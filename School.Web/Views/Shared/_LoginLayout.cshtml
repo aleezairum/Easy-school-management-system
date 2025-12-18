@@ -12,6 +12,12 @@
             font-family: 'Inter', sans-serif;
         }
 
+        :root {
+            --primary-color: #008649;
+            --primary-dark: #006d3b;
+            --primary-light: #00a65a;
+        }
+
         body {
             margin: 0;
             padding: 0;
@@ -47,13 +53,13 @@
         .login-left-content .logo-icon {
             width: 100px;
             height: 100px;
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
             border-radius: 24px;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 30px;
-            box-shadow: 0 10px 30px rgba(37, 99, 235, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 134, 73, 0.3);
         }
 
         .login-left-content .logo-icon i {
@@ -94,7 +100,7 @@
 
         .feature-item i {
             font-size: 24px;
-            color: #2563eb;
+            color: var(--primary-color);
         }
 
         .feature-item span {
@@ -140,7 +146,7 @@
             margin-bottom: 8px;
         }
 
-        .form-control {
+        .form-control, .form-select {
             padding: 14px 16px;
             border: 2px solid #e2e8f0;
             border-radius: 10px;
@@ -148,9 +154,9 @@
             transition: all 0.3s;
         }
 
-        .form-control:focus {
-            border-color: #2563eb;
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(0, 134, 73, 0.1);
         }
 
         .input-group {
@@ -173,7 +179,7 @@
         .btn-login {
             width: 100%;
             padding: 14px;
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
             border: none;
             border-radius: 10px;
             font-size: 16px;
@@ -181,13 +187,13 @@
             color: white;
             cursor: pointer;
             transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+            box-shadow: 0 4px 15px rgba(0, 134, 73, 0.3);
         }
 
         .btn-login:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
-            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+            box-shadow: 0 6px 20px rgba(0, 134, 73, 0.4);
+            background: linear-gradient(135deg, var(--primary-dark) 0%, #005a30 100%);
         }
 
         .btn-login:active {
@@ -199,24 +205,13 @@
         }
 
         .form-check-input:checked {
-            background-color: #2563eb;
-            border-color: #2563eb;
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
         }
 
         .form-check-label {
             color: #64748b;
             font-size: 14px;
-        }
-
-        .forgot-link {
-            color: #2563eb;
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .forgot-link:hover {
-            text-decoration: underline;
         }
 
         .alert {
@@ -253,6 +248,24 @@
             font-weight: 500;
         }
 
+        .select-wrapper {
+            position: relative;
+        }
+
+        .select-wrapper .select-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .select-wrapper .form-select {
+            padding-left: 48px;
+        }
+
         @@media (max-width: 992px) {
             .login-left {
                 display: none;
@@ -264,5 +277,6 @@
     @RenderBody()
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

@@ -10,15 +10,15 @@ namespace School.Web.Controllers
         }
 
         [HttpPost]
-        public IActionResult Login(string email, string password)
+        public IActionResult Login(string username, string password)
         {
             // Static validation for demo purposes
-            if (email == "admin@school.com" && password == "admin123")
+            if (username == "admin" && password == "admin123")
             {
                 return RedirectToAction("Index", "Dashboard");
             }
 
-            ViewBag.Error = "Invalid email or password";
+            ViewBag.Error = "Invalid username or password";
             return View();
         }
 

@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet add package:*)",
+      "Bash(dotnet add:*)",
+      "Bash(if not exist \"E:\\easy-school-management-system\\School.Web\\wwwroot\\images\" mkdir \"E:\\easy-school-management-system\\School.Web\\wwwroot\\images\")",
+      "Bash(ls -la \"E:\\easy-school-management-system\\School.Web\"\" | grep -E \"^d \")",
+      "Bash(dotnet build:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
