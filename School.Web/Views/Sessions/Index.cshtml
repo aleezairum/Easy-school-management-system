@@ -193,6 +193,11 @@
         background: #f8fafc;
     }
 
+    .table tbody tr.selected {
+        background: #ecfdf5;
+        border-left: 3px solid #008649;
+    }
+
     .alert {
         border-radius: 12px;
         border: none;
@@ -234,76 +239,37 @@
         border-width: 0.3rem;
     }
 
-    .session-form-section {
+    .form-section {
         background: #f8fafc;
         border-radius: 12px;
         padding: 20px;
         margin-bottom: 20px;
     }
 
-    .badge-current {
-        background: linear-gradient(135deg, #008649 0%, #006d3b 100%);
-        color: white;
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 600;
-    }
-
-    .session-card {
-        background: white;
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 16px;
-        border: 2px solid #e2e8f0;
-        transition: all 0.2s;
-    }
-
-    .session-card:hover {
-        border-color: #008649;
-        box-shadow: 0 4px 12px rgba(0, 134, 73, 0.1);
-    }
-
-    .session-card.current {
-        border-color: #008649;
-        background: linear-gradient(135deg, rgba(0, 134, 73, 0.05) 0%, rgba(0, 109, 59, 0.05) 100%);
-    }
-
-    .session-name {
-        font-size: 18px;
-        font-weight: 600;
-        color: #1e293b;
-        margin-bottom: 8px;
-    }
-
-    .session-dates {
+    .form-section-title {
         font-size: 14px;
+        font-weight: 600;
         color: #64748b;
-        margin-bottom: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #e2e8f0;
     }
 
-    .session-dates i {
-        margin-right: 6px;
-        color: #008649;
+    .grid-section {
+        margin-top: 24px;
     }
 
-    .modal-content {
-        border-radius: 16px;
-        border: none;
-    }
-
-    .modal-header {
-        border-bottom: 1px solid #e2e8f0;
-        padding: 20px 24px;
-    }
-
-    .modal-body {
-        padding: 24px;
-    }
-
-    .modal-footer {
-        border-top: 1px solid #e2e8f0;
-        padding: 16px 24px;
+    .grid-section-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #e2e8f0;
     }
 </style>
 
@@ -311,34 +277,10 @@
     <!-- Alert Messages -->
     <div id="alertContainer"></div>
 
-    <!-- Current Session Info -->
-    <div class="card mb-4" id="currentSessionCard" style="display: none;">
-        <div class="card-body">
-            <div class="d-flex align-items-center justify-content-between">
-                <div>
-                    <h6 class="text-muted mb-1">Current Academic Session</h6>
-                    <h4 class="mb-0" id="currentSessionName">-</h4>
-                </div>
-                <div class="text-end">
-                    <div class="text-muted mb-1">Session Period</div>
-                    <div id="currentSessionDates" class="fw-semibold">-</div>
-                </div>
-                <div>
-                    <span class="badge-current">
-                        <i class="bi bi-check-circle me-1"></i> Active Session
-                    </span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Sessions List Card -->
+    <!-- Sessions Card -->
     <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="card-header">
             <h5><i class="bi bi-calendar-range me-2"></i>Academic Sessions</h5>
-            <button type="button" class="btn btn-primary" onclick="openAddModal()">
-                <i class="bi bi-plus-lg me-1"></i> Add Session
-            </button>
         </div>
         <div class="card-body position-relative">
             <div id="loadingOverlay" class="loading-overlay" style="display: none;">
@@ -347,87 +289,77 @@
                 </div>
             </div>
 
-            <!-- Sessions List Table -->
-            <div class="table-responsive">
-                <table class="table table-hover" id="sessionsTable">
-                    <thead>
-                        <tr>
-                            <th style="width: 60px;">Sr#</th>
-                            <th>Session Name</th>
-                            <th>Start Date</th>
-                            <th>End Date</th>
-                            <th class="text-center" style="width: 100px;">Current</th>
-                            <th class="text-center" style="width: 100px;">Status</th>
-                            <th class="text-center" style="width: 200px;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="sessionsBody">
-                        <!-- Sessions will be loaded dynamically -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Add/Edit Session Modal -->
-<div class="modal fade" id="sessionModal" tabindex="-1" aria-labelledby="sessionModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="sessionModalLabel"><i class="bi bi-plus-circle me-2"></i>Add Session</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
+            <!-- Form Section -->
+            <div class="form-section">
+                <div class="form-section-title">
+                    <i class="bi bi-pencil-square me-2"></i><span id="formTitle">Add New Session</span>
+                </div>
                 <form id="sessionForm">
                     <input type="hidden" id="sessionId" name="Id" value="0" />
 
-                    <div class="mb-3">
-                        <label for="sessionName" class="form-label">Session Name <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="sessionName" name="SessionName"
-                               placeholder="e.g., 2024-2025" required />
-                        <div class="form-text">Enter the academic year (e.g., 2024-2025)</div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label for="sessionName" class="form-label">Session Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="sessionName" name="SessionName"
+                                   placeholder="e.g., 2024-2025" required />
+                        </div>
+                        <div class="col-md-2">
                             <label for="startDate" class="form-label">Start Date <span class="text-danger">*</span></label>
                             <input type="date" class="form-control" id="startDate" name="StartDate" required />
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-2">
                             <label for="endDate" class="form-label">End Date <span class="text-danger">*</span></label>
                             <input type="date" class="form-control" id="endDate" name="EndDate" required />
                         </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-1">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="isCurrent" name="IsCurrent" />
-                                <label class="form-check-label" for="isCurrent">
-                                    <strong>Set as Current Session</strong>
-                                </label>
+                                <label class="form-check-label" for="isCurrent">Current</label>
                             </div>
-                            <div class="form-text">Only one session can be current at a time</div>
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-1">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="isActive" name="IsActive" checked />
-                                <label class="form-check-label" for="isActive">
-                                    <strong>Is Active</strong>
-                                </label>
+                                <label class="form-check-label" for="isActive">Active</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-primary" onclick="saveSession()">
+                                    <i class="bi bi-check-lg me-1"></i> Save
+                                </button>
+                                <button type="button" class="btn btn-secondary" onclick="resetForm()">
+                                    <i class="bi bi-x-lg me-1"></i> Clear
+                                </button>
                             </div>
                         </div>
                     </div>
                 </form>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="bi bi-x-lg me-1"></i> Cancel
-                </button>
-                <button type="button" class="btn btn-primary" onclick="saveSession()">
-                    <i class="bi bi-check-lg me-1"></i> Save
-                </button>
+
+            <!-- Grid Section -->
+            <div class="grid-section">
+                <div class="grid-section-title">
+                    <i class="bi bi-table me-2"></i>Sessions List
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover" id="sessionsTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 60px;">Sr#</th>
+                                <th>Session Name</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th class="text-center" style="width: 100px;">Current</th>
+                                <th class="text-center" style="width: 100px;">Status</th>
+                                <th class="text-center" style="width: 200px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sessionsBody">
+                            <!-- Sessions will be loaded dynamically -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -436,10 +368,9 @@
 @section Scripts {
     <script>
         const API_BASE = 'http://localhost:5266/api';
-        let sessionModal = null;
+        let editingSessionId = 0;
 
         $(document).ready(function () {
-            sessionModal = new bootstrap.Modal(document.getElementById('sessionModal'));
             loadSessions();
         });
 
@@ -451,7 +382,6 @@
                 if (response.ok) {
                     const sessions = await response.json();
                     renderSessionsList(sessions);
-                    updateCurrentSessionCard(sessions);
                 } else {
                     showAlert('Failed to load sessions', 'danger');
                 }
@@ -463,33 +393,19 @@
             }
         }
 
-        // Update current session card
-        function updateCurrentSessionCard(sessions) {
-            const currentSession = sessions.find(s => s.isCurrent);
-            if (currentSession) {
-                $('#currentSessionCard').show();
-                $('#currentSessionName').text(currentSession.sessionName);
-                $('#currentSessionDates').text(
-                    formatDate(currentSession.startDate) + ' - ' + formatDate(currentSession.endDate)
-                );
-            } else {
-                $('#currentSessionCard').hide();
-            }
-        }
-
         // Render sessions list table
         function renderSessionsList(sessions) {
             const tbody = $('#sessionsBody');
             tbody.empty();
 
             if (sessions.length === 0) {
-                tbody.html('<tr><td colspan="7" class="text-center text-muted py-4">No sessions found. Click "Add Session" to create one.</td></tr>');
+                tbody.html('<tr><td colspan="7" class="text-center text-muted py-4">No sessions found. Add a new session using the form above.</td></tr>');
                 return;
             }
 
             sessions.forEach((session, index) => {
                 const row = `
-                    <tr>
+                    <tr data-id="${session.id}" class="${editingSessionId === session.id ? 'selected' : ''}">
                         <td>${index + 1}</td>
                         <td>
                             <strong>${session.sessionName}</strong>
@@ -544,13 +460,6 @@
             return date.toISOString().split('T')[0];
         }
 
-        // Open modal for adding a new session
-        function openAddModal() {
-            $('#sessionModalLabel').html('<i class="bi bi-plus-circle me-2"></i>Add Session');
-            resetForm();
-            sessionModal.show();
-        }
-
         // Edit existing session
         async function editSession(sessionId) {
             showLoading();
@@ -558,9 +467,18 @@
                 const response = await fetch(`${API_BASE}/Session/${sessionId}`);
                 if (response.ok) {
                     const data = await response.json();
-                    $('#sessionModalLabel').html('<i class="bi bi-pencil me-2"></i>Edit Session');
                     populateForm(data);
-                    sessionModal.show();
+                    editingSessionId = sessionId;
+                    $('#formTitle').text('Edit Session');
+
+                    // Highlight the selected row
+                    $('#sessionsBody tr').removeClass('selected');
+                    $(`#sessionsBody tr[data-id="${sessionId}"]`).addClass('selected');
+
+                    // Scroll to form
+                    $('html, body').animate({
+                        scrollTop: $('.form-section').offset().top - 100
+                    }, 300);
                 } else {
                     showAlert('Failed to load session', 'danger');
                 }
@@ -613,6 +531,12 @@
 
                 if (response.ok) {
                     showAlert('Session deleted successfully!', 'success');
+
+                    // If deleting the session being edited, reset the form
+                    if (editingSessionId === sessionId) {
+                        resetForm();
+                    }
+
                     await loadSessions();
                 } else {
                     const error = await response.json();
@@ -644,6 +568,11 @@
             $('#endDate').val('');
             $('#isCurrent').prop('checked', false);
             $('#isActive').prop('checked', true);
+            $('#formTitle').text('Add New Session');
+            editingSessionId = 0;
+
+            // Remove selected highlight from table
+            $('#sessionsBody tr').removeClass('selected');
         }
 
         // Save session
@@ -702,7 +631,7 @@
 
                 if (response.ok) {
                     showAlert('Session saved successfully!', 'success');
-                    sessionModal.hide();
+                    resetForm();
                     await loadSessions();
                 } else {
                     const error = await response.json();
@@ -738,10 +667,6 @@
             setTimeout(() => {
                 $('.alert').alert('close');
             }, 5000);
-        }
-
-        function hideAlert() {
-            $('#alertContainer').empty();
         }
     </script>
 }

@@ -114,39 +114,6 @@
         box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
     }
 
-    .btn-warning {
-        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-        border: none;
-        border-radius: 10px;
-        padding: 10px 20px;
-        font-weight: 600;
-        font-size: 14px;
-        color: white;
-        transition: all 0.2s;
-    }
-
-    .btn-warning:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
-    }
-
-    .btn-danger {
-        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        border: none;
-        border-radius: 10px;
-        padding: 10px 20px;
-        font-weight: 600;
-        font-size: 14px;
-        color: white;
-        transition: all 0.2s;
-    }
-
-    .btn-danger:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
-        color: white;
-    }
-
     .table {
         margin-bottom: 0;
     }
@@ -179,9 +146,25 @@
         color: #1e293b;
     }
 
-    .menu-title.child {
+    .menu-title.level-1 {
+        color: #475569;
+        padding-left: 20px;
+    }
+
+    .menu-title.level-2 {
         color: #64748b;
-        padding-left: 10px;
+        padding-left: 40px;
+    }
+
+    .menu-title.level-3 {
+        color: #94a3b8;
+        padding-left: 60px;
+    }
+
+    .menu-arrow {
+        color: #94a3b8;
+        margin-right: 8px;
+        font-family: monospace;
     }
 
     .alert {
@@ -200,8 +183,13 @@
         color: #991b1b;
     }
 
+    .alert-warning {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
     .permission-grid {
-        max-height: 500px;
+        max-height: 600px;
         overflow-y: auto;
     }
 
@@ -252,11 +240,39 @@
         border-width: 0.3rem;
     }
 
-    .role-form-section {
+    .search-section {
         background: #f8fafc;
         border-radius: 12px;
         padding: 20px;
         margin-bottom: 20px;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #94a3b8;
+    }
+
+    .empty-state i {
+        font-size: 48px;
+        margin-bottom: 16px;
+        display: block;
+    }
+
+    .role-info {
+        background: #ecfdf5;
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-bottom: 16px;
+        display: none;
+    }
+
+    .role-info.show {
+        display: block;
+    }
+
+    .role-info strong {
+        color: #166534;
     }
 </style>
 
@@ -264,12 +280,12 @@
     <!-- Alert Messages -->
     <div id="alertContainer"></div>
 
-    <!-- Role List Card -->
+    <!-- Role Permissions Card -->
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5><i class="bi bi-shield-lock me-2"></i>Role Permissions</h5>
-            <button type="button" class="btn btn-primary" onclick="openAddModal()">
-                <i class="bi bi-plus-lg me-1"></i> Add Role
+            <button type="button" class="btn btn-primary" id="btnSave" onclick="savePermissions()" style="display: none;">
+                <i class="bi bi-check-lg me-1"></i> Save Permissions
             </button>
         </div>
         <div class="card-body position-relative">
@@ -279,144 +295,78 @@
                 </div>
             </div>
 
-            <!-- Roles List Table -->
-            <div class="table-responsive">
-                <table class="table table-hover" id="rolesTable">
+            <!-- Search Section -->
+            <div class="search-section">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label for="roleSelect" class="form-label">Select Role</label>
+                        <select class="form-select" id="roleSelect">
+                            <option value="">-- Select a Role --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-info w-100" onclick="fetchRolePermissions()">
+                            <i class="bi bi-search me-1"></i> Fetch
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Role Info -->
+            <div class="role-info" id="roleInfo">
+                <i class="bi bi-info-circle me-2"></i>
+                Editing permissions for: <strong id="selectedRoleName"></strong>
+                <input type="hidden" id="selectedRoleId" value="0" />
+            </div>
+
+            <!-- Empty State -->
+            <div class="empty-state" id="emptyState">
+                <i class="bi bi-shield-exclamation"></i>
+                <h5>No Role Selected</h5>
+                <p>Select a role from the dropdown above and click "Fetch" to view and edit permissions.</p>
+            </div>
+
+            <!-- Permissions Grid -->
+            <div class="table-responsive permission-grid" id="permissionsContainer" style="display: none;">
+                <table class="table table-hover" id="permissionsTable">
                     <thead>
                         <tr>
                             <th style="width: 60px;">Sr#</th>
-                            <th>Role Name</th>
-                            <th class="text-center" style="width: 100px;">Status</th>
-                            <th class="text-center" style="width: 150px;">Actions</th>
+                            <th style="min-width: 280px;">Menu Title</th>
+                            <th class="text-center check-all-header" onclick="toggleColumn('IsView')" style="width: 80px;">
+                                IsView
+                                <br><small class="text-muted">(click all)</small>
+                            </th>
+                            <th class="text-center check-all-header" onclick="toggleColumn('IsInsert')" style="width: 80px;">
+                                IsInsert
+                                <br><small class="text-muted">(click all)</small>
+                            </th>
+                            <th class="text-center check-all-header" onclick="toggleColumn('IsUpdate')" style="width: 80px;">
+                                IsUpdate
+                                <br><small class="text-muted">(click all)</small>
+                            </th>
+                            <th class="text-center check-all-header" onclick="toggleColumn('IsDelete')" style="width: 80px;">
+                                IsDelete
+                                <br><small class="text-muted">(click all)</small>
+                            </th>
+                            <th class="text-center check-all-header" onclick="toggleColumn('IsActive')" style="width: 80px;">
+                                IsActive
+                                <br><small class="text-muted">(click all)</small>
+                            </th>
+                            <th class="text-center check-all-header" onclick="toggleColumn('IsBackDate')" style="width: 90px;">
+                                IsBackDate
+                                <br><small class="text-muted">(click all)</small>
+                            </th>
+                            <th class="text-center check-all-header" onclick="toggleColumn('IsPrint')" style="width: 80px;">
+                                IsPrint
+                                <br><small class="text-muted">(click all)</small>
+                            </th>
                         </tr>
                     </thead>
-                    <tbody id="rolesBody">
-                        <!-- Roles will be loaded dynamically -->
+                    <tbody id="permissionsBody">
+                        <!-- Permissions will be loaded dynamically -->
                     </tbody>
                 </table>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Add Role Modal (Simple) -->
-<div class="modal fade" id="addRoleModal" tabindex="-1" aria-labelledby="addRoleModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content" style="border-radius: 16px; border: none;">
-            <div class="modal-header" style="border-bottom: 1px solid #e2e8f0;">
-                <h5 class="modal-title" id="addRoleModalLabel"><i class="bi bi-plus-circle me-2"></i>Add Role</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="addRoleForm">
-                    <div class="mb-3">
-                        <label for="newRoleName" class="form-label">Role Name <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="newRoleName" name="RoleName" placeholder="Enter role name" required />
-                    </div>
-                    <div class="mb-3">
-                        <label for="newRoleDescription" class="form-label">Description</label>
-                        <textarea class="form-control" id="newRoleDescription" name="Description" rows="2" placeholder="Enter role description"></textarea>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="newIsActive" name="IsActive" checked />
-                        <label class="form-check-label" for="newIsActive">Is Active</label>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer" style="border-top: 1px solid #e2e8f0;">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="bi bi-x-lg me-1"></i> Cancel
-                </button>
-                <button type="button" class="btn btn-primary" onclick="saveNewRole()">
-                    <i class="bi bi-check-lg me-1"></i> Save
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Edit Role Permissions Modal -->
-<div class="modal fade" id="permissionsModal" tabindex="-1" aria-labelledby="permissionsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content" style="border-radius: 16px; border: none;">
-            <div class="modal-header" style="border-bottom: 1px solid #e2e8f0;">
-                <h5 class="modal-title" id="permissionsModalLabel"><i class="bi bi-shield-lock me-2"></i>Edit Role Permissions</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="roleForm">
-                    <input type="hidden" id="roleId" name="Id" value="0" />
-
-                    <div class="role-form-section">
-                        <div class="row g-3 align-items-end">
-                            <div class="col-md-4">
-                                <label for="roleName" class="form-label">Role Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="roleName" name="RoleName" placeholder="Enter role name" required />
-                            </div>
-                            <div class="col-md-6">
-                                <label for="roleDescription" class="form-label">Description</label>
-                                <input type="text" class="form-control" id="roleDescription" name="Description" placeholder="Enter description" />
-                            </div>
-                            <div class="col-md-2">
-                                <div class="form-check mt-4">
-                                    <input class="form-check-input" type="checkbox" id="isActive" name="IsActive" checked />
-                                    <label class="form-check-label" for="isActive">Is Active</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Permissions Grid -->
-                    <div class="table-responsive permission-grid">
-                        <table class="table table-hover" id="permissionsTable">
-                            <thead>
-                                <tr>
-                                    <th style="width: 60px;">Sr#</th>
-                                    <th style="min-width: 250px;">Menu Title</th>
-                                    <th class="text-center check-all-header" onclick="toggleColumn('IsView')" style="width: 80px;">
-                                        IsView
-                                        <br><small class="text-muted">(click all)</small>
-                                    </th>
-                                    <th class="text-center check-all-header" onclick="toggleColumn('IsInsert')" style="width: 80px;">
-                                        IsInsert
-                                        <br><small class="text-muted">(click all)</small>
-                                    </th>
-                                    <th class="text-center check-all-header" onclick="toggleColumn('IsUpdate')" style="width: 80px;">
-                                        IsUpdate
-                                        <br><small class="text-muted">(click all)</small>
-                                    </th>
-                                    <th class="text-center check-all-header" onclick="toggleColumn('IsDelete')" style="width: 80px;">
-                                        IsDelete
-                                        <br><small class="text-muted">(click all)</small>
-                                    </th>
-                                    <th class="text-center check-all-header" onclick="toggleColumn('IsActive')" style="width: 80px;">
-                                        IsActive
-                                        <br><small class="text-muted">(click all)</small>
-                                    </th>
-                                    <th class="text-center check-all-header" onclick="toggleColumn('IsBackDate')" style="width: 90px;">
-                                        IsBackDate
-                                        <br><small class="text-muted">(click all)</small>
-                                    </th>
-                                    <th class="text-center check-all-header" onclick="toggleColumn('IsPrint')" style="width: 80px;">
-                                        IsPrint
-                                        <br><small class="text-muted">(click all)</small>
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody id="permissionsBody">
-                                <!-- Permissions will be loaded dynamically -->
-                            </tbody>
-                        </table>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer" style="border-top: 1px solid #e2e8f0;">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="bi bi-x-lg me-1"></i> Cancel
-                </button>
-                <button type="button" class="btn btn-primary" onclick="saveRolePermissions()">
-                    <i class="bi bi-check-lg me-1"></i> Save
-                </button>
             </div>
         </div>
     </div>
@@ -426,69 +376,102 @@
     <script>
         const API_BASE = 'http://localhost:5266/api';
         let allMenus = [];
-        let currentPermissions = [];
-        let addRoleModal = null;
-        let permissionsModal = null;
+        let currentRoleData = null;
 
         $(document).ready(function () {
-            addRoleModal = new bootstrap.Modal(document.getElementById('addRoleModal'));
-            permissionsModal = new bootstrap.Modal(document.getElementById('permissionsModal'));
-            loadMenus();
             loadRoles();
+            loadMenus();
+
+            // Show dummy data for preview
+            showDummyData();
         });
 
-        // Load all roles for the list
+        // Show dummy data for grid preview
+        function showDummyData() {
+            const dummyMenus = [
+                { id: 1, menuTitle: 'Dashboard', level: 0 },
+                { id: 2, menuTitle: 'User Management', level: 0 },
+                { id: 3, menuTitle: 'Users', level: 1 },
+                { id: 4, menuTitle: 'Roles', level: 1 },
+                { id: 5, menuTitle: 'Permissions', level: 2 },
+                { id: 6, menuTitle: 'Academic', level: 0 },
+                { id: 7, menuTitle: 'Sessions', level: 1 },
+                { id: 8, menuTitle: 'Classes', level: 1 },
+                { id: 9, menuTitle: 'Subjects', level: 2 },
+                { id: 10, menuTitle: 'Reports', level: 0 }
+            ];
+
+            const tbody = $('#permissionsBody');
+            tbody.empty();
+
+            dummyMenus.forEach((menu, index) => {
+                const arrow = getMenuArrow(menu.level);
+                const levelClass = `level-${menu.level}`;
+
+                const row = `
+                    <tr data-menu-id="${menu.id}">
+                        <td>${index + 1}</td>
+                        <td class="menu-title ${levelClass}">
+                            ${arrow ? `<span class="menu-arrow">${arrow}</span>` : ''}${menu.menuTitle}
+                        </td>
+                        <td class="text-center">
+                            <input type="checkbox" class="form-check-input perm-checkbox" data-field="IsView" />
+                        </td>
+                        <td class="text-center">
+                            <input type="checkbox" class="form-check-input perm-checkbox" data-field="IsInsert" />
+                        </td>
+                        <td class="text-center">
+                            <input type="checkbox" class="form-check-input perm-checkbox" data-field="IsUpdate" />
+                        </td>
+                        <td class="text-center">
+                            <input type="checkbox" class="form-check-input perm-checkbox" data-field="IsDelete" />
+                        </td>
+                        <td class="text-center">
+                            <input type="checkbox" class="form-check-input perm-checkbox" data-field="IsActive" />
+                        </td>
+                        <td class="text-center">
+                            <input type="checkbox" class="form-check-input perm-checkbox" data-field="IsBackDate" />
+                        </td>
+                        <td class="text-center">
+                            <input type="checkbox" class="form-check-input perm-checkbox" data-field="IsPrint" />
+                        </td>
+                    </tr>
+                `;
+                tbody.append(row);
+            });
+
+            // Show grid, hide empty state
+            $('#emptyState').hide();
+            $('#permissionsContainer').show();
+        }
+
+        // Load all roles for the dropdown
         async function loadRoles() {
-            showLoading();
             try {
                 const response = await fetch(`${API_BASE}/RolesApi`);
                 if (response.ok) {
                     const roles = await response.json();
-                    renderRolesList(roles);
+                    populateRoleDropdown(roles);
                 } else {
                     showAlert('Failed to load roles', 'danger');
                 }
             } catch (error) {
                 console.error('Error loading roles:', error);
                 showAlert('Error loading roles: ' + error.message, 'danger');
-            } finally {
-                hideLoading();
             }
         }
 
-        // Render roles list table
-        function renderRolesList(roles) {
-            const tbody = $('#rolesBody');
-            tbody.empty();
+        // Populate role dropdown
+        function populateRoleDropdown(roles) {
+            const select = $('#roleSelect');
+            select.find('option:not(:first)').remove();
 
-            if (roles.length === 0) {
-                tbody.html('<tr><td colspan="4" class="text-center text-muted py-4">No roles found</td></tr>');
-                return;
-            }
-
-            roles.forEach((role, index) => {
-                const row = `
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td class="menu-title">${role.roleName}</td>
-                        <td class="text-center">
-                            <span class="badge ${role.isActive ? 'bg-success' : 'bg-secondary'}">${role.isActive ? 'Active' : 'Inactive'}</span>
-                        </td>
-                        <td class="text-center">
-                            <button type="button" class="btn btn-sm btn-info me-1" onclick="editRole(${role.id})" title="Edit">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button type="button" class="btn btn-sm btn-danger" onclick="deleteRole(${role.id}, '${role.roleName}')" title="Delete">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
-                tbody.append(row);
+            roles.forEach(role => {
+                select.append(`<option value="${role.id}" data-name="${role.roleName}">${role.roleName}</option>`);
             });
         }
 
-        // Load all menus for the permissions grid
+        // Load all menus for hierarchy display
         async function loadMenus() {
             try {
                 const response = await fetch(`${API_BASE}/MenusApi/hierarchy`);
@@ -503,116 +486,74 @@
             }
         }
 
-        // Open modal for adding a new role (simple modal without permissions)
-        function openAddModal() {
-            $('#newRoleName').val('');
-            $('#newRoleDescription').val('');
-            $('#newIsActive').prop('checked', true);
-            addRoleModal.show();
-        }
+        // Fetch role permissions
+        async function fetchRolePermissions() {
+            const roleId = $('#roleSelect').val();
+            const roleName = $('#roleSelect option:selected').data('name');
 
-        // Save new role (simple add without permissions)
-        async function saveNewRole() {
-            const roleName = $('#newRoleName').val().trim();
-            if (!roleName) {
-                showAlert('Please enter a role name', 'danger');
+            if (!roleId) {
+                showAlert('Please select a role first', 'warning');
                 return;
             }
 
-            const data = {
-                roleName: roleName,
-                description: $('#newRoleDescription').val().trim(),
-                isActive: $('#newIsActive').is(':checked'),
-                permissions: []
-            };
-
-            showLoading();
-            try {
-                const response = await fetch(`${API_BASE}/RolesApi/save`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                });
-
-                if (response.ok) {
-                    showAlert('Role created successfully!', 'success');
-                    addRoleModal.hide();
-                    await loadRoles();
-                } else {
-                    const error = await response.json();
-                    showAlert(error.message || 'Failed to create role', 'danger');
-                }
-            } catch (error) {
-                console.error('Error creating role:', error);
-                showAlert('Error creating role: ' + error.message, 'danger');
-            } finally {
-                hideLoading();
-            }
-        }
-
-        // Edit existing role (opens permissions modal)
-        async function editRole(roleId) {
             showLoading();
             try {
                 const response = await fetch(`${API_BASE}/RolesApi/${roleId}`);
                 if (response.ok) {
-                    const data = await response.json();
-                    populateForm(data);
-                    permissionsModal.show();
+                    currentRoleData = await response.json();
+
+                    // Update role info display
+                    $('#selectedRoleId').val(currentRoleData.id);
+                    $('#selectedRoleName').text(currentRoleData.roleName);
+                    $('#roleInfo').addClass('show');
+
+                    // Show grid and save button
+                    $('#emptyState').hide();
+                    $('#permissionsContainer').show();
+                    $('#btnSave').show();
+
+                    // Render permissions grid
+                    renderPermissionsGrid(currentRoleData.permissions || []);
                 } else {
-                    showAlert('Failed to load role', 'danger');
+                    showAlert('Failed to fetch role permissions', 'danger');
                 }
             } catch (error) {
-                console.error('Error loading role:', error);
-                showAlert('Error loading role: ' + error.message, 'danger');
+                console.error('Error fetching role permissions:', error);
+                showAlert('Error fetching role permissions: ' + error.message, 'danger');
             } finally {
                 hideLoading();
             }
         }
 
-        // Delete role
-        async function deleteRole(roleId, roleName) {
-            if (!confirm(`Are you sure you want to delete the role "${roleName}"?`)) {
-                return;
-            }
-
-            showLoading();
-            try {
-                const response = await fetch(`${API_BASE}/RolesApi/${roleId}`, {
-                    method: 'DELETE'
-                });
-
-                if (response.ok) {
-                    showAlert('Role deleted successfully!', 'success');
-                    await loadRoles();
-                } else {
-                    const error = await response.json();
-                    showAlert(error.message || 'Failed to delete role', 'danger');
-                }
-            } catch (error) {
-                console.error('Error deleting role:', error);
-                showAlert('Error deleting role: ' + error.message, 'danger');
-            } finally {
-                hideLoading();
-            }
+        // Get arrow prefix based on menu level
+        function getMenuArrow(level) {
+            if (level === 0) return '';
+            if (level === 1) return '-->';
+            if (level === 2) return '--->';
+            return '-'.repeat(level * 2) + '>';
         }
 
         // Render the permissions grid
-        function renderPermissionsGrid(permissions = []) {
+        function renderPermissionsGrid(permissions) {
             const tbody = $('#permissionsBody');
             tbody.empty();
 
+            if (allMenus.length === 0) {
+                tbody.html('<tr><td colspan="9" class="text-center text-muted py-4">No menus found</td></tr>');
+                return;
+            }
+
             allMenus.forEach((menu, index) => {
                 const permission = permissions.find(p => p.menuId === menu.id) || {};
-                const isChild = menu.menuTitle.startsWith('---->');
-                const menuTitleClass = isChild ? 'menu-title child' : 'menu-title';
+                const arrow = getMenuArrow(menu.level);
+                const levelClass = `level-${menu.level}`;
 
                 const row = `
                     <tr data-menu-id="${menu.id}">
                         <td>${index + 1}</td>
-                        <td class="${menuTitleClass}">${menu.menuTitle}</td>
+                        <td class="menu-title ${levelClass}">
+                            ${arrow ? `<span class="menu-arrow">${arrow}</span>` : ''}${menu.menuTitle}
+                        </td>
                         <td class="text-center">
                             <input type="checkbox" class="form-check-input perm-checkbox"
                                    data-field="IsView" ${permission.isView ? 'checked' : ''} />
@@ -654,21 +595,10 @@
             checkboxes.prop('checked', !allChecked);
         }
 
-        // Populate form with role data (for permissions modal)
-        function populateForm(data) {
-            $('#roleId').val(data.id);
-            $('#roleName').val(data.roleName);
-            $('#roleDescription').val(data.description || '');
-            $('#isActive').prop('checked', data.isActive);
-            currentPermissions = data.permissions || [];
-            renderPermissionsGrid(currentPermissions);
-        }
-
-        // Save role permissions
-        async function saveRolePermissions() {
-            const roleName = $('#roleName').val().trim();
-            if (!roleName) {
-                showAlert('Please enter a role name', 'danger');
+        // Save permissions
+        async function savePermissions() {
+            if (!currentRoleData) {
+                showAlert('No role selected', 'warning');
                 return;
             }
 
@@ -691,10 +621,10 @@
             });
 
             const data = {
-                id: parseInt($('#roleId').val()) || 0,
-                roleName: roleName,
-                description: $('#roleDescription').val().trim(),
-                isActive: $('#isActive').is(':checked'),
+                id: currentRoleData.id,
+                roleName: currentRoleData.roleName,
+                description: currentRoleData.description,
+                isActive: currentRoleData.isActive,
                 permissions: permissions
             };
 
@@ -709,16 +639,14 @@
                 });
 
                 if (response.ok) {
-                    showAlert('Role permissions saved successfully!', 'success');
-                    permissionsModal.hide();
-                    await loadRoles();
+                    showAlert('Permissions saved successfully!', 'success');
                 } else {
                     const error = await response.json();
-                    showAlert(error.message || 'Failed to save role', 'danger');
+                    showAlert(error.message || 'Failed to save permissions', 'danger');
                 }
             } catch (error) {
-                console.error('Error saving role:', error);
-                showAlert('Error saving role: ' + error.message, 'danger');
+                console.error('Error saving permissions:', error);
+                showAlert('Error saving permissions: ' + error.message, 'danger');
             } finally {
                 hideLoading();
             }
@@ -746,10 +674,6 @@
             setTimeout(() => {
                 $('.alert').alert('close');
             }, 5000);
-        }
-
-        function hideAlert() {
-            $('#alertContainer').empty();
         }
     </script>
 }

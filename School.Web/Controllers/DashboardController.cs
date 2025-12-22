@@ -4,6 +4,7 @@ namespace School.Web.Controllers
 {
     public class DashboardController : Controller
     {
+        [Route("dashboard")]
         public IActionResult Index()
         {
             // Static dashboard data

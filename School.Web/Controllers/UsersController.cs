@@ -5,6 +5,7 @@ namespace School.Web.Controllers
 {
     public class UsersController : Controller
     {
+        [Route("users")]
         public IActionResult Index()
         {
             ViewData["Title"] = "User Management";

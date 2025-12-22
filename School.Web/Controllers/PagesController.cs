@@ -5,6 +5,7 @@ namespace School.Web.Controllers
 {
     public class PagesController : Controller
     {
+        [Route("pages")]
         public IActionResult Index()
         {
             ViewData["Title"] = "Add Pages";

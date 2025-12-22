@@ -4,12 +4,16 @@ namespace School.Web.Controllers
 {
     public class AccountController : Controller
     {
+        [Route("login")]
+        [Route("")]
         public IActionResult Login()
         {
             return View();
         }
 
         [HttpPost]
+        [Route("login")]
+        [Route("")]
         public IActionResult Login(string username, string password)
         {
             // Static validation for demo purposes
