@@ -1,0 +1,14 @@
+﻿using School.API.Data.DBModels.Academic;
+using School.API.DTOs.Academic;
+using School.API.DTOs.Common;
+
+public interface IAcademicSessionYearService
+{
+    Task<ResponseDto> SaveAsync(
+        AcademicSessionYearSaveDto dto,
+        int userId,
+        string userIp);
+
+    Task<List<AcademicSessionYear>> GetAllAsync();
+    Task<AcademicSessionYear?> GetByIdAsync(int id);
+}

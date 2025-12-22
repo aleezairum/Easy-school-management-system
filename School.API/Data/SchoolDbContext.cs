@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using School.API.DTOs.Common;
 using School.API.Models;
 
 namespace School.API.Data
@@ -16,6 +17,8 @@ namespace School.API.Data
         public DbSet<User> Users { get; set; }
         public DbSet<UserRole> UserRoles { get; set; }
         public DbSet<Session> Sessions { get; set; }
+        public object AcademicSessionYears { get; internal set; }
+        public DbSet<ResponseDto> AcademicSessionYearResponses { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
