@@ -1,7 +1,10 @@
-﻿namespace School.API.Data.DBModels.Academic
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace School.API.Data.DBModels.Academic
 {
     public class AcademicSessionYear
     {
+        [Key]
         public int VID { get; set; }
         public string VName { get; set; }
         public DateTime DateFrom { get; set; }

@@ -378,8 +378,9 @@
         async function loadSessions() {
             showLoading();
             try {
-                const response = await fetch(`${API_BASE}/Session`);
+                const response = await fetch(`${API_BASE}/AcademicSessionYear`);
                 if (response.ok) {
+
                     const sessions = await response.json();
                     renderSessionsList(sessions);
                 } else {
@@ -405,14 +406,14 @@
 
             sessions.forEach((session, index) => {
                 const row = `
-                    <tr data-id="${session.id}" class="${editingSessionId === session.id ? 'selected' : ''}">
+                    <tr data-id="${session.vID}" class="${editingSessionId === session.vID ? 'selected' : ''}">
                         <td>${index + 1}</td>
                         <td>
-                            <strong>${session.sessionName}</strong>
-                            ${session.isCurrent ? '<span class="badge bg-success ms-2">Current</span>' : ''}
+                            <strong>${session.vName}</strong>
+                            ${session.IsCurrent ? '<span class="badge bg-success ms-2">Current</span>' : ''}
                         </td>
-                        <td>${formatDate(session.startDate)}</td>
-                        <td>${formatDate(session.endDate)}</td>
+                        <td>${formatDate(session.dateFrom)}</td>
+                        <td>${formatDate(session.dateTo)}</td>
                         <td class="text-center">
                             ${session.isCurrent
                                 ? '<i class="bi bi-check-circle-fill text-success fs-5"></i>'
@@ -425,15 +426,15 @@
                         </td>
                         <td class="text-center">
                             ${!session.isCurrent && session.isActive ? `
-                                <button type="button" class="btn btn-sm btn-success me-1" onclick="setCurrentSession(${session.id})" title="Set as Current">
+                                <button type="button" class="btn btn-sm btn-success me-1" onclick="setCurrentSession(${session.vID})" title="Set as Current">
                                     <i class="bi bi-check2-circle"></i>
                                 </button>
                             ` : ''}
-                            <button type="button" class="btn btn-sm btn-info me-1" onclick="editSession(${session.id})" title="Edit">
+                            <button type="button" class="btn btn-sm btn-info me-1" onclick="editSession(${session.vID})" title="Edit">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            ${!session.isCurrent ? `
-                                <button type="button" class="btn btn-sm btn-danger" onclick="deleteSession(${session.id}, '${session.sessionName}')" title="Delete">
+                            ${!session.isActive ? `
+                                <button type="button" class="btn btn-sm btn-danger" onclick="deleteSession(${session.vID}, '${session.vName}')" title="Delete">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             ` : ''}
@@ -464,7 +465,7 @@
         async function editSession(sessionId) {
             showLoading();
             try {
-                const response = await fetch(`${API_BASE}/Session/${sessionId}`);
+                const response = await fetch(`${API_BASE}/AcademicSessionYear/${sessionId}`);
                 if (response.ok) {
                     const data = await response.json();
                     populateForm(data);
@@ -498,7 +499,7 @@
 
             showLoading();
             try {
-                const response = await fetch(`${API_BASE}/Session/${sessionId}/setcurrent`, {
+                const response = await fetch(`${API_BASE}/AcademicSessionYear/${sessionId}/setcurrent`, {
                     method: 'POST'
                 });
 
@@ -525,7 +526,7 @@
 
             showLoading();
             try {
-                const response = await fetch(`${API_BASE}/Session/${sessionId}`, {
+                const response = await fetch(`${API_BASE}/AcademicSessionYear/${sessionId}`, {
                     method: 'DELETE'
                 });
 
@@ -598,12 +599,12 @@
 
             const sessionId = parseInt($('#sessionId').val()) || 0;
             const data = {
-                id: sessionId,
-                sessionName: sessionName,
-                startDate: startDate,
-                endDate: endDate,
-                isCurrent: $('#isCurrent').is(':checked'),
-                isActive: $('#isActive').is(':checked')
+                VID: sessionId,
+                VName: sessionName,
+                DateFrom: startDate,
+                DateTo: endDate,
+                //isCurrent: $('#isCurrent').is(':checked'),
+                IsActive: $('#isActive').is(':checked')
             };
 
             showLoading();
@@ -611,7 +612,7 @@
                 let response;
                 if (sessionId === 0) {
                     // Create new session
-                    response = await fetch(`${API_BASE}/Session`, {
+                    response = await fetch(`${API_BASE}/AcademicSessionYear`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -620,7 +621,7 @@
                     });
                 } else {
                     // Update existing session
-                    response = await fetch(`${API_BASE}/Session/${sessionId}`, {
+                    response = await fetch(`${API_BASE}/AcademicSessionYear/${sessionId}`, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json'

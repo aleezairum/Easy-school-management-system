@@ -1,11 +1,12 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using School.API.DTOs.Academic;
+using School.API.Services.Interfaces.Academic;
 
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+//[Authorize]
 public class AcademicSessionYearController : ControllerBase
 {
     private readonly IAcademicSessionYearService _service;

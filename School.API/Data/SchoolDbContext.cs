@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using School.API.Data.DBModels.Academic;
+using School.API.DTOs.Academic;
 using School.API.DTOs.Common;
 using School.API.Models;
 
@@ -9,7 +11,7 @@ namespace School.API.Data
         public SchoolDbContext(DbContextOptions<SchoolDbContext> options) : base(options)
         {
         }
-
+        
         public DbSet<Menu> Menus { get; set; }
         public DbSet<Role> Roles { get; set; }
         public DbSet<RolePermission> RolePermissions { get; set; }
@@ -17,12 +19,17 @@ namespace School.API.Data
         public DbSet<User> Users { get; set; }
         public DbSet<UserRole> UserRoles { get; set; }
         public DbSet<Session> Sessions { get; set; }
-        public object AcademicSessionYears { get; internal set; }
         public DbSet<ResponseDto> AcademicSessionYearResponses { get; set; }
+
+        public DbSet<AcademicSessionYear> AcademicSessionYear { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            // Keyless entity
+            modelBuilder.Entity<ResponseDto>().HasNoKey();
+            modelBuilder.Entity<AcademicSessionYearSaveDto>().HasNoKey();
 
             // Menu configuration
             modelBuilder.Entity<Menu>(entity =>

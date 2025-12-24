@@ -2,13 +2,16 @@
 using School.API.DTOs.Academic;
 using School.API.DTOs.Common;
 
-public interface IAcademicSessionYearService
+namespace School.API.Services.Interfaces.Academic
 {
-    Task<ResponseDto> SaveAsync(
-        AcademicSessionYearSaveDto dto,
-        int userId,
-        string userIp);
+    public interface IAcademicSessionYearService
+    {
+        Task<ResponseDto> SaveAsync(
+            AcademicSessionYearSaveDto dto,
+            int userId,
+            string userIp);
 
-    Task<List<AcademicSessionYear>> GetAllAsync();
-    Task<AcademicSessionYear?> GetByIdAsync(int id);
+        Task<List<AcademicSessionYearSaveDto>> GetAllAsync();
+        Task<AcademicSessionYearSaveDto?> GetByIdAsync(int id);
+    }
 }

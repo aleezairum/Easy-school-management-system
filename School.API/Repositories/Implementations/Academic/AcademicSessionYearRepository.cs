@@ -1,66 +1,70 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Humanizer;
+using Microsoft.EntityFrameworkCore;
 using School.API.Data;
 using School.API.Data.DBModels.Academic;
 using School.API.DTOs.Academic;
 using School.API.DTOs.Common;
+using School.API.Models;
+using School.API.Repositories.Interfaces.Academic;
 
-public class AcademicSessionYearRepository : IAcademicSessionYearRepository
+namespace School.API.Repositories.Implementations.Academic
 {
-    private readonly SchoolDbContext _context;
-
-    public AcademicSessionYearRepository(SchoolDbContext context)
+    public class AcademicSessionYearRepository : IAcademicSessionYearRepository
     {
-        _context = context;
-    }
+        private readonly SchoolDbContext _context;
 
-    public Task<List<AcademicSessionYear>> GetAllAsync()
-    {
-        throw new NotImplementedException();
-    }
+        public AcademicSessionYearRepository(SchoolDbContext context)
+        {
+            _context = context;
+        }
 
-    public Task<AcademicSessionYear?> GetByIdAsync(int id)
-    {
-        throw new NotImplementedException();
-    }
+        public async Task<List<AcademicSessionYearSaveDto>> GetAllAsync()
+        {
+            var resultList = await _context
+                .Set<AcademicSessionYearSaveDto>()
+                .FromSqlRaw("EXEC SpGet_AcademicSessionYear @VID={0}", 0) // 0 to get all
+                .AsNoTracking()
+                .ToListAsync();
 
-    public async Task<ResponseDto> SaveAsync(
-        AcademicSessionYearSaveDto dto,
-        int userId,
-        string userIp)
-    {
-        var result = await _context
-            .Set<ResponseDto>()
-            .FromSqlRaw(
-                "EXEC SpSave_AcademicSessionYear @VID={0}, @VName={1}, @DateFrom={2}, @DateTo={3}, @IsActive={4}, @UserID={5}, @UserIP={6}",
-                dto.VID,
-                dto.VName,
-                dto.DateFrom,
-                dto.DateTo,
-                dto.IsActive,
-                userId,
-                userIp)
-            .AsNoTracking()
-            .FirstAsync();
+            return resultList;
+        }
 
-        return result;
-    }
 
-    //public async Task<List<AcademicSessionYear>> GetAllAsync()
-    //{
-    //    return await _context.AcademicSessionYears
-    //        .AsNoTracking()
-    //        .ToListAsync();
-    //}
+        public async Task<AcademicSessionYearSaveDto?> GetByIdAsync(int vid)
+        {
+            var resultList = await _context
+                .Set<AcademicSessionYearSaveDto>()
+                .FromSqlRaw("EXEC SpGet_AcademicSessionYear @VID={0}", vid)
+                .AsNoTracking()
+                .ToListAsync();
 
-    //public async Task<AcademicSessionYear?> GetByIdAsync(int id)
-    //{
-    //    return await _context.AcademicSessionYears
-    //        .AsNoTracking()
-    //        .FirstOrDefaultAsync(x => x.VID == id);
-    //}
+            return resultList.FirstOrDefault();
+        }
 
-    Task<ResponseDto> IAcademicSessionYearRepository.SaveAsync(AcademicSessionYearSaveDto dto, int userId, string userIp)
-    {
-        throw new NotImplementedException();
+
+        public async Task<ResponseDto> SaveAsync(AcademicSessionYearSaveDto dto, int userId, string userIp)
+        {
+            // Execute the stored procedure
+            var resultList = await _context
+                .Set<ResponseDto>()
+                .FromSqlRaw(
+                    "EXEC SpSave_AcademicSessionYear @VID={0}, @VName={1}, @DateFrom={2}, @DateTo={3}, @IsActive={4}, @UserID={5}, @UserIP={6}",
+                    dto.VID,
+                    dto.VName,
+                    dto.DateFrom,
+                    dto.DateTo,
+                    dto.IsActive,
+                    userId,
+                    userIp)
+                .AsNoTracking()
+                .ToListAsync(); // materialize results in memory
+
+            // Safely get the first (or single) record
+            var result = resultList.FirstOrDefault();
+
+            return result;
+        }
+
+       
     }
 }
