@@ -158,6 +158,74 @@ END
 GO
 
 -- =============================================
+-- Table: SMSClass
+-- =============================================
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SMSClass]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [dbo].[SMSClass] (
+        [VID] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+        [VName] NVARCHAR(100) NOT NULL,
+        [IsActive] BIT NOT NULL DEFAULT 1,
+        [InsertedBy] INT NULL,
+        [InsertedDate] DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
+        [InsertedIp] NVARCHAR(50) NULL,
+        [UpdatedBy] INT NULL,
+        [UpdatedDate] DATETIME2 NULL,
+        [UpdatedIp] NVARCHAR(50) NULL,
+        CONSTRAINT [UQ_SMSClass_VName] UNIQUE ([VName])
+    );
+END
+GO
+
+-- =============================================
+-- Table: SMSSection
+-- =============================================
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SMSSection]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [dbo].[SMSSection] (
+        [VID] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+        [VName] NVARCHAR(100) NOT NULL,
+        [ClassID] INT NOT NULL,
+        [IsActive] BIT NOT NULL DEFAULT 1,
+        [InsertedBy] INT NULL,
+        [InsertedDate] DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
+        [InsertedIp] NVARCHAR(50) NULL,
+        [UpdatedBy] INT NULL,
+        [UpdatedDate] DATETIME2 NULL,
+        [UpdatedIp] NVARCHAR(50) NULL,
+        CONSTRAINT [FK_SMSSection_Class] FOREIGN KEY ([ClassID]) REFERENCES [dbo].[SMSClass]([VID]) ON DELETE CASCADE,
+        CONSTRAINT [UQ_SMSSection_ClassSection] UNIQUE ([ClassID], [VName])
+    );
+
+    CREATE INDEX [IX_SMSSection_ClassID] ON [dbo].[SMSSection]([ClassID]);
+END
+GO
+
+-- =============================================
+-- Table: SMSSubject
+-- =============================================
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SMSSubject]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [dbo].[SMSSubject] (
+        [VID] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+        [VName] NVARCHAR(100) NOT NULL,
+        [ClassID] INT NOT NULL,
+        [IsActive] BIT NOT NULL DEFAULT 1,
+        [InsertedBy] INT NULL,
+        [InsertedDate] DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
+        [InsertedIp] NVARCHAR(50) NULL,
+        [UpdatedBy] INT NULL,
+        [UpdatedDate] DATETIME2 NULL,
+        [UpdatedIp] NVARCHAR(50) NULL,
+        CONSTRAINT [FK_SMSSubject_Class] FOREIGN KEY ([ClassID]) REFERENCES [dbo].[SMSClass]([VID]) ON DELETE CASCADE,
+        CONSTRAINT [UQ_SMSSubject_ClassSubject] UNIQUE ([ClassID], [VName])
+    );
+
+    CREATE INDEX [IX_SMSSubject_ClassID] ON [dbo].[SMSSubject]([ClassID]);
+END
+GO
+
+-- =============================================
 -- Seed Data: Menus
 -- =============================================
 SET IDENTITY_INSERT [dbo].[Menus] ON;

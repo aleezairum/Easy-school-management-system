@@ -1,0 +1,597 @@
+@{
+    ViewData["Title"] = "Subject Management";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<style>
+    .card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        margin-bottom: 24px;
+    }
+
+    .card-header {
+        background: white;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 20px 24px;
+        border-radius: 16px 16px 0 0 !important;
+    }
+
+    .card-header h5 {
+        margin: 0;
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .card-body {
+        padding: 24px;
+    }
+
+    .form-label {
+        font-weight: 500;
+        color: #475569;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+
+    .form-control, .form-select {
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #008649;
+        box-shadow: 0 0 0 4px rgba(0, 134, 73, 0.1);
+    }
+
+    .form-check-input {
+        width: 18px;
+        height: 18px;
+        border: 2px solid #cbd5e1;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .form-check-input:checked {
+        background-color: #008649;
+        border-color: #008649;
+    }
+
+    .form-check-input:focus {
+        box-shadow: 0 0 0 4px rgba(0, 134, 73, 0.1);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #008649 0%, #006d3b 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 134, 73, 0.4);
+        background: linear-gradient(135deg, #006d3b 0%, #005a30 100%);
+    }
+
+    .btn-secondary {
+        background: #f1f5f9;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-weight: 600;
+        font-size: 14px;
+        color: #64748b;
+        transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+        background: #e2e8f0;
+        border-color: #cbd5e1;
+        color: #475569;
+    }
+
+    .btn-info {
+        background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-weight: 600;
+        font-size: 13px;
+        color: white;
+        transition: all 0.2s;
+    }
+
+    .btn-info:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
+        color: white;
+    }
+
+    .btn-danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-weight: 600;
+        font-size: 13px;
+        color: white;
+        transition: all 0.2s;
+    }
+
+    .btn-danger:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        color: white;
+    }
+
+    .table {
+        margin-bottom: 0;
+    }
+
+    .table thead th {
+        background: #f8fafc;
+        border-bottom: 2px solid #e2e8f0;
+        padding: 14px 16px;
+        font-weight: 600;
+        font-size: 13px;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+    }
+
+    .table tbody td {
+        padding: 12px 16px;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 14px;
+    }
+
+    .table tbody tr:hover {
+        background: #f8fafc;
+    }
+
+    .table tbody tr.selected {
+        background: #ecfdf5;
+        border-left: 3px solid #008649;
+    }
+
+    .alert {
+        border-radius: 12px;
+        border: none;
+        padding: 16px 20px;
+    }
+
+    .alert-success {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .alert-danger {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        border-radius: 16px;
+    }
+
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+        border-width: 0.3rem;
+    }
+
+    .form-section {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .form-section-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .grid-section {
+        margin-top: 24px;
+    }
+
+    .grid-section-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .filter-section {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-bottom: 20px;
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Alert Messages -->
+    <div id="alertContainer"></div>
+
+    <!-- Subjects Card -->
+    <div class="card">
+        <div class="card-header">
+            <h5><i class="bi bi-journal-bookmark-fill me-2"></i>Subject Management</h5>
+        </div>
+        <div class="card-body position-relative">
+            <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+                <div class="spinner-border text-success" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+
+            <!-- Form Section -->
+            <div class="form-section">
+                <div class="form-section-title">
+                    <i class="bi bi-pencil-square me-2"></i><span id="formTitle">Add New Subject</span>
+                </div>
+                <form id="subjectForm">
+                    <input type="hidden" id="subjectId" value="0" />
+
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label for="classId" class="form-label">Class <span class="text-danger">*</span></label>
+                            <select class="form-select" id="classId" required>
+                                <option value="">-- Select Class --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="subjectName" class="form-label">Subject Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="subjectName" placeholder="e.g., Mathematics, English" required />
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="isActive" checked />
+                                <label class="form-check-label" for="isActive">Active</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-primary" onclick="saveSubject()">
+                                    <i class="bi bi-check-lg me-1"></i> Save
+                                </button>
+                                <button type="button" class="btn btn-secondary" onclick="resetForm()">
+                                    <i class="bi bi-x-lg me-1"></i> Clear
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Filter Section -->
+            <div class="filter-section">
+                <div class="row align-items-center">
+                    <div class="col-md-3">
+                        <label for="filterClass" class="form-label mb-0 me-2"><i class="bi bi-funnel me-1"></i>Filter by Class:</label>
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-select" id="filterClass" onchange="loadSubjects()">
+                            <option value="">All Classes</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grid Section -->
+            <div class="grid-section">
+                <div class="grid-section-title">
+                    <i class="bi bi-table me-2"></i>Subjects List
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover" id="subjectsTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 60px;">Sr#</th>
+                                <th>Subject Name</th>
+                                <th>Class</th>
+                                <th class="text-center" style="width: 100px;">Status</th>
+                                <th class="text-center" style="width: 150px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="subjectsBody">
+                            <!-- Subjects will be loaded dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const API_BASE = 'http://localhost:5266/api';
+        let editingSubjectId = 0;
+
+        $(document).ready(function () {
+            loadClasses();
+            loadSubjects();
+        });
+
+        // Load classes for dropdown
+        async function loadClasses() {
+            try {
+                const response = await fetch(`${API_BASE}/class/dropdown`);
+                if (response.ok) {
+                    const classes = await response.json();
+                    const formSelect = $('#classId');
+                    const filterSelect = $('#filterClass');
+
+                    formSelect.find('option:not(:first)').remove();
+                    filterSelect.find('option:not(:first)').remove();
+
+                    classes.forEach(cls => {
+                        formSelect.append(`<option value="${cls.viD}">${cls.vName}</option>`);
+                        filterSelect.append(`<option value="${cls.viD}">${cls.vName}</option>`);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading classes:', error);
+            }
+        }
+
+        // Load subjects
+        async function loadSubjects() {
+            showLoading();
+            try {
+                const filterClass = $('#filterClass').val();
+                let url = `${API_BASE}/subject`;
+                if (filterClass) {
+                    url += `?classId=${filterClass}`;
+                }
+
+                const response = await fetch(url);
+                if (response.ok) {
+                    const subjects = await response.json();
+                    renderSubjectsList(subjects);
+                } else {
+                    showAlert('Failed to load subjects', 'danger');
+                }
+            } catch (error) {
+                console.error('Error loading subjects:', error);
+                showAlert('Error loading subjects: ' + error.message, 'danger');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Render subjects list table
+        function renderSubjectsList(subjects) {
+            const tbody = $('#subjectsBody');
+            tbody.empty();
+
+            if (subjects.length === 0) {
+                tbody.html('<tr><td colspan="5" class="text-center text-muted py-4">No subjects found. Add a new subject using the form above.</td></tr>');
+                return;
+            }
+
+            subjects.forEach((subject, index) => {
+                const row = `
+                    <tr data-id="${subject.viD}" class="${editingSubjectId === subject.viD ? 'selected' : ''}">
+                        <td>${index + 1}</td>
+                        <td><strong>${subject.vName}</strong></td>
+                        <td><span class="badge bg-warning text-dark">${subject.className}</span></td>
+                        <td class="text-center">
+                            <span class="badge ${subject.isActive ? 'bg-success' : 'bg-secondary'}">
+                                ${subject.isActive ? 'Active' : 'Inactive'}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-sm btn-info me-1" onclick="editSubject(${subject.viD})" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-danger" onclick="deleteSubject(${subject.viD}, '${subject.vName}')" title="Delete">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.append(row);
+            });
+        }
+
+        // Edit existing subject
+        async function editSubject(subjectId) {
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/subject/${subjectId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    populateForm(data);
+                    editingSubjectId = subjectId;
+                    $('#formTitle').text('Edit Subject');
+
+                    // Highlight the selected row
+                    $('#subjectsBody tr').removeClass('selected');
+                    $(`#subjectsBody tr[data-id="${subjectId}"]`).addClass('selected');
+
+                    // Scroll to form
+                    $('html, body').animate({
+                        scrollTop: $('.form-section').offset().top - 100
+                    }, 300);
+                } else {
+                    showAlert('Failed to load subject', 'danger');
+                }
+            } catch (error) {
+                console.error('Error loading subject:', error);
+                showAlert('Error loading subject: ' + error.message, 'danger');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Delete subject
+        async function deleteSubject(subjectId, subjectName) {
+            if (!confirm(`Are you sure you want to delete the subject "${subjectName}"?`)) {
+                return;
+            }
+
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/subject/${subjectId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showAlert('Subject deleted successfully!', 'success');
+                    if (editingSubjectId === subjectId) {
+                        resetForm();
+                    }
+                    await loadSubjects();
+                } else {
+                    const error = await response.json();
+                    showAlert(error.message || 'Failed to delete subject', 'danger');
+                }
+            } catch (error) {
+                console.error('Error deleting subject:', error);
+                showAlert('Error deleting subject: ' + error.message, 'danger');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Populate form with subject data
+        function populateForm(data) {
+            $('#subjectId').val(data.viD);
+            $('#classId').val(data.classID);
+            $('#subjectName').val(data.vName);
+            $('#isActive').prop('checked', data.isActive);
+        }
+
+        // Reset form
+        function resetForm() {
+            $('#subjectId').val('0');
+            $('#classId').val('');
+            $('#subjectName').val('');
+            $('#isActive').prop('checked', true);
+            $('#formTitle').text('Add New Subject');
+            editingSubjectId = 0;
+
+            // Remove selected highlight from table
+            $('#subjectsBody tr').removeClass('selected');
+        }
+
+        // Save subject
+        async function saveSubject() {
+            const classId = parseInt($('#classId').val()) || 0;
+            const subjectName = $('#subjectName').val().trim();
+
+            if (!classId) {
+                showAlert('Please select a class', 'danger');
+                $('#classId').focus();
+                return;
+            }
+
+            if (!subjectName) {
+                showAlert('Please enter a subject name', 'danger');
+                $('#subjectName').focus();
+                return;
+            }
+
+            const subjectId = parseInt($('#subjectId').val()) || 0;
+            const data = {
+                VID: subjectId,
+                ClassID: classId,
+                VName: subjectName,
+                IsActive: $('#isActive').is(':checked')
+            };
+
+            showLoading();
+            try {
+                let response;
+                if (subjectId === 0) {
+                    // Create new subject
+                    response = await fetch(`${API_BASE}/subject`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                } else {
+                    // Update existing subject
+                    response = await fetch(`${API_BASE}/subject/${subjectId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                }
+
+                if (response.ok) {
+                    showAlert(subjectId === 0 ? 'Subject created successfully!' : 'Subject updated successfully!', 'success');
+                    resetForm();
+                    await loadSubjects();
+                } else {
+                    const error = await response.json();
+                    showAlert(error.message || 'Failed to save subject', 'danger');
+                }
+            } catch (error) {
+                console.error('Error saving subject:', error);
+                showAlert('Error saving subject: ' + error.message, 'danger');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Helper functions
+        function showLoading() {
+            $('#loadingOverlay').show();
+        }
+
+        function hideLoading() {
+            $('#loadingOverlay').hide();
+        }
+
+        function showAlert(message, type) {
+            const alert = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+            $('#alertContainer').html(alert);
+
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                $('.alert').alert('close');
+            }, 5000);
+        }
+    </script>
+}

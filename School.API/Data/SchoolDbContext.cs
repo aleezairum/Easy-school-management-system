@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using School.API.Data.DBModels;
 using School.API.Data.DBModels.Academic;
 using School.API.DTOs.Academic;
 using School.API.DTOs.Common;
@@ -22,6 +23,9 @@ namespace School.API.Data
         public DbSet<ResponseDto> AcademicSessionYearResponses { get; set; }
 
         public DbSet<AcademicSessionYear> AcademicSessionYear { get; set; }
+        public DbSet<SMSClass> SMSClasses { get; set; }
+        public DbSet<SMSSection> SMSSections { get; set; }
+        public DbSet<SMSSubject> SMSSubjects { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -74,6 +78,35 @@ namespace School.API.Data
                 entity.HasOne(ur => ur.Role)
                     .WithMany(r => r.UserRoles)
                     .HasForeignKey(ur => ur.RoleId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // SMSClass configuration
+            modelBuilder.Entity<SMSClass>(entity =>
+            {
+                entity.ToTable("SMSClass");
+                entity.HasKey(e => e.VID);
+            });
+
+            // SMSSection configuration
+            modelBuilder.Entity<SMSSection>(entity =>
+            {
+                entity.ToTable("SMSSection");
+                entity.HasKey(e => e.VID);
+                entity.HasOne(s => s.Class)
+                    .WithMany(c => c.Sections)
+                    .HasForeignKey(s => s.ClassID)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // SMSSubject configuration
+            modelBuilder.Entity<SMSSubject>(entity =>
+            {
+                entity.ToTable("SMSSubject");
+                entity.HasKey(e => e.VID);
+                entity.HasOne(s => s.Class)
+                    .WithMany(c => c.Subjects)
+                    .HasForeignKey(s => s.ClassID)
                     .OnDelete(DeleteBehavior.Cascade);
             });
         }

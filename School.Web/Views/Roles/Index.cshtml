@@ -362,22 +362,17 @@
                 </div>
             </div>
 
-            <!-- Search/Fetch Role Section -->
+            <!-- Select Role Section -->
             <div class="search-section">
                 <div class="search-section-title">
-                    <i class="bi bi-search me-2"></i>Fetch Role Permissions
+                    <i class="bi bi-search me-2"></i>Select Role
                 </div>
                 <div class="row g-3 align-items-end">
                     <div class="col-md-4">
                         <label for="roleSelect" class="form-label">Select Role</label>
-                        <select class="form-select" id="roleSelect">
+                        <select class="form-select" id="roleSelect" onchange="fetchRolePermissions()">
                             <option value="">-- Select a Role --</option>
                         </select>
-                    </div>
-                    <div class="col-md-2">
-                        <button type="button" class="btn btn-info w-100" onclick="fetchRolePermissions()">
-                            <i class="bi bi-download me-1"></i> Fetch
-                        </button>
                     </div>
                 </div>
             </div>
@@ -659,10 +654,13 @@
         // Fetch role permissions
         async function fetchRolePermissions() {
             const roleId = $('#roleSelect').val();
-            const roleName = $('#roleSelect option:selected').data('name');
 
             if (!roleId) {
-                showAlert('Please select a role first', 'warning');
+                // Reset to dummy data when no role selected
+                $('#roleInfo').removeClass('show');
+                $('#btnSavePermissions').hide();
+                currentRoleData = null;
+                showDummyData();
                 return;
             }
 
