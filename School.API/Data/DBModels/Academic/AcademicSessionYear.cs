@@ -9,6 +9,7 @@ namespace School.API.Data.DBModels.Academic
         public string VName { get; set; }
         public DateTime DateFrom { get; set; }
         public DateTime DateTo { get; set; }
+        public bool IsCurrent { get; set; }
         public bool IsActive { get; set; }
         public int? InsertedBy { get; set; }
         public DateTime? InsertedDate { get; set; }

@@ -26,5 +26,8 @@ namespace School.API.Services.Implementations.Academic
 
         public Task<AcademicSessionYearSaveDto?> GetByIdAsync(int id)
             => _repo.GetByIdAsync(id);
+
+        public Task<ResponseDto?> DeleteByIdAsync(int id)
+           => _repo.DeleteByIdAsync(id);
     }
 }

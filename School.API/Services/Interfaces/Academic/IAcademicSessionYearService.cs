@@ -13,5 +13,6 @@ namespace School.API.Services.Interfaces.Academic
 
         Task<List<AcademicSessionYearSaveDto>> GetAllAsync();
         Task<AcademicSessionYearSaveDto?> GetByIdAsync(int id);
+        Task<ResponseDto?> DeleteByIdAsync(int id);
     }
 }

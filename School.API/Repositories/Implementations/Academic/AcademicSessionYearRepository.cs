@@ -41,6 +41,17 @@ namespace School.API.Repositories.Implementations.Academic
             return resultList.FirstOrDefault();
         }
 
+        public async Task<ResponseDto?> DeleteByIdAsync(int vid)
+        {
+            var resultList = await _context
+                .Set<ResponseDto>()
+                .FromSqlRaw("EXEC SpDelete_AcademicSessionYear @VID={0}", vid)
+                .AsNoTracking()
+                .ToListAsync();
+
+            return resultList.FirstOrDefault();
+        }
+
 
         public async Task<ResponseDto> SaveAsync(AcademicSessionYearSaveDto dto, int userId, string userIp)
         {
@@ -48,11 +59,12 @@ namespace School.API.Repositories.Implementations.Academic
             var resultList = await _context
                 .Set<ResponseDto>()
                 .FromSqlRaw(
-                    "EXEC SpSave_AcademicSessionYear @VID={0}, @VName={1}, @DateFrom={2}, @DateTo={3}, @IsActive={4}, @UserID={5}, @UserIP={6}",
+                    "EXEC SpSave_AcademicSessionYear @VID={0}, @VName={1}, @DateFrom={2}, @DateTo={3}, @IsCurrent={4}, @IsActive={5}, @UserID={6}, @UserIP={7}",
                     dto.VID,
                     dto.VName,
                     dto.DateFrom,
                     dto.DateTo,
+                    dto.IsCurrent,
                     dto.IsActive,
                     userId,
                     userIp)
