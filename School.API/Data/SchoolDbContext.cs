@@ -26,6 +26,8 @@ namespace School.API.Data
         public DbSet<SMSClass> SMSClasses { get; set; }
         public DbSet<SMSSection> SMSSections { get; set; }
         public DbSet<SMSSubject> SMSSubjects { get; set; }
+        public DbSet<Institute> Institutes { get; set; }
+        public DbSet<Admission> Admissions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

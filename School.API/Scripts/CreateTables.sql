@@ -226,6 +226,114 @@ END
 GO
 
 -- =============================================
+-- Table: Institutes
+-- =============================================
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Institutes]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [dbo].[Institutes] (
+        [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+        [Name] NVARCHAR(200) NOT NULL,
+        [Code] NVARCHAR(50) NOT NULL,
+        [Address] NVARCHAR(500) NULL,
+        [Phone] NVARCHAR(20) NULL,
+        [Email] NVARCHAR(200) NULL,
+        [Website] NVARCHAR(200) NULL,
+        [LogoUrl] NVARCHAR(500) NULL,
+        [IsActive] BIT NOT NULL DEFAULT 1,
+        [CreatedAt] DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
+        [UpdatedAt] DATETIME2 NULL,
+        CONSTRAINT [UQ_Institutes_Code] UNIQUE ([Code])
+    );
+END
+GO
+
+-- =============================================
+-- Table: Admissions
+-- =============================================
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Admissions]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [dbo].[Admissions] (
+        [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+
+        -- Admission Info
+        [DateOfAdmission] DATETIME2 NULL,
+        [AdmissionNo] NVARCHAR(50) NULL,
+        [ClassSought] NVARCHAR(100) NULL,
+
+        -- Student Info
+        [NameOfStudent] NVARCHAR(200) NOT NULL,
+        [NameOfStudentUrdu] NVARCHAR(200) NULL,
+
+        -- Father Info
+        [FatherName] NVARCHAR(200) NULL,
+        [FatherNameUrdu] NVARCHAR(200) NULL,
+        [FatherCNIC] NVARCHAR(20) NULL,
+        [FatherOccupation] NVARCHAR(100) NULL,
+        [FatherMobile] NVARCHAR(20) NULL,
+
+        -- Mother Info
+        [MotherName] NVARCHAR(200) NULL,
+        [MotherCNIC] NVARCHAR(20) NULL,
+        [MotherMobile] NVARCHAR(20) NULL,
+
+        -- Guardian Info
+        [GuardianName] NVARCHAR(200) NULL,
+        [GuardianCNIC] NVARCHAR(20) NULL,
+        [GuardianRelation] NVARCHAR(100) NULL,
+        [GuardianMobile] NVARCHAR(20) NULL,
+
+        -- Student Details
+        [DateOfBirth] DATETIME2 NULL,
+        [DateOfBirthInWords] NVARCHAR(200) NULL,
+        [PlaceOfBirth] NVARCHAR(200) NULL,
+        [FormBNo] NVARCHAR(50) NULL,
+        [Gender] NVARCHAR(20) NULL,
+        [Religion] NVARCHAR(50) NULL,
+
+        -- Address
+        [PresentAddress] NVARCHAR(500) NULL,
+        [PresentAddressUrdu] NVARCHAR(500) NULL,
+        [PermanentAddress] NVARCHAR(500) NULL,
+        [PermanentAddressUrdu] NVARCHAR(500) NULL,
+        [PhoneResidence] NVARCHAR(20) NULL,
+        [EmergencyContact] NVARCHAR(20) NULL,
+
+        -- Previous School
+        [PreviousSchool] NVARCHAR(300) NULL,
+        [LastClass] NVARCHAR(50) NULL,
+        [Board] NVARCHAR(100) NULL,
+        [YearOfPassing] NVARCHAR(10) NULL,
+        [MarksObtained] NVARCHAR(10) NULL,
+        [TotalMarks] NVARCHAR(10) NULL,
+        [Percentage] NVARCHAR(10) NULL,
+
+        -- For Office Use Only
+        [RegistrationNo] NVARCHAR(50) NULL,
+        [RollNo] NVARCHAR(50) NULL,
+        [AdmissionFee] DECIMAL(18,2) NULL,
+        [TuitionFee] DECIMAL(18,2) NULL,
+        [OtherCharges] DECIMAL(18,2) NULL,
+        [TotalFee] DECIMAL(18,2) NULL,
+        [TestMarks] NVARCHAR(10) NULL,
+        [TestTotalMarks] NVARCHAR(10) NULL,
+        [TestPercentage] NVARCHAR(10) NULL,
+        [TestGrade] NVARCHAR(10) NULL,
+        [Remarks] NVARCHAR(500) NULL,
+
+        -- Status
+        [Status] NVARCHAR(50) NOT NULL DEFAULT 'Pending',
+        [IsActive] BIT NOT NULL DEFAULT 1,
+        [CreatedAt] DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
+        [UpdatedAt] DATETIME2 NULL
+    );
+
+    CREATE INDEX [IX_Admissions_AdmissionNo] ON [dbo].[Admissions]([AdmissionNo]);
+    CREATE INDEX [IX_Admissions_NameOfStudent] ON [dbo].[Admissions]([NameOfStudent]);
+    CREATE INDEX [IX_Admissions_Status] ON [dbo].[Admissions]([Status]);
+END
+GO
+
+-- =============================================
 -- Seed Data: Menus
 -- =============================================
 SET IDENTITY_INSERT [dbo].[Menus] ON;
