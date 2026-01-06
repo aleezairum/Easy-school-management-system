@@ -29,6 +29,12 @@ public class AcademicSessionYearController : ControllerBase
         return record == null ? NotFound() : Ok(record);
     }
 
+    [HttpDelete("{id}")]
+    public async Task<IActionResult>DeleteById(int id)
+    {
+        var record = await _service.DeleteByIdAsync(id);
+        return record == null ? NotFound() : Ok(record);
+    }
     [HttpPost]
     public async Task<IActionResult> Save(AcademicSessionYearSaveDto dto)
     {

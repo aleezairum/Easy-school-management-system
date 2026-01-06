@@ -19,16 +19,13 @@ namespace School.API.Data
         public DbSet<Employee> Employees { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<UserRole> UserRoles { get; set; }
-        public DbSet<Session> Sessions { get; set; }
-        public DbSet<ResponseDto> AcademicSessionYearResponses { get; set; }
-
-        public DbSet<AcademicSessionYear> AcademicSessionYear { get; set; }
         public DbSet<SMSClass> SMSClasses { get; set; }
         public DbSet<SMSSection> SMSSections { get; set; }
         public DbSet<SMSSubject> SMSSubjects { get; set; }
-        public DbSet<Institute> Institutes { get; set; }
-        public DbSet<Admission> Admissions { get; set; }
+        public DbSet<ResponseDto> AcademicSessionYearResponses { get; set; }
 
+        public DbSet<AcademicSessionYear> AcademicSessionYear { get; set; }
+        
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -80,35 +77,6 @@ namespace School.API.Data
                 entity.HasOne(ur => ur.Role)
                     .WithMany(r => r.UserRoles)
                     .HasForeignKey(ur => ur.RoleId)
-                    .OnDelete(DeleteBehavior.Cascade);
-            });
-
-            // SMSClass configuration
-            modelBuilder.Entity<SMSClass>(entity =>
-            {
-                entity.ToTable("SMSClass");
-                entity.HasKey(e => e.VID);
-            });
-
-            // SMSSection configuration
-            modelBuilder.Entity<SMSSection>(entity =>
-            {
-                entity.ToTable("SMSSection");
-                entity.HasKey(e => e.VID);
-                entity.HasOne(s => s.Class)
-                    .WithMany(c => c.Sections)
-                    .HasForeignKey(s => s.ClassID)
-                    .OnDelete(DeleteBehavior.Cascade);
-            });
-
-            // SMSSubject configuration
-            modelBuilder.Entity<SMSSubject>(entity =>
-            {
-                entity.ToTable("SMSSubject");
-                entity.HasKey(e => e.VID);
-                entity.HasOne(s => s.Class)
-                    .WithMany(c => c.Subjects)
-                    .HasForeignKey(s => s.ClassID)
                     .OnDelete(DeleteBehavior.Cascade);
             });
         }

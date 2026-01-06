@@ -1,4 +1,4 @@
-@{
+﻿@{
     ViewData["Title"] = "Academic Sessions";
     Layout = "~/Views/Shared/_DashboardLayout.cshtml";
 }
@@ -403,10 +403,9 @@
                 tbody.html('<tr><td colspan="7" class="text-center text-muted py-4">No sessions found. Add a new session using the form above.</td></tr>');
                 return;
             }
-
-            sessions.forEach((session, index) => {
+           sessions.forEach((session, index) => {
                 const row = `
-                    <tr data-id="${session.vID}" class="${editingSessionId === session.vID ? 'selected' : ''}">
+                    <tr data-id="${session.vid}" class="${editingSessionId === session.vid ? 'selected' : ''}">
                         <td>${index + 1}</td>
                         <td>
                             <strong>${session.vName}</strong>
@@ -426,15 +425,15 @@
                         </td>
                         <td class="text-center">
                             ${!session.isCurrent && session.isActive ? `
-                                <button type="button" class="btn btn-sm btn-success me-1" onclick="setCurrentSession(${session.vID})" title="Set as Current">
+                                <button type="button" class="btn btn-sm btn-success me-1" onclick="setCurrentSession(${session.vid}, '${session.vName}', '${session.dateFrom}', '${session.dateTo}', '${session.isActive}')" title="Set as Current">
                                     <i class="bi bi-check2-circle"></i>
                                 </button>
                             ` : ''}
-                            <button type="button" class="btn btn-sm btn-info me-1" onclick="editSession(${session.vID})" title="Edit">
+                            <button type="button" class="btn btn-sm btn-info me-1" onclick="editSession(${session.vid})" title="Edit">
                                 <i class="bi bi-pencil"></i>
                             </button>
                             ${!session.isActive ? `
-                                <button type="button" class="btn btn-sm btn-danger" onclick="deleteSession(${session.vID}, '${session.vName}')" title="Delete">
+                                <button type="button" class="btn btn-sm btn-danger" onclick="deleteSession(${session.vid}, '${session.vName}')" title="Delete">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             ` : ''}
@@ -458,8 +457,10 @@
         // Format date for input field
         function formatDateForInput(dateString) {
             const date = new Date(dateString);
+            date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
             return date.toISOString().split('T')[0];
         }
+
 
         // Edit existing session
         async function editSession(sessionId) {
@@ -492,16 +493,31 @@
         }
 
         // Set session as current
-        async function setCurrentSession(sessionId) {
+        async function setCurrentSession(sessionId, sessionName, dateFrom, dateTo, isActive) {
             if (!confirm('Are you sure you want to set this session as the current session?')) {
                 return;
             }
 
+            debugger;
+            const data = {
+                VID: sessionId,
+                VName: sessionName,
+                DateFrom: dateFrom,
+                DateTo: dateTo,
+                IsCurrent: true,
+                IsActive: isActive == "true"
+            };
+
             showLoading();
             try {
-                const response = await fetch(`${API_BASE}/AcademicSessionYear/${sessionId}/setcurrent`, {
-                    method: 'POST'
-                });
+                let response;
+                response = await fetch(`${API_BASE}/AcademicSessionYear`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
 
                 if (response.ok) {
                     showAlert('Session set as current successfully!', 'success');
@@ -511,11 +527,12 @@
                     showAlert(error.message || 'Failed to set current session', 'danger');
                 }
             } catch (error) {
-                console.error('Error setting current session:', error);
-                showAlert('Error setting current session: ' + error.message, 'danger');
+                console.error('Error saving session:', error);
+                showAlert('Error saving session: ' + error.message, 'danger');
             } finally {
                 hideLoading();
             }
+            
         }
 
         // Delete session
@@ -527,7 +544,10 @@
             showLoading();
             try {
                 const response = await fetch(`${API_BASE}/AcademicSessionYear/${sessionId}`, {
-                    method: 'DELETE'
+                    method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
                 });
 
                 if (response.ok) {
@@ -553,10 +573,10 @@
 
         // Populate form with session data
         function populateForm(data) {
-            $('#sessionId').val(data.id);
-            $('#sessionName').val(data.sessionName);
-            $('#startDate').val(formatDateForInput(data.startDate));
-            $('#endDate').val(formatDateForInput(data.endDate));
+            $('#sessionId').val(data.vid);
+            $('#sessionName').val(data.vName);
+            $('#startDate').val(formatDateForInput(data.dateFrom));
+            $('#endDate').val(formatDateForInput(data.dateTo));
             $('#isCurrent').prop('checked', data.isCurrent);
             $('#isActive').prop('checked', data.isActive);
         }
@@ -603,33 +623,21 @@
                 VName: sessionName,
                 DateFrom: startDate,
                 DateTo: endDate,
-                //isCurrent: $('#isCurrent').is(':checked'),
+                IsCurrent: $('#isCurrent').is(':checked'),
                 IsActive: $('#isActive').is(':checked')
             };
 
             showLoading();
             try {
                 let response;
-                if (sessionId === 0) {
-                    // Create new session
-                    response = await fetch(`${API_BASE}/AcademicSessionYear`, {
+                response = await fetch(`${API_BASE}/AcademicSessionYear`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify(data)
                     });
-                } else {
-                    // Update existing session
-                    response = await fetch(`${API_BASE}/AcademicSessionYear/${sessionId}`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(data)
-                    });
-                }
-
+               
                 if (response.ok) {
                     showAlert('Session saved successfully!', 'success');
                     resetForm();

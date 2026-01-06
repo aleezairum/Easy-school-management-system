@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace School.Web.Controllers
 {
-    public class AccountController : Controller
+    public class AuthController : Controller
     {
         [Route("login")]
         [Route("")]
