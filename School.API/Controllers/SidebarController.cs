@@ -11,6 +11,7 @@ namespace School.API.Controllers
         public IActionResult GetSidebarData()
         {
             // TEMPORARY MOCK DATA (replace when DB is ready)
+
             var sidebarData = new SidebarDataDto
             {
                 LogoUrl = "/images/logo.png",
