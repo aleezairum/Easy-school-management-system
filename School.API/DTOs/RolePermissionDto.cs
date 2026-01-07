@@ -15,12 +15,12 @@ namespace School.API.DTOs
         public bool IsPrint { get; set; }
     }
 
-    public class MenuForPermissionDto
-    {
-        public int Id { get; set; }
-        public string MenuTitle { get; set; } = string.Empty;
-        public int? ParentId { get; set; }
-        public int Level { get; set; }
-        public int DisplayOrder { get; set; }
-    }
+    //public class MenuForPermissionDto
+    //{
+    //    public int Id { get; set; }
+    //    public string MenuTitle { get; set; } = string.Empty;
+    //    public int? ParentId { get; set; }
+    //    public int Level { get; set; }
+    //    public int DisplayOrder { get; set; }
+    //}
 }
