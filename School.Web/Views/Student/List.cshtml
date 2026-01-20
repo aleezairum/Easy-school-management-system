@@ -1,0 +1,365 @@
+@model List<School.Web.Models.StudentListViewModel>
+@{
+    ViewData["Title"] = "Student List";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<style>
+    .card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .card-header {
+        background: white;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 20px 24px;
+        border-radius: 16px 16px 0 0 !important;
+    }
+
+    .card-header h5 {
+        margin: 0;
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .card-body {
+        padding: 24px;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #008649 0%, #006d3b 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 134, 73, 0.4);
+        background: linear-gradient(135deg, #006d3b 0%, #005a30 100%);
+    }
+
+    .table {
+        margin-bottom: 0;
+    }
+
+    .table th {
+        background: #f8fafc;
+        font-weight: 600;
+        color: #475569;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 14px 16px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .table td {
+        padding: 14px 16px;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f5f9;
+        color: #334155;
+    }
+
+    .table tbody tr:hover {
+        background: #f8fafc;
+    }
+
+    .student-photo {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #e2e8f0;
+    }
+
+    .student-photo-placeholder {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        background: #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #94a3b8;
+        font-size: 20px;
+        border: 2px solid #e2e8f0;
+    }
+
+    .badge-active {
+        background: #dcfce7;
+        color: #166534;
+        font-weight: 500;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+    }
+
+    .badge-inactive {
+        background: #fee2e2;
+        color: #991b1b;
+        font-weight: 500;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+    }
+
+    .badge-left {
+        background: #fef3c7;
+        color: #92400e;
+        font-weight: 500;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+    }
+
+    .btn-action {
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        margin-right: 4px;
+    }
+
+    .btn-edit {
+        background: #e0f2fe;
+        color: #0369a1;
+        border: none;
+    }
+
+    .btn-edit:hover {
+        background: #bae6fd;
+        color: #0284c7;
+    }
+
+    .btn-delete {
+        background: #fee2e2;
+        color: #dc2626;
+        border: none;
+    }
+
+    .btn-delete:hover {
+        background: #fecaca;
+        color: #b91c1c;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #64748b;
+    }
+
+    .empty-state i {
+        font-size: 64px;
+        color: #cbd5e1;
+        margin-bottom: 20px;
+    }
+
+    .empty-state h6 {
+        font-weight: 600;
+        color: #475569;
+        margin-bottom: 8px;
+    }
+
+    .search-box {
+        position: relative;
+        max-width: 300px;
+    }
+
+    .search-box input {
+        padding-left: 40px;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        height: 42px;
+    }
+
+    .search-box input:focus {
+        border-color: #008649;
+        box-shadow: 0 0 0 4px rgba(0, 134, 73, 0.1);
+    }
+
+    .search-box i {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+    }
+
+    .alert {
+        border-radius: 12px;
+        border: none;
+        padding: 16px 20px;
+    }
+
+    .alert-success {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .alert-danger {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Alert Messages -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>@TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <h5><i class="bi bi-mortarboard-fill me-2"></i>Students</h5>
+            <div class="d-flex gap-3 align-items-center flex-wrap">
+                <div class="search-box">
+                    <i class="bi bi-search"></i>
+                    <input type="text" class="form-control" id="searchInput" placeholder="Search students...">
+                </div>
+                <a href="/student/form" class="btn btn-primary">
+                    <i class="bi bi-plus-lg me-1"></i> Add Student
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            @if (Model != null && Model.Count > 0)
+            {
+                <div class="table-responsive">
+                    <table class="table" id="studentTable">
+                        <thead>
+                            <tr>
+                                <th>Photo</th>
+                                <th>Reg. No.</th>
+                                <th>Roll No.</th>
+                                <th>Student Name</th>
+                                <th>Father's Name</th>
+                                <th>Class</th>
+                                <th>Section</th>
+                                <th>Mobile</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var student in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(student.StudentPhoto))
+                                        {
+                                            <img src="@student.StudentPhoto" alt="@student.NameOfStudent" class="student-photo" />
+                                        }
+                                        else
+                                        {
+                                            <div class="student-photo-placeholder">
+                                                <i class="bi bi-person"></i>
+                                            </div>
+                                        }
+                                    </td>
+                                    <td>@(student.RegistrationNo ?? "-")</td>
+                                    <td>@(student.RollNo ?? "-")</td>
+                                    <td><strong>@student.NameOfStudent</strong></td>
+                                    <td>@(student.FatherName ?? "-")</td>
+                                    <td>@(student.CurrentClass ?? "-")</td>
+                                    <td>@(student.Section ?? "-")</td>
+                                    <td>@(student.FatherMobile ?? "-")</td>
+                                    <td>
+                                        @if (student.Status == "Active")
+                                        {
+                                            <span class="badge-active">Active</span>
+                                        }
+                                        else if (student.Status == "Left")
+                                        {
+                                            <span class="badge-left">Left</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge-inactive">@student.Status</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <a href="/student/form/@student.Id" class="btn btn-action btn-edit" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-action btn-delete" title="Delete"
+                                                onclick="confirmDelete(@student.Id, '@student.NameOfStudent')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="bi bi-mortarboard"></i>
+                    <h6>No Students Found</h6>
+                    <p>Get started by adding your first student.</p>
+                    <a href="/student/form" class="btn btn-primary mt-3">
+                        <i class="bi bi-plus-lg me-1"></i> Add Student
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete <strong id="studentNameToDelete"></strong>?</p>
+                <p class="text-muted small">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="post" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Search functionality
+        $('#searchInput').on('keyup', function () {
+            const value = $(this).val().toLowerCase();
+            $('#studentTable tbody tr').filter(function () {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+            });
+        });
+
+        // Delete confirmation
+        function confirmDelete(id, name) {
+            $('#studentNameToDelete').text(name);
+            $('#deleteForm').attr('action', '/student/delete/' + id);
+            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        }
+    </script>
+}

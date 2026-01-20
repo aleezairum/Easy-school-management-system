@@ -1,0 +1,847 @@
+@{
+    ViewData["Title"] = "Role Permissions";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<style>
+    .card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        margin-bottom: 24px;
+    }
+
+    .card-header {
+        background: white;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 20px 24px;
+        border-radius: 16px 16px 0 0 !important;
+    }
+
+    .card-header h5 {
+        margin: 0;
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .card-body {
+        padding: 24px;
+    }
+
+    .form-label {
+        font-weight: 500;
+        color: #475569;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+
+    .form-control, .form-select {
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #008649;
+        box-shadow: 0 0 0 4px rgba(0, 134, 73, 0.1);
+    }
+
+    .form-check-input {
+        width: 18px;
+        height: 18px;
+        border: 2px solid #cbd5e1;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .form-check-input:checked {
+        background-color: #008649;
+        border-color: #008649;
+    }
+
+    .form-check-input:focus {
+        box-shadow: 0 0 0 4px rgba(0, 134, 73, 0.1);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #008649 0%, #006d3b 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 134, 73, 0.4);
+        background: linear-gradient(135deg, #006d3b 0%, #005a30 100%);
+    }
+
+    .btn-secondary {
+        background: #f1f5f9;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-weight: 600;
+        font-size: 14px;
+        color: #64748b;
+        transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+        background: #e2e8f0;
+        border-color: #cbd5e1;
+        color: #475569;
+    }
+
+    .btn-info {
+        background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-weight: 600;
+        font-size: 14px;
+        color: white;
+        transition: all 0.2s;
+    }
+
+    .btn-info:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
+        color: white;
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-weight: 600;
+        font-size: 14px;
+        color: white;
+        transition: all 0.2s;
+    }
+
+    .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+        color: white;
+    }
+
+    .table {
+        margin-bottom: 0;
+    }
+
+    .table thead th {
+        background: #f8fafc;
+        border-bottom: 2px solid #e2e8f0;
+        padding: 14px 16px;
+        font-weight: 600;
+        font-size: 13px;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+    }
+
+    .table tbody td {
+        padding: 12px 16px;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 14px;
+    }
+
+    .table tbody tr:hover {
+        background: #f8fafc;
+    }
+
+    .menu-title {
+        font-weight: 500;
+        color: #1e293b;
+    }
+
+    .menu-title.level-1 {
+        color: #475569;
+        padding-left: 20px;
+    }
+
+    .menu-title.level-2 {
+        color: #64748b;
+        padding-left: 40px;
+    }
+
+    .menu-title.level-3 {
+        color: #94a3b8;
+        padding-left: 60px;
+    }
+
+    .menu-arrow {
+        color: #94a3b8;
+        margin-right: 8px;
+        font-family: monospace;
+    }
+
+    .alert {
+        border-radius: 12px;
+        border: none;
+        padding: 16px 20px;
+    }
+
+    .alert-success {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .alert-danger {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .alert-warning {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .permission-grid {
+        max-height: 600px;
+        overflow-y: auto;
+    }
+
+    .permission-grid::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .permission-grid::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 4px;
+    }
+
+    .permission-grid::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+
+    .permission-grid::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    .check-all-header {
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .check-all-header:hover {
+        color: #008649;
+    }
+
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        border-radius: 16px;
+    }
+
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+        border-width: 0.3rem;
+    }
+
+    .form-section {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .form-section-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .search-section {
+        background: #e0f2fe;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .search-section-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #0369a1;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #bae6fd;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #94a3b8;
+    }
+
+    .empty-state i {
+        font-size: 48px;
+        margin-bottom: 16px;
+        display: block;
+    }
+
+    .role-info {
+        background: #ecfdf5;
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-bottom: 16px;
+        display: none;
+    }
+
+    .role-info.show {
+        display: block;
+    }
+
+    .role-info strong {
+        color: #166534;
+    }
+
+    .grid-section {
+        margin-top: 24px;
+    }
+
+    .grid-section-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Alert Messages -->
+    <div id="alertContainer"></div>
+
+    <!-- Role Permissions Card -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5><i class="bi bi-shield-lock me-2"></i>Role Permissions</h5>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-success" onclick="openAddRoleModal()">
+                    <i class="bi bi-plus-lg me-1"></i> Add Role
+                </button>
+                <button type="button" class="btn btn-primary" id="btnSavePermissions" onclick="savePermissions()" style="display: none;">
+                    <i class="bi bi-check-lg me-1"></i> Save Permissions
+                </button>
+            </div>
+        </div>
+        <div class="card-body position-relative">
+            <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+                <div class="spinner-border text-success" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+
+            <!-- Select Role Section -->
+            <div class="search-section">
+                <div class="search-section-title">
+                    <i class="bi bi-search me-2"></i>Select Role
+                </div>
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label for="roleSelect" class="form-label">Select Role</label>
+                        <select class="form-select" id="roleSelect" onchange="fetchRolePermissions()">
+                            <option value="">-- Select a Role --</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Role Info -->
+            <div class="role-info" id="roleInfo">
+                <i class="bi bi-info-circle me-2"></i>
+                Editing permissions for: <strong id="selectedRoleName"></strong>
+                <input type="hidden" id="selectedRoleId" value="0" />
+            </div>
+
+            <!-- Permissions Grid Section -->
+            <div class="grid-section">
+                <div class="grid-section-title">
+                    <i class="bi bi-table me-2"></i>Permissions Grid
+                </div>
+
+                <!-- Empty State -->
+                <div class="empty-state" id="emptyState">
+                    <i class="bi bi-shield-exclamation"></i>
+                    <h5>No Role Selected</h5>
+                    <p>Select a role from the dropdown above and click "Fetch" to view and edit permissions.</p>
+                </div>
+
+                <!-- Permissions Grid -->
+                <div class="table-responsive permission-grid" id="permissionsContainer" style="display: none;">
+                    <table class="table table-hover" id="permissionsTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 60px;">Sr#</th>
+                                <th style="min-width: 280px;">Menu Title</th>
+                                <th class="text-center check-all-header" onclick="toggleColumn('IsView')" style="width: 80px;">
+                                    IsView
+                                    <br><small class="text-muted">(click all)</small>
+                                </th>
+                                <th class="text-center check-all-header" onclick="toggleColumn('IsInsert')" style="width: 80px;">
+                                    IsInsert
+                                    <br><small class="text-muted">(click all)</small>
+                                </th>
+                                <th class="text-center check-all-header" onclick="toggleColumn('IsUpdate')" style="width: 80px;">
+                                    IsUpdate
+                                    <br><small class="text-muted">(click all)</small>
+                                </th>
+                                <th class="text-center check-all-header" onclick="toggleColumn('IsDelete')" style="width: 80px;">
+                                    IsDelete
+                                    <br><small class="text-muted">(click all)</small>
+                                </th>
+                                <th class="text-center check-all-header" onclick="toggleColumn('IsActive')" style="width: 80px;">
+                                    IsActive
+                                    <br><small class="text-muted">(click all)</small>
+                                </th>
+                                <th class="text-center check-all-header" onclick="toggleColumn('IsBackDate')" style="width: 90px;">
+                                    IsBackDate
+                                    <br><small class="text-muted">(click all)</small>
+                                </th>
+                                <th class="text-center check-all-header" onclick="toggleColumn('IsPrint')" style="width: 80px;">
+                                    IsPrint
+                                    <br><small class="text-muted">(click all)</small>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="permissionsBody">
+                            <!-- Permissions will be loaded dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Role Modal -->
+<div class="modal fade" id="addRoleModal" tabindex="-1" aria-labelledby="addRoleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius: 16px; border: none;">
+            <div class="modal-header" style="border-bottom: 1px solid #e2e8f0;">
+                <h5 class="modal-title" id="addRoleModalLabel"><i class="bi bi-plus-circle me-2"></i>Add New Role</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addRoleForm">
+                    <div class="mb-3">
+                        <label for="newRoleName" class="form-label">Role Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="newRoleName" placeholder="Enter role name" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="newRoleDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="newRoleDescription" rows="2" placeholder="Enter role description"></textarea>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="newIsActive" checked />
+                        <label class="form-check-label" for="newIsActive">Is Active</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid #e2e8f0;">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg me-1"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-primary" onclick="saveNewRole()">
+                    <i class="bi bi-check-lg me-1"></i> Save
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const API_BASE = 'http://localhost:5266/api';
+        let allMenus = [];
+        let currentRoleData = null;
+        let addRoleModal = null;
+
+        $(document).ready(function () {
+            addRoleModal = new bootstrap.Modal(document.getElementById('addRoleModal'));
+            loadRoles();
+            loadMenus();
+
+            // Show dummy data for preview
+            showDummyData();
+        });
+
+        // Open add role modal
+        function openAddRoleModal() {
+            resetAddRoleForm();
+            addRoleModal.show();
+        }
+
+        // Show dummy data for grid preview
+        function showDummyData() {
+            const dummyMenus = [
+                { id: 1, menuTitle: 'Dashboard', level: 0 },
+                { id: 2, menuTitle: 'User Management', level: 0 },
+                { id: 3, menuTitle: 'Users', level: 1 },
+                { id: 4, menuTitle: 'Roles', level: 1 },
+                { id: 5, menuTitle: 'Permissions', level: 2 },
+                { id: 6, menuTitle: 'Academic', level: 0 },
+                { id: 7, menuTitle: 'Sessions', level: 1 },
+                { id: 8, menuTitle: 'Classes', level: 1 },
+                { id: 9, menuTitle: 'Subjects', level: 2 },
+                { id: 10, menuTitle: 'Reports', level: 0 }
+            ];
+
+            const tbody = $('#permissionsBody');
+            tbody.empty();
+
+            dummyMenus.forEach((menu, index) => {
+                const arrow = getMenuArrow(menu.level);
+                const levelClass = `level-${menu.level}`;
+
+                const row = `
+                    <tr data-menu-id="${menu.id}">
+                        <td>${index + 1}</td>
+                        <td class="menu-title ${levelClass}">
+                            ${arrow ? `<span class="menu-arrow">${arrow}</span>` : ''}${menu.menuTitle}
+                        </td>
+                        <td class="text-center">
+                            <input type="checkbox" class="form-check-input perm-checkbox" data-field="IsView" />
+                        </td>
+                        <td class="text-center">
+                            <input type="checkbox" class="form-check-input perm-checkbox" data-field="IsInsert" />
+                        </td>
+                        <td class="text-center">
+                            <input type="checkbox" class="form-check-input perm-checkbox" data-field="IsUpdate" />
+                        </td>
+                        <td class="text-center">
+                            <input type="checkbox" class="form-check-input perm-checkbox" data-field="IsDelete" />
+                        </td>
+                        <td class="text-center">
+                            <input type="checkbox" class="form-check-input perm-checkbox" data-field="IsActive" />
+                        </td>
+                        <td class="text-center">
+                            <input type="checkbox" class="form-check-input perm-checkbox" data-field="IsBackDate" />
+                        </td>
+                        <td class="text-center">
+                            <input type="checkbox" class="form-check-input perm-checkbox" data-field="IsPrint" />
+                        </td>
+                    </tr>
+                `;
+                tbody.append(row);
+            });
+
+            // Show grid, hide empty state
+            $('#emptyState').hide();
+            $('#permissionsContainer').show();
+        }
+
+        // Load all roles for the dropdown
+        async function loadRoles() {
+            try {
+                const response = await fetch(`${API_BASE}/RolesApi`);
+                if (response.ok) {
+                    const roles = await response.json();
+                    populateRoleDropdown(roles);
+                } else {
+                    showAlert('Failed to load roles', 'danger');
+                }
+            } catch (error) {
+                console.error('Error loading roles:', error);
+                showAlert('Error loading roles: ' + error.message, 'danger');
+            }
+        }
+
+        // Populate role dropdown
+        function populateRoleDropdown(roles) {
+            const select = $('#roleSelect');
+            select.find('option:not(:first)').remove();
+
+            roles.forEach(role => {
+                select.append(`<option value="${role.id}" data-name="${role.roleName}">${role.roleName}</option>`);
+            });
+        }
+
+        // Load all menus for hierarchy display
+        async function loadMenus() {
+            try {
+                const response = await fetch(`${API_BASE}/MenusApi/hierarchy`);
+                if (response.ok) {
+                    allMenus = await response.json();
+                } else {
+                    showAlert('Failed to load menus', 'danger');
+                }
+            } catch (error) {
+                console.error('Error loading menus:', error);
+                showAlert('Error loading menus: ' + error.message, 'danger');
+            }
+        }
+
+        // Save new role
+        async function saveNewRole() {
+            const roleName = $('#newRoleName').val().trim();
+            if (!roleName) {
+                showAlert('Please enter a role name', 'danger');
+                return;
+            }
+
+            const data = {
+                roleName: roleName,
+                description: $('#newRoleDescription').val().trim(),
+                isActive: $('#newIsActive').is(':checked'),
+                permissions: []
+            };
+
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/RolesApi/save`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    showAlert('Role created successfully!', 'success');
+                    addRoleModal.hide();
+                    resetAddRoleForm();
+                    await loadRoles(); // Refresh dropdown
+                } else {
+                    const error = await response.json();
+                    showAlert(error.message || 'Failed to create role', 'danger');
+                }
+            } catch (error) {
+                console.error('Error creating role:', error);
+                showAlert('Error creating role: ' + error.message, 'danger');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Reset add role form
+        function resetAddRoleForm() {
+            $('#newRoleName').val('');
+            $('#newRoleDescription').val('');
+            $('#newIsActive').prop('checked', true);
+        }
+
+        // Fetch role permissions
+        async function fetchRolePermissions() {
+            const roleId = $('#roleSelect').val();
+
+            if (!roleId) {
+                // Reset to dummy data when no role selected
+                $('#roleInfo').removeClass('show');
+                $('#btnSavePermissions').hide();
+                currentRoleData = null;
+                showDummyData();
+                return;
+            }
+
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/RolesApi/${roleId}`);
+                if (response.ok) {
+                    currentRoleData = await response.json();
+
+                    // Update role info display
+                    $('#selectedRoleId').val(currentRoleData.id);
+                    $('#selectedRoleName').text(currentRoleData.roleName);
+                    $('#roleInfo').addClass('show');
+
+                    // Show grid and save button
+                    $('#emptyState').hide();
+                    $('#permissionsContainer').show();
+                    $('#btnSavePermissions').show();
+
+                    // Render permissions grid
+                    renderPermissionsGrid(currentRoleData.permissions || []);
+                } else {
+                    showAlert('Failed to fetch role permissions', 'danger');
+                }
+            } catch (error) {
+                console.error('Error fetching role permissions:', error);
+                showAlert('Error fetching role permissions: ' + error.message, 'danger');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Get arrow prefix based on menu level
+        function getMenuArrow(level) {
+            if (level === 0) return '';
+            if (level === 1) return '-->';
+            if (level === 2) return '--->';
+            return '-'.repeat(level * 2) + '>';
+        }
+
+        // Render the permissions grid
+        function renderPermissionsGrid(permissions) {
+            const tbody = $('#permissionsBody');
+            tbody.empty();
+
+            if (allMenus.length === 0) {
+                tbody.html('<tr><td colspan="9" class="text-center text-muted py-4">No menus found</td></tr>');
+                return;
+            }
+
+            allMenus.forEach((menu, index) => {
+                const permission = permissions.find(p => p.menuId === menu.id) || {};
+                const arrow = getMenuArrow(menu.level);
+                const levelClass = `level-${menu.level}`;
+
+                const row = `
+                    <tr data-menu-id="${menu.id}">
+                        <td>${index + 1}</td>
+                        <td class="menu-title ${levelClass}">
+                            ${arrow ? `<span class="menu-arrow">${arrow}</span>` : ''}${menu.menuTitle}
+                        </td>
+                        <td class="text-center">
+                            <input type="checkbox" class="form-check-input perm-checkbox"
+                                   data-field="IsView" ${permission.isView ? 'checked' : ''} />
+                        </td>
+                        <td class="text-center">
+                            <input type="checkbox" class="form-check-input perm-checkbox"
+                                   data-field="IsInsert" ${permission.isInsert ? 'checked' : ''} />
+                        </td>
+                        <td class="text-center">
+                            <input type="checkbox" class="form-check-input perm-checkbox"
+                                   data-field="IsUpdate" ${permission.isUpdate ? 'checked' : ''} />
+                        </td>
+                        <td class="text-center">
+                            <input type="checkbox" class="form-check-input perm-checkbox"
+                                   data-field="IsDelete" ${permission.isDelete ? 'checked' : ''} />
+                        </td>
+                        <td class="text-center">
+                            <input type="checkbox" class="form-check-input perm-checkbox"
+                                   data-field="IsActive" ${permission.isActive ? 'checked' : ''} />
+                        </td>
+                        <td class="text-center">
+                            <input type="checkbox" class="form-check-input perm-checkbox"
+                                   data-field="IsBackDate" ${permission.isBackDate ? 'checked' : ''} />
+                        </td>
+                        <td class="text-center">
+                            <input type="checkbox" class="form-check-input perm-checkbox"
+                                   data-field="IsPrint" ${permission.isPrint ? 'checked' : ''} />
+                        </td>
+                    </tr>
+                `;
+                tbody.append(row);
+            });
+        }
+
+        // Toggle all checkboxes in a column
+        function toggleColumn(fieldName) {
+            const checkboxes = $(`.perm-checkbox[data-field="${fieldName}"]`);
+            const allChecked = checkboxes.filter(':checked').length === checkboxes.length;
+            checkboxes.prop('checked', !allChecked);
+        }
+
+        // Save permissions
+        async function savePermissions() {
+            if (!currentRoleData) {
+                showAlert('No role selected', 'warning');
+                return;
+            }
+
+            // Collect permissions
+            const permissions = [];
+            $('#permissionsBody tr').each(function () {
+                const row = $(this);
+                const menuId = parseInt(row.data('menu-id'));
+
+                permissions.push({
+                    menuId: menuId,
+                    isView: row.find('[data-field="IsView"]').is(':checked'),
+                    isInsert: row.find('[data-field="IsInsert"]').is(':checked'),
+                    isUpdate: row.find('[data-field="IsUpdate"]').is(':checked'),
+                    isDelete: row.find('[data-field="IsDelete"]').is(':checked'),
+                    isActive: row.find('[data-field="IsActive"]').is(':checked'),
+                    isBackDate: row.find('[data-field="IsBackDate"]').is(':checked'),
+                    isPrint: row.find('[data-field="IsPrint"]').is(':checked')
+                });
+            });
+
+            const data = {
+                id: currentRoleData.id,
+                roleName: currentRoleData.roleName,
+                description: currentRoleData.description,
+                isActive: currentRoleData.isActive,
+                permissions: permissions
+            };
+
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/RolesApi/save`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    showAlert('Permissions saved successfully!', 'success');
+                } else {
+                    const error = await response.json();
+                    showAlert(error.message || 'Failed to save permissions', 'danger');
+                }
+            } catch (error) {
+                console.error('Error saving permissions:', error);
+                showAlert('Error saving permissions: ' + error.message, 'danger');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Helper functions
+        function showLoading() {
+            $('#loadingOverlay').show();
+        }
+
+        function hideLoading() {
+            $('#loadingOverlay').hide();
+        }
+
+        function showAlert(message, type) {
+            const alert = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+            $('#alertContainer').html(alert);
+
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                $('.alert').alert('close');
+            }, 5000);
+        }
+    </script>
+}

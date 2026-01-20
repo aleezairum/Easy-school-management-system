@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - School Management System</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+
+        :root {
+            --primary-color: #008649;
+            --primary-dark: #006d3b;
+            --primary-light: #00a65a;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: #f0f4f8;
+        }
+
+        .login-wrapper {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .login-left {
+            flex: 1;
+            background: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 60px;
+            position: relative;
+            overflow: hidden;
+            border-right: 1px solid #e2e8f0;
+        }
+
+        .login-left-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            color: #1e293b;
+        }
+
+        .login-left-content .logo-icon {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            box-shadow: 0 10px 30px rgba(0, 134, 73, 0.3);
+        }
+
+        .login-left-content .logo-icon i {
+            font-size: 48px;
+            color: white;
+        }
+
+        .login-left-content h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #1e293b;
+        }
+
+        .login-left-content p {
+            font-size: 16px;
+            color: #64748b;
+            max-width: 350px;
+            line-height: 1.6;
+        }
+
+        .features-list {
+            margin-top: 50px;
+            text-align: left;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px 20px;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .feature-item i {
+            font-size: 24px;
+            color: var(--primary-color);
+        }
+
+        .feature-item span {
+            font-size: 14px;
+            font-weight: 500;
+            color: #334155;
+        }
+
+        .login-right {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            background: white;
+        }
+
+        .login-form-container {
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .login-header {
+            margin-bottom: 40px;
+        }
+
+        .login-header h2 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+
+        .login-header p {
+            color: #64748b;
+            font-size: 15px;
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: #334155;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .form-control, .form-select {
+            padding: 14px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 15px;
+            transition: all 0.3s;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(0, 134, 73, 0.1);
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            z-index: 10;
+        }
+
+        .input-group .form-control {
+            padding-left: 48px;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 134, 73, 0.3);
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 134, 73, 0.4);
+            background: linear-gradient(135deg, var(--primary-dark) 0%, #005a30 100%);
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
+        .form-check {
+            margin: 20px 0;
+        }
+
+        .form-check-input:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .form-check-label {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .alert {
+            border: none;
+            border-radius: 10px;
+            padding: 14px 18px;
+            font-size: 14px;
+        }
+
+        .alert-danger {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .demo-credentials {
+            margin-top: 30px;
+            padding: 16px;
+            background: #f1f5f9;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .demo-credentials p {
+            margin: 0;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .demo-credentials code {
+            background: #e2e8f0;
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: #1e293b;
+            font-weight: 500;
+        }
+
+        .select-wrapper {
+            position: relative;
+        }
+
+        .select-wrapper .select-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .select-wrapper .form-select {
+            padding-left: 48px;
+        }
+
+        @@media (max-width: 992px) {
+            .login-left {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    @RenderBody()
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

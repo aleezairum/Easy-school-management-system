@@ -1,0 +1,747 @@
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "_DashboardLayout";
+}
+
+@section Styles {
+<style>
+    /* Stats Cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 24px;
+        margin-bottom: 32px;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        border: 1px solid var(--border-color);
+        transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+    }
+
+    .stat-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        flex-shrink: 0;
+    }
+
+    .stat-icon.blue {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        color: #2563eb;
+    }
+
+    .stat-icon.green {
+        background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+        color: #16a34a;
+    }
+
+    .stat-icon.orange {
+        background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%);
+        color: #ea580c;
+    }
+
+    .stat-icon.purple {
+        background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+        color: #9333ea;
+    }
+
+    .stat-icon.pink {
+        background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
+        color: #db2777;
+    }
+
+    .stat-icon.cyan {
+        background: linear-gradient(135deg, #cffafe 0%, #a5f3fc 100%);
+        color: #0891b2;
+    }
+
+    .stat-content h3 {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0 0 4px 0;
+    }
+
+    .stat-content p {
+        color: var(--text-secondary);
+        font-size: 14px;
+        margin: 0 0 8px 0;
+    }
+
+    .stat-trend {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 13px;
+        font-weight: 500;
+    }
+
+    .stat-trend.up {
+        color: #16a34a;
+    }
+
+    .stat-trend.down {
+        color: #dc2626;
+    }
+
+    /* Cards */
+    .dashboard-card {
+        background: white;
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        overflow: hidden;
+    }
+
+    .card-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .card-header h5 {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .card-header h5 i {
+        color: var(--primary-color);
+    }
+
+    .card-header .view-all {
+        color: var(--primary-color);
+        font-size: 13px;
+        font-weight: 500;
+        text-decoration: none;
+    }
+
+    .card-header .view-all:hover {
+        text-decoration: underline;
+    }
+
+    .card-body {
+        padding: 24px;
+    }
+
+    /* Table Styles */
+    .modern-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .modern-table th {
+        text-align: left;
+        padding: 12px 16px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        background: var(--bg-light);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .modern-table td {
+        padding: 16px;
+        font-size: 14px;
+        color: var(--text-primary);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .modern-table tbody tr:hover {
+        background: #f8fafc;
+    }
+
+    .modern-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .student-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .student-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 14px;
+        color: white;
+    }
+
+    .student-name {
+        font-weight: 500;
+    }
+
+    .student-email {
+        font-size: 12px;
+        color: var(--text-secondary);
+    }
+
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .status-badge.active {
+        background: #dcfce7;
+        color: #16a34a;
+    }
+
+    .status-badge.pending {
+        background: #fef3c7;
+        color: #d97706;
+    }
+
+    .status-badge.inactive {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+    /* Events */
+    .event-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .event-item {
+        display: flex;
+        gap: 16px;
+        padding: 16px;
+        background: var(--bg-light);
+        border-radius: 12px;
+        transition: all 0.2s;
+    }
+
+    .event-item:hover {
+        background: #f1f5f9;
+    }
+
+    .event-date {
+        width: 54px;
+        height: 54px;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .event-date .day {
+        font-size: 20px;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .event-date .month {
+        font-size: 11px;
+        text-transform: uppercase;
+        opacity: 0.9;
+    }
+
+    .event-details h6 {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0 0 4px 0;
+    }
+
+    .event-details p {
+        font-size: 13px;
+        color: var(--text-secondary);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    /* Activity Feed */
+    .activity-list {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .activity-item {
+        display: flex;
+        gap: 16px;
+        padding: 16px 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .activity-icon.success {
+        background: #dcfce7;
+        color: #16a34a;
+    }
+
+    .activity-icon.info {
+        background: #dbeafe;
+        color: #2563eb;
+    }
+
+    .activity-icon.warning {
+        background: #fef3c7;
+        color: #d97706;
+    }
+
+    .activity-content h6 {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text-primary);
+        margin: 0 0 4px 0;
+    }
+
+    .activity-content p {
+        font-size: 13px;
+        color: var(--text-secondary);
+        margin: 0;
+    }
+
+    .activity-time {
+        margin-left: auto;
+        font-size: 12px;
+        color: var(--text-secondary);
+        white-space: nowrap;
+    }
+
+    /* Quick Actions */
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .quick-action-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 20px;
+        background: var(--bg-light);
+        border: 2px solid transparent;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+    }
+
+    .quick-action-btn:hover {
+        border-color: var(--primary-color);
+        background: #eff6ff;
+    }
+
+    .quick-action-btn i {
+        font-size: 24px;
+        color: var(--primary-color);
+    }
+
+    .quick-action-btn span {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-primary);
+    }
+
+    /* Welcome Banner */
+    .welcome-banner {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+        border-radius: 16px;
+        padding: 32px;
+        color: white;
+        margin-bottom: 32px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .welcome-banner::before {
+        content: '';
+        position: absolute;
+        right: -50px;
+        top: -50px;
+        width: 200px;
+        height: 200px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 50%;
+    }
+
+    .welcome-banner h2 {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+
+    .welcome-banner p {
+        font-size: 15px;
+        opacity: 0.9;
+        margin: 0;
+    }
+
+    .welcome-banner .date-info {
+        position: absolute;
+        right: 32px;
+        top: 50%;
+        transform: translateY(-50%);
+        text-align: right;
+    }
+
+    .welcome-banner .date-info .day {
+        font-size: 48px;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .welcome-banner .date-info .month-year {
+        font-size: 14px;
+        opacity: 0.9;
+    }
+</style>
+}
+
+<!-- Welcome Banner -->
+<div class="welcome-banner">
+    <h2>Welcome back, Admin!</h2>
+    <p>Here's what's happening with your school today.</p>
+    <div class="date-info">
+        <div class="day">@DateTime.Now.Day</div>
+        <div class="month-year">@DateTime.Now.ToString("MMMM yyyy")</div>
+    </div>
+</div>
+
+<!-- Stats Grid -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon blue">
+            <i class="bi bi-people-fill"></i>
+        </div>
+        <div class="stat-content">
+            <h3>@ViewBag.TotalStudents</h3>
+            <p>Total Students</p>
+            <div class="stat-trend up">
+                <i class="bi bi-arrow-up"></i> 12% from last month
+            </div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon green">
+            <i class="bi bi-person-badge-fill"></i>
+        </div>
+        <div class="stat-content">
+            <h3>@ViewBag.TotalTeachers</h3>
+            <p>Total Teachers</p>
+            <div class="stat-trend up">
+                <i class="bi bi-arrow-up"></i> 3 new this month
+            </div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon orange">
+            <i class="bi bi-building"></i>
+        </div>
+        <div class="stat-content">
+            <h3>@ViewBag.TotalClasses</h3>
+            <p>Active Classes</p>
+            <div class="stat-trend up">
+                <i class="bi bi-check-circle"></i> All running
+            </div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon purple">
+            <i class="bi bi-graph-up-arrow"></i>
+        </div>
+        <div class="stat-content">
+            <h3>@ViewBag.AttendanceRate%</h3>
+            <p>Attendance Rate</p>
+            <div class="stat-trend up">
+                <i class="bi bi-arrow-up"></i> 2.5% increase
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Recent Students -->
+    <div class="col-lg-8">
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h5><i class="bi bi-people"></i> Recent Students</h5>
+                <a href="#" class="view-all">View All <i class="bi bi-arrow-right"></i></a>
+            </div>
+            <div class="card-body p-0">
+                <table class="modern-table">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>ID</th>
+                            <th>Class</th>
+                            <th>Status</th>
+                            <th>Joined</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <div class="student-info">
+                                    <div class="student-avatar" style="background: linear-gradient(135deg, #2563eb, #1d4ed8);">JS</div>
+                                    <div>
+                                        <div class="student-name">John Smith</div>
+                                        <div class="student-email">john.smith@school.com</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>STU001</td>
+                            <td>Grade 10-A</td>
+                            <td><span class="status-badge active">Active</span></td>
+                            <td>Dec 1, 2024</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="student-info">
+                                    <div class="student-avatar" style="background: linear-gradient(135deg, #16a34a, #15803d);">EJ</div>
+                                    <div>
+                                        <div class="student-name">Emily Johnson</div>
+                                        <div class="student-email">emily.j@school.com</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>STU002</td>
+                            <td>Grade 9-B</td>
+                            <td><span class="status-badge active">Active</span></td>
+                            <td>Nov 28, 2024</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="student-info">
+                                    <div class="student-avatar" style="background: linear-gradient(135deg, #ea580c, #c2410c);">MB</div>
+                                    <div>
+                                        <div class="student-name">Michael Brown</div>
+                                        <div class="student-email">m.brown@school.com</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>STU003</td>
+                            <td>Grade 11-A</td>
+                            <td><span class="status-badge pending">Pending</span></td>
+                            <td>Nov 25, 2024</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="student-info">
+                                    <div class="student-avatar" style="background: linear-gradient(135deg, #9333ea, #7e22ce);">SD</div>
+                                    <div>
+                                        <div class="student-name">Sarah Davis</div>
+                                        <div class="student-email">sarah.d@school.com</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>STU004</td>
+                            <td>Grade 10-B</td>
+                            <td><span class="status-badge active">Active</span></td>
+                            <td>Nov 20, 2024</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="student-info">
+                                    <div class="student-avatar" style="background: linear-gradient(135deg, #dc2626, #b91c1c);">JW</div>
+                                    <div>
+                                        <div class="student-name">James Wilson</div>
+                                        <div class="student-email">j.wilson@school.com</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>STU005</td>
+                            <td>Grade 12-A</td>
+                            <td><span class="status-badge inactive">Inactive</span></td>
+                            <td>Nov 15, 2024</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upcoming Events -->
+    <div class="col-lg-4">
+        <div class="dashboard-card h-100">
+            <div class="card-header">
+                <h5><i class="bi bi-calendar-event"></i> Upcoming Events</h5>
+            </div>
+            <div class="card-body">
+                <div class="event-list">
+                    <div class="event-item">
+                        <div class="event-date">
+                            <span class="day">15</span>
+                            <span class="month">Dec</span>
+                        </div>
+                        <div class="event-details">
+                            <h6>Annual Sports Day</h6>
+                            <p><i class="bi bi-clock"></i> 9:00 AM - Main Ground</p>
+                        </div>
+                    </div>
+                    <div class="event-item">
+                        <div class="event-date">
+                            <span class="day">20</span>
+                            <span class="month">Dec</span>
+                        </div>
+                        <div class="event-details">
+                            <h6>Parent-Teacher Meeting</h6>
+                            <p><i class="bi bi-geo-alt"></i> Auditorium</p>
+                        </div>
+                    </div>
+                    <div class="event-item">
+                        <div class="event-date">
+                            <span class="day">25</span>
+                            <span class="month">Dec</span>
+                        </div>
+                        <div class="event-details">
+                            <h6>Christmas Holiday</h6>
+                            <p><i class="bi bi-info-circle"></i> School Closed</p>
+                        </div>
+                    </div>
+                    <div class="event-item">
+                        <div class="event-date">
+                            <span class="day">02</span>
+                            <span class="month">Jan</span>
+                        </div>
+                        <div class="event-details">
+                            <h6>Final Exams Begin</h6>
+                            <p><i class="bi bi-people"></i> All Grades</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Recent Activity -->
+    <div class="col-lg-8">
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h5><i class="bi bi-activity"></i> Recent Activity</h5>
+                <a href="#" class="view-all">View All <i class="bi bi-arrow-right"></i></a>
+            </div>
+            <div class="card-body">
+                <div class="activity-list">
+                    <div class="activity-item">
+                        <div class="activity-icon success">
+                            <i class="bi bi-check-lg"></i>
+                        </div>
+                        <div class="activity-content">
+                            <h6>Fee payment received</h6>
+                            <p>John Smith - Grade 10-A paid $500</p>
+                        </div>
+                        <div class="activity-time">2 hours ago</div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon info">
+                            <i class="bi bi-person-plus"></i>
+                        </div>
+                        <div class="activity-content">
+                            <h6>New student enrolled</h6>
+                            <p>Alice Cooper joined Grade 9-A</p>
+                        </div>
+                        <div class="activity-time">5 hours ago</div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                        </div>
+                        <div class="activity-content">
+                            <h6>Low attendance alert</h6>
+                            <p>Grade 11-B has 75% attendance this week</p>
+                        </div>
+                        <div class="activity-time">1 day ago</div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon info">
+                            <i class="bi bi-file-earmark-check"></i>
+                        </div>
+                        <div class="activity-content">
+                            <h6>Exam results published</h6>
+                            <p>Mid-term examination results are now available</p>
+                        </div>
+                        <div class="activity-time">2 days ago</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="col-lg-4">
+        <div class="dashboard-card h-100">
+            <div class="card-header">
+                <h5><i class="bi bi-lightning"></i> Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="quick-actions">
+                    <a href="#" class="quick-action-btn">
+                        <i class="bi bi-person-plus-fill"></i>
+                        <span>Add Student</span>
+                    </a>
+                    <a href="#" class="quick-action-btn">
+                        <i class="bi bi-person-badge-fill"></i>
+                        <span>Add Teacher</span>
+                    </a>
+                    <a href="#" class="quick-action-btn">
+                        <i class="bi bi-calendar-plus"></i>
+                        <span>New Event</span>
+                    </a>
+                    <a href="#" class="quick-action-btn">
+                        <i class="bi bi-file-earmark-plus"></i>
+                        <span>Create Report</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

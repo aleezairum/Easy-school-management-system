@@ -1,0 +1,1291 @@
+@model School.Web.Models.StudentFormViewModel
+@using Microsoft.AspNetCore.Mvc.Rendering
+@{
+    ViewData["Title"] = Model.Id > 0 ? "Edit Student" : "New Student";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    var isEdit = Model.Id > 0;
+    var fromAdmission = ViewData["FromAdmission"] != null && (bool)ViewData["FromAdmission"];
+}
+
+<style>
+    .card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        margin-bottom: 24px;
+    }
+
+    .card-header {
+        background: white;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 20px 24px;
+        border-radius: 16px 16px 0 0 !important;
+    }
+
+    .card-header h5 {
+        margin: 0;
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .card-body {
+        padding: 24px;
+    }
+
+    /* Wizard Steps Navigation */
+    .wizard-steps {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 32px;
+        position: relative;
+        padding: 0 10px;
+    }
+
+    .wizard-steps::before {
+        content: '';
+        position: absolute;
+        top: 24px;
+        left: 40px;
+        right: 40px;
+        height: 3px;
+        background: #e2e8f0;
+        z-index: 0;
+    }
+
+    .wizard-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        z-index: 1;
+        cursor: pointer;
+        flex: 1;
+        padding: 0;
+        border: none;
+        background: none;
+    }
+
+    .wizard-step .step-circle {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: white;
+        border: 3px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        color: #94a3b8;
+        transition: all 0.3s ease;
+        margin-bottom: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .wizard-step .step-label {
+        font-size: 12px;
+        font-weight: 500;
+        color: #94a3b8;
+        text-align: center;
+        transition: all 0.3s ease;
+        max-width: 80px;
+    }
+
+    .wizard-step:hover .step-circle {
+        border-color: #008649;
+        color: #008649;
+        transform: scale(1.05);
+    }
+
+    .wizard-step:hover .step-label {
+        color: #008649;
+    }
+
+    .wizard-step.active .step-circle {
+        background: linear-gradient(135deg, #008649 0%, #006d3b 100%);
+        border-color: #008649;
+        color: white;
+        box-shadow: 0 4px 15px rgba(0, 134, 73, 0.4);
+        transform: scale(1.1);
+    }
+
+    .wizard-step.active .step-label {
+        color: #008649;
+        font-weight: 600;
+    }
+
+    .wizard-step.completed .step-circle {
+        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        border-color: #22c55e;
+        color: white;
+        box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+    }
+
+    .wizard-step.completed .step-label {
+        color: #22c55e;
+    }
+
+    .wizard-step.completed .step-circle .step-icon {
+        display: none;
+    }
+
+    .wizard-step.completed .step-circle::after {
+        content: '\2713';
+        font-size: 20px;
+        font-weight: bold;
+    }
+
+    .wizard-progress-line {
+        position: absolute;
+        top: 24px;
+        left: 40px;
+        height: 3px;
+        background: linear-gradient(90deg, #22c55e 0%, #008649 100%);
+        z-index: 0;
+        transition: width 0.4s ease;
+    }
+
+    /* Tab Content Styles */
+    .tab-content {
+        min-height: 400px;
+    }
+
+    .tab-pane {
+        animation: fadeIn 0.3s ease;
+    }
+
+    @@keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Form Styles */
+    .form-label {
+        font-weight: 500;
+        color: #475569;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+
+    .form-control, .form-select {
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #008649;
+        box-shadow: 0 0 0 4px rgba(0, 134, 73, 0.1);
+    }
+
+    /* Button Styles */
+    .btn-primary {
+        background: linear-gradient(135deg, #008649 0%, #006d3b 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 10px 24px;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 134, 73, 0.4);
+        background: linear-gradient(135deg, #006d3b 0%, #005a30 100%);
+    }
+
+    .btn-secondary {
+        background: #f1f5f9;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 10px 24px;
+        font-weight: 600;
+        font-size: 14px;
+        color: #64748b;
+        transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+        background: #e2e8f0;
+        border-color: #cbd5e1;
+        color: #475569;
+    }
+
+    .btn-outline-primary {
+        border: 2px solid #008649;
+        border-radius: 10px;
+        padding: 10px 24px;
+        font-weight: 600;
+        font-size: 14px;
+        color: #008649;
+        background: transparent;
+        transition: all 0.2s;
+    }
+
+    .btn-outline-primary:hover {
+        background: #008649;
+        color: white;
+    }
+
+    /* Admission Table Styles */
+    .admission-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .admission-table td {
+        padding: 8px 12px;
+        vertical-align: middle;
+    }
+
+    .admission-table .lbl {
+        background: #f1f5f9;
+        font-weight: 500;
+        font-size: 13px;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px 0 0 8px;
+        white-space: nowrap;
+    }
+
+    .admission-table .val {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-left: none;
+        border-radius: 0 8px 8px 0;
+    }
+
+    .admission-table .val input,
+    .admission-table .val select {
+        width: 100%;
+        border: none;
+        background: transparent;
+        font-size: 14px;
+        padding: 8px 10px;
+        outline: none;
+        color: #1e293b;
+    }
+
+    .admission-table .val input:focus,
+    .admission-table .val select:focus {
+        background: rgba(0, 134, 73, 0.05);
+    }
+
+    .admission-table .val-rtl {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-left: none;
+        border-radius: 0 8px 8px 0;
+    }
+
+    .admission-table .val-rtl input {
+        width: 100%;
+        border: none;
+        background: transparent;
+        font-size: 14px;
+        padding: 8px 10px;
+        outline: none;
+        direction: rtl;
+        text-align: right;
+        font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', Tahoma, Arial;
+        color: #1e293b;
+    }
+
+    .admission-table .val-rtl input:focus {
+        background: rgba(0, 134, 73, 0.05);
+    }
+
+    /* Tab Header */
+    .tab-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .tab-header-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #008649 0%, #006d3b 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 20px;
+    }
+
+    .tab-header-text h6 {
+        margin: 0;
+        font-weight: 600;
+        color: #1e293b;
+        font-size: 16px;
+    }
+
+    .tab-header-text p {
+        margin: 4px 0 0 0;
+        font-size: 13px;
+        color: #64748b;
+    }
+
+    /* Navigation Buttons */
+    .tab-navigation {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 24px;
+        padding-top: 20px;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    /* Progress Bar */
+    .progress-container {
+        margin-bottom: 20px;
+    }
+
+    .progress {
+        height: 6px;
+        border-radius: 3px;
+        background: #e2e8f0;
+    }
+
+    .progress-bar {
+        background: linear-gradient(135deg, #008649 0%, #006d3b 100%);
+        border-radius: 3px;
+        transition: width 0.3s ease;
+    }
+
+    .progress-text {
+        font-size: 12px;
+        color: #64748b;
+        margin-top: 8px;
+    }
+
+    /* Loading Overlay */
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        border-radius: 16px;
+    }
+
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+        border-width: 0.3rem;
+    }
+
+    /* Alert Styles */
+    .alert {
+        border-radius: 12px;
+        border: none;
+        padding: 16px 20px;
+    }
+
+    .alert-success {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .alert-danger {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    /* Photo Upload Styles */
+    .photo-upload-container {
+        display: flex;
+        align-items: flex-start;
+        gap: 20px;
+        padding: 10px 0;
+    }
+
+    .photo-preview-wrapper {
+        width: 120px;
+        height: 150px;
+        border: 2px dashed #e2e8f0;
+        border-radius: 8px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f8fafc;
+    }
+
+    .photo-preview-wrapper img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .photo-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        color: #94a3b8;
+    }
+
+    .photo-placeholder i {
+        font-size: 40px;
+    }
+
+    .photo-placeholder span {
+        font-size: 11px;
+        text-align: center;
+    }
+
+    .photo-upload-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .photo-file-input {
+        display: none;
+    }
+
+    .photo-help-text {
+        color: #64748b;
+    }
+
+    .photo-help-text small {
+        font-size: 11px;
+    }
+
+    /* Synced from admission badge */
+    .synced-badge {
+        background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Responsive adjustments */
+    @@media (max-width: 768px) {
+        .wizard-steps {
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .wizard-steps::before {
+            display: none;
+        }
+
+        .wizard-progress-line {
+            display: none;
+        }
+
+        .wizard-step {
+            flex: 0 0 auto;
+        }
+
+        .wizard-step .step-circle {
+            width: 36px;
+            height: 36px;
+            font-size: 12px;
+            margin-bottom: 0;
+        }
+
+        .wizard-step .step-label {
+            display: none;
+        }
+
+        .admission-table td {
+            display: block;
+            width: 100%;
+        }
+
+        .admission-table .lbl {
+            border-radius: 8px 8px 0 0;
+        }
+
+        .admission-table .val,
+        .admission-table .val-rtl {
+            border-left: 1px solid #e2e8f0;
+            border-radius: 0 0 8px 8px;
+            margin-bottom: 10px;
+        }
+
+        .tab-navigation {
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .tab-navigation .btn {
+            width: 100%;
+        }
+
+        .tab-navigation .d-flex {
+            width: 100%;
+            flex-direction: column;
+        }
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Alert Messages -->
+    <div id="alertContainer">
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle me-2"></i>@TempData["Success"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle me-2"></i>@TempData["Error"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+    </div>
+
+    <!-- Student Form Card -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5>
+                <i class="bi bi-mortarboard-fill me-2"></i>
+                @(isEdit ? "Edit Student" : "New Student")
+                @if (Model.AdmissionId.HasValue)
+                {
+                    <span class="synced-badge ms-2">Synced from Admission</span>
+                }
+            </h5>
+            <a href="/student/list" class="btn btn-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to List
+            </a>
+        </div>
+        <div class="card-body position-relative">
+            <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+                <div class="spinner-border text-success" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="progress-container">
+                <div class="progress">
+                    <div class="progress-bar" role="progressbar" style="width: 14.28%;" id="formProgress"></div>
+                </div>
+                <div class="progress-text">Step <span id="currentStep">1</span> of 7 - <span id="stepName">Registration Info</span></div>
+            </div>
+
+            <!-- Wizard Steps Navigation -->
+            <div class="wizard-steps" id="studentWizard">
+                <div class="wizard-progress-line" id="wizardProgressLine" style="width: 0%;"></div>
+
+                <button type="button" class="wizard-step active" data-step="0" data-target="registration">
+                    <div class="step-circle">
+                        <i class="bi bi-card-checklist step-icon"></i>
+                    </div>
+                    <span class="step-label">Registration</span>
+                </button>
+
+                <button type="button" class="wizard-step" data-step="1" data-target="student">
+                    <div class="step-circle">
+                        <i class="bi bi-person step-icon"></i>
+                    </div>
+                    <span class="step-label">Student</span>
+                </button>
+
+                <button type="button" class="wizard-step" data-step="2" data-target="father">
+                    <div class="step-circle">
+                        <i class="bi bi-person-badge step-icon"></i>
+                    </div>
+                    <span class="step-label">Father</span>
+                </button>
+
+                <button type="button" class="wizard-step" data-step="3" data-target="mother">
+                    <div class="step-circle">
+                        <i class="bi bi-person-heart step-icon"></i>
+                    </div>
+                    <span class="step-label">Mother</span>
+                </button>
+
+                <button type="button" class="wizard-step" data-step="4" data-target="guardian">
+                    <div class="step-circle">
+                        <i class="bi bi-people step-icon"></i>
+                    </div>
+                    <span class="step-label">Guardian</span>
+                </button>
+
+                <button type="button" class="wizard-step" data-step="5" data-target="address">
+                    <div class="step-circle">
+                        <i class="bi bi-geo-alt step-icon"></i>
+                    </div>
+                    <span class="step-label">Address</span>
+                </button>
+
+                <button type="button" class="wizard-step" data-step="6" data-target="academic">
+                    <div class="step-circle">
+                        <i class="bi bi-book step-icon"></i>
+                    </div>
+                    <span class="step-label">Academic</span>
+                </button>
+            </div>
+
+            @using (Html.BeginForm("Save", "Student", FormMethod.Post, new { id = "studentForm", enctype = "multipart/form-data" }))
+            {
+                @Html.HiddenFor(m => m.Id)
+                @Html.HiddenFor(m => m.AdmissionId)
+
+                <!-- Tab Content -->
+                <div class="tab-content" id="studentTabsContent">
+
+                    <!-- Tab 1: Registration Info -->
+                    <div class="tab-pane fade show active" id="registration" role="tabpanel">
+                        <div class="tab-header">
+                            <div class="tab-header-icon">
+                                <i class="bi bi-card-checklist"></i>
+                            </div>
+                            <div class="tab-header-text">
+                                <h6>Registration Information</h6>
+                                <p>Enter student registration and class details</p>
+                            </div>
+                        </div>
+
+                        @if (!isEdit)
+                        {
+                            <!-- Import from Admission Section -->
+                            <div class="admission-import-section mb-4">
+                                <div class="alert alert-info d-flex align-items-center gap-3" style="background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); border: 2px solid #0ea5e9; border-radius: 12px;">
+                                    <i class="bi bi-lightbulb fs-4 text-primary"></i>
+                                    <div class="flex-grow-1">
+                                        <strong>Import from Admission</strong>
+                                        <p class="mb-2 small">Select an approved admission to auto-fill student details</p>
+                                        <select id="admissionSelect" class="form-select" style="max-width: 500px;" onchange="loadAdmissionData(this.value)">
+                                            <option value="">-- Select Admission (Optional) --</option>
+                                            @if (ViewBag.Admissions != null)
+                                            {
+                                                foreach (var admission in ViewBag.Admissions as List<School.Web.Models.AdmissionDropdownItem>)
+                                                {
+                                                    <option value="@admission.Id"
+                                                            data-name="@admission.NameOfStudent"
+                                                            data-father="@admission.FatherName"
+                                                            data-class="@admission.ClassSought"
+                                                            data-admissionno="@admission.AdmissionNo"
+                                                            data-date="@admission.DateOfAdmission">
+                                                        @admission.DisplayText
+                                                    </option>
+                                                }
+                                            }
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                        <table class="admission-table">
+                            <tr>
+                                <td class="lbl" style="width:18%">Registration No.</td>
+                                <td class="val" style="width:32%">@Html.TextBoxFor(m => m.RegistrationNo, new { @placeholder = "Enter registration number" })</td>
+                                <td class="lbl" style="width:18%">Roll No.</td>
+                                <td class="val" style="width:32%">@Html.TextBoxFor(m => m.RollNo, new { @placeholder = "Enter roll number" })</td>
+                            </tr>
+                            <tr>
+                                <td class="lbl">Admission No.</td>
+                                <td class="val">@Html.TextBoxFor(m => m.AdmissionNo, new { @placeholder = "Admission number" })</td>
+                                <td class="lbl">Date of Admission</td>
+                                <td class="val">@Html.TextBoxFor(m => m.DateOfAdmission, new { @type = "date" })</td>
+                            </tr>
+                            <tr>
+                                <td class="lbl">Current Class</td>
+                                <td class="val">@Html.TextBoxFor(m => m.CurrentClass, new { @placeholder = "e.g., Class 5, Grade 10" })</td>
+                                <td class="lbl">Section</td>
+                                <td class="val">@Html.TextBoxFor(m => m.Section, new { @placeholder = "e.g., A, B, C" })</td>
+                            </tr>
+                            <tr>
+                                <td class="lbl">Status</td>
+                                <td class="val" colspan="3">
+                                    @Html.DropDownListFor(m => m.Status, new List<SelectListItem>
+                                    {
+                                        new SelectListItem { Text = "Active", Value = "Active" },
+                                        new SelectListItem { Text = "Inactive", Value = "Inactive" },
+                                        new SelectListItem { Text = "Left", Value = "Left" },
+                                        new SelectListItem { Text = "Passed Out", Value = "Passed Out" }
+                                    }, new { id = "Status" })
+                                </td>
+                            </tr>
+                        </table>
+                        <div class="tab-navigation">
+                            <div></div>
+                            <button type="button" class="btn btn-primary" onclick="nextTab()">
+                                Next <i class="bi bi-arrow-right ms-1"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tab 2: Student Information -->
+                    <div class="tab-pane fade" id="student" role="tabpanel">
+                        <div class="tab-header">
+                            <div class="tab-header-icon">
+                                <i class="bi bi-person"></i>
+                            </div>
+                            <div class="tab-header-text">
+                                <h6>Student Information</h6>
+                                <p>Enter student's personal details</p>
+                            </div>
+                        </div>
+                        <table class="admission-table">
+                            <tr>
+                                <td class="lbl" style="width:18%">Name of Student</td>
+                                <td class="val" style="width:32%">@Html.TextBoxFor(m => m.NameOfStudent, new { @placeholder = "Full name in English" })</td>
+                                <td class="lbl" style="width:18%">Name (In Urdu)</td>
+                                <td class="val-rtl" style="width:32%">@Html.TextBoxFor(m => m.NameOfStudentUrdu, new { @placeholder = "اردو میں نام" })</td>
+                            </tr>
+                            <tr>
+                                <td class="lbl">Date of Birth</td>
+                                <td class="val">@Html.TextBoxFor(m => m.DateOfBirth, new { @type = "date" })</td>
+                                <td class="lbl">DOB (In Words)</td>
+                                <td class="val">@Html.TextBoxFor(m => m.DateOfBirthInWords, new { @placeholder = "e.g., January 15, 2010" })</td>
+                            </tr>
+                            <tr>
+                                <td class="lbl">Place of Birth</td>
+                                <td class="val">@Html.TextBoxFor(m => m.PlaceOfBirth, new { @placeholder = "City/Town" })</td>
+                                <td class="lbl">Form-B No.</td>
+                                <td class="val">@Html.TextBoxFor(m => m.FormBNo, new { @placeholder = "NADRA Form-B number" })</td>
+                            </tr>
+                            <tr>
+                                <td class="lbl">Gender</td>
+                                <td class="val">@Html.TextBoxFor(m => m.Gender, new { @placeholder = "Male / Female" })</td>
+                                <td class="lbl">Religion</td>
+                                <td class="val">@Html.TextBoxFor(m => m.Religion, new { @placeholder = "Religion" })</td>
+                            </tr>
+                            <tr>
+                                <td class="lbl">Blood Group</td>
+                                <td class="val">@Html.TextBoxFor(m => m.BloodGroup, new { @placeholder = "e.g., A+, B-, O+" })</td>
+                                <td class="lbl">Nationality</td>
+                                <td class="val">@Html.TextBoxFor(m => m.Nationality, new { @placeholder = "e.g., Pakistani" })</td>
+                            </tr>
+                            <tr>
+                                <td class="lbl">Student Photo</td>
+                                <td class="val" colspan="3">
+                                    <div class="photo-upload-container">
+                                        <div class="photo-preview-wrapper">
+                                            @if (!string.IsNullOrEmpty(Model.StudentPhoto))
+                                            {
+                                                <img id="photoPreview" src="@Model.StudentPhoto" alt="Photo Preview" />
+                                            }
+                                            else
+                                            {
+                                                <img id="photoPreview" src="" alt="Photo Preview" style="display: none;" />
+                                            }
+                                            <div id="photoPlaceholder" class="photo-placeholder" style="@(!string.IsNullOrEmpty(Model.StudentPhoto) ? "display: none;" : "")">
+                                                <i class="bi bi-person-bounding-box"></i>
+                                                <span>No photo selected</span>
+                                            </div>
+                                        </div>
+                                        <div class="photo-upload-controls">
+                                            <input type="file" name="PhotoFile" id="PhotoFile" accept=".jpg,.jpeg,.png" class="photo-file-input" />
+                                            <label for="PhotoFile" class="btn btn-outline-primary btn-sm">
+                                                <i class="bi bi-upload me-1"></i> Choose Photo
+                                            </label>
+                                            <button type="button" class="btn btn-secondary btn-sm" id="removePhoto" style="@(string.IsNullOrEmpty(Model.StudentPhoto) ? "display: none;" : "")">
+                                                <i class="bi bi-x-lg me-1"></i> Remove
+                                            </button>
+                                            <div class="photo-help-text">
+                                                <small>Allowed: JPG, JPEG, PNG (Max 2MB)</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @Html.HiddenFor(m => m.StudentPhoto)
+                                </td>
+                            </tr>
+                        </table>
+                        <div class="tab-navigation">
+                            <button type="button" class="btn btn-secondary" onclick="prevTab()">
+                                <i class="bi bi-arrow-left me-1"></i> Previous
+                            </button>
+                            <button type="button" class="btn btn-primary" onclick="nextTab()">
+                                Next <i class="bi bi-arrow-right ms-1"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tab 3: Father's Information -->
+                    <div class="tab-pane fade" id="father" role="tabpanel">
+                        <div class="tab-header">
+                            <div class="tab-header-icon">
+                                <i class="bi bi-person-badge"></i>
+                            </div>
+                            <div class="tab-header-text">
+                                <h6>Father's Information</h6>
+                                <p>Enter father's details and contact information</p>
+                            </div>
+                        </div>
+                        <table class="admission-table">
+                            <tr>
+                                <td class="lbl" style="width:18%">Father's Name</td>
+                                <td class="val" style="width:32%">@Html.TextBoxFor(m => m.FatherName, new { @placeholder = "Full name in English" })</td>
+                                <td class="lbl" style="width:18%">Name (In Urdu)</td>
+                                <td class="val-rtl" style="width:32%">@Html.TextBoxFor(m => m.FatherNameUrdu, new { @placeholder = "اردو میں نام" })</td>
+                            </tr>
+                            <tr>
+                                <td class="lbl">Father's CNIC</td>
+                                <td class="val">@Html.TextBoxFor(m => m.FatherCNIC, new { @placeholder = "XXXXX-XXXXXXX-X" })</td>
+                                <td class="lbl">Occupation</td>
+                                <td class="val">@Html.TextBoxFor(m => m.FatherOccupation, new { @placeholder = "Profession/Job" })</td>
+                            </tr>
+                            <tr>
+                                <td class="lbl">Mobile No.</td>
+                                <td class="val" colspan="3">@Html.TextBoxFor(m => m.FatherMobile, new { @placeholder = "03XX-XXXXXXX" })</td>
+                            </tr>
+                        </table>
+                        <div class="tab-navigation">
+                            <button type="button" class="btn btn-secondary" onclick="prevTab()">
+                                <i class="bi bi-arrow-left me-1"></i> Previous
+                            </button>
+                            <button type="button" class="btn btn-primary" onclick="nextTab()">
+                                Next <i class="bi bi-arrow-right ms-1"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tab 4: Mother's Information -->
+                    <div class="tab-pane fade" id="mother" role="tabpanel">
+                        <div class="tab-header">
+                            <div class="tab-header-icon">
+                                <i class="bi bi-person-heart"></i>
+                            </div>
+                            <div class="tab-header-text">
+                                <h6>Mother's Information</h6>
+                                <p>Enter mother's details and contact information</p>
+                            </div>
+                        </div>
+                        <table class="admission-table">
+                            <tr>
+                                <td class="lbl" style="width:18%">Mother's Name</td>
+                                <td class="val" style="width:32%">@Html.TextBoxFor(m => m.MotherName, new { @placeholder = "Full name" })</td>
+                                <td class="lbl" style="width:18%">Mother's CNIC</td>
+                                <td class="val" style="width:32%">@Html.TextBoxFor(m => m.MotherCNIC, new { @placeholder = "XXXXX-XXXXXXX-X" })</td>
+                            </tr>
+                            <tr>
+                                <td class="lbl">Mobile No.</td>
+                                <td class="val" colspan="3">@Html.TextBoxFor(m => m.MotherMobile, new { @placeholder = "03XX-XXXXXXX" })</td>
+                            </tr>
+                        </table>
+                        <div class="tab-navigation">
+                            <button type="button" class="btn btn-secondary" onclick="prevTab()">
+                                <i class="bi bi-arrow-left me-1"></i> Previous
+                            </button>
+                            <button type="button" class="btn btn-primary" onclick="nextTab()">
+                                Next <i class="bi bi-arrow-right ms-1"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tab 5: Guardian's Information -->
+                    <div class="tab-pane fade" id="guardian" role="tabpanel">
+                        <div class="tab-header">
+                            <div class="tab-header-icon">
+                                <i class="bi bi-people"></i>
+                            </div>
+                            <div class="tab-header-text">
+                                <h6>Guardian's Information</h6>
+                                <p>Enter guardian details (if different from parents)</p>
+                            </div>
+                        </div>
+                        <table class="admission-table">
+                            <tr>
+                                <td class="lbl" style="width:18%">Guardian's Name</td>
+                                <td class="val" style="width:32%">@Html.TextBoxFor(m => m.GuardianName, new { @placeholder = "Full name" })</td>
+                                <td class="lbl" style="width:18%">Guardian's CNIC</td>
+                                <td class="val" style="width:32%">@Html.TextBoxFor(m => m.GuardianCNIC, new { @placeholder = "XXXXX-XXXXXXX-X" })</td>
+                            </tr>
+                            <tr>
+                                <td class="lbl">Relation</td>
+                                <td class="val">@Html.TextBoxFor(m => m.GuardianRelation, new { @placeholder = "e.g., Uncle, Grandfather" })</td>
+                                <td class="lbl">Mobile No.</td>
+                                <td class="val">@Html.TextBoxFor(m => m.GuardianMobile, new { @placeholder = "03XX-XXXXXXX" })</td>
+                            </tr>
+                        </table>
+                        <div class="tab-navigation">
+                            <button type="button" class="btn btn-secondary" onclick="prevTab()">
+                                <i class="bi bi-arrow-left me-1"></i> Previous
+                            </button>
+                            <button type="button" class="btn btn-primary" onclick="nextTab()">
+                                Next <i class="bi bi-arrow-right ms-1"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tab 6: Address Information -->
+                    <div class="tab-pane fade" id="address" role="tabpanel">
+                        <div class="tab-header">
+                            <div class="tab-header-icon">
+                                <i class="bi bi-geo-alt"></i>
+                            </div>
+                            <div class="tab-header-text">
+                                <h6>Address Information</h6>
+                                <p>Enter present and permanent address details</p>
+                            </div>
+                        </div>
+                        <table class="admission-table">
+                            <tr>
+                                <td class="lbl" style="width:18%">Present Address</td>
+                                <td class="val" colspan="3">@Html.TextBoxFor(m => m.PresentAddress, new { @placeholder = "Complete present address" })</td>
+                            </tr>
+                            <tr>
+                                <td class="lbl">Present Address (Urdu)</td>
+                                <td class="val-rtl" colspan="3">@Html.TextBoxFor(m => m.PresentAddressUrdu, new { @placeholder = "موجودہ پتہ" })</td>
+                            </tr>
+                            <tr>
+                                <td class="lbl">Permanent Address</td>
+                                <td class="val" colspan="3">@Html.TextBoxFor(m => m.PermanentAddress, new { @placeholder = "Complete permanent address" })</td>
+                            </tr>
+                            <tr>
+                                <td class="lbl">Permanent Address (Urdu)</td>
+                                <td class="val-rtl" colspan="3">@Html.TextBoxFor(m => m.PermanentAddressUrdu, new { @placeholder = "مستقل پتہ" })</td>
+                            </tr>
+                            <tr>
+                                <td class="lbl">Phone (Residence)</td>
+                                <td class="val" style="width:32%">@Html.TextBoxFor(m => m.PhoneResidence, new { @placeholder = "Landline number" })</td>
+                                <td class="lbl" style="width:18%">Emergency Contact</td>
+                                <td class="val" style="width:32%">@Html.TextBoxFor(m => m.EmergencyContact, new { @placeholder = "Emergency phone number" })</td>
+                            </tr>
+                            <tr>
+                                <td class="lbl">Email</td>
+                                <td class="val" colspan="3">@Html.TextBoxFor(m => m.Email, new { @type = "email", @placeholder = "student@example.com" })</td>
+                            </tr>
+                        </table>
+                        <div class="tab-navigation">
+                            <button type="button" class="btn btn-secondary" onclick="prevTab()">
+                                <i class="bi bi-arrow-left me-1"></i> Previous
+                            </button>
+                            <button type="button" class="btn btn-primary" onclick="nextTab()">
+                                Next <i class="bi bi-arrow-right ms-1"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tab 7: Academic & Fee Information -->
+                    <div class="tab-pane fade" id="academic" role="tabpanel">
+                        <div class="tab-header">
+                            <div class="tab-header-icon">
+                                <i class="bi bi-book"></i>
+                            </div>
+                            <div class="tab-header-text">
+                                <h6>Academic & Fee Information</h6>
+                                <p>Previous education and fee details</p>
+                            </div>
+                        </div>
+                        <table class="admission-table">
+                            <tr>
+                                <td class="lbl" style="width:18%">Previous School</td>
+                                <td class="val" colspan="3">@Html.TextBoxFor(m => m.PreviousSchool, new { @placeholder = "Name of previous school" })</td>
+                            </tr>
+                            <tr>
+                                <td class="lbl">Last Class Attended</td>
+                                <td class="val" style="width:32%">@Html.TextBoxFor(m => m.LastClass, new { @placeholder = "Class/Grade" })</td>
+                                <td class="lbl" style="width:18%">Board</td>
+                                <td class="val" style="width:32%">@Html.TextBoxFor(m => m.Board, new { @placeholder = "Education board" })</td>
+                            </tr>
+                            <tr>
+                                <td class="lbl">Year of Passing</td>
+                                <td class="val">@Html.TextBoxFor(m => m.YearOfPassing, new { @placeholder = "YYYY" })</td>
+                                <td class="lbl">Marks Obtained</td>
+                                <td class="val">@Html.TextBoxFor(m => m.MarksObtained, new { @placeholder = "Marks" })</td>
+                            </tr>
+                            <tr>
+                                <td class="lbl">Total Marks</td>
+                                <td class="val">@Html.TextBoxFor(m => m.TotalMarks, new { @placeholder = "Out of" })</td>
+                                <td class="lbl">Percentage</td>
+                                <td class="val">@Html.TextBoxFor(m => m.Percentage, new { @placeholder = "%" })</td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" style="padding: 16px 0 8px 0;"><strong style="color: #475569;">Fee Information</strong></td>
+                            </tr>
+                            <tr>
+                                <td class="lbl">Admission Fee</td>
+                                <td class="val">@Html.TextBoxFor(m => m.AdmissionFee, new { @placeholder = "Rs." })</td>
+                                <td class="lbl">Monthly Fee</td>
+                                <td class="val">@Html.TextBoxFor(m => m.MonthlyFee, new { @placeholder = "Rs." })</td>
+                            </tr>
+                            <tr>
+                                <td class="lbl">Fee Category</td>
+                                <td class="val" colspan="3">@Html.TextBoxFor(m => m.FeeCategory, new { @placeholder = "e.g., Regular, Scholarship, Sibling Discount" })</td>
+                            </tr>
+                        </table>
+
+                        <div class="tab-navigation">
+                            <button type="button" class="btn btn-secondary" onclick="prevTab()">
+                                <i class="bi bi-arrow-left me-1"></i> Previous
+                            </button>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-secondary" onclick="resetForm()">
+                                    <i class="bi bi-x-lg me-1"></i> Clear All
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-lg me-1"></i> @(isEdit ? "Update Student" : "Save Student")
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const API_BASE = 'http://localhost:5266/api';
+        const tabNames = ['Registration Info', 'Student Information', "Father's Information", "Mother's Information", "Guardian's Information", 'Address Information', 'Academic & Fee Info'];
+        const tabs = ['registration', 'student', 'father', 'mother', 'guardian', 'address', 'academic'];
+        let currentTabIndex = 0;
+
+        $(document).ready(function () {
+            // Wizard step click handler
+            $('.wizard-step').on('click', function () {
+                const stepIndex = parseInt($(this).data('step'));
+                goToStep(stepIndex);
+            });
+
+            // Initialize
+            updateWizard();
+        });
+
+        // Load admission data and populate form
+        function loadAdmissionData(admissionId) {
+            if (!admissionId) {
+                // Clear the AdmissionId hidden field
+                $('#AdmissionId').val('');
+                return;
+            }
+
+            // Show loading
+            $('#loadingOverlay').show();
+
+            // Fetch admission details from API
+            $.ajax({
+                url: `${API_BASE}/Admission/${admissionId}`,
+                method: 'GET',
+                success: function(data) {
+                    // Set AdmissionId
+                    $('#AdmissionId').val(admissionId);
+
+                    // Populate Registration Info
+                    $('#AdmissionNo').val(data.admissionNo || '');
+                    $('#DateOfAdmission').val(data.dateOfAdmission ? data.dateOfAdmission.split('T')[0] : '');
+                    $('#CurrentClass').val(data.classSought || '');
+
+                    // Populate Student Info
+                    $('#NameOfStudent').val(data.nameOfStudent || '');
+                    $('#NameOfStudentUrdu').val(data.nameOfStudentUrdu || '');
+                    $('#DateOfBirth').val(data.dateOfBirth ? data.dateOfBirth.split('T')[0] : '');
+                    $('#DateOfBirthInWords').val(data.dateOfBirthInWords || '');
+                    $('#PlaceOfBirth').val(data.placeOfBirth || '');
+                    $('#FormBNo').val(data.formBNo || '');
+                    $('#Gender').val(data.gender || '');
+                    $('#Religion').val(data.religion || '');
+
+                    // Populate Father Info
+                    $('#FatherName').val(data.fatherName || '');
+                    $('#FatherNameUrdu').val(data.fatherNameUrdu || '');
+                    $('#FatherCNIC').val(data.fatherCNIC || '');
+                    $('#FatherOccupation').val(data.fatherOccupation || '');
+                    $('#FatherMobile').val(data.fatherMobile || '');
+
+                    // Populate Mother Info
+                    $('#MotherName').val(data.motherName || '');
+                    $('#MotherCNIC').val(data.motherCNIC || '');
+                    $('#MotherMobile').val(data.motherMobile || '');
+
+                    // Populate Guardian Info
+                    $('#GuardianName').val(data.guardianName || '');
+                    $('#GuardianCNIC').val(data.guardianCNIC || '');
+                    $('#GuardianRelation').val(data.guardianRelation || '');
+                    $('#GuardianMobile').val(data.guardianMobile || '');
+
+                    // Populate Address Info
+                    $('#PresentAddress').val(data.presentAddress || '');
+                    $('#PresentAddressUrdu').val(data.presentAddressUrdu || '');
+                    $('#PermanentAddress').val(data.permanentAddress || '');
+                    $('#PermanentAddressUrdu').val(data.permanentAddressUrdu || '');
+                    $('#PhoneResidence').val(data.phoneResidence || '');
+                    $('#EmergencyContact').val(data.emergencyContact || '');
+
+                    // Populate Academic Info
+                    $('#PreviousSchool').val(data.previousSchool || '');
+                    $('#LastClass').val(data.lastClass || '');
+                    $('#Board').val(data.board || '');
+                    $('#YearOfPassing').val(data.yearOfPassing || '');
+                    $('#MarksObtained').val(data.marksObtained || '');
+                    $('#TotalMarks').val(data.totalMarks || '');
+                    $('#Percentage').val(data.percentage || '');
+
+                    // Populate Fee Info
+                    $('#AdmissionFee').val(data.admissionFee || '');
+
+                    // Handle photo if exists
+                    if (data.studentPhoto) {
+                        $('#photoPreview').attr('src', data.studentPhoto).show();
+                        $('#photoPlaceholder').hide();
+                        $('#removePhoto').show();
+                        $('#StudentPhoto').val(data.studentPhoto);
+                    }
+
+                    showAlert('Admission data loaded successfully! Please review and add any additional details.', 'success');
+                    $('#loadingOverlay').hide();
+                },
+                error: function(xhr, status, error) {
+                    showAlert('Failed to load admission data. Please try again or enter details manually.', 'danger');
+                    $('#loadingOverlay').hide();
+                }
+            });
+        }
+
+        // Go to specific step
+        function goToStep(stepIndex) {
+            if (stepIndex < 0 || stepIndex >= tabs.length) return;
+
+            // Hide all tab panes
+            $('.tab-pane').removeClass('show active');
+
+            // Show target pane
+            $('#' + tabs[stepIndex]).addClass('show active');
+
+            // Update current index
+            currentTabIndex = stepIndex;
+
+            // Update wizard UI
+            updateWizard();
+        }
+
+        // Update wizard UI
+        function updateWizard() {
+            const $steps = $('.wizard-step');
+
+            $steps.each(function (index) {
+                $(this).removeClass('active completed');
+
+                if (index < currentTabIndex) {
+                    $(this).addClass('completed');
+                } else if (index === currentTabIndex) {
+                    $(this).addClass('active');
+                }
+            });
+
+            // Update progress line
+            const progressWidth = currentTabIndex > 0 ? ((currentTabIndex) / (tabs.length - 1)) * 100 : 0;
+            $('#wizardProgressLine').css('width', progressWidth + '%');
+
+            // Update progress bar and text
+            const progress = ((currentTabIndex + 1) / tabs.length) * 100;
+            $('#formProgress').css('width', progress + '%');
+            $('#currentStep').text(currentTabIndex + 1);
+            $('#stepName').text(tabNames[currentTabIndex]);
+        }
+
+        // Navigate to next tab
+        function nextTab() {
+            if (currentTabIndex < tabs.length - 1) {
+                goToStep(currentTabIndex + 1);
+            }
+        }
+
+        // Navigate to previous tab
+        function prevTab() {
+            if (currentTabIndex > 0) {
+                goToStep(currentTabIndex - 1);
+            }
+        }
+
+        // Reset form
+        function resetForm() {
+            if (confirm('Are you sure you want to clear all fields?')) {
+                document.getElementById('studentForm').reset();
+                // Go back to first tab
+                goToStep(0);
+            }
+        }
+
+        // Show alert
+        function showAlert(message, type) {
+            const alert = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+            $('#alertContainer').html(alert);
+
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                $('.alert').alert('close');
+            }, 5000);
+        }
+
+        // Photo upload preview
+        $('#PhotoFile').on('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Validate file type
+                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+                if (!allowedTypes.includes(file.type)) {
+                    showAlert('Please select a valid image file (JPG, JPEG, or PNG).', 'danger');
+                    this.value = '';
+                    return;
+                }
+
+                // Validate file size (2MB max)
+                const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+                if (file.size > maxSize) {
+                    showAlert('File size must be less than 2MB.', 'danger');
+                    this.value = '';
+                    return;
+                }
+
+                // Show preview
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    $('#photoPreview').attr('src', event.target.result).show();
+                    $('#photoPlaceholder').hide();
+                    $('#removePhoto').show();
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Remove photo
+        $('#removePhoto').on('click', function () {
+            $('#PhotoFile').val('');
+            $('#photoPreview').attr('src', '').hide();
+            $('#photoPlaceholder').show();
+            $('#removePhoto').hide();
+            $('#StudentPhoto').val('');
+        });
+
+        // Keyboard navigation
+        $(document).keydown(function (e) {
+            // Alt + Right Arrow = Next Tab
+            if (e.altKey && e.keyCode === 39) {
+                e.preventDefault();
+                nextTab();
+            }
+            // Alt + Left Arrow = Previous Tab
+            if (e.altKey && e.keyCode === 37) {
+                e.preventDefault();
+                prevTab();
+            }
+        });
+    </script>
+}

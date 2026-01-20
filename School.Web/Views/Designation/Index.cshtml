@@ -1,0 +1,539 @@
+@{
+    ViewData["Title"] = "Designations";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<style>
+    .card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        margin-bottom: 24px;
+    }
+
+    .card-header {
+        background: white;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 20px 24px;
+        border-radius: 16px 16px 0 0 !important;
+    }
+
+    .card-header h5 {
+        margin: 0;
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .card-body {
+        padding: 24px;
+    }
+
+    .form-label {
+        font-weight: 500;
+        color: #475569;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+
+    .form-control, .form-select {
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #008649;
+        box-shadow: 0 0 0 4px rgba(0, 134, 73, 0.1);
+    }
+
+    .form-check-input {
+        width: 18px;
+        height: 18px;
+        border: 2px solid #cbd5e1;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .form-check-input:checked {
+        background-color: #008649;
+        border-color: #008649;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #008649 0%, #006d3b 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 134, 73, 0.4);
+        background: linear-gradient(135deg, #006d3b 0%, #005a30 100%);
+    }
+
+    .btn-secondary {
+        background: #f1f5f9;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-weight: 600;
+        font-size: 14px;
+        color: #64748b;
+        transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+        background: #e2e8f0;
+        border-color: #cbd5e1;
+        color: #475569;
+    }
+
+    .btn-info {
+        background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-weight: 600;
+        font-size: 14px;
+        color: white;
+        transition: all 0.2s;
+    }
+
+    .btn-info:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
+        color: white;
+    }
+
+    .btn-danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-weight: 600;
+        font-size: 14px;
+        color: white;
+        transition: all 0.2s;
+    }
+
+    .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        color: white;
+    }
+
+    .table {
+        margin-bottom: 0;
+    }
+
+    .table thead th {
+        background: #f8fafc;
+        border-bottom: 2px solid #e2e8f0;
+        padding: 14px 16px;
+        font-weight: 600;
+        font-size: 13px;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+    }
+
+    .table tbody td {
+        padding: 12px 16px;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 14px;
+    }
+
+    .table tbody tr:hover {
+        background: #f8fafc;
+    }
+
+    .table tbody tr.selected {
+        background: #ecfdf5;
+        border-left: 3px solid #008649;
+    }
+
+    .alert {
+        border-radius: 12px;
+        border: none;
+        padding: 16px 20px;
+    }
+
+    .alert-success {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .alert-danger {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        border-radius: 16px;
+    }
+
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+        border-width: 0.3rem;
+    }
+
+    .form-section {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .form-section-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .grid-section {
+        margin-top: 24px;
+    }
+
+    .grid-section-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Alert Messages -->
+    <div id="alertContainer"></div>
+
+    <!-- Designations Card -->
+    <div class="card">
+        <div class="card-header">
+            <h5><i class="bi bi-briefcase me-2"></i>Designations</h5>
+        </div>
+        <div class="card-body position-relative">
+            <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+                <div class="spinner-border text-success" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+
+            <!-- Form Section -->
+            <div class="form-section">
+                <div class="form-section-title">
+                    <i class="bi bi-pencil-square me-2"></i><span id="formTitle">Add New Designation</span>
+                </div>
+                <form id="designationForm">
+                    <input type="hidden" id="designationId" name="Id" value="0" />
+
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-2">
+                            <label for="code" class="form-label">Code <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="code" name="Code"
+                                   placeholder="e.g., PRIN" required />
+                        </div>
+                        <div class="col-md-3">
+                            <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" name="Name"
+                                   placeholder="e.g., Principal" required />
+                        </div>
+                        <div class="col-md-3">
+                            <label for="description" class="form-label">Description</label>
+                            <input type="text" class="form-control" id="description" name="Description"
+                                   placeholder="Description (optional)" />
+                        </div>
+                        <div class="col-md-1">
+                            <label for="sortOrder" class="form-label">Sort</label>
+                            <input type="number" class="form-control" id="sortOrder" name="SortOrder" value="0" />
+                        </div>
+                        <div class="col-md-1">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="isActive" name="IsActive" checked />
+                                <label class="form-check-label" for="isActive">Active</label>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-primary" onclick="saveDesignation()">
+                                    <i class="bi bi-check-lg me-1"></i> Save
+                                </button>
+                                <button type="button" class="btn btn-secondary" onclick="resetForm()">
+                                    <i class="bi bi-x-lg me-1"></i> Clear
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Grid Section -->
+            <div class="grid-section">
+                <div class="grid-section-title">
+                    <i class="bi bi-table me-2"></i>Designations List
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover" id="designationsTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 60px;">Sr#</th>
+                                <th>Code</th>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th class="text-center" style="width: 80px;">Sort</th>
+                                <th class="text-center" style="width: 80px;">Status</th>
+                                <th class="text-center" style="width: 120px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="designationsBody">
+                            <!-- Designations will be loaded dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const API_BASE = 'http://localhost:5266/api';
+        let editingId = 0;
+
+        $(document).ready(function () {
+            loadDesignations();
+        });
+
+        async function loadDesignations() {
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/Designation`);
+                if (response.ok) {
+                    const data = await response.json();
+                    renderList(data);
+                } else {
+                    showAlert('Failed to load designations', 'danger');
+                }
+            } catch (error) {
+                console.error('Error loading designations:', error);
+                showAlert('Error loading designations: ' + error.message, 'danger');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function renderList(items) {
+            const tbody = $('#designationsBody');
+            tbody.empty();
+
+            if (items.length === 0) {
+                tbody.html('<tr><td colspan="7" class="text-center text-muted py-4">No designations found. Add a new designation using the form above.</td></tr>');
+                return;
+            }
+
+            items.forEach((item, index) => {
+                const row = `
+                    <tr data-id="${item.id}" class="${editingId === item.id ? 'selected' : ''}">
+                        <td>${index + 1}</td>
+                        <td><strong>${item.code}</strong></td>
+                        <td>${item.name}</td>
+                        <td>${item.description || '-'}</td>
+                        <td class="text-center">${item.sortOrder || 0}</td>
+                        <td class="text-center">
+                            <span class="badge ${item.isActive ? 'bg-success' : 'bg-secondary'}">
+                                ${item.isActive ? 'Active' : 'Inactive'}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-sm btn-info me-1" onclick="editDesignation(${item.id})" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-danger" onclick="deleteDesignation(${item.id}, '${item.name}')" title="Delete">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.append(row);
+            });
+        }
+
+        async function editDesignation(id) {
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/Designation/${id}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    populateForm(data);
+                    editingId = id;
+                    $('#formTitle').text('Edit Designation');
+
+                    $('#designationsBody tr').removeClass('selected');
+                    $(`#designationsBody tr[data-id="${id}"]`).addClass('selected');
+
+                    $('html, body').animate({
+                        scrollTop: $('.form-section').offset().top - 100
+                    }, 300);
+                } else {
+                    showAlert('Failed to load designation', 'danger');
+                }
+            } catch (error) {
+                console.error('Error loading designation:', error);
+                showAlert('Error loading designation: ' + error.message, 'danger');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function deleteDesignation(id, name) {
+            if (!confirm(`Are you sure you want to delete "${name}"?`)) {
+                return;
+            }
+
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/Designation/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (response.ok) {
+                    showAlert('Designation deleted successfully!', 'success');
+                    if (editingId === id) {
+                        resetForm();
+                    }
+                    await loadDesignations();
+                } else {
+                    const error = await response.json();
+                    showAlert(error.message || 'Failed to delete designation', 'danger');
+                }
+            } catch (error) {
+                console.error('Error deleting designation:', error);
+                showAlert('Error deleting designation: ' + error.message, 'danger');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function populateForm(data) {
+            $('#designationId').val(data.id);
+            $('#code').val(data.code);
+            $('#name').val(data.name);
+            $('#description').val(data.description);
+            $('#sortOrder').val(data.sortOrder);
+            $('#isActive').prop('checked', data.isActive);
+        }
+
+        function resetForm() {
+            $('#designationId').val('0');
+            $('#code').val('');
+            $('#name').val('');
+            $('#description').val('');
+            $('#sortOrder').val('0');
+            $('#isActive').prop('checked', true);
+            $('#formTitle').text('Add New Designation');
+            editingId = 0;
+            $('#designationsBody tr').removeClass('selected');
+        }
+
+        async function saveDesignation() {
+            const code = $('#code').val().trim();
+            const name = $('#name').val().trim();
+
+            if (!code || !name) {
+                showAlert('Please enter code and name', 'danger');
+                return;
+            }
+
+            const id = parseInt($('#designationId').val()) || 0;
+            const data = {
+                Id: id,
+                Code: code,
+                Name: name,
+                Description: $('#description').val().trim(),
+                SortOrder: parseInt($('#sortOrder').val()) || 0,
+                IsActive: $('#isActive').is(':checked')
+            };
+
+            showLoading();
+            try {
+                let response;
+                if (id === 0) {
+                    response = await fetch(`${API_BASE}/Designation`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                } else {
+                    response = await fetch(`${API_BASE}/Designation/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                }
+
+                if (response.ok) {
+                    showAlert('Designation saved successfully!', 'success');
+                    resetForm();
+                    await loadDesignations();
+                } else {
+                    const error = await response.json();
+                    showAlert(error.message || 'Failed to save designation', 'danger');
+                }
+            } catch (error) {
+                console.error('Error saving designation:', error);
+                showAlert('Error saving designation: ' + error.message, 'danger');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function showLoading() {
+            $('#loadingOverlay').show();
+        }
+
+        function hideLoading() {
+            $('#loadingOverlay').hide();
+        }
+
+        function showAlert(message, type) {
+            const alert = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+            $('#alertContainer').html(alert);
+            setTimeout(() => {
+                $('.alert').alert('close');
+            }, 5000);
+        }
+    </script>
+}

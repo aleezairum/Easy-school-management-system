@@ -1,0 +1,740 @@
+@{
+    ViewData["Title"] = ViewData["EmployeeId"] != null ? "Edit Employee" : "Add Employee";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    var employeeId = ViewData["EmployeeId"];
+}
+
+<style>
+    .card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        margin-bottom: 24px;
+    }
+
+    .card-header {
+        background: white;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 20px 24px;
+        border-radius: 16px 16px 0 0 !important;
+    }
+
+    .card-header h5 {
+        margin: 0;
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .card-body {
+        padding: 24px;
+    }
+
+    /* Tab Navigation */
+    .nav-tabs {
+        border-bottom: 2px solid #e2e8f0;
+        margin-bottom: 24px;
+    }
+
+    .nav-tabs .nav-link {
+        border: none;
+        color: #64748b;
+        font-weight: 500;
+        padding: 12px 20px;
+        margin-bottom: -2px;
+        transition: all 0.2s;
+    }
+
+    .nav-tabs .nav-link:hover {
+        color: #008649;
+        border: none;
+    }
+
+    .nav-tabs .nav-link.active {
+        color: #008649;
+        border: none;
+        border-bottom: 3px solid #008649;
+        background: transparent;
+    }
+
+    /* Form Styles */
+    .form-label {
+        font-weight: 500;
+        color: #475569;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+
+    .form-control, .form-select {
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #008649;
+        box-shadow: 0 0 0 4px rgba(0, 134, 73, 0.1);
+    }
+
+    .form-check-input {
+        width: 18px;
+        height: 18px;
+        border: 2px solid #cbd5e1;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .form-check-input:checked {
+        background-color: #008649;
+        border-color: #008649;
+    }
+
+    /* Button Styles */
+    .btn-primary {
+        background: linear-gradient(135deg, #008649 0%, #006d3b 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 10px 24px;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 134, 73, 0.4);
+        background: linear-gradient(135deg, #006d3b 0%, #005a30 100%);
+    }
+
+    .btn-secondary {
+        background: #f1f5f9;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 10px 24px;
+        font-weight: 600;
+        font-size: 14px;
+        color: #64748b;
+        transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+        background: #e2e8f0;
+        border-color: #cbd5e1;
+        color: #475569;
+    }
+
+    .section-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #008649;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .alert {
+        border-radius: 12px;
+        border: none;
+        padding: 16px 20px;
+    }
+
+    .alert-success {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .alert-danger {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        border-radius: 16px;
+    }
+
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+        border-width: 0.3rem;
+    }
+
+    .photo-preview {
+        width: 150px;
+        height: 150px;
+        border-radius: 12px;
+        border: 2px dashed #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f8fafc;
+        overflow: hidden;
+    }
+
+    .photo-preview img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: cover;
+    }
+
+    .photo-preview i {
+        font-size: 48px;
+        color: #cbd5e1;
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Alert Messages -->
+    <div id="alertContainer"></div>
+
+    <!-- Employee Form Card -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5><i class="bi bi-person-badge me-2"></i>@ViewData["Title"]</h5>
+            <a href="/employee" class="btn btn-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to List
+            </a>
+        </div>
+        <div class="card-body position-relative">
+            <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+                <div class="spinner-border text-success" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+
+            <form id="employeeForm">
+                <input type="hidden" id="employeeId" name="Id" value="0" />
+
+                <!-- Tab Navigation -->
+                <ul class="nav nav-tabs" id="employeeTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="personal-tab" data-bs-toggle="tab" data-bs-target="#personal" type="button">
+                            <i class="bi bi-person me-1"></i> Personal Info
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="contact-tab" data-bs-toggle="tab" data-bs-target="#contact" type="button">
+                            <i class="bi bi-telephone me-1"></i> Contact Info
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="employment-tab" data-bs-toggle="tab" data-bs-target="#employment" type="button">
+                            <i class="bi bi-briefcase me-1"></i> Employment
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="salary-tab" data-bs-toggle="tab" data-bs-target="#salary" type="button">
+                            <i class="bi bi-cash me-1"></i> Salary & Bank
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="emergency-tab" data-bs-toggle="tab" data-bs-target="#emergency" type="button">
+                            <i class="bi bi-exclamation-triangle me-1"></i> Emergency Contact
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content" id="employeeTabContent">
+                    <!-- Personal Info Tab -->
+                    <div class="tab-pane fade show active" id="personal" role="tabpanel">
+                        <div class="row g-3">
+                            <div class="col-md-9">
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label for="employeeCode" class="form-label">Employee Code</label>
+                                        <input type="text" class="form-control" id="employeeCode" name="EmployeeCode" placeholder="Auto-generated" />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="firstName" class="form-label">First Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="firstName" name="FirstName" required />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="lastName" class="form-label">Last Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="lastName" name="LastName" required />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="firstNameUrdu" class="form-label">First Name (Urdu)</label>
+                                        <input type="text" class="form-control" id="firstNameUrdu" name="FirstNameUrdu" dir="rtl" />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="lastNameUrdu" class="form-label">Last Name (Urdu)</label>
+                                        <input type="text" class="form-control" id="lastNameUrdu" name="LastNameUrdu" dir="rtl" />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="cnic" class="form-label">CNIC <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="cnic" name="CNIC" placeholder="00000-0000000-0" required />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="gender" class="form-label">Gender <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="gender" name="Gender" required>
+                                            <option value="">Select Gender</option>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="dateOfBirth" class="form-label">Date of Birth</label>
+                                        <input type="date" class="form-control" id="dateOfBirth" name="DateOfBirth" />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="qualification" class="form-label">Qualification</label>
+                                        <input type="text" class="form-control" id="qualification" name="Qualification" />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="specialization" class="form-label">Specialization</label>
+                                        <input type="text" class="form-control" id="specialization" name="Specialization" />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="experience" class="form-label">Experience</label>
+                                        <input type="text" class="form-control" id="experience" name="Experience" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Photo</label>
+                                <div class="photo-preview mb-2" id="photoPreview">
+                                    <i class="bi bi-person-square"></i>
+                                </div>
+                                <input type="file" class="form-control" id="photoFile" accept="image/*" onchange="previewPhoto(this)" />
+                                <input type="hidden" id="photo" name="Photo" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact Info Tab -->
+                    <div class="tab-pane fade" id="contact" role="tabpanel">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="Email" />
+                            </div>
+                            <div class="col-md-4">
+                                <label for="phone" class="form-label">Phone</label>
+                                <input type="text" class="form-control" id="phone" name="Phone" />
+                            </div>
+                            <div class="col-md-4">
+                                <label for="mobile" class="form-label">Mobile</label>
+                                <input type="text" class="form-control" id="mobile" name="Mobile" />
+                            </div>
+                            <div class="col-md-8">
+                                <label for="address" class="form-label">Address</label>
+                                <textarea class="form-control" id="address" name="Address" rows="3"></textarea>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="city" class="form-label">City</label>
+                                <input type="text" class="form-control" id="city" name="City" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Employment Tab -->
+                    <div class="tab-pane fade" id="employment" role="tabpanel">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label for="designationId" class="form-label">Designation <span class="text-danger">*</span></label>
+                                <select class="form-select" id="designationId" name="DesignationId" required>
+                                    <option value="">Select Designation</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="hrGradeId" class="form-label">HR Grade</label>
+                                <select class="form-select" id="hrGradeId" name="HRGradeId">
+                                    <option value="">Select HR Grade</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="academicGradeId" class="form-label">Academic Grade</label>
+                                <select class="form-select" id="academicGradeId" name="AcademicGradeId">
+                                    <option value="">Select Academic Grade</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="department" class="form-label">Department</label>
+                                <input type="text" class="form-control" id="department" name="Department" />
+                            </div>
+                            <div class="col-md-3">
+                                <label for="employeeType" class="form-label">Employee Type</label>
+                                <select class="form-select" id="employeeType" name="EmployeeType">
+                                    <option value="">Select Type</option>
+                                    <option value="Permanent">Permanent</option>
+                                    <option value="Contract">Contract</option>
+                                    <option value="Temporary">Temporary</option>
+                                    <option value="Visiting">Visiting</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="joiningDate" class="form-label">Joining Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="joiningDate" name="JoiningDate" required />
+                            </div>
+                            <div class="col-md-3">
+                                <label for="leavingDate" class="form-label">Leaving Date</label>
+                                <input type="date" class="form-control" id="leavingDate" name="LeavingDate" />
+                            </div>
+                            <div class="col-md-3">
+                                <label for="status" class="form-label">Status</label>
+                                <select class="form-select" id="status" name="Status">
+                                    <option value="Active">Active</option>
+                                    <option value="On Leave">On Leave</option>
+                                    <option value="Resigned">Resigned</option>
+                                    <option value="Terminated">Terminated</option>
+                                    <option value="Retired">Retired</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check mt-4">
+                                    <input class="form-check-input" type="checkbox" id="isActive" name="IsActive" checked />
+                                    <label class="form-check-label" for="isActive">Is Active</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Salary & Bank Tab -->
+                    <div class="tab-pane fade" id="salary" role="tabpanel">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <div class="section-title">Salary Details</div>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="basicSalary" class="form-label">Basic Salary</label>
+                                <input type="number" class="form-control" id="basicSalary" name="BasicSalary" value="0" step="0.01" />
+                            </div>
+                            <div class="col-md-3">
+                                <label for="allowances" class="form-label">Allowances</label>
+                                <input type="number" class="form-control" id="allowances" name="Allowances" value="0" step="0.01" />
+                            </div>
+                            <div class="col-md-3">
+                                <label for="deductions" class="form-label">Deductions</label>
+                                <input type="number" class="form-control" id="deductions" name="Deductions" value="0" step="0.01" />
+                            </div>
+                            <div class="col-md-3">
+                                <label for="netSalary" class="form-label">Net Salary</label>
+                                <input type="number" class="form-control" id="netSalary" name="NetSalary" value="0" step="0.01" readonly style="background: #f8fafc;" />
+                            </div>
+                            <div class="col-12 mt-4">
+                                <div class="section-title">Bank Details</div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="bankName" class="form-label">Bank Name</label>
+                                <input type="text" class="form-control" id="bankName" name="BankName" />
+                            </div>
+                            <div class="col-md-4">
+                                <label for="bankAccountNo" class="form-label">Bank Account No</label>
+                                <input type="text" class="form-control" id="bankAccountNo" name="BankAccountNo" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Emergency Contact Tab -->
+                    <div class="tab-pane fade" id="emergency" role="tabpanel">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="emergencyContactName" class="form-label">Contact Name</label>
+                                <input type="text" class="form-control" id="emergencyContactName" name="EmergencyContactName" />
+                            </div>
+                            <div class="col-md-4">
+                                <label for="emergencyContactPhone" class="form-label">Contact Phone</label>
+                                <input type="text" class="form-control" id="emergencyContactPhone" name="EmergencyContactPhone" />
+                            </div>
+                            <div class="col-md-4">
+                                <label for="emergencyContactRelation" class="form-label">Relation</label>
+                                <input type="text" class="form-control" id="emergencyContactRelation" name="EmergencyContactRelation" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="d-flex justify-content-end gap-2 mt-4 pt-4 border-top">
+                    <a href="/employee" class="btn btn-secondary">
+                        <i class="bi bi-x-lg me-1"></i> Cancel
+                    </a>
+                    <button type="button" class="btn btn-primary" onclick="saveEmployee()">
+                        <i class="bi bi-check-lg me-1"></i> Save Employee
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const API_BASE = 'http://localhost:5266/api';
+        const employeeId = @(employeeId != null ? employeeId.ToString() : "0");
+
+        $(document).ready(function () {
+            loadDropdowns();
+
+            if (employeeId > 0) {
+                loadEmployee(employeeId);
+            }
+
+            // Calculate net salary on change
+            $('#basicSalary, #allowances, #deductions').on('change keyup', calculateNetSalary);
+        });
+
+        function calculateNetSalary() {
+            const basic = parseFloat($('#basicSalary').val()) || 0;
+            const allowances = parseFloat($('#allowances').val()) || 0;
+            const deductions = parseFloat($('#deductions').val()) || 0;
+            const net = basic + allowances - deductions;
+            $('#netSalary').val(net.toFixed(2));
+        }
+
+        function previewPhoto(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    $('#photoPreview').html(`<img src="${e.target.result}" />`);
+                    $('#photo').val(e.target.result);
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        async function loadDropdowns() {
+            try {
+                // Load Designations
+                const designationsResponse = await fetch(`${API_BASE}/Designation/dropdown`);
+                if (designationsResponse.ok) {
+                    const designations = await designationsResponse.json();
+                    const designationSelect = $('#designationId');
+                    designations.forEach(d => {
+                        designationSelect.append(`<option value="${d.id}">${d.name}</option>`);
+                    });
+                }
+
+                // Load HR Grades
+                const hrGradesResponse = await fetch(`${API_BASE}/HRGrade/dropdown`);
+                if (hrGradesResponse.ok) {
+                    const hrGrades = await hrGradesResponse.json();
+                    const hrGradeSelect = $('#hrGradeId');
+                    hrGrades.forEach(g => {
+                        hrGradeSelect.append(`<option value="${g.id}">${g.name}</option>`);
+                    });
+                }
+
+                // Load Academic Grades
+                const academicGradesResponse = await fetch(`${API_BASE}/AcademicGrade/dropdown`);
+                if (academicGradesResponse.ok) {
+                    const academicGrades = await academicGradesResponse.json();
+                    const academicGradeSelect = $('#academicGradeId');
+                    academicGrades.forEach(g => {
+                        academicGradeSelect.append(`<option value="${g.id}">${g.name}</option>`);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading dropdowns:', error);
+            }
+        }
+
+        async function loadEmployee(id) {
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/Employee/${id}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    populateForm(data);
+                } else {
+                    showAlert('Failed to load employee', 'danger');
+                }
+            } catch (error) {
+                console.error('Error loading employee:', error);
+                showAlert('Error loading employee: ' + error.message, 'danger');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function populateForm(data) {
+            $('#employeeId').val(data.id);
+            $('#employeeCode').val(data.employeeCode);
+            $('#firstName').val(data.firstName);
+            $('#lastName').val(data.lastName);
+            $('#firstNameUrdu').val(data.firstNameUrdu);
+            $('#lastNameUrdu').val(data.lastNameUrdu);
+            $('#cnic').val(data.cnic);
+            $('#gender').val(data.gender);
+            $('#dateOfBirth').val(formatDateForInput(data.dateOfBirth));
+            $('#qualification').val(data.qualification);
+            $('#specialization').val(data.specialization);
+            $('#experience').val(data.experience);
+
+            $('#email').val(data.email);
+            $('#phone').val(data.phone);
+            $('#mobile').val(data.mobile);
+            $('#address').val(data.address);
+            $('#city').val(data.city);
+
+            $('#designationId').val(data.designationId);
+            $('#hrGradeId').val(data.hrGradeId);
+            $('#academicGradeId').val(data.academicGradeId);
+            $('#department').val(data.department);
+            $('#employeeType').val(data.employeeType);
+            $('#joiningDate').val(formatDateForInput(data.joiningDate));
+            $('#leavingDate').val(formatDateForInput(data.leavingDate));
+            $('#status').val(data.status);
+            $('#isActive').prop('checked', data.isActive);
+
+            $('#basicSalary').val(data.basicSalary);
+            $('#allowances').val(data.allowances);
+            $('#deductions').val(data.deductions);
+            $('#netSalary').val(data.netSalary);
+            $('#bankName').val(data.bankName);
+            $('#bankAccountNo').val(data.bankAccountNo);
+
+            $('#emergencyContactName').val(data.emergencyContactName);
+            $('#emergencyContactPhone').val(data.emergencyContactPhone);
+            $('#emergencyContactRelation').val(data.emergencyContactRelation);
+
+            if (data.photo) {
+                $('#photoPreview').html(`<img src="${data.photo}" />`);
+                $('#photo').val(data.photo);
+            }
+        }
+
+        function formatDateForInput(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return '';
+            date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+            return date.toISOString().split('T')[0];
+        }
+
+        async function saveEmployee() {
+            const firstName = $('#firstName').val().trim();
+            const lastName = $('#lastName').val().trim();
+            const cnic = $('#cnic').val().trim();
+            const joiningDate = $('#joiningDate').val();
+            const designationId = $('#designationId').val();
+
+            if (!firstName || !lastName) {
+                showAlert('Please enter first name and last name', 'danger');
+                return;
+            }
+
+            if (!cnic) {
+                showAlert('Please enter CNIC', 'danger');
+                return;
+            }
+
+            if (!joiningDate) {
+                showAlert('Please enter joining date', 'danger');
+                return;
+            }
+
+            if (!designationId) {
+                showAlert('Please select a designation', 'danger');
+                return;
+            }
+
+            const id = parseInt($('#employeeId').val()) || 0;
+            const data = {
+                Id: id,
+                EmployeeCode: $('#employeeCode').val().trim(),
+                FirstName: firstName,
+                LastName: lastName,
+                FirstNameUrdu: $('#firstNameUrdu').val().trim(),
+                LastNameUrdu: $('#lastNameUrdu').val().trim(),
+                CNIC: cnic,
+                Email: $('#email').val().trim(),
+                Phone: $('#phone').val().trim(),
+                Mobile: $('#mobile').val().trim(),
+                Gender: $('#gender').val(),
+                DateOfBirth: $('#dateOfBirth').val() || null,
+                JoiningDate: joiningDate,
+                LeavingDate: $('#leavingDate').val() || null,
+                Address: $('#address').val().trim(),
+                City: $('#city').val().trim(),
+                Photo: $('#photo').val(),
+                Qualification: $('#qualification').val().trim(),
+                Specialization: $('#specialization').val().trim(),
+                Experience: $('#experience').val().trim(),
+                Department: $('#department').val().trim(),
+                DesignationId: parseInt(designationId),
+                HRGradeId: $('#hrGradeId').val() ? parseInt($('#hrGradeId').val()) : null,
+                AcademicGradeId: $('#academicGradeId').val() ? parseInt($('#academicGradeId').val()) : null,
+                BasicSalary: parseFloat($('#basicSalary').val()) || 0,
+                Allowances: parseFloat($('#allowances').val()) || 0,
+                Deductions: parseFloat($('#deductions').val()) || 0,
+                NetSalary: parseFloat($('#netSalary').val()) || 0,
+                BankName: $('#bankName').val().trim(),
+                BankAccountNo: $('#bankAccountNo').val().trim(),
+                EmergencyContactName: $('#emergencyContactName').val().trim(),
+                EmergencyContactPhone: $('#emergencyContactPhone').val().trim(),
+                EmergencyContactRelation: $('#emergencyContactRelation').val().trim(),
+                EmployeeType: $('#employeeType').val(),
+                Status: $('#status').val(),
+                IsActive: $('#isActive').is(':checked')
+            };
+
+            showLoading();
+            try {
+                let response;
+                if (id === 0) {
+                    response = await fetch(`${API_BASE}/Employee`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                } else {
+                    response = await fetch(`${API_BASE}/Employee/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                }
+
+                if (response.ok) {
+                    showAlert('Employee saved successfully!', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/employee';
+                    }, 1500);
+                } else {
+                    const error = await response.json();
+                    showAlert(error.message || 'Failed to save employee', 'danger');
+                }
+            } catch (error) {
+                console.error('Error saving employee:', error);
+                showAlert('Error saving employee: ' + error.message, 'danger');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function showLoading() {
+            $('#loadingOverlay').show();
+        }
+
+        function hideLoading() {
+            $('#loadingOverlay').hide();
+        }
+
+        function showAlert(message, type) {
+            const alert = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+            $('#alertContainer').html(alert);
+            setTimeout(() => {
+                $('.alert').alert('close');
+            }, 5000);
+        }
+    </script>
+}

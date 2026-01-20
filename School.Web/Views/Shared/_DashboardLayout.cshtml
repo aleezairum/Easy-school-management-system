@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - School Management System</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+
+        :root {
+            --sidebar-width: 260px;
+            --primary-color: #008649;
+            --primary-dark: #006d3b;
+            --primary-light: #00a65a;
+            --sidebar-bg: #006d3b;
+            --sidebar-hover: #005a30;
+            --sidebar-active: #004d28;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --bg-light: #f8fafc;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg-light);
+            min-height: 100vh;
+        }
+
+        .wrapper {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--sidebar-bg);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 24px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .sidebar-brand-icon {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 22px;
+            overflow: hidden;
+        }
+
+        .sidebar-brand-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .sidebar-brand-text h4 {
+            color: white;
+            font-size: 16px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .sidebar-brand-text span {
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+
+        .sidebar-menu {
+            flex: 1;
+            padding: 16px 12px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.2) transparent;
+        }
+
+        .sidebar-menu::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar-menu::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .sidebar-menu::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.2);
+            border-radius: 3px;
+        }
+
+        .menu-section {
+            margin-bottom: 24px;
+        }
+
+        .menu-section-title {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 0 12px;
+            margin-bottom: 8px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 10px;
+            margin-bottom: 4px;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .menu-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+        }
+
+        .menu-item.active {
+            background: rgba(255, 255, 255, 0.25);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            font-weight: 600;
+        }
+
+        .menu-item i {
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .menu-item .badge {
+            margin-left: auto;
+            background: #ef4444;
+            color: white;
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 20px;
+        }
+
+        .sidebar-footer {
+            padding: 16px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--sidebar-hover);
+            border-radius: 12px;
+        }
+
+        .user-avatar {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .user-info h6 {
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .user-info span {
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .top-header {
+            background: white;
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .page-title h4 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .page-title .breadcrumb {
+            margin: 0;
+            font-size: 13px;
+        }
+
+        .breadcrumb-item a {
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+
+        .breadcrumb-item.active {
+            color: var(--primary-color);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-search {
+            position: relative;
+        }
+
+        .header-search input {
+            width: 280px;
+            padding: 10px 16px 10px 42px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .header-search input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        }
+
+        .header-search i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+
+        .header-btn {
+            width: 42px;
+            height: 42px;
+            border: 2px solid var(--border-color);
+            background: white;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .header-btn:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .header-btn .notification-dot {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 8px;
+            height: 8px;
+            background: #ef4444;
+            border-radius: 50%;
+        }
+
+        .content-area {
+            padding: 32px;
+            flex: 1;
+        }
+
+        /* Welcome Banner */
+        .welcome-banner {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            border-radius: 16px;
+            padding: 32px;
+            color: white;
+            margin-bottom: 32px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .welcome-banner::before {
+            content: '';
+            position: absolute;
+            right: -50px;
+            top: -50px;
+            width: 200px;
+            height: 200px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+        }
+
+        .welcome-banner::after {
+            content: '';
+            position: absolute;
+            right: 50px;
+            bottom: -80px;
+            width: 150px;
+            height: 150px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+        }
+
+        .welcome-banner h2 {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .welcome-banner p {
+            font-size: 15px;
+            opacity: 0.9;
+            margin: 0;
+        }
+
+        .welcome-banner .date-display {
+            position: absolute;
+            right: 32px;
+            top: 50%;
+            transform: translateY(-50%);
+            text-align: right;
+            z-index: 1;
+        }
+
+        .welcome-banner .date-display .day {
+            font-size: 42px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .welcome-banner .date-display .month-year {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        /* Hamburger Menu Button */
+        .hamburger-btn {
+            width: 42px;
+            height: 42px;
+            border: none;
+            background: var(--primary-color);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 20px;
+        }
+
+        .hamburger-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Sidebar Collapsed State */
+        .sidebar.collapsed {
+            width: 70px;
+        }
+
+        .sidebar.collapsed .sidebar-brand-text,
+        .sidebar.collapsed .menu-section-title,
+        .sidebar.collapsed .menu-item span,
+        .sidebar.collapsed .user-info,
+        .sidebar.collapsed .menu-item .badge {
+            display: none;
+        }
+
+        .sidebar.collapsed .sidebar-header {
+            padding: 24px 13px;
+        }
+
+        .sidebar.collapsed .sidebar-brand {
+            justify-content: center;
+        }
+
+        .sidebar.collapsed .menu-item {
+            justify-content: center;
+            padding: 12px;
+        }
+
+        .sidebar.collapsed .menu-item i {
+            margin: 0;
+        }
+
+        .sidebar.collapsed .user-profile {
+            justify-content: center;
+            padding: 12px;
+        }
+
+        .sidebar.collapsed .sidebar-footer {
+            padding: 16px 8px;
+        }
+
+        .main-content.expanded {
+            margin-left: 70px;
+        }
+
+        /* Smooth transitions for sidebar */
+        .sidebar, .main-content {
+            transition: all 0.3s ease;
+        }
+
+        /* User Info in Header */
+        .header-user-wrapper {
+            position: relative;
+        }
+
+        .header-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 16px;
+            background: var(--bg-light);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .header-user:hover {
+            background: #e2e8f0;
+        }
+
+        .header-user-avatar {
+            width: 36px;
+            height: 36px;
+            background: var(--primary-color);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .header-user-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        /* User Dropdown Menu */
+        .user-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            width: 280px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            border: 1px solid var(--border-color);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s ease;
+            z-index: 1000;
+        }
+
+        .user-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .user-dropdown-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-dropdown-avatar {
+            width: 44px;
+            height: 44px;
+            background: var(--primary-color);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .user-dropdown-info h6 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .user-dropdown-info span {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .user-dropdown-menu {
+            padding: 8px;
+        }
+
+        .user-dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: 100%;
+        }
+
+        .user-dropdown-item:hover {
+            background: var(--bg-light);
+        }
+
+        .user-dropdown-item i {
+            font-size: 18px;
+            color: var(--text-secondary);
+            width: 24px;
+            text-align: center;
+        }
+
+        .user-dropdown-item.logout {
+            color: #ef4444;
+        }
+
+        .user-dropdown-item.logout i {
+            color: #ef4444;
+        }
+
+        .user-dropdown-item.logout:hover {
+            background: #fef2f2;
+        }
+
+        .user-dropdown-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 8px 0;
+        }
+    </style>
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    <div class="wrapper">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <a href="/" class="sidebar-brand">
+                    <div class="sidebar-brand-icon">
+                        <img id="sidebarLogo" src="~/images/logo.png" alt="Logo" />
+                    </div>
+                    <div class="sidebar-brand-text">
+                        <h4 id="sidebarInstituteName">Loading...</h4>
+                        <span id="sidebarInstituteTagline"></span>
+                    </div>
+                </a>
+            </div>
+
+            <div class="sidebar-menu" id="sidebarMenu">
+                <!-- Menu will be loaded dynamically from API -->
+                <div class="text-center py-4">
+                    <div class="spinner-border spinner-border-sm text-light" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar">A</div>
+                    <div class="user-info">
+                        <h6>Admin User</h6>
+                        <span>Administrator</span>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <header class="top-header">
+                <div class="d-flex align-items-center gap-3">
+                    <button class="hamburger-btn" onclick="toggleSidebar()">
+                        <i class="bi bi-list" id="hamburgerIcon"></i>
+                    </button>
+                    <div class="page-title">
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="#">Home</a></li>
+                                <li class="breadcrumb-item active">@ViewData["Title"]</li>
+                            </ol>
+                        </nav>
+                        <h4>@ViewData["Title"]</h4>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <div class="header-search">
+                        <i class="bi bi-search"></i>
+                        <input type="text" placeholder="Search anything...">
+                    </div>
+                    <button class="header-btn">
+                        <i class="bi bi-bell"></i>
+                        <span class="notification-dot"></span>
+                    </button>
+                    <div class="header-user-wrapper">
+                        <div class="header-user" onclick="toggleUserDropdown(event)">
+                            <div class="header-user-avatar">A</div>
+                            <span class="header-user-name">Admin User</span>
+                            <i class="bi bi-chevron-down ms-1" style="font-size: 12px; color: var(--text-secondary);"></i>
+                        </div>
+                        <!-- User Dropdown -->
+                        <div class="user-dropdown" id="userDropdown">
+                            <div class="user-dropdown-header">
+                                <div class="user-dropdown-avatar">A</div>
+                                <div class="user-dropdown-info">
+                                    <h6>Admin User</h6>
+                                    <span>Administrator</span>
+                                </div>
+                            </div>
+                            <div class="user-dropdown-menu">
+                                <a href="#" class="user-dropdown-item">
+                                    <i class="bi bi-person"></i>
+                                    My Profile
+                                </a>
+                                <a href="#" class="user-dropdown-item" onclick="openSwitchCredentials(event)">
+                                    <i class="bi bi-arrow-left-right"></i>
+                                    Switch Credentials
+                                </a>
+                                <a href="#" class="user-dropdown-item">
+                                    <i class="bi bi-gear"></i>
+                                    Settings
+                                </a>
+                                <div class="user-dropdown-divider"></div>
+                                <a href="@Url.Action("Logout", "Auth")" class="user-dropdown-item logout">
+                                    <i class="bi bi-box-arrow-right"></i>
+                                    Logout
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="content-area">
+                @RenderBody()
+            </div>
+        </div>
+    </div>
+
+    <!-- Switch Credentials Modal -->
+    <div class="modal fade" id="switchCredentialsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 16px; border: none;">
+                <div class="modal-header" style="border-bottom: 1px solid #e2e8f0;">
+                    <h5 class="modal-title"><i class="bi bi-arrow-left-right me-2"></i>Switch Credentials</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="switchCredentialsForm">
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">Institute Name</label>
+                            <select class="form-select" id="instituteSelect" required style="border: 2px solid #e2e8f0; border-radius: 10px; padding: 10px 14px;">
+                                <option value="" disabled selected>Select Institute</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">Academic Session</label>
+                            <select class="form-select" id="sessionSelect" required style="border: 2px solid #e2e8f0; border-radius: 10px; padding: 10px 14px;">
+                                <option value="" disabled selected>Select Session</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid #e2e8f0;">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 8px;">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="applySwitchCredentials()" style="background: linear-gradient(135deg, #008649 0%, #006d3b 100%); border: none; border-radius: 8px;">Apply</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Toggle Sidebar collapse/expand
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+            const hamburgerIcon = document.getElementById('hamburgerIcon');
+
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('expanded');
+
+            // Toggle icon
+            if (sidebar.classList.contains('collapsed')) {
+                hamburgerIcon.classList.remove('bi-list');
+                hamburgerIcon.classList.add('bi-chevron-right');
+                localStorage.setItem('sidebarCollapsed', 'true');
+            } else {
+                hamburgerIcon.classList.remove('bi-chevron-right');
+                hamburgerIcon.classList.add('bi-list');
+                localStorage.setItem('sidebarCollapsed', 'false');
+            }
+        }
+
+        // Restore sidebar state on page load
+        function restoreSidebarState() {
+            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            if (isCollapsed) {
+                const sidebar = document.querySelector('.sidebar');
+                const mainContent = document.querySelector('.main-content');
+                const hamburgerIcon = document.getElementById('hamburgerIcon');
+
+                sidebar.classList.add('collapsed');
+                mainContent.classList.add('expanded');
+                hamburgerIcon.classList.remove('bi-list');
+                hamburgerIcon.classList.add('bi-chevron-right');
+            }
+        }
+
+        // Toggle user dropdown
+        function toggleUserDropdown(event) {
+            event.stopPropagation();
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('userDropdown');
+            const userWrapper = document.querySelector('.header-user-wrapper');
+
+            if (!userWrapper.contains(event.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        // Open Switch Credentials Modal
+        function openSwitchCredentials(event) {
+            event.preventDefault();
+            document.getElementById('userDropdown').classList.remove('show');
+            loadInstitutes();
+            loadSessions();
+            const modal = new bootstrap.Modal(document.getElementById('switchCredentialsModal'));
+            modal.show();
+        }
+
+        function loadInstitutes() {
+            fetch('http://localhost:5266/api/institute')
+                .then(response => response.json())
+                .then(institutes => {
+                    const select = document.getElementById('instituteSelect');
+                    select.innerHTML = '<option value="" disabled selected>Select Institute</option>';
+                    institutes.forEach(institute => {
+                        const option = document.createElement('option');
+                        option.value = institute.id;
+                        option.textContent = institute.name;
+                        select.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading institutes:', error);
+                });
+        }
+
+        function loadSessions() {
+            fetch('http://localhost:5266/api/session')
+                .then(response => response.json())
+                .then(sessions => {
+                    const select = document.getElementById('sessionSelect');
+                    select.innerHTML = '<option value="" disabled selected>Select Session</option>';
+                    sessions.forEach(session => {
+                        const option = document.createElement('option');
+                        option.value = session.id;
+                        option.textContent = session.sessionName;
+                        if (session.isCurrent) {
+                            option.selected = true;
+                        }
+                        select.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading sessions:', error);
+                });
+        }
+
+        // Apply switch credentials
+        function applySwitchCredentials() {
+            const instituteId = document.getElementById('instituteSelect').value;
+            const sessionId = document.getElementById('sessionSelect').value;
+
+            if (!instituteId || !sessionId) {
+                alert('Please select both Institute and Session');
+                return;
+            }
+
+            // Store selected values
+            localStorage.setItem('selectedInstitute', instituteId);
+            localStorage.setItem('selectedSession', sessionId);
+
+            // Close modal and reload page
+            bootstrap.Modal.getInstance(document.getElementById('switchCredentialsModal')).hide();
+            location.reload();
+        }
+
+        // Close dropdown on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.getElementById('userDropdown').classList.remove('show');
+            }
+        });
+
+        // Load sidebar data from API
+        function loadSidebarData() {
+            fetch('http://localhost:5266/api/sidebar')
+                .then(response => response.json())
+                .then(data => {
+                    // Update institute name and tagline
+                    document.getElementById('sidebarInstituteName').textContent = data.instituteName;
+                    document.getElementById('sidebarInstituteTagline').textContent = data.instituteTagline;
+
+                    // Update logo if provided
+                    if (data.logoUrl) {
+                        document.getElementById('sidebarLogo').src = data.logoUrl;
+                    }
+
+                    // Build menu HTML
+                    const menuContainer = document.getElementById('sidebarMenu');
+                    let menuHtml = '';
+
+                    const currentPath = window.location.pathname;
+
+                    data.menuSections.forEach(section => {
+                        menuHtml += `<div class="menu-section">`;
+                        menuHtml += `<div class="menu-section-title">${section.title}</div>`;
+
+                        section.items.forEach(item => {
+                            const isActive = currentPath.toLowerCase().startsWith(item.url.toLowerCase()) ||
+                                           (item.url === '/Dashboard' && currentPath === '/');
+                            const activeClass = isActive ? 'active' : '';
+                            const badgeHtml = item.badge ? `<span class="badge">${item.badge}</span>` : '';
+
+                            menuHtml += `
+                                <a href="${item.url}" class="menu-item ${activeClass}">
+                                    <i class="bi ${item.icon}"></i>
+                                    ${item.title}
+                                    ${badgeHtml}
+                                </a>
+                            `;
+                        });
+
+                        menuHtml += `</div>`;
+                    });
+
+                    menuContainer.innerHTML = menuHtml;
+                })
+                .catch(error => {
+                    console.error('Error loading sidebar data:', error);
+                    document.getElementById('sidebarMenu').innerHTML = '<div class="text-center py-4 text-light">Failed to load menu</div>';
+                });
+        }
+
+        // Load sidebar on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSidebarData();
+            restoreSidebarState();
+        });
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
