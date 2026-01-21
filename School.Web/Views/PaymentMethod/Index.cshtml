@@ -1,0 +1,447 @@
+@{
+    ViewData["Title"] = "Payment Methods";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<style>
+    .card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        margin-bottom: 24px;
+    }
+
+    .card-header {
+        background: white;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 20px 24px;
+        border-radius: 16px 16px 0 0 !important;
+    }
+
+    .card-header h5 {
+        margin: 0;
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .card-body {
+        padding: 24px;
+    }
+
+    .form-label {
+        font-weight: 500;
+        color: #475569;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+
+    .form-control, .form-select {
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 12px 16px;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #008649;
+        box-shadow: 0 0 0 4px rgba(0, 134, 73, 0.1);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #008649 0%, #006d3b 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 12px 24px;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .btn-secondary {
+        background: #f1f5f9;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 12px 24px;
+        font-weight: 600;
+        font-size: 14px;
+        color: #64748b;
+    }
+
+    .payment-mode-card {
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 20px;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: center;
+        background: white;
+    }
+
+    .payment-mode-card:hover {
+        border-color: #008649;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 134, 73, 0.15);
+    }
+
+    .payment-mode-card.selected {
+        border-color: #008649;
+        background: #ecfdf5;
+    }
+
+    .payment-mode-card .icon {
+        font-size: 32px;
+        margin-bottom: 10px;
+    }
+
+    .payment-mode-card .name {
+        font-weight: 600;
+        color: #1e293b;
+        font-size: 14px;
+    }
+
+    .payment-mode-card .desc {
+        font-size: 12px;
+        color: #64748b;
+        margin-top: 4px;
+    }
+
+    .jazz-icon { color: #e60000; }
+    .easy-icon { color: #00a651; }
+    .cash-icon { color: #f59e0b; }
+    .bank-icon { color: #0ea5e9; }
+
+    .dynamic-fields {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 20px;
+        display: none;
+    }
+
+    .dynamic-fields.show {
+        display: block;
+    }
+
+    .field-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #64748b;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .payment-list {
+        margin-top: 30px;
+    }
+
+    .payment-list-item {
+        display: flex;
+        align-items: center;
+        padding: 16px 20px;
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        margin-bottom: 12px;
+    }
+
+    .payment-list-item .icon-wrapper {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        margin-right: 16px;
+    }
+
+    .payment-list-item .info {
+        flex: 1;
+    }
+
+    .payment-list-item .info .name {
+        font-weight: 600;
+        color: #1e293b;
+        font-size: 16px;
+    }
+
+    .payment-list-item .info .details {
+        font-size: 13px;
+        color: #64748b;
+        margin-top: 2px;
+    }
+
+    .payment-list-item .status {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .status-active {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .jazz-bg { background: #fee2e2; }
+    .easy-bg { background: #dcfce7; }
+    .cash-bg { background: #fef3c7; }
+    .bank-bg { background: #e0f2fe; }
+</style>
+
+<div class="container-fluid">
+    <div id="alertContainer"></div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5><i class="bi bi-credit-card me-2"></i>Payment Methods</h5>
+        </div>
+        <div class="card-body">
+            <!-- Payment Mode Selection -->
+            <label class="form-label mb-3">Select Payment Mode</label>
+            <div class="row g-3 mb-3">
+                <div class="col-md-3">
+                    <div class="payment-mode-card" data-mode="JAZZ" onclick="selectPaymentMode('JAZZ')">
+                        <div class="icon jazz-icon"><i class="bi bi-phone"></i></div>
+                        <div class="name">JazzCash</div>
+                        <div class="desc">Mobile Wallet</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="payment-mode-card" data-mode="EASY" onclick="selectPaymentMode('EASY')">
+                        <div class="icon easy-icon"><i class="bi bi-phone-fill"></i></div>
+                        <div class="name">EasyPaisa</div>
+                        <div class="desc">Mobile Wallet</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="payment-mode-card" data-mode="CASH" onclick="selectPaymentMode('CASH')">
+                        <div class="icon cash-icon"><i class="bi bi-cash-stack"></i></div>
+                        <div class="name">Cash</div>
+                        <div class="desc">Cash Payment</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="payment-mode-card" data-mode="BANK" onclick="selectPaymentMode('BANK')">
+                        <div class="icon bank-icon"><i class="bi bi-bank"></i></div>
+                        <div class="name">Bank Transfer</div>
+                        <div class="desc">Direct Deposit</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dynamic Fields based on selection -->
+            <div id="dynamicFields" class="dynamic-fields">
+                <div class="field-title">
+                    <i class="bi bi-pencil-square me-2"></i><span id="fieldTitle">Payment Details</span>
+                </div>
+
+                <!-- JazzCash / EasyPaisa Fields -->
+                <div id="mobileWalletFields" class="row g-3" style="display: none;">
+                    <div class="col-md-4">
+                        <label class="form-label">Account Title</label>
+                        <input type="text" class="form-control" id="accountTitle" placeholder="Account holder name">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Mobile Number</label>
+                        <input type="text" class="form-control" id="mobileNumber" placeholder="03XX-XXXXXXX">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Transaction ID</label>
+                        <input type="text" class="form-control" id="transactionId" placeholder="Transaction reference">
+                    </div>
+                </div>
+
+                <!-- Cash Fields -->
+                <div id="cashFields" class="row g-3" style="display: none;">
+                    <div class="col-md-6">
+                        <label class="form-label">Received By</label>
+                        <input type="text" class="form-control" id="receivedBy" placeholder="Cashier name">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Receipt Number</label>
+                        <input type="text" class="form-control" id="receiptNumber" placeholder="Receipt #">
+                    </div>
+                </div>
+
+                <!-- Bank Transfer Fields -->
+                <div id="bankFields" class="row g-3" style="display: none;">
+                    <div class="col-md-3">
+                        <label class="form-label">Bank Name</label>
+                        <input type="text" class="form-control" id="bankName" placeholder="Bank name">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Account Number</label>
+                        <input type="text" class="form-control" id="accountNumber" placeholder="Account number">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Branch Code</label>
+                        <input type="text" class="form-control" id="branchCode" placeholder="Branch code">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Transaction Reference</label>
+                        <input type="text" class="form-control" id="bankTransRef" placeholder="Ref #">
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <label class="form-label">Remarks</label>
+                        <input type="text" class="form-control" id="remarks" placeholder="Additional notes (optional)">
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <button type="button" class="btn btn-primary me-2" onclick="savePaymentMethod()">
+                        <i class="bi bi-check-lg me-1"></i> Save
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="resetForm()">
+                        <i class="bi bi-x-lg me-1"></i> Clear
+                    </button>
+                </div>
+            </div>
+
+            <!-- Payment Methods List -->
+            <div class="payment-list">
+                <div class="field-title">
+                    <i class="bi bi-list-ul me-2"></i>Available Payment Methods
+                </div>
+
+                <div class="payment-list-item">
+                    <div class="icon-wrapper jazz-bg">
+                        <i class="bi bi-phone jazz-icon"></i>
+                    </div>
+                    <div class="info">
+                        <div class="name">JazzCash</div>
+                        <div class="details">Mobile wallet payment via JazzCash</div>
+                    </div>
+                    <span class="status status-active">Active</span>
+                </div>
+
+                <div class="payment-list-item">
+                    <div class="icon-wrapper easy-bg">
+                        <i class="bi bi-phone-fill easy-icon"></i>
+                    </div>
+                    <div class="info">
+                        <div class="name">EasyPaisa</div>
+                        <div class="details">Mobile wallet payment via EasyPaisa</div>
+                    </div>
+                    <span class="status status-active">Active</span>
+                </div>
+
+                <div class="payment-list-item">
+                    <div class="icon-wrapper cash-bg">
+                        <i class="bi bi-cash-stack cash-icon"></i>
+                    </div>
+                    <div class="info">
+                        <div class="name">Cash</div>
+                        <div class="details">Cash payment at school office</div>
+                    </div>
+                    <span class="status status-active">Active</span>
+                </div>
+
+                <div class="payment-list-item">
+                    <div class="icon-wrapper bank-bg">
+                        <i class="bi bi-bank bank-icon"></i>
+                    </div>
+                    <div class="info">
+                        <div class="name">Bank Transfer</div>
+                        <div class="details">Direct bank transfer or deposit</div>
+                    </div>
+                    <span class="status status-active">Active</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let selectedMode = null;
+
+        // Static Payment Methods
+        const paymentModes = {
+            'JAZZ': { name: 'JazzCash', type: 'mobile' },
+            'EASY': { name: 'EasyPaisa', type: 'mobile' },
+            'CASH': { name: 'Cash', type: 'cash' },
+            'BANK': { name: 'Bank Transfer', type: 'bank' }
+        };
+
+        function selectPaymentMode(mode) {
+            selectedMode = mode;
+
+            // Update card selection
+            $('.payment-mode-card').removeClass('selected');
+            $(`.payment-mode-card[data-mode="${mode}"]`).addClass('selected');
+
+            // Show dynamic fields
+            $('#dynamicFields').addClass('show');
+            $('#fieldTitle').text(paymentModes[mode].name + ' Details');
+
+            // Hide all field groups
+            $('#mobileWalletFields, #cashFields, #bankFields').hide();
+
+            // Show relevant fields
+            const type = paymentModes[mode].type;
+            if (type === 'mobile') {
+                $('#mobileWalletFields').show();
+            } else if (type === 'cash') {
+                $('#cashFields').show();
+            } else if (type === 'bank') {
+                $('#bankFields').show();
+            }
+        }
+
+        function resetForm() {
+            selectedMode = null;
+            $('.payment-mode-card').removeClass('selected');
+            $('#dynamicFields').removeClass('show');
+            $('input').val('');
+        }
+
+        function savePaymentMethod() {
+            if (!selectedMode) {
+                showAlert('Please select a payment mode', 'warning');
+                return;
+            }
+
+            // Collect data based on selected mode
+            const data = {
+                mode: selectedMode,
+                remarks: $('#remarks').val()
+            };
+
+            const type = paymentModes[selectedMode].type;
+            if (type === 'mobile') {
+                data.accountTitle = $('#accountTitle').val();
+                data.mobileNumber = $('#mobileNumber').val();
+                data.transactionId = $('#transactionId').val();
+            } else if (type === 'cash') {
+                data.receivedBy = $('#receivedBy').val();
+                data.receiptNumber = $('#receiptNumber').val();
+            } else if (type === 'bank') {
+                data.bankName = $('#bankName').val();
+                data.accountNumber = $('#accountNumber').val();
+                data.branchCode = $('#branchCode').val();
+                data.transactionRef = $('#bankTransRef').val();
+            }
+
+            console.log('Payment Data:', data);
+            showAlert('Payment method saved successfully!', 'success');
+            resetForm();
+        }
+
+        function showAlert(message, type) {
+            if (type === 'success') {
+                toastSuccess(message);
+            } else if (type === 'danger' || type === 'error') {
+                toastError(message);
+            } else if (type === 'warning') {
+                toastWarning(message);
+            } else {
+                toastInfo(message);
+            }
+        }
+    </script>
+}

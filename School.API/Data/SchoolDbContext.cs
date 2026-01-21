@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using School.API.Data.DBModels;
 using School.API.Data.DBModels.Academic;
+using School.API.Data.DBModels.Accounts;
 using School.API.Data.DBModels.HR;
 using School.API.DTOs.Academic;
 using School.API.DTOs.Common;
@@ -28,12 +29,22 @@ namespace School.API.Data
         public DbSet<AcademicSessionYear> AcademicSessionYear { get; set; }
         public DbSet<Admission> Admissions { get; set; }
         public DbSet<Student> Students { get; set; }
+        public DbSet<TimeTable> TimeTables { get; set; }
+        public DbSet<Attendance> Attendances { get; set; }
+        public DbSet<Exam> Exams { get; set; }
+        public DbSet<ExamResult> ExamResults { get; set; }
 
         // HR entities
         public DbSet<Designation> Designations { get; set; }
         public DbSet<HRGrade> HRGrades { get; set; }
         public DbSet<AcademicGrade> AcademicGrades { get; set; }
         public DbSet<Employee> Employees { get; set; }
+        public DbSet<Salary> Salaries { get; set; }
+
+        // Accounts entities
+        public DbSet<PaymentMethod> PaymentMethods { get; set; }
+        public DbSet<ChallanVoucher> ChallanVouchers { get; set; }
+        public DbSet<FeeVoucher> FeeVouchers { get; set; }
 
         // Keyless entities
         public DbSet<ResponseDto> AcademicSessionYearResponses { get; set; }
