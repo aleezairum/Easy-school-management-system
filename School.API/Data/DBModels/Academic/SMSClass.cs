@@ -1,9 +1,8 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
-namespace School.API.Data.DBModels
+namespace School.API.Data.DBModels.Academic
 {
-    public class SMSSubject
+    public class SMSClass
     {
         [Key]
         public int VID { get; set; }
@@ -11,9 +10,6 @@ namespace School.API.Data.DBModels
         [Required]
         [StringLength(100)]
         public string VName { get; set; } = string.Empty;
-
-        [Required]
-        public int ClassID { get; set; }
 
         public bool IsActive { get; set; } = true;
 
@@ -24,8 +20,8 @@ namespace School.API.Data.DBModels
         public DateTime? UpdatedDate { get; set; }
         public string? UpdatedIp { get; set; }
 
-        // Navigation property
-        [ForeignKey("ClassID")]
-        public virtual SMSClass? Class { get; set; }
+        // Navigation properties
+        public virtual ICollection<SMSSection> Sections { get; set; } = new List<SMSSection>();
+        public virtual ICollection<SMSSubject> Subjects { get; set; } = new List<SMSSubject>();
     }
 }

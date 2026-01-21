@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using School.API.Data.DBModels;
 using School.API.Data.DBModels.Academic;
 using School.API.Data.DBModels.HR;
 using School.API.DTOs.Academic;
@@ -45,6 +44,7 @@ namespace School.API.Data
             // Keyless entity
             modelBuilder.Entity<ResponseDto>().HasNoKey();
             modelBuilder.Entity<AcademicSessionYearSaveDto>().HasNoKey();
+            modelBuilder.Entity<SMSSectionSaveDto>().HasNoKey();
 
             // Menu configuration
             modelBuilder.Entity<Menu>(entity =>

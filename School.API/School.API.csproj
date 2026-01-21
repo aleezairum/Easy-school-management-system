@@ -7,6 +7,89 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Controllers\Accounts\**" />
+    <Compile Remove="Controllers\HR\**" />
+    <Compile Remove="Controllers\UserManagement\**" />
+    <Compile Remove="Data\DBModels\Accounts\**" />
+    <Compile Remove="Data\DBModels\UserManagement\**" />
+    <Compile Remove="DTOs\AcademicSessionYear\**" />
+    <Compile Remove="DTOs\Accounts\**" />
+    <Compile Remove="DTOs\Auth\**" />
+    <Compile Remove="DTOs\HR\**" />
+    <Compile Remove="DTOs\UserManagement\**" />
+    <Compile Remove="Helpers\**" />
+    <Compile Remove="Middlewares\**" />
+    <Compile Remove="Repositories\Implementations\Accounts\**" />
+    <Compile Remove="Repositories\Implementations\UserManagement\**" />
+    <Compile Remove="Repositories\Interfaces\Accounts\**" />
+    <Compile Remove="Repositories\Interfaces\UserManagement\**" />
+    <Compile Remove="Services\Implementations\Accounts\**" />
+    <Compile Remove="Services\Implementations\UserManagement\**" />
+    <Compile Remove="Services\Interfaces\Accounts\**" />
+    <Compile Remove="Services\Interfaces\UserManagement\**" />
+    <Content Remove="Controllers\Accounts\**" />
+    <Content Remove="Controllers\HR\**" />
+    <Content Remove="Controllers\UserManagement\**" />
+    <Content Remove="Data\DBModels\Accounts\**" />
+    <Content Remove="Data\DBModels\UserManagement\**" />
+    <Content Remove="DTOs\AcademicSessionYear\**" />
+    <Content Remove="DTOs\Accounts\**" />
+    <Content Remove="DTOs\Auth\**" />
+    <Content Remove="DTOs\HR\**" />
+    <Content Remove="DTOs\UserManagement\**" />
+    <Content Remove="Helpers\**" />
+    <Content Remove="Middlewares\**" />
+    <Content Remove="Repositories\Implementations\Accounts\**" />
+    <Content Remove="Repositories\Implementations\UserManagement\**" />
+    <Content Remove="Repositories\Interfaces\Accounts\**" />
+    <Content Remove="Repositories\Interfaces\UserManagement\**" />
+    <Content Remove="Services\Implementations\Accounts\**" />
+    <Content Remove="Services\Implementations\UserManagement\**" />
+    <Content Remove="Services\Interfaces\Accounts\**" />
+    <Content Remove="Services\Interfaces\UserManagement\**" />
+    <EmbeddedResource Remove="Controllers\Accounts\**" />
+    <EmbeddedResource Remove="Controllers\HR\**" />
+    <EmbeddedResource Remove="Controllers\UserManagement\**" />
+    <EmbeddedResource Remove="Data\DBModels\Accounts\**" />
+    <EmbeddedResource Remove="Data\DBModels\UserManagement\**" />
+    <EmbeddedResource Remove="DTOs\AcademicSessionYear\**" />
+    <EmbeddedResource Remove="DTOs\Accounts\**" />
+    <EmbeddedResource Remove="DTOs\Auth\**" />
+    <EmbeddedResource Remove="DTOs\HR\**" />
+    <EmbeddedResource Remove="DTOs\UserManagement\**" />
+    <EmbeddedResource Remove="Helpers\**" />
+    <EmbeddedResource Remove="Middlewares\**" />
+    <EmbeddedResource Remove="Repositories\Implementations\Accounts\**" />
+    <EmbeddedResource Remove="Repositories\Implementations\UserManagement\**" />
+    <EmbeddedResource Remove="Repositories\Interfaces\Accounts\**" />
+    <EmbeddedResource Remove="Repositories\Interfaces\UserManagement\**" />
+    <EmbeddedResource Remove="Services\Implementations\Accounts\**" />
+    <EmbeddedResource Remove="Services\Implementations\UserManagement\**" />
+    <EmbeddedResource Remove="Services\Interfaces\Accounts\**" />
+    <EmbeddedResource Remove="Services\Interfaces\UserManagement\**" />
+    <None Remove="Controllers\Accounts\**" />
+    <None Remove="Controllers\HR\**" />
+    <None Remove="Controllers\UserManagement\**" />
+    <None Remove="Data\DBModels\Accounts\**" />
+    <None Remove="Data\DBModels\UserManagement\**" />
+    <None Remove="DTOs\AcademicSessionYear\**" />
+    <None Remove="DTOs\Accounts\**" />
+    <None Remove="DTOs\Auth\**" />
+    <None Remove="DTOs\HR\**" />
+    <None Remove="DTOs\UserManagement\**" />
+    <None Remove="Helpers\**" />
+    <None Remove="Middlewares\**" />
+    <None Remove="Repositories\Implementations\Accounts\**" />
+    <None Remove="Repositories\Implementations\UserManagement\**" />
+    <None Remove="Repositories\Interfaces\Accounts\**" />
+    <None Remove="Repositories\Interfaces\UserManagement\**" />
+    <None Remove="Services\Implementations\Accounts\**" />
+    <None Remove="Services\Implementations\UserManagement\**" />
+    <None Remove="Services\Interfaces\Accounts\**" />
+    <None Remove="Services\Interfaces\UserManagement\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.8" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.8" />
@@ -18,31 +101,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\HR\" />
-    <Folder Include="Controllers\Accounts\" />
-    <Folder Include="Controllers\UserManagement\" />
-    <Folder Include="Data\DBModels\Accounts\" />
     <Folder Include="Data\DBModels\HR\" />
-    <Folder Include="Data\DBModels\UserManagement\" />
-    <Folder Include="DTOs\AcademicSessionYear\" />
-    <Folder Include="DTOs\Accounts\" />
-    <Folder Include="DTOs\Auth\" />
-    <Folder Include="DTOs\HR\" />
-    <Folder Include="DTOs\UserManagement\" />
-    <Folder Include="Helpers\" />
-    <Folder Include="Middlewares\" />
-    <Folder Include="Repositories\Implementations\Accounts\" />
     <Folder Include="Repositories\Implementations\HR\" />
-    <Folder Include="Repositories\Implementations\UserManagement\" />
-    <Folder Include="Repositories\Interfaces\Accounts\" />
     <Folder Include="Repositories\Interfaces\HR\" />
-    <Folder Include="Repositories\Interfaces\UserManagement\" />
-    <Folder Include="Services\Implementations\Accounts\" />
     <Folder Include="Services\Implementations\HR\" />
-    <Folder Include="Services\Implementations\UserManagement\" />
-    <Folder Include="Services\Interfaces\Accounts\" />
     <Folder Include="Services\Interfaces\HR\" />
-    <Folder Include="Services\Interfaces\UserManagement\" />
   </ItemGroup>
 
 </Project>

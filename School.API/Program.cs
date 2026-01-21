@@ -44,7 +44,7 @@ builder.Services.AddAuthorization();
 // Dependency Injection
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAcademicSessionYearRepository, AcademicSessionYearRepository>();
-builder.Services.AddScoped<IAcademicSessionYearService, AcademicSessionYearService>();
+builder.Services.AddScoped<ISMSSectionService, AcademicSessionYearService>();
 builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddScoped<IStudentService, StudentService>();
 

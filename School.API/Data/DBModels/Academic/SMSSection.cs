@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace School.API.Data.DBModels
+namespace School.API.Data.DBModels.Academic
 {
     public class SMSSection
     {
