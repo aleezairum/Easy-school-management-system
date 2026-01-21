@@ -1,0 +1,483 @@
+@{
+    ViewData["Title"] = ViewData["Title"] ?? "Fee Challan";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    var challanId = ViewData["ChallanId"];
+    var isEdit = challanId != null;
+}
+
+<style>
+    .card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        margin-bottom: 24px;
+    }
+
+    .card-header {
+        background: white;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 20px 24px;
+        border-radius: 16px 16px 0 0 !important;
+    }
+
+    .card-header h5 {
+        margin: 0;
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .card-body {
+        padding: 24px;
+    }
+
+    .form-label {
+        font-weight: 500;
+        color: #475569;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+
+    .form-control, .form-select {
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #008649;
+        box-shadow: 0 0 0 4px rgba(0, 134, 73, 0.1);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #008649 0%, #006d3b 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 12px 24px;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .btn-secondary {
+        background: #f1f5f9;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 12px 24px;
+        font-weight: 600;
+        font-size: 14px;
+        color: #64748b;
+    }
+
+    .section-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .fee-input {
+        text-align: right;
+    }
+
+    .total-row {
+        background: #f8fafc;
+        border-radius: 10px;
+        padding: 16px;
+        margin-top: 16px;
+    }
+
+    .total-row .label {
+        font-weight: 600;
+        color: #475569;
+    }
+
+    .total-row .amount {
+        font-size: 20px;
+        font-weight: 700;
+        color: #008649;
+    }
+</style>
+
+<div class="container-fluid">
+    <div id="alertContainer"></div>
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5><i class="bi bi-receipt me-2"></i>@(isEdit ? "Edit" : "Create") Fee Challan</h5>
+            <a href="/challan" class="btn btn-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to List
+            </a>
+        </div>
+        <div class="card-body">
+            <form id="challanForm">
+                <input type="hidden" id="challanId" value="@(challanId ?? 0)" />
+
+                <!-- Student Information -->
+                <div class="section-title">
+                    <i class="bi bi-person me-2"></i>Student Information
+                </div>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <label class="form-label">Student <span class="text-danger">*</span></label>
+                        <select class="form-select" id="studentId" required>
+                            <option value="">Select Student</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Class <span class="text-danger">*</span></label>
+                        <select class="form-select" id="classId" required>
+                            <option value="">Select Class</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Section <span class="text-danger">*</span></label>
+                        <select class="form-select" id="sectionId" required>
+                            <option value="">Select Section</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <label class="form-label">Session <span class="text-danger">*</span></label>
+                        <select class="form-select" id="sessionId" required>
+                            <option value="">Select Session</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Issue Date <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="issueDate" required />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Due Date <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="dueDate" required />
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <label class="form-label">For Month</label>
+                        <select class="form-select" id="forMonth">
+                            <option value="">Select Month</option>
+                            <option value="1">January</option>
+                            <option value="2">February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5">May</option>
+                            <option value="6">June</option>
+                            <option value="7">July</option>
+                            <option value="8">August</option>
+                            <option value="9">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">For Year</label>
+                        <input type="number" class="form-control" id="forYear" placeholder="2024" />
+                    </div>
+                </div>
+
+                <!-- Fee Components -->
+                <div class="section-title">
+                    <i class="bi bi-cash-stack me-2"></i>Fee Components
+                </div>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <label class="form-label">Tuition Fee</label>
+                        <input type="number" class="form-control fee-input" id="tuitionFee" value="0" step="0.01" onchange="calculateTotal()" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Admission Fee</label>
+                        <input type="number" class="form-control fee-input" id="admissionFee" value="0" step="0.01" onchange="calculateTotal()" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Exam Fee</label>
+                        <input type="number" class="form-control fee-input" id="examFee" value="0" step="0.01" onchange="calculateTotal()" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Transport Fee</label>
+                        <input type="number" class="form-control fee-input" id="transportFee" value="0" step="0.01" onchange="calculateTotal()" />
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <label class="form-label">Lab Fee</label>
+                        <input type="number" class="form-control fee-input" id="labFee" value="0" step="0.01" onchange="calculateTotal()" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Library Fee</label>
+                        <input type="number" class="form-control fee-input" id="libraryFee" value="0" step="0.01" onchange="calculateTotal()" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Sports Fee</label>
+                        <input type="number" class="form-control fee-input" id="sportsFee" value="0" step="0.01" onchange="calculateTotal()" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Computer Fee</label>
+                        <input type="number" class="form-control fee-input" id="computerFee" value="0" step="0.01" onchange="calculateTotal()" />
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <label class="form-label">Other Fee</label>
+                        <input type="number" class="form-control fee-input" id="otherFee" value="0" step="0.01" onchange="calculateTotal()" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Arrears Amount</label>
+                        <input type="number" class="form-control fee-input" id="arrearsAmount" value="0" step="0.01" onchange="calculateTotal()" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Discount</label>
+                        <input type="number" class="form-control fee-input" id="discount" value="0" step="0.01" onchange="calculateTotal()" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Late Fee</label>
+                        <input type="number" class="form-control fee-input" id="lateFee" value="0" step="0.01" onchange="calculateTotal()" />
+                    </div>
+                </div>
+
+                <!-- Totals -->
+                <div class="total-row">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <span class="label">Gross Amount:</span>
+                            <span class="ms-2" id="grossAmount">0.00</span>
+                        </div>
+                        <div class="col-md-4">
+                            <span class="label">After Discount/Late Fee:</span>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <span class="label">Total Amount:</span>
+                            <span class="amount ms-2" id="totalAmount">0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Remarks -->
+                <div class="row g-3 mt-4">
+                    <div class="col-md-12">
+                        <label class="form-label">Remarks</label>
+                        <textarea class="form-control" id="remarks" rows="2" placeholder="Additional notes..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Buttons -->
+                <div class="mt-4">
+                    <button type="button" class="btn btn-primary me-2" onclick="saveChallan()">
+                        <i class="bi bi-check-lg me-1"></i> Save Challan
+                    </button>
+                    <a href="/challan" class="btn btn-secondary">
+                        <i class="bi bi-x-lg me-1"></i> Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const API_BASE = 'http://localhost:5266/api';
+        const challanId = parseInt('@(challanId ?? 0)') || 0;
+
+        $(document).ready(function () {
+            // Set default dates
+            const today = new Date();
+            $('#issueDate').val(today.toISOString().split('T')[0]);
+
+            const dueDate = new Date();
+            dueDate.setDate(dueDate.getDate() + 15);
+            $('#dueDate').val(dueDate.toISOString().split('T')[0]);
+
+            $('#forYear').val(today.getFullYear());
+
+            loadDropdowns();
+
+            if (challanId > 0) {
+                loadChallan(challanId);
+            }
+        });
+
+        async function loadDropdowns() {
+            try {
+                // Load sessions
+                const sessions = await fetch(`${API_BASE}/AcademicSessionYear`).then(r => r.json()).catch(() => []);
+                const sessionSelect = $('#sessionId');
+                sessions.forEach(s => {
+                    sessionSelect.append(`<option value="${s.vid}">${s.vname}</option>`);
+                });
+
+                // For demo, add static options for class/section/student
+                // In production, these would come from API
+                $('#classId').append(`
+                    <option value="1">Class 1</option>
+                    <option value="2">Class 2</option>
+                    <option value="3">Class 3</option>
+                    <option value="4">Class 4</option>
+                    <option value="5">Class 5</option>
+                `);
+
+                $('#sectionId').append(`
+                    <option value="1">Section A</option>
+                    <option value="2">Section B</option>
+                    <option value="3">Section C</option>
+                `);
+
+                $('#studentId').append(`
+                    <option value="1">Ahmad Ali</option>
+                    <option value="2">Sara Khan</option>
+                    <option value="3">Usman Ahmed</option>
+                `);
+
+            } catch (error) {
+                console.error('Error loading dropdowns:', error);
+            }
+        }
+
+        async function loadChallan(id) {
+            try {
+                const response = await fetch(`${API_BASE}/ChallanVoucher/${id}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    populateForm(data);
+                }
+            } catch (error) {
+                console.error('Error loading challan:', error);
+            }
+        }
+
+        function populateForm(data) {
+            $('#studentId').val(data.studentId);
+            $('#classId').val(data.classId);
+            $('#sectionId').val(data.sectionId);
+            $('#sessionId').val(data.sessionId);
+            $('#issueDate').val(data.issueDate.split('T')[0]);
+            $('#dueDate').val(data.dueDate.split('T')[0]);
+            $('#forMonth').val(data.forMonth);
+            $('#forYear').val(data.forYear);
+            $('#tuitionFee').val(data.tuitionFee);
+            $('#admissionFee').val(data.admissionFee);
+            $('#examFee').val(data.examFee);
+            $('#transportFee').val(data.transportFee);
+            $('#labFee').val(data.labFee);
+            $('#libraryFee').val(data.libraryFee);
+            $('#sportsFee').val(data.sportsFee);
+            $('#computerFee').val(data.computerFee);
+            $('#otherFee').val(data.otherFee);
+            $('#arrearsAmount').val(data.arrearsAmount);
+            $('#discount').val(data.discount);
+            $('#lateFee').val(data.lateFee);
+            $('#remarks').val(data.remarks);
+            calculateTotal();
+        }
+
+        function calculateTotal() {
+            const tuitionFee = parseFloat($('#tuitionFee').val()) || 0;
+            const admissionFee = parseFloat($('#admissionFee').val()) || 0;
+            const examFee = parseFloat($('#examFee').val()) || 0;
+            const transportFee = parseFloat($('#transportFee').val()) || 0;
+            const labFee = parseFloat($('#labFee').val()) || 0;
+            const libraryFee = parseFloat($('#libraryFee').val()) || 0;
+            const sportsFee = parseFloat($('#sportsFee').val()) || 0;
+            const computerFee = parseFloat($('#computerFee').val()) || 0;
+            const otherFee = parseFloat($('#otherFee').val()) || 0;
+            const arrearsAmount = parseFloat($('#arrearsAmount').val()) || 0;
+            const discount = parseFloat($('#discount').val()) || 0;
+            const lateFee = parseFloat($('#lateFee').val()) || 0;
+
+            const grossAmount = tuitionFee + admissionFee + examFee + transportFee +
+                               labFee + libraryFee + sportsFee + computerFee +
+                               otherFee + arrearsAmount;
+
+            const totalAmount = grossAmount - discount + lateFee;
+
+            $('#grossAmount').text(grossAmount.toFixed(2));
+            $('#totalAmount').text(totalAmount.toFixed(2));
+        }
+
+        async function saveChallan() {
+            const studentId = $('#studentId').val();
+            const classId = $('#classId').val();
+            const sectionId = $('#sectionId').val();
+            const sessionId = $('#sessionId').val();
+
+            if (!studentId || !classId || !sectionId || !sessionId) {
+                showAlert('Please fill all required fields', 'danger');
+                return;
+            }
+
+            const data = {
+                StudentId: parseInt(studentId),
+                ClassId: parseInt(classId),
+                SectionId: parseInt(sectionId),
+                SessionId: parseInt(sessionId),
+                IssueDate: $('#issueDate').val(),
+                DueDate: $('#dueDate').val(),
+                ForMonth: parseInt($('#forMonth').val()) || null,
+                ForYear: parseInt($('#forYear').val()) || null,
+                TuitionFee: parseFloat($('#tuitionFee').val()) || 0,
+                AdmissionFee: parseFloat($('#admissionFee').val()) || 0,
+                ExamFee: parseFloat($('#examFee').val()) || 0,
+                TransportFee: parseFloat($('#transportFee').val()) || 0,
+                LabFee: parseFloat($('#labFee').val()) || 0,
+                LibraryFee: parseFloat($('#libraryFee').val()) || 0,
+                SportsFee: parseFloat($('#sportsFee').val()) || 0,
+                ComputerFee: parseFloat($('#computerFee').val()) || 0,
+                OtherFee: parseFloat($('#otherFee').val()) || 0,
+                ArrearsAmount: parseFloat($('#arrearsAmount').val()) || 0,
+                Discount: parseFloat($('#discount').val()) || 0,
+                LateFee: parseFloat($('#lateFee').val()) || 0,
+                Remarks: $('#remarks').val()
+            };
+
+            try {
+                let response;
+                if (challanId > 0) {
+                    data.Status = 1; // Pending
+                    response = await fetch(`${API_BASE}/ChallanVoucher/${challanId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                } else {
+                    response = await fetch(`${API_BASE}/ChallanVoucher`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                }
+
+                if (response.ok) {
+                    showAlert('Challan saved successfully!', 'success');
+                    setTimeout(() => window.location.href = '/challan', 1500);
+                } else {
+                    const error = await response.json();
+                    showAlert(error.message || 'Failed to save challan', 'danger');
+                }
+            } catch (error) {
+                showAlert('Error saving challan: ' + error.message, 'danger');
+            }
+        }
+
+        function showAlert(message, type) {
+            if (type === 'success') {
+                toastSuccess(message);
+            } else if (type === 'danger' || type === 'error') {
+                toastError(message);
+            } else if (type === 'warning') {
+                toastWarning(message);
+            } else {
+                toastInfo(message);
+            }
+        }
+    </script>
+}

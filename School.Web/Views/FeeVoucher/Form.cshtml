@@ -1,0 +1,490 @@
+@{
+    ViewData["Title"] = ViewData["Title"] ?? "Fee Voucher";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    var voucherId = ViewData["VoucherId"];
+    var isEdit = voucherId != null;
+}
+
+<style>
+    .card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        margin-bottom: 24px;
+    }
+
+    .card-header {
+        background: white;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 20px 24px;
+        border-radius: 16px 16px 0 0 !important;
+    }
+
+    .card-header h5 {
+        margin: 0;
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .card-body {
+        padding: 24px;
+    }
+
+    .form-label {
+        font-weight: 500;
+        color: #475569;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+
+    .form-control, .form-select {
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #008649;
+        box-shadow: 0 0 0 4px rgba(0, 134, 73, 0.1);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #008649 0%, #006d3b 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 12px 24px;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .btn-secondary {
+        background: #f1f5f9;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 12px 24px;
+        font-weight: 600;
+        font-size: 14px;
+        color: #64748b;
+    }
+
+    .section-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .challan-info {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .challan-info .label {
+        font-size: 12px;
+        color: #64748b;
+        text-transform: uppercase;
+    }
+
+    .challan-info .value {
+        font-size: 16px;
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .challan-info .balance {
+        font-size: 24px;
+        font-weight: 700;
+        color: #dc2626;
+    }
+
+    .payment-mode-card {
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 16px;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: center;
+        background: white;
+    }
+
+    .payment-mode-card:hover {
+        border-color: #008649;
+    }
+
+    .payment-mode-card.selected {
+        border-color: #008649;
+        background: #ecfdf5;
+    }
+
+    .payment-mode-card .icon {
+        font-size: 28px;
+        margin-bottom: 8px;
+    }
+
+    .payment-mode-card .name {
+        font-weight: 600;
+        font-size: 13px;
+    }
+
+    .jazz-icon { color: #e60000; }
+    .easy-icon { color: #00a651; }
+    .cash-icon { color: #f59e0b; }
+    .bank-icon { color: #0ea5e9; }
+
+    .dynamic-fields {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 16px;
+        display: none;
+    }
+
+    .dynamic-fields.show {
+        display: block;
+    }
+</style>
+
+<div class="container-fluid">
+    <div id="alertContainer"></div>
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5><i class="bi bi-receipt-cutoff me-2"></i>@(isEdit ? "Edit" : "Receive") Payment</h5>
+            <a href="/feevoucher" class="btn btn-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to List
+            </a>
+        </div>
+        <div class="card-body">
+            <form id="voucherForm">
+                <input type="hidden" id="voucherId" value="@(voucherId ?? 0)" />
+
+                <!-- Select Challan -->
+                <div class="section-title">
+                    <i class="bi bi-file-text me-2"></i>Select Fee Challan
+                </div>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label">Fee Challan <span class="text-danger">*</span></label>
+                        <select class="form-select" id="challanVoucherId" required onchange="loadChallanDetails()">
+                            <option value="">Select Pending Challan</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Challan Info -->
+                <div id="challanInfo" class="challan-info" style="display: none;">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="label">Student</div>
+                            <div class="value" id="studentName">-</div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="label">Challan #</div>
+                            <div class="value" id="challanNumber">-</div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="label">Total Amount</div>
+                            <div class="value" id="totalAmount">0.00</div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="label">Paid Amount</div>
+                            <div class="value" id="paidAmount">0.00</div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="label">Balance Due</div>
+                            <div class="balance" id="balanceAmount">0.00</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Details -->
+                <div class="section-title mt-4">
+                    <i class="bi bi-credit-card me-2"></i>Payment Details
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Payment Date <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="paymentDate" required />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Amount Paying <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="amountPaid" step="0.01" required placeholder="0.00" />
+                    </div>
+                </div>
+
+                <!-- Payment Mode Selection -->
+                <label class="form-label mt-3">Payment Mode <span class="text-danger">*</span></label>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-3">
+                        <div class="payment-mode-card" data-mode="JAZZ" onclick="selectPaymentMode('JAZZ')">
+                            <div class="icon jazz-icon"><i class="bi bi-phone"></i></div>
+                            <div class="name">JazzCash</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="payment-mode-card" data-mode="EASY" onclick="selectPaymentMode('EASY')">
+                            <div class="icon easy-icon"><i class="bi bi-phone-fill"></i></div>
+                            <div class="name">EasyPaisa</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="payment-mode-card" data-mode="CASH" onclick="selectPaymentMode('CASH')">
+                            <div class="icon cash-icon"><i class="bi bi-cash-stack"></i></div>
+                            <div class="name">Cash</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="payment-mode-card" data-mode="BANK" onclick="selectPaymentMode('BANK')">
+                            <div class="icon bank-icon"><i class="bi bi-bank"></i></div>
+                            <div class="name">Bank Transfer</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dynamic Fields -->
+                <div id="dynamicFields" class="dynamic-fields">
+                    <!-- Mobile Wallet Fields -->
+                    <div id="mobileFields" class="row g-3" style="display: none;">
+                        <div class="col-md-6">
+                            <label class="form-label">Mobile Number</label>
+                            <input type="text" class="form-control" id="mobileNumber" placeholder="03XX-XXXXXXX" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Transaction ID</label>
+                            <input type="text" class="form-control" id="transactionReference" placeholder="Transaction ID" />
+                        </div>
+                    </div>
+
+                    <!-- Cash Fields -->
+                    <div id="cashFields" class="row g-3" style="display: none;">
+                        <div class="col-md-6">
+                            <label class="form-label">Received By</label>
+                            <input type="text" class="form-control" id="receivedBy" placeholder="Cashier name" />
+                        </div>
+                    </div>
+
+                    <!-- Bank Fields -->
+                    <div id="bankFields" class="row g-3" style="display: none;">
+                        <div class="col-md-3">
+                            <label class="form-label">Bank Name</label>
+                            <input type="text" class="form-control" id="bankName" placeholder="Bank name" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Cheque Number</label>
+                            <input type="text" class="form-control" id="chequeNumber" placeholder="Cheque #" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Cheque Date</label>
+                            <input type="date" class="form-control" id="chequeDate" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Transaction Ref</label>
+                            <input type="text" class="form-control" id="bankTransRef" placeholder="Reference #" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Remarks -->
+                <div class="row g-3 mt-3">
+                    <div class="col-md-12">
+                        <label class="form-label">Remarks</label>
+                        <textarea class="form-control" id="remarks" rows="2" placeholder="Additional notes..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Buttons -->
+                <div class="mt-4">
+                    <button type="button" class="btn btn-primary me-2" onclick="saveVoucher()">
+                        <i class="bi bi-check-lg me-1"></i> Save Payment
+                    </button>
+                    <a href="/feevoucher" class="btn btn-secondary">
+                        <i class="bi bi-x-lg me-1"></i> Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const API_BASE = 'http://localhost:5266/api';
+        const voucherId = parseInt('@(voucherId ?? 0)') || 0;
+        let selectedMode = null;
+        let selectedChallan = null;
+
+        // Static Payment Methods
+        const paymentMethods = {
+            'JAZZ': { id: 1, name: 'JazzCash', type: 'mobile' },
+            'EASY': { id: 2, name: 'EasyPaisa', type: 'mobile' },
+            'CASH': { id: 3, name: 'Cash', type: 'cash' },
+            'BANK': { id: 4, name: 'Bank Transfer', type: 'bank' }
+        };
+
+        $(document).ready(function () {
+            $('#paymentDate').val(new Date().toISOString().split('T')[0]);
+            loadChallans();
+
+            if (voucherId > 0) {
+                loadVoucher(voucherId);
+            }
+        });
+
+        async function loadChallans() {
+            try {
+                const response = await fetch(`${API_BASE}/ChallanVoucher`);
+                if (response.ok) {
+                    const challans = await response.json();
+                    const select = $('#challanVoucherId');
+                    challans.filter(c => c.status !== 3).forEach(c => {
+                        const balance = c.totalAmount - c.paidAmount;
+                        select.append(`<option value="${c.id}" data-challan='${JSON.stringify(c)}'>${c.challanNumber} - ${c.studentName} (Balance: ${balance.toFixed(2)})</option>`);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading challans:', error);
+            }
+        }
+
+        function loadChallanDetails() {
+            const selected = $('#challanVoucherId option:selected');
+            if (selected.val()) {
+                selectedChallan = JSON.parse(selected.attr('data-challan'));
+                $('#challanInfo').show();
+                $('#studentName').text(selectedChallan.studentName || '-');
+                $('#challanNumber').text(selectedChallan.challanNumber);
+                $('#totalAmount').text(selectedChallan.totalAmount.toFixed(2));
+                $('#paidAmount').text(selectedChallan.paidAmount.toFixed(2));
+                const balance = selectedChallan.totalAmount - selectedChallan.paidAmount;
+                $('#balanceAmount').text(balance.toFixed(2));
+                $('#amountPaid').val(balance.toFixed(2));
+            } else {
+                $('#challanInfo').hide();
+                selectedChallan = null;
+            }
+        }
+
+        function selectPaymentMode(mode) {
+            selectedMode = mode;
+
+            $('.payment-mode-card').removeClass('selected');
+            $(`.payment-mode-card[data-mode="${mode}"]`).addClass('selected');
+
+            $('#dynamicFields').addClass('show');
+            $('#mobileFields, #cashFields, #bankFields').hide();
+
+            const type = paymentMethods[mode].type;
+            if (type === 'mobile') {
+                $('#mobileFields').show();
+            } else if (type === 'cash') {
+                $('#cashFields').show();
+            } else if (type === 'bank') {
+                $('#bankFields').show();
+            }
+        }
+
+        async function loadVoucher(id) {
+            try {
+                const response = await fetch(`${API_BASE}/FeeVoucher/${id}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    $('#challanVoucherId').val(data.challanVoucherId);
+                    loadChallanDetails();
+                    $('#paymentDate').val(data.paymentDate.split('T')[0]);
+                    $('#amountPaid').val(data.amountPaid);
+                    $('#remarks').val(data.remarks);
+                    $('#receivedBy').val(data.receivedBy);
+                    $('#bankName').val(data.bankName);
+                    $('#chequeNumber').val(data.chequeNumber);
+                    if (data.chequeDate) {
+                        $('#chequeDate').val(data.chequeDate.split('T')[0]);
+                    }
+                    $('#bankTransRef').val(data.transactionReference);
+                }
+            } catch (error) {
+                console.error('Error loading voucher:', error);
+            }
+        }
+
+        async function saveVoucher() {
+            const challanVoucherId = $('#challanVoucherId').val();
+            const amountPaid = parseFloat($('#amountPaid').val());
+
+            if (!challanVoucherId) {
+                showAlert('Please select a challan', 'danger');
+                return;
+            }
+
+            if (!selectedMode) {
+                showAlert('Please select a payment mode', 'danger');
+                return;
+            }
+
+            if (!amountPaid || amountPaid <= 0) {
+                showAlert('Please enter a valid amount', 'danger');
+                return;
+            }
+
+            const data = {
+                ChallanVoucherId: parseInt(challanVoucherId),
+                PaymentMethodId: paymentMethods[selectedMode].id,
+                PaymentDate: $('#paymentDate').val(),
+                AmountPaid: amountPaid,
+                Remarks: $('#remarks').val(),
+                ReceivedBy: $('#receivedBy').val(),
+                BankName: $('#bankName').val(),
+                ChequeNumber: $('#chequeNumber').val(),
+                ChequeDate: $('#chequeDate').val() || null,
+                TransactionReference: $('#transactionReference').val() || $('#bankTransRef').val()
+            };
+
+            try {
+                let response;
+                if (voucherId > 0) {
+                    response = await fetch(`${API_BASE}/FeeVoucher/${voucherId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                } else {
+                    response = await fetch(`${API_BASE}/FeeVoucher`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                }
+
+                if (response.ok) {
+                    showAlert('Payment saved successfully!', 'success');
+                    setTimeout(() => window.location.href = '/feevoucher', 1500);
+                } else {
+                    const error = await response.json();
+                    showAlert(error.message || 'Failed to save payment', 'danger');
+                }
+            } catch (error) {
+                showAlert('Error saving payment: ' + error.message, 'danger');
+            }
+        }
+
+        function showAlert(message, type) {
+            if (type === 'success') {
+                toastSuccess(message);
+            } else if (type === 'danger' || type === 'error') {
+                toastError(message);
+            } else if (type === 'warning') {
+                toastWarning(message);
+            } else {
+                toastInfo(message);
+            }
+        }
+    </script>
+}

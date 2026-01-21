@@ -1,0 +1,152 @@
+@{
+    Layout = null;
+    var voucherId = ViewData["VoucherId"];
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fee Voucher</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; font-size: 12px; padding: 20px; }
+        .voucher { border: 2px solid #000; padding: 20px; max-width: 600px; margin: 0 auto; }
+        .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 15px; }
+        .header h1 { font-size: 24px; margin-bottom: 5px; }
+        .header h2 { font-size: 16px; font-weight: normal; color: #008649; }
+        .voucher-no { text-align: right; font-size: 14px; font-weight: bold; margin-bottom: 15px; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .info-item .label { font-size: 10px; color: #666; text-transform: uppercase; }
+        .info-item .value { font-size: 14px; font-weight: bold; }
+        .amount-box { background: #008649; color: white; padding: 20px; text-align: center; border-radius: 10px; margin: 20px 0; }
+        .amount-box .label { font-size: 12px; opacity: 0.8; }
+        .amount-box .amount { font-size: 32px; font-weight: bold; }
+        .payment-info { background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .payment-info .row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .payment-info .row:last-child { margin-bottom: 0; }
+        .footer { margin-top: 30px; display: flex; justify-content: space-between; }
+        .signature { width: 150px; text-align: center; }
+        .signature-line { border-top: 1px solid #000; margin-top: 40px; padding-top: 5px; font-size: 10px; }
+        .print-btn { position: fixed; top: 20px; right: 20px; padding: 10px 20px; background: #008649; color: white; border: none; cursor: pointer; border-radius: 5px; }
+        @@media print { .print-btn { display: none; } }
+    </style>
+</head>
+<body>
+    <button class="print-btn" onclick="window.print()">Print Voucher</button>
+
+    <div class="voucher" id="voucherContent">
+        <div class="header">
+            <h1>SCHOOL NAME</h1>
+            <h2>Payment Receipt</h2>
+        </div>
+
+        <div class="voucher-no">
+            Voucher No: <span id="voucherNumber">-</span>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="label">Student Name</div>
+                <div class="value" id="studentName">-</div>
+            </div>
+            <div class="info-item">
+                <div class="label">Roll Number</div>
+                <div class="value" id="rollNumber">-</div>
+            </div>
+            <div class="info-item">
+                <div class="label">Challan Number</div>
+                <div class="value" id="challanNumber">-</div>
+            </div>
+            <div class="info-item">
+                <div class="label">Payment Date</div>
+                <div class="value" id="paymentDate">-</div>
+            </div>
+        </div>
+
+        <div class="amount-box">
+            <div class="label">Amount Received</div>
+            <div class="amount">Rs. <span id="amountPaid">0.00</span></div>
+        </div>
+
+        <div class="payment-info">
+            <div class="row">
+                <span>Payment Method:</span>
+                <strong id="paymentMethod">-</strong>
+            </div>
+            <div class="row" id="transRefRow" style="display: none;">
+                <span>Transaction Ref:</span>
+                <strong id="transactionRef">-</strong>
+            </div>
+            <div class="row" id="chequeRow" style="display: none;">
+                <span>Cheque Number:</span>
+                <strong id="chequeNumber">-</strong>
+            </div>
+            <div class="row" id="receivedByRow" style="display: none;">
+                <span>Received By:</span>
+                <strong id="receivedBy">-</strong>
+            </div>
+        </div>
+
+        <div class="footer">
+            <div class="signature">
+                <div class="signature-line">Student/Parent</div>
+            </div>
+            <div class="signature">
+                <div class="signature-line">Accountant</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5266/api';
+        const voucherId = @(voucherId ?? 0);
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (voucherId > 0) {
+                loadVoucher();
+            }
+        });
+
+        async function loadVoucher() {
+            try {
+                const response = await fetch(`${API_BASE}/FeeVoucher/${voucherId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    displayVoucher(data);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function displayVoucher(data) {
+            document.getElementById('voucherNumber').textContent = data.voucherNumber;
+            document.getElementById('studentName').textContent = data.studentName || '-';
+            document.getElementById('rollNumber').textContent = data.rollNumber || '-';
+            document.getElementById('challanNumber').textContent = data.challanNumber || '-';
+            document.getElementById('paymentDate').textContent = formatDate(data.paymentDate);
+            document.getElementById('amountPaid').textContent = data.amountPaid.toFixed(2);
+            document.getElementById('paymentMethod').textContent = data.paymentMethodName || '-';
+
+            if (data.transactionReference) {
+                document.getElementById('transRefRow').style.display = 'flex';
+                document.getElementById('transactionRef').textContent = data.transactionReference;
+            }
+
+            if (data.chequeNumber) {
+                document.getElementById('chequeRow').style.display = 'flex';
+                document.getElementById('chequeNumber').textContent = data.chequeNumber;
+            }
+
+            if (data.receivedBy) {
+                document.getElementById('receivedByRow').style.display = 'flex';
+                document.getElementById('receivedBy').textContent = data.receivedBy;
+            }
+        }
+
+        function formatDate(dateStr) {
+            return new Date(dateStr).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+    </script>
+</body>
+</html>

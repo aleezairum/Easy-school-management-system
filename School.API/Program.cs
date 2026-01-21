@@ -17,6 +17,10 @@ using School.API.Services.Interfaces.HR;
 using School.API.Services.Implementations.HR;
 using School.API.Repositories.Interfaces.HR;
 using School.API.Repositories.Implementations.HR;
+using School.API.Services.Interfaces.Accounts;
+using School.API.Services.Implementations.Accounts;
+using School.API.Repositories.Interfaces.Accounts;
+using School.API.Repositories.Implementations.Accounts;
 var builder = WebApplication.CreateBuilder(args);
 
 // Database
@@ -57,6 +61,24 @@ builder.Services.AddScoped<IAcademicGradeRepository, AcademicGradeRepository>();
 builder.Services.AddScoped<IAcademicGradeService, AcademicGradeService>();
 builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
 builder.Services.AddScoped<IEmployeeService, EmployeeService>();
+builder.Services.AddScoped<ISalaryRepository, SalaryRepository>();
+builder.Services.AddScoped<ISalaryService, SalaryService>();
+
+// Academic Services (new)
+builder.Services.AddScoped<ITimeTableRepository, TimeTableRepository>();
+builder.Services.AddScoped<ITimeTableService, TimeTableService>();
+builder.Services.AddScoped<IAttendanceRepository, AttendanceRepository>();
+builder.Services.AddScoped<IAttendanceService, AttendanceService>();
+builder.Services.AddScoped<IExamRepository, ExamRepository>();
+builder.Services.AddScoped<IExamService, ExamService>();
+
+// Accounts Services
+builder.Services.AddScoped<IPaymentMethodRepository, PaymentMethodRepository>();
+builder.Services.AddScoped<IPaymentMethodService, PaymentMethodService>();
+builder.Services.AddScoped<IChallanVoucherRepository, ChallanVoucherRepository>();
+builder.Services.AddScoped<IChallanVoucherService, ChallanVoucherService>();
+builder.Services.AddScoped<IFeeVoucherRepository, FeeVoucherRepository>();
+builder.Services.AddScoped<IFeeVoucherService, FeeVoucherService>();
 
 // Controllers
 builder.Services.AddControllers()
