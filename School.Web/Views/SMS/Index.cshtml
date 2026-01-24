@@ -12,7 +12,7 @@
         </div>
         <div class="card-body p-0">
             <!-- Tab Navigation -->
-            <ul class="nav nav-tabs px-4 pt-3" id="smsTabs" role="tablist" style="border-bottom: 2px solid #e2e8f0;">
+            <ul class="nav nav-tabs px-4 pt-3" id="smsTabs" role="tablist" style="border-bottom: 2px solid #e2e8f0; flex-wrap: wrap;">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="staff-tab" data-bs-toggle="tab" data-bs-target="#staff" type="button" role="tab">Staff</button>
                 </li>
@@ -26,17 +26,32 @@
                     <button class="nav-link" id="late-tab" data-bs-toggle="tab" data-bs-target="#late" type="button" role="tab">Late</button>
                 </li>
                 <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="again-tab" data-bs-toggle="tab" data-bs-target="#again" type="button" role="tab">Again</button>
+                </li>
+                <li class="nav-item" role="presentation">
                     <button class="nav-link" id="fee-tab" data-bs-toggle="tab" data-bs-target="#fee" type="button" role="tab">Fee</button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="result-tab" data-bs-toggle="tab" data-bs-target="#result" type="button" role="tab">Result</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="fromto-tab" data-bs-toggle="tab" data-bs-target="#fromto" type="button" role="tab">From To</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="fromexcel-tab" data-bs-toggle="tab" data-bs-target="#fromexcel" type="button" role="tab">From Excel</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="rcard-tab" data-bs-toggle="tab" data-bs-target="#rcard" type="button" role="tab">Rcard</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="websmsdetail-tab" data-bs-toggle="tab" data-bs-target="#websmsdetail" type="button" role="tab">Web SMS Detail</button>
                 </li>
             </ul>
 
             <!-- Tab Content -->
             <div class="tab-content p-4" id="smsTabsContent">
 
-                <!-- Staff SMS Tab -->
+                <!-- TAB 1: STAFF SMS -->
                 <div class="tab-pane fade" id="staff" role="tabpanel">
                     <div class="row">
                         <!-- Left Panel - Message Composition -->
@@ -56,11 +71,13 @@
                                         <option value="all">All Staff</option>
                                         <option value="teaching">Teaching Staff</option>
                                         <option value="non-teaching">Non-Teaching Staff</option>
+                                        <option value="administrative">Administrative Staff</option>
+                                        <option value="support">Support Staff</option>
                                     </select>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">To</label>
-                                    <select class="form-select" id="staffTo">
+                                    <select class="form-select" id="staffTo" onchange="updateStaffContact()">
                                         <option value="">-- Select Staff --</option>
                                     </select>
                                 </div>
@@ -93,7 +110,7 @@
                     </div>
                 </div>
 
-                <!-- General SMS Tab -->
+                <!-- TAB 2: GENERAL SMS -->
                 <div class="tab-pane fade show active" id="general" role="tabpanel">
                     <div class="row">
                         <!-- Left Panel - Message Composition -->
@@ -133,7 +150,7 @@
                                         <option value="">-- Select Class --</option>
                                     </select>
                                 </div>
-                                <div class="mb-3" id="generalSectionField" style="display: none;">
+                                <div class="mb-3" id="generalSectionField">
                                     <label class="form-label">Section</label>
                                     <select class="form-select" id="generalSectionId" onchange="loadGeneralStudents()">
                                         <option value="">-- Select Section --</option>
@@ -170,7 +187,7 @@
                     </div>
                 </div>
 
-                <!-- Absent SMS Tab -->
+                <!-- TAB 3: ABSENT SMS -->
                 <div class="tab-pane fade" id="absent" role="tabpanel">
                     <div class="row">
                         <!-- Left Panel - Filter & Send -->
@@ -214,7 +231,7 @@
                                         <option value="">-- Select Class --</option>
                                     </select>
                                 </div>
-                                <div class="mb-3" id="absentSectionField" style="display: none;">
+                                <div class="mb-3" id="absentSectionField">
                                     <label class="form-label">Section</label>
                                     <select class="form-select" id="absentSectionId" onchange="loadAbsentStudents()">
                                         <option value="">-- Select Section --</option>
@@ -243,112 +260,645 @@
                     </div>
                 </div>
 
-                <!-- Late SMS Tab -->
+                <!-- TAB 4: LATE SMS -->
                 <div class="tab-pane fade" id="late" role="tabpanel">
                     <div class="row">
                         <div class="col-md-6">
                             <div class="p-3" style="background: #f8fafc; border-radius: 12px;">
                                 <h6 class="mb-3" style="font-weight: 600; color: #475569;">Send Late Notification</h6>
                                 <div class="mb-3">
+                                    <label class="form-label">Choose</label>
+                                    <div class="d-flex gap-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="lateChoose" id="lateStudent" value="student" checked onchange="toggleLateFields()">
+                                            <label class="form-check-label" for="lateStudent">Student</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="lateChoose" id="lateSection" value="section" onchange="toggleLateFields()">
+                                            <label class="form-check-label" for="lateSection">Section</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="lateChoose" id="lateClass" value="class" onchange="toggleLateFields()">
+                                            <label class="form-check-label" for="lateClass">Class</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="lateChoose" id="lateAll" value="all" onchange="toggleLateFields()">
+                                            <label class="form-check-label" for="lateAll">All</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="lateSmsUrdu">
+                                        <label class="form-check-label" for="lateSmsUrdu">SMS in Urdu</label>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
                                     <label class="form-label">Date <span class="text-danger">*</span></label>
                                     <input type="date" class="form-control" id="lateDate" required />
                                 </div>
-                                <div class="mb-3">
+                                <div class="mb-3" id="lateClassField">
                                     <label class="form-label">Class</label>
                                     <select class="form-select" id="lateClassId" onchange="loadLateSections()">
-                                        <option value="">-- All Classes --</option>
+                                        <option value="">-- Select Class --</option>
                                     </select>
                                 </div>
-                                <div class="mb-3">
+                                <div class="mb-3" id="lateSectionField">
                                     <label class="form-label">Section</label>
-                                    <select class="form-select" id="lateSectionId">
-                                        <option value="">-- All Sections --</option>
+                                    <select class="form-select" id="lateSectionId" onchange="loadLateStudents()">
+                                        <option value="">-- Select Section --</option>
                                     </select>
                                 </div>
-                                <button type="button" class="btn btn-primary" onclick="sendLateSMS()">
-                                    <i class="bi bi-send me-1"></i> Send
-                                </button>
+                                <div class="mb-3" id="lateStudentField">
+                                    <label class="form-label">Student</label>
+                                    <select class="form-select" id="lateStudentId">
+                                        <option value="">-- Select Student --</option>
+                                    </select>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-primary" onclick="sendLateSMS()">
+                                        <i class="bi bi-send me-1"></i> Send
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="p-3" style="background: #f8fafc; border-radius: 12px; height: 100%;">
                                 <h6 class="mb-3" style="font-weight: 600; color: #475569;">Sending Detail - Message Sent (<span id="lateSentCount">0</span>)</h6>
-                                <textarea class="form-control" id="lateSendingLog" rows="10" readonly style="background: #fff;"></textarea>
+                                <textarea class="form-control" id="lateSendingLog" rows="15" readonly style="background: #fff;"></textarea>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Fee SMS Tab -->
+                <!-- TAB 5: AGAIN SMS -->
+                <div class="tab-pane fade" id="again" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="p-3" style="background: #f8fafc; border-radius: 12px;">
+                                <h6 class="mb-3" style="font-weight: 600; color: #475569;">Send Again Notification</h6>
+                                <div class="mb-3">
+                                    <label class="form-label">Choose</label>
+                                    <div class="d-flex gap-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="againChoose" id="againStudent" value="student" checked onchange="toggleAgainFields()">
+                                            <label class="form-check-label" for="againStudent">Student</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="againChoose" id="againSection" value="section" onchange="toggleAgainFields()">
+                                            <label class="form-check-label" for="againSection">Section</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="againChoose" id="againClass" value="class" onchange="toggleAgainFields()">
+                                            <label class="form-check-label" for="againClass">Class</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="againChoose" id="againAll" value="all" onchange="toggleAgainFields()">
+                                            <label class="form-check-label" for="againAll">All</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="againSmsUrdu">
+                                        <label class="form-check-label" for="againSmsUrdu">SMS in Urdu</label>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Date <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" id="againDate" required />
+                                </div>
+                                <div class="mb-3" id="againClassField">
+                                    <label class="form-label">Class</label>
+                                    <select class="form-select" id="againClassId" onchange="loadAgainSections()">
+                                        <option value="">-- Select Class --</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3" id="againSectionField">
+                                    <label class="form-label">Section</label>
+                                    <select class="form-select" id="againSectionId" onchange="loadAgainStudents()">
+                                        <option value="">-- Select Section --</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3" id="againStudentField">
+                                    <label class="form-label">Student</label>
+                                    <select class="form-select" id="againStudentId">
+                                        <option value="">-- Select Student --</option>
+                                    </select>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-primary" onclick="sendAgainSMS()">
+                                        <i class="bi bi-send me-1"></i> Send
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3" style="background: #f8fafc; border-radius: 12px; height: 100%;">
+                                <h6 class="mb-3" style="font-weight: 600; color: #475569;">Sending Detail - Message Sent (<span id="againSentCount">0</span>)</h6>
+                                <textarea class="form-control" id="againSendingLog" rows="15" readonly style="background: #fff;"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 6: FEE SMS -->
                 <div class="tab-pane fade" id="fee" role="tabpanel">
                     <div class="row">
                         <div class="col-md-6">
                             <div class="p-3" style="background: #f8fafc; border-radius: 12px;">
                                 <h6 class="mb-3" style="font-weight: 600; color: #475569;">Send Fee Reminder</h6>
                                 <div class="mb-3">
+                                    <label class="form-label">Choose</label>
+                                    <div class="d-flex gap-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="feeChoose" id="feeStudent" value="student" checked onchange="toggleFeeFields()">
+                                            <label class="form-check-label" for="feeStudent">Student</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="feeChoose" id="feeSection" value="section" onchange="toggleFeeFields()">
+                                            <label class="form-check-label" for="feeSection">Section</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="feeChoose" id="feeClass" value="class" onchange="toggleFeeFields()">
+                                            <label class="form-check-label" for="feeClass">Class</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="feeChoose" id="feeAll" value="all" onchange="toggleFeeFields()">
+                                            <label class="form-check-label" for="feeAll">All</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="feeSmsUrdu">
+                                        <label class="form-check-label" for="feeSmsUrdu">SMS in Urdu</label>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Fee Type</label>
+                                    <select class="form-select" id="feeFeeType">
+                                        <option value="">-- Select Fee Type --</option>
+                                        <option value="school">School Fee</option>
+                                        <option value="transport">Transport Fee</option>
+                                        <option value="admission">Admission Fee</option>
+                                        <option value="exam">Exam Fee</option>
+                                        <option value="lab">Lab Fee</option>
+                                        <option value="sports">Sports Fee</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Fee Status</label>
+                                    <select class="form-select" id="feeFeeStatus">
+                                        <option value="">-- Select Status --</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="due">Due</option>
+                                        <option value="overdue">Overdue</option>
+                                        <option value="paid">Paid</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3" id="feeClassField">
                                     <label class="form-label">Class</label>
                                     <select class="form-select" id="feeClassId" onchange="loadFeeSections()">
-                                        <option value="">-- All Classes --</option>
+                                        <option value="">-- Select Class --</option>
                                     </select>
                                 </div>
-                                <div class="mb-3">
+                                <div class="mb-3" id="feeSectionField">
                                     <label class="form-label">Section</label>
-                                    <select class="form-select" id="feeSectionId">
-                                        <option value="">-- All Sections --</option>
+                                    <select class="form-select" id="feeSectionId" onchange="loadFeeStudents()">
+                                        <option value="">-- Select Section --</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3" id="feeStudentField">
+                                    <label class="form-label">Student</label>
+                                    <select class="form-select" id="feeStudentId">
+                                        <option value="">-- Select Student --</option>
                                     </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Due Amount Greater Than</label>
-                                    <input type="number" class="form-control" id="feeDueAmount" value="0" min="0" />
+                                    <label class="form-label">Message</label>
+                                    <textarea class="form-control" id="feeMessage" rows="4" placeholder="Optional custom message..." onkeyup="updateCharCount('feeMessage', 'feeCharCount')"></textarea>
+                                    <small class="text-muted">Characters: <span id="feeCharCount">0</span></small>
                                 </div>
-                                <button type="button" class="btn btn-primary" onclick="sendFeeSMS()">
-                                    <i class="bi bi-send me-1"></i> Send
-                                </button>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-primary" onclick="sendFeeSMS()">
+                                        <i class="bi bi-send me-1"></i> Send
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" onclick="clearFeeForm()">
+                                        <i class="bi bi-x-lg me-1"></i> Clear
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="p-3" style="background: #f8fafc; border-radius: 12px; height: 100%;">
                                 <h6 class="mb-3" style="font-weight: 600; color: #475569;">Sending Detail - Message Sent (<span id="feeSentCount">0</span>)</h6>
-                                <textarea class="form-control" id="feeSendingLog" rows="10" readonly style="background: #fff;"></textarea>
+                                <textarea class="form-control" id="feeSendingLog" rows="15" readonly style="background: #fff;"></textarea>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Result SMS Tab -->
+                <!-- TAB 7: RESULT SMS -->
                 <div class="tab-pane fade" id="result" role="tabpanel">
                     <div class="row">
                         <div class="col-md-6">
                             <div class="p-3" style="background: #f8fafc; border-radius: 12px;">
                                 <h6 class="mb-3" style="font-weight: 600; color: #475569;">Send Result Notification</h6>
                                 <div class="mb-3">
-                                    <label class="form-label">Exam</label>
-                                    <select class="form-select" id="resultExamId">
+                                    <label class="form-label">Choose</label>
+                                    <div class="d-flex gap-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="resultChoose" id="resultStudent" value="student" checked onchange="toggleResultFields()">
+                                            <label class="form-check-label" for="resultStudent">Student</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="resultChoose" id="resultSection" value="section" onchange="toggleResultFields()">
+                                            <label class="form-check-label" for="resultSection">Section</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="resultChoose" id="resultClass" value="class" onchange="toggleResultFields()">
+                                            <label class="form-check-label" for="resultClass">Class</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="resultChoose" id="resultAll" value="all" onchange="toggleResultFields()">
+                                            <label class="form-check-label" for="resultAll">All</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="resultSmsUrdu">
+                                        <label class="form-check-label" for="resultSmsUrdu">SMS in Urdu</label>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Exam <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="resultExamId" required>
                                         <option value="">-- Select Exam --</option>
                                     </select>
                                 </div>
-                                <div class="mb-3">
+                                <div class="mb-3" id="resultClassField">
                                     <label class="form-label">Class</label>
                                     <select class="form-select" id="resultClassId" onchange="loadResultSections()">
-                                        <option value="">-- All Classes --</option>
+                                        <option value="">-- Select Class --</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3" id="resultSectionField">
+                                    <label class="form-label">Section</label>
+                                    <select class="form-select" id="resultSectionId" onchange="loadResultStudents()">
+                                        <option value="">-- Select Section --</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3" id="resultStudentField">
+                                    <label class="form-label">Student</label>
+                                    <select class="form-select" id="resultStudentId">
+                                        <option value="">-- Select Student --</option>
                                     </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Section</label>
-                                    <select class="form-select" id="resultSectionId">
-                                        <option value="">-- All Sections --</option>
+                                    <label class="form-label">Result Status</label>
+                                    <select class="form-select" id="resultStatus">
+                                        <option value="">-- All --</option>
+                                        <option value="pass">Pass</option>
+                                        <option value="fail">Fail</option>
                                     </select>
                                 </div>
-                                <button type="button" class="btn btn-primary" onclick="sendResultSMS()">
-                                    <i class="bi bi-send me-1"></i> Send
-                                </button>
+                                <div class="mb-3">
+                                    <label class="form-label">Message</label>
+                                    <textarea class="form-control" id="resultMessage" rows="4" placeholder="Optional custom message..." onkeyup="updateCharCount('resultMessage', 'resultCharCount')"></textarea>
+                                    <small class="text-muted">Characters: <span id="resultCharCount">0</span></small>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-primary" onclick="sendResultSMS()">
+                                        <i class="bi bi-send me-1"></i> Send
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" onclick="clearResultForm()">
+                                        <i class="bi bi-x-lg me-1"></i> Clear
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="p-3" style="background: #f8fafc; border-radius: 12px; height: 100%;">
                                 <h6 class="mb-3" style="font-weight: 600; color: #475569;">Sending Detail - Message Sent (<span id="resultSentCount">0</span>)</h6>
-                                <textarea class="form-control" id="resultSendingLog" rows="10" readonly style="background: #fff;"></textarea>
+                                <textarea class="form-control" id="resultSendingLog" rows="15" readonly style="background: #fff;"></textarea>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 8: FROM TO SMS -->
+                <div class="tab-pane fade" id="fromto" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="p-3" style="background: #f8fafc; border-radius: 12px;">
+                                <h6 class="mb-3" style="font-weight: 600; color: #475569;">Send SMS for Date Range</h6>
+                                <div class="mb-3">
+                                    <label class="form-label">Choose</label>
+                                    <div class="d-flex gap-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="fromtoChoose" id="fromtoStudent" value="student" checked onchange="toggleFromToFields()">
+                                            <label class="form-check-label" for="fromtoStudent">Student</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="fromtoChoose" id="fromtoSection" value="section" onchange="toggleFromToFields()">
+                                            <label class="form-check-label" for="fromtoSection">Section</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="fromtoChoose" id="fromtoClass" value="class" onchange="toggleFromToFields()">
+                                            <label class="form-check-label" for="fromtoClass">Class</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="fromtoChoose" id="fromtoAll" value="all" onchange="toggleFromToFields()">
+                                            <label class="form-check-label" for="fromtoAll">All</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="fromtoSmsUrdu">
+                                        <label class="form-check-label" for="fromtoSmsUrdu">SMS in Urdu</label>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">From Date <span class="text-danger">*</span></label>
+                                        <input type="date" class="form-control" id="fromtoFromDate" required />
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">To Date <span class="text-danger">*</span></label>
+                                        <input type="date" class="form-control" id="fromtoToDate" required />
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Filter Type</label>
+                                    <select class="form-select" id="fromtoFilterType">
+                                        <option value="">-- Select Filter --</option>
+                                        <option value="absent">Absent</option>
+                                        <option value="late">Late</option>
+                                        <option value="feedue">Fee Due</option>
+                                        <option value="again">Again</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3" id="fromtoClassField">
+                                    <label class="form-label">Class</label>
+                                    <select class="form-select" id="fromtoClassId" onchange="loadFromToSections()">
+                                        <option value="">-- Select Class --</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3" id="fromtoSectionField">
+                                    <label class="form-label">Section</label>
+                                    <select class="form-select" id="fromtoSectionId" onchange="loadFromToStudents()">
+                                        <option value="">-- Select Section --</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3" id="fromtoStudentField">
+                                    <label class="form-label">Student</label>
+                                    <select class="form-select" id="fromtoStudentId">
+                                        <option value="">-- Select Student --</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Message</label>
+                                    <textarea class="form-control" id="fromtoMessage" rows="4" placeholder="Type your message here..." onkeyup="updateCharCount('fromtoMessage', 'fromtoCharCount')"></textarea>
+                                    <small class="text-muted">Characters: <span id="fromtoCharCount">0</span></small>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-primary" onclick="sendFromToSMS()">
+                                        <i class="bi bi-send me-1"></i> Send
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" onclick="clearFromToForm()">
+                                        <i class="bi bi-x-lg me-1"></i> Clear
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3" style="background: #f8fafc; border-radius: 12px; height: 100%;">
+                                <h6 class="mb-3" style="font-weight: 600; color: #475569;">Sending Detail - Message Sent (<span id="fromtoSentCount">0</span>)</h6>
+                                <textarea class="form-control" id="fromtoSendingLog" rows="15" readonly style="background: #fff;"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 9: FROM EXCEL SMS -->
+                <div class="tab-pane fade" id="fromexcel" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="p-3" style="background: #f8fafc; border-radius: 12px;">
+                                <h6 class="mb-3" style="font-weight: 600; color: #475569;">Upload & Send SMS from Excel</h6>
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="excelSmsUrdu">
+                                        <label class="form-check-label" for="excelSmsUrdu">SMS in Urdu</label>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Upload Excel File <span class="text-danger">*</span></label>
+                                    <input type="file" class="form-control" id="excelFile" accept=".xlsx,.xls,.csv" onchange="previewExcelFile()" />
+                                    <small class="text-muted">Accepted formats: .xlsx, .xls, .csv</small>
+                                </div>
+                                <div class="mb-3" id="excelPreviewSection" style="display: none;">
+                                    <label class="form-label">File Preview</label>
+                                    <div class="p-2 border rounded" style="background: #fff;">
+                                        <span id="excelFileName"></span> - <span id="excelRowCount">0</span> rows
+                                    </div>
+                                </div>
+                                <div class="mb-3" id="excelColumnsSection" style="display: none;">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Phone Column</label>
+                                            <select class="form-select" id="excelPhoneColumn">
+                                                <option value="">-- Select Column --</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Message Column</label>
+                                            <select class="form-select" id="excelMessageColumn">
+                                                <option value="">-- Select Column --</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-primary" onclick="sendExcelSMS()">
+                                        <i class="bi bi-send me-1"></i> Send
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" onclick="clearExcelForm()">
+                                        <i class="bi bi-x-lg me-1"></i> Clear
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3" style="background: #f8fafc; border-radius: 12px; height: 100%;">
+                                <h6 class="mb-3" style="font-weight: 600; color: #475569;">Sending Detail - Message Sent (<span id="excelSentCount">0</span>)</h6>
+                                <textarea class="form-control" id="excelSendingLog" rows="15" readonly style="background: #fff;"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 10: RCARD SMS -->
+                <div class="tab-pane fade" id="rcard" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="p-3" style="background: #f8fafc; border-radius: 12px;">
+                                <h6 class="mb-3" style="font-weight: 600; color: #475569;">Send Report Card Notification</h6>
+                                <div class="mb-3">
+                                    <label class="form-label">Choose</label>
+                                    <div class="d-flex gap-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="rcardChoose" id="rcardStudent" value="student" checked onchange="toggleRcardFields()">
+                                            <label class="form-check-label" for="rcardStudent">Student</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="rcardChoose" id="rcardSection" value="section" onchange="toggleRcardFields()">
+                                            <label class="form-check-label" for="rcardSection">Section</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="rcardChoose" id="rcardClass" value="class" onchange="toggleRcardFields()">
+                                            <label class="form-check-label" for="rcardClass">Class</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="rcardChoose" id="rcardAll" value="all" onchange="toggleRcardFields()">
+                                            <label class="form-check-label" for="rcardAll">All</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="rcardSmsUrdu">
+                                        <label class="form-check-label" for="rcardSmsUrdu">SMS in Urdu</label>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Exam <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="rcardExamId" required>
+                                        <option value="">-- Select Exam --</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3" id="rcardClassField">
+                                    <label class="form-label">Class</label>
+                                    <select class="form-select" id="rcardClassId" onchange="loadRcardSections()">
+                                        <option value="">-- Select Class --</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3" id="rcardSectionField">
+                                    <label class="form-label">Section</label>
+                                    <select class="form-select" id="rcardSectionId" onchange="loadRcardStudents()">
+                                        <option value="">-- Select Section --</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3" id="rcardStudentField">
+                                    <label class="form-label">Student</label>
+                                    <select class="form-select" id="rcardStudentId">
+                                        <option value="">-- Select Student --</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="rcardIncludeLink">
+                                        <label class="form-check-label" for="rcardIncludeLink">Include Report Card Download Link</label>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Message</label>
+                                    <textarea class="form-control" id="rcardMessage" rows="4" placeholder="Optional custom message..." onkeyup="updateCharCount('rcardMessage', 'rcardCharCount')"></textarea>
+                                    <small class="text-muted">Characters: <span id="rcardCharCount">0</span></small>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-primary" onclick="sendRcardSMS()">
+                                        <i class="bi bi-send me-1"></i> Send
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" onclick="clearRcardForm()">
+                                        <i class="bi bi-x-lg me-1"></i> Clear
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3" style="background: #f8fafc; border-radius: 12px; height: 100%;">
+                                <h6 class="mb-3" style="font-weight: 600; color: #475569;">Sending Detail - Message Sent (<span id="rcardSentCount">0</span>)</h6>
+                                <textarea class="form-control" id="rcardSendingLog" rows="15" readonly style="background: #fff;"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 11: WEB SMS DETAIL -->
+                <div class="tab-pane fade" id="websmsdetail" role="tabpanel">
+                    <div class="p-3" style="background: #f8fafc; border-radius: 12px;">
+                        <h6 class="mb-3" style="font-weight: 600; color: #475569;">SMS Sending History</h6>
+                        <!-- Filter Section -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-2">
+                                <label class="form-label">From Date</label>
+                                <input type="date" class="form-control" id="historyFromDate" />
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">To Date</label>
+                                <input type="date" class="form-control" id="historyToDate" />
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Recipient Type</label>
+                                <select class="form-select" id="historyRecipientType">
+                                    <option value="">All</option>
+                                    <option value="student">Student</option>
+                                    <option value="staff">Staff</option>
+                                    <option value="section">Section</option>
+                                    <option value="class">Class</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Status</label>
+                                <select class="form-select" id="historyStatus">
+                                    <option value="">All</option>
+                                    <option value="sent">Sent</option>
+                                    <option value="failed">Failed</option>
+                                    <option value="pending">Pending</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Search</label>
+                                <input type="text" class="form-control" id="historySearch" placeholder="Search..." />
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end gap-2">
+                                <button type="button" class="btn btn-primary" onclick="filterHistory()">
+                                    <i class="bi bi-search me-1"></i> Filter
+                                </button>
+                                <button type="button" class="btn btn-secondary" onclick="refreshHistory()">
+                                    <i class="bi bi-arrow-clockwise"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- History Table -->
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="historyTable">
+                                <thead>
+                                    <tr style="background: #e2e8f0;">
+                                        <th>Date/Time</th>
+                                        <th>Recipient Type</th>
+                                        <th>Recipient Name/Count</th>
+                                        <th>Message Preview</th>
+                                        <th>Status</th>
+                                        <th>Sent By</th>
+                                        <th>Total Count</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="historyBody">
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted py-4">No SMS history found. Use filters and click Filter to search.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="d-flex justify-content-end mt-3">
+                            <button type="button" class="btn btn-secondary" onclick="exportHistory()">
+                                <i class="bi bi-download me-1"></i> Export
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -364,8 +914,9 @@
         border: none;
         color: #64748b;
         font-weight: 500;
-        padding: 12px 20px;
+        padding: 12px 16px;
         margin-bottom: -2px;
+        font-size: 14px;
     }
     .nav-tabs .nav-link:hover {
         color: #008649;
@@ -386,14 +937,22 @@
 
     $(document).ready(function () {
         // Set default dates
-        $('#absentDate').val(new Date().toISOString().split('T')[0]);
-        $('#lateDate').val(new Date().toISOString().split('T')[0]);
+        const today = new Date().toISOString().split('T')[0];
+        $('#absentDate, #lateDate, #againDate').val(today);
+        $('#fromtoFromDate, #historyFromDate').val(today);
+        $('#fromtoToDate, #historyToDate').val(today);
 
         loadAllDropdowns();
 
         // Initialize field visibility based on default selections
         toggleGeneralFields();
         toggleAbsentFields();
+        toggleLateFields();
+        toggleAgainFields();
+        toggleFeeFields();
+        toggleResultFields();
+        toggleFromToFields();
+        toggleRcardFields();
     });
 
     async function loadAllDropdowns() {
@@ -404,7 +963,11 @@
             ]);
 
             // Populate all class dropdowns
-            ['generalClassId', 'absentClassId', 'lateClassId', 'feeClassId', 'resultClassId'].forEach(id => {
+            const classDropdowns = [
+                'generalClassId', 'absentClassId', 'lateClassId', 'againClassId',
+                'feeClassId', 'resultClassId', 'fromtoClassId', 'rcardClassId'
+            ];
+            classDropdowns.forEach(id => {
                 const select = $(`#${id}`);
                 select.find('option:not(:first)').remove();
                 classes.forEach(c => {
@@ -412,11 +975,14 @@
                 });
             });
 
-            // Populate exam dropdown
-            const examSelect = $('#resultExamId');
-            examSelect.find('option:not(:first)').remove();
-            exams.forEach(e => {
-                examSelect.append(`<option value="${e.id}">${e.examName}</option>`);
+            // Populate exam dropdowns
+            const examDropdowns = ['resultExamId', 'rcardExamId'];
+            examDropdowns.forEach(id => {
+                const select = $(`#${id}`);
+                select.find('option:not(:first)').remove();
+                exams.forEach(e => {
+                    select.append(`<option value="${e.id}">${e.examName}</option>`);
+                });
             });
         } catch (error) {
             console.error('Error loading dropdowns:', error);
@@ -429,7 +995,7 @@
         $(`#${counterId}`).text(count);
     }
 
-    // Toggle fields based on selection - General
+    // Toggle functions for each tab
     function toggleGeneralFields() {
         const choice = $('input[name="generalChoose"]:checked').val();
         $('#generalClassField').toggle(choice !== 'all');
@@ -437,7 +1003,6 @@
         $('#generalStudentField').toggle(choice === 'student');
     }
 
-    // Toggle fields based on selection - Absent
     function toggleAbsentFields() {
         const choice = $('input[name="absentChoose"]:checked').val();
         $('#absentClassField').toggle(choice !== 'all');
@@ -445,27 +1010,49 @@
         $('#absentStudentField').toggle(choice === 'student');
     }
 
-    // Load sections for different tabs
-    async function loadGeneralSections() {
-        await loadSectionsFor('generalClassId', 'generalSectionId');
+    function toggleLateFields() {
+        const choice = $('input[name="lateChoose"]:checked').val();
+        $('#lateClassField').toggle(choice !== 'all');
+        $('#lateSectionField').toggle(choice === 'section' || choice === 'student');
+        $('#lateStudentField').toggle(choice === 'student');
     }
 
-    async function loadAbsentSections() {
-        await loadSectionsFor('absentClassId', 'absentSectionId');
+    function toggleAgainFields() {
+        const choice = $('input[name="againChoose"]:checked').val();
+        $('#againClassField').toggle(choice !== 'all');
+        $('#againSectionField').toggle(choice === 'section' || choice === 'student');
+        $('#againStudentField').toggle(choice === 'student');
     }
 
-    async function loadLateSections() {
-        await loadSectionsFor('lateClassId', 'lateSectionId');
+    function toggleFeeFields() {
+        const choice = $('input[name="feeChoose"]:checked').val();
+        $('#feeClassField').toggle(choice !== 'all');
+        $('#feeSectionField').toggle(choice === 'section' || choice === 'student');
+        $('#feeStudentField').toggle(choice === 'student');
     }
 
-    async function loadFeeSections() {
-        await loadSectionsFor('feeClassId', 'feeSectionId');
+    function toggleResultFields() {
+        const choice = $('input[name="resultChoose"]:checked').val();
+        $('#resultClassField').toggle(choice !== 'all');
+        $('#resultSectionField').toggle(choice === 'section' || choice === 'student');
+        $('#resultStudentField').toggle(choice === 'student');
     }
 
-    async function loadResultSections() {
-        await loadSectionsFor('resultClassId', 'resultSectionId');
+    function toggleFromToFields() {
+        const choice = $('input[name="fromtoChoose"]:checked').val();
+        $('#fromtoClassField').toggle(choice !== 'all');
+        $('#fromtoSectionField').toggle(choice === 'section' || choice === 'student');
+        $('#fromtoStudentField').toggle(choice === 'student');
     }
 
+    function toggleRcardFields() {
+        const choice = $('input[name="rcardChoose"]:checked').val();
+        $('#rcardClassField').toggle(choice !== 'all');
+        $('#rcardSectionField').toggle(choice === 'section' || choice === 'student');
+        $('#rcardStudentField').toggle(choice === 'student');
+    }
+
+    // Generic section loading function
     async function loadSectionsFor(classDropdownId, sectionDropdownId) {
         const classId = $(`#${classDropdownId}`).val();
         const sectionSelect = $(`#${sectionDropdownId}`);
@@ -486,15 +1073,7 @@
         }
     }
 
-    // Load students
-    async function loadGeneralStudents() {
-        await loadStudentsFor('generalClassId', 'generalSectionId', 'generalStudentId');
-    }
-
-    async function loadAbsentStudents() {
-        await loadStudentsFor('absentClassId', 'absentSectionId', 'absentStudentId');
-    }
-
+    // Generic student loading function
     async function loadStudentsFor(classDropdownId, sectionDropdownId, studentDropdownId) {
         const classId = $(`#${classDropdownId}`).val();
         const sectionId = $(`#${sectionDropdownId}`).val();
@@ -516,7 +1095,27 @@
         }
     }
 
-    // Load staff by type
+    // Section loading functions for each tab
+    async function loadGeneralSections() { await loadSectionsFor('generalClassId', 'generalSectionId'); }
+    async function loadAbsentSections() { await loadSectionsFor('absentClassId', 'absentSectionId'); }
+    async function loadLateSections() { await loadSectionsFor('lateClassId', 'lateSectionId'); }
+    async function loadAgainSections() { await loadSectionsFor('againClassId', 'againSectionId'); }
+    async function loadFeeSections() { await loadSectionsFor('feeClassId', 'feeSectionId'); }
+    async function loadResultSections() { await loadSectionsFor('resultClassId', 'resultSectionId'); }
+    async function loadFromToSections() { await loadSectionsFor('fromtoClassId', 'fromtoSectionId'); }
+    async function loadRcardSections() { await loadSectionsFor('rcardClassId', 'rcardSectionId'); }
+
+    // Student loading functions for each tab
+    async function loadGeneralStudents() { await loadStudentsFor('generalClassId', 'generalSectionId', 'generalStudentId'); }
+    async function loadAbsentStudents() { await loadStudentsFor('absentClassId', 'absentSectionId', 'absentStudentId'); }
+    async function loadLateStudents() { await loadStudentsFor('lateClassId', 'lateSectionId', 'lateStudentId'); }
+    async function loadAgainStudents() { await loadStudentsFor('againClassId', 'againSectionId', 'againStudentId'); }
+    async function loadFeeStudents() { await loadStudentsFor('feeClassId', 'feeSectionId', 'feeStudentId'); }
+    async function loadResultStudents() { await loadStudentsFor('resultClassId', 'resultSectionId', 'resultStudentId'); }
+    async function loadFromToStudents() { await loadStudentsFor('fromtoClassId', 'fromtoSectionId', 'fromtoStudentId'); }
+    async function loadRcardStudents() { await loadStudentsFor('rcardClassId', 'rcardSectionId', 'rcardStudentId'); }
+
+    // Staff functions
     async function loadStaffByType() {
         const type = $('#staffType').val();
         const staffSelect = $('#staffTo');
@@ -535,6 +1134,24 @@
         } catch (error) {
             console.error('Error loading staff:', error);
         }
+    }
+
+    function updateStaffContact() {
+        const selectedOption = $('#staffTo option:selected');
+        const phone = selectedOption.data('phone');
+        if (phone) {
+            $('#staffContactNo').val(phone);
+        }
+    }
+
+    // SMS logging function
+    function logSMS(logId, countId, message) {
+        const timestamp = new Date().toLocaleString();
+        const log = $(`#${logId}`);
+        log.val(log.val() + `[${timestamp}] ${message}\n`);
+
+        const count = parseInt($(`#${countId}`).text()) + 1;
+        $(`#${countId}`).text(count);
     }
 
     // Send SMS functions
@@ -569,7 +1186,22 @@
     }
 
     async function sendLateSMS() {
+        const date = $('#lateDate').val();
+        if (!date) {
+            toastWarning('Please select a date');
+            return;
+        }
         logSMS('lateSendingLog', 'lateSentCount', 'Late notification sent successfully');
+        toastSuccess('SMS sent successfully!');
+    }
+
+    async function sendAgainSMS() {
+        const date = $('#againDate').val();
+        if (!date) {
+            toastWarning('Please select a date');
+            return;
+        }
+        logSMS('againSendingLog', 'againSentCount', 'Again notification sent successfully');
         toastSuccess('SMS sent successfully!');
     }
 
@@ -579,26 +1211,77 @@
     }
 
     async function sendResultSMS() {
+        const examId = $('#resultExamId').val();
+        if (!examId) {
+            toastWarning('Please select an exam');
+            return;
+        }
         logSMS('resultSendingLog', 'resultSentCount', 'Result notification sent successfully');
         toastSuccess('SMS sent successfully!');
     }
 
-    function logSMS(logId, countId, message) {
-        const timestamp = new Date().toLocaleString();
-        const log = $(`#${logId}`);
-        log.val(log.val() + `[${timestamp}] ${message}\n`);
-
-        const count = parseInt($(`#${countId}`).text()) + 1;
-        $(`#${countId}`).text(count);
+    async function sendFromToSMS() {
+        const fromDate = $('#fromtoFromDate').val();
+        const toDate = $('#fromtoToDate').val();
+        if (!fromDate || !toDate) {
+            toastWarning('Please select date range');
+            return;
+        }
+        logSMS('fromtoSendingLog', 'fromtoSentCount', 'Date range SMS sent successfully');
+        toastSuccess('SMS sent successfully!');
     }
 
-    // Clear forms
+    async function sendExcelSMS() {
+        const file = $('#excelFile').val();
+        if (!file) {
+            toastWarning('Please upload an Excel file');
+            return;
+        }
+        logSMS('excelSendingLog', 'excelSentCount', 'Excel SMS sent successfully');
+        toastSuccess('SMS sent successfully!');
+    }
+
+    async function sendRcardSMS() {
+        const examId = $('#rcardExamId').val();
+        if (!examId) {
+            toastWarning('Please select an exam');
+            return;
+        }
+        logSMS('rcardSendingLog', 'rcardSentCount', 'Report card notification sent successfully');
+        toastSuccess('SMS sent successfully!');
+    }
+
+    // Excel file preview
+    function previewExcelFile() {
+        const fileInput = $('#excelFile')[0];
+        if (fileInput.files && fileInput.files[0]) {
+            const file = fileInput.files[0];
+            $('#excelFileName').text(file.name);
+            $('#excelRowCount').text('--');
+            $('#excelPreviewSection').show();
+            $('#excelColumnsSection').show();
+
+            // Mock column options
+            const columns = ['Column A', 'Column B', 'Column C', 'Name', 'Phone', 'Message'];
+            const phoneSelect = $('#excelPhoneColumn');
+            const messageSelect = $('#excelMessageColumn');
+            phoneSelect.find('option:not(:first)').remove();
+            messageSelect.find('option:not(:first)').remove();
+            columns.forEach(col => {
+                phoneSelect.append(`<option value="${col}">${col}</option>`);
+                messageSelect.append(`<option value="${col}">${col}</option>`);
+            });
+        }
+    }
+
+    // Clear form functions
     function clearStaffForm() {
         $('#staffType').val('');
         $('#staffTo').val('');
         $('#staffContactNo').val('');
         $('#staffMessage').val('');
         $('#staffCharCount').text('0');
+        $('#staffSmsUrdu').prop('checked', false);
     }
 
     function clearGeneralForm() {
@@ -607,6 +1290,75 @@
         $('#generalStudentId').val('');
         $('#generalMessage').val('');
         $('#generalCharCount').text('0');
+        $('#generalSmsUrdu').prop('checked', false);
+    }
+
+    function clearFeeForm() {
+        $('#feeFeeType').val('');
+        $('#feeFeeStatus').val('');
+        $('#feeClassId').val('');
+        $('#feeSectionId').val('');
+        $('#feeStudentId').val('');
+        $('#feeMessage').val('');
+        $('#feeCharCount').text('0');
+        $('#feeSmsUrdu').prop('checked', false);
+    }
+
+    function clearResultForm() {
+        $('#resultExamId').val('');
+        $('#resultClassId').val('');
+        $('#resultSectionId').val('');
+        $('#resultStudentId').val('');
+        $('#resultStatus').val('');
+        $('#resultMessage').val('');
+        $('#resultCharCount').text('0');
+        $('#resultSmsUrdu').prop('checked', false);
+    }
+
+    function clearFromToForm() {
+        $('#fromtoFromDate').val('');
+        $('#fromtoToDate').val('');
+        $('#fromtoFilterType').val('');
+        $('#fromtoClassId').val('');
+        $('#fromtoSectionId').val('');
+        $('#fromtoStudentId').val('');
+        $('#fromtoMessage').val('');
+        $('#fromtoCharCount').text('0');
+        $('#fromtoSmsUrdu').prop('checked', false);
+    }
+
+    function clearExcelForm() {
+        $('#excelFile').val('');
+        $('#excelPreviewSection').hide();
+        $('#excelColumnsSection').hide();
+        $('#excelSmsUrdu').prop('checked', false);
+    }
+
+    function clearRcardForm() {
+        $('#rcardExamId').val('');
+        $('#rcardClassId').val('');
+        $('#rcardSectionId').val('');
+        $('#rcardStudentId').val('');
+        $('#rcardIncludeLink').prop('checked', false);
+        $('#rcardMessage').val('');
+        $('#rcardCharCount').text('0');
+        $('#rcardSmsUrdu').prop('checked', false);
+    }
+
+    // History functions
+    function filterHistory() {
+        toastInfo('Filtering SMS history...');
+        // Implementation for filtering history
+    }
+
+    function refreshHistory() {
+        toastInfo('Refreshing SMS history...');
+        // Implementation for refreshing history
+    }
+
+    function exportHistory() {
+        toastInfo('Exporting SMS history...');
+        // Implementation for exporting history
     }
 </script>
 }
