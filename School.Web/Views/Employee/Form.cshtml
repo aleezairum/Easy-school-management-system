@@ -251,33 +251,35 @@
                     <!-- Personal Info Tab -->
                     <div class="tab-pane fade show active" id="personal" role="tabpanel">
                         <div class="row g-3">
-                            <div class="col-md-9">
+                            <!-- Left Column - Personal Information -->
+                            <div class="col-md-4">
+                                <div class="section-title">Personal Information</div>
                                 <div class="row g-3">
-                                    <div class="col-md-4">
+                                    <div class="col-12">
                                         <label for="employeeCode" class="form-label">Employee Code</label>
                                         <input type="text" class="form-control" id="employeeCode" name="EmployeeCode" placeholder="Auto-generated" />
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-12">
                                         <label for="firstName" class="form-label">First Name <span class="text-danger">*</span></label>
                                         <input type="text" class="form-control" id="firstName" name="FirstName" required />
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-12">
                                         <label for="lastName" class="form-label">Last Name <span class="text-danger">*</span></label>
                                         <input type="text" class="form-control" id="lastName" name="LastName" required />
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-12">
                                         <label for="firstNameUrdu" class="form-label">First Name (Urdu)</label>
                                         <input type="text" class="form-control" id="firstNameUrdu" name="FirstNameUrdu" dir="rtl" />
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-12">
                                         <label for="lastNameUrdu" class="form-label">Last Name (Urdu)</label>
                                         <input type="text" class="form-control" id="lastNameUrdu" name="LastNameUrdu" dir="rtl" />
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-12">
                                         <label for="cnic" class="form-label">CNIC <span class="text-danger">*</span></label>
                                         <input type="text" class="form-control" id="cnic" name="CNIC" placeholder="00000-0000000-0" required />
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-12">
                                         <label for="gender" class="form-label">Gender <span class="text-danger">*</span></label>
                                         <select class="form-select" id="gender" name="Gender" required>
                                             <option value="">Select Gender</option>
@@ -285,31 +287,57 @@
                                             <option value="Female">Female</option>
                                         </select>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-12">
                                         <label for="dateOfBirth" class="form-label">Date of Birth</label>
                                         <input type="date" class="form-control" id="dateOfBirth" name="DateOfBirth" />
                                     </div>
-                                    <div class="col-md-4">
-                                        <label for="qualification" class="form-label">Qualification</label>
-                                        <input type="text" class="form-control" id="qualification" name="Qualification" />
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label for="specialization" class="form-label">Specialization</label>
-                                        <input type="text" class="form-control" id="specialization" name="Specialization" />
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label for="experience" class="form-label">Experience</label>
-                                        <input type="text" class="form-control" id="experience" name="Experience" />
-                                    </div>
                                 </div>
                             </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Photo</label>
-                                <div class="photo-preview mb-2" id="photoPreview">
-                                    <i class="bi bi-person-square"></i>
+                            <!-- Center Column - Photo -->
+                            <div class="col-md-4 text-center">
+                                <div class="section-title">Photo</div>
+                                <div class="d-flex flex-column align-items-center">
+                                    <div class="photo-preview mb-2" id="photoPreview" style="width: 180px; height: 180px;">
+                                        <i class="bi bi-person-square"></i>
+                                    </div>
+                                    <input type="file" class="form-control" id="photoFile" accept="image/*" onchange="previewPhoto(this)" style="max-width: 200px;" />
+                                    <input type="hidden" id="photo" name="Photo" />
                                 </div>
-                                <input type="file" class="form-control" id="photoFile" accept="image/*" onchange="previewPhoto(this)" />
-                                <input type="hidden" id="photo" name="Photo" />
+                            </div>
+                            <!-- Right Column - Qualifications -->
+                            <div class="col-md-4">
+                                <div class="section-title">Qualifications</div>
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label for="fatherHusbandName" class="form-label">Father's / Husband's Name</label>
+                                        <input type="text" class="form-control" id="fatherHusbandName" name="FatherHusbandName" />
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="maritalStatus" class="form-label">Marital Status</label>
+                                        <div class="d-flex gap-3 pt-2">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="MaritalStatus" id="maritalSingle" value="Single">
+                                                <label class="form-check-label" for="maritalSingle">Single</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="MaritalStatus" id="maritalMarried" value="Married">
+                                                <label class="form-check-label" for="maritalMarried">Married</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="academicQualification" class="form-label">Academic Qualification</label>
+                                        <textarea class="form-control" id="academicQualification" name="AcademicQualification" rows="3"></textarea>
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="professionalQualification" class="form-label">Professional Qualification</label>
+                                        <textarea class="form-control" id="professionalQualification" name="ProfessionalQualification" rows="3"></textarea>
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="teachingExperience" class="form-label">Teaching Experience</label>
+                                        <textarea class="form-control" id="teachingExperience" name="TeachingExperience" rows="3"></textarea>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -570,9 +598,13 @@
             $('#cnic').val(data.cnic);
             $('#gender').val(data.gender);
             $('#dateOfBirth').val(formatDateForInput(data.dateOfBirth));
-            $('#qualification').val(data.qualification);
-            $('#specialization').val(data.specialization);
-            $('#experience').val(data.experience);
+            $('#fatherHusbandName').val(data.fatherHusbandName);
+            if (data.maritalStatus) {
+                $(`input[name="MaritalStatus"][value="${data.maritalStatus}"]`).prop('checked', true);
+            }
+            $('#academicQualification').val(data.academicQualification);
+            $('#professionalQualification').val(data.professionalQualification);
+            $('#teachingExperience').val(data.teachingExperience);
 
             $('#email').val(data.email);
             $('#phone').val(data.phone);
@@ -661,9 +693,11 @@
                 Address: $('#address').val().trim(),
                 City: $('#city').val().trim(),
                 Photo: $('#photo').val(),
-                Qualification: $('#qualification').val().trim(),
-                Specialization: $('#specialization').val().trim(),
-                Experience: $('#experience').val().trim(),
+                FatherHusbandName: $('#fatherHusbandName').val().trim(),
+                MaritalStatus: $('input[name="MaritalStatus"]:checked').val() || null,
+                AcademicQualification: $('#academicQualification').val().trim(),
+                ProfessionalQualification: $('#professionalQualification').val().trim(),
+                TeachingExperience: $('#teachingExperience').val().trim(),
                 Department: $('#department').val().trim(),
                 DesignationId: parseInt(designationId),
                 HRGradeId: $('#hrGradeId').val() ? parseInt($('#hrGradeId').val()) : null,

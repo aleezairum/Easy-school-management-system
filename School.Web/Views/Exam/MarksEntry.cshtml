@@ -1,0 +1,351 @@
+@{
+    ViewData["Title"] = "Award List - Marks Entry";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<div class="container-fluid">
+    <div id="alertContainer"></div>
+
+    <div class="card" style="border-radius: 16px; border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+        <div class="card-header d-flex justify-content-between align-items-center" style="background: white; border-bottom: 1px solid #e2e8f0; padding: 20px 24px; border-radius: 16px 16px 0 0;">
+            <h5 style="margin: 0; font-weight: 600; color: #1e293b;"><i class="bi bi-clipboard-data me-2"></i>Award List - Marks Entry</h5>
+            <a href="/exam" class="btn btn-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to Exams
+            </a>
+        </div>
+        <div class="card-body p-4">
+            <!-- Filter Section - Two Column Layout -->
+            <div class="filter-section" style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                <div class="row g-3">
+                    <!-- Left Column -->
+                    <div class="col-md-6">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="classId" class="form-label">Class <span class="text-danger">*</span></label>
+                                <select class="form-select" id="classId" required onchange="loadSections()">
+                                    <option value="">-- Select Class --</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="sectionId" class="form-label">Section <span class="text-danger">*</span></label>
+                                <select class="form-select" id="sectionId" required disabled onchange="loadStudents()">
+                                    <option value="">-- Select Section --</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="examDate" class="form-label">Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="examDate" required />
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Right Column -->
+                    <div class="col-md-6">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label for="examId" class="form-label">Exam <span class="text-danger">*</span></label>
+                                <select class="form-select" id="examId" required>
+                                    <option value="">-- Select Exam --</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="subjectId" class="form-label">Subject <span class="text-danger">*</span></label>
+                                <select class="form-select" id="subjectId" required>
+                                    <option value="">-- Select Subject --</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="totalMarks" class="form-label">Total Marks <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="totalMarks" value="100" min="1" required />
+                            </div>
+                            <div class="col-md-3">
+                                <label for="passPercentage" class="form-label">Pass %</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="passPercentage" value="40" min="0" max="100" />
+                                    <span class="input-group-text">%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-12 d-flex justify-content-end">
+                        <button type="button" class="btn btn-primary" onclick="loadStudents()">
+                            <i class="bi bi-search me-1"></i> Load Students
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Marks Entry Grid -->
+            <div class="grid-section">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="marksTable">
+                        <thead>
+                            <tr style="background: #f8fafc;">
+                                <th style="width: 80px;">Roll No</th>
+                                <th>Student Name</th>
+                                <th class="text-center" style="width: 150px;">Marks</th>
+                                <th class="text-center" style="width: 120px;">Attendance</th>
+                            </tr>
+                        </thead>
+                        <tbody id="marksBody">
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">Select Class, Section, Exam and Subject to load students</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                <a href="/exam" class="btn btn-secondary">
+                    <i class="bi bi-x-lg me-1"></i> Close
+                </a>
+                <button type="button" class="btn btn-primary" onclick="printAwardList()">
+                    <i class="bi bi-printer me-1"></i> Print
+                </button>
+                <button type="button" class="btn btn-primary" onclick="printDetailedReport()">
+                    <i class="bi bi-file-earmark-text me-1"></i> Print Report
+                </button>
+                <button type="button" class="btn btn-primary" id="btnSave" onclick="saveMarks()">
+                    <i class="bi bi-check-lg me-1"></i> Save
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const API_BASE = 'http://localhost:5266/api';
+    let students = [];
+
+    $(document).ready(function () {
+        $('#examDate').val(new Date().toISOString().split('T')[0]);
+        loadDropdowns();
+    });
+
+    async function loadDropdowns() {
+        try {
+            const [classes, exams, subjects] = await Promise.all([
+                fetch(`${API_BASE}/SMSClass`).then(r => r.ok ? r.json() : []),
+                fetch(`${API_BASE}/Exam`).then(r => r.ok ? r.json() : []),
+                fetch(`${API_BASE}/Subject`).then(r => r.ok ? r.json() : [])
+            ]);
+
+            const classSelect = $('#classId');
+            classSelect.find('option:not(:first)').remove();
+            classes.forEach(c => {
+                classSelect.append(`<option value="${c.viD}">${c.vName}</option>`);
+            });
+
+            const examSelect = $('#examId');
+            examSelect.find('option:not(:first)').remove();
+            exams.forEach(e => {
+                examSelect.append(`<option value="${e.id}" data-total="${e.totalMarks}">${e.examName} (${e.examType})</option>`);
+            });
+
+            const subjectSelect = $('#subjectId');
+            subjectSelect.find('option:not(:first)').remove();
+            subjects.forEach(s => {
+                subjectSelect.append(`<option value="${s.id}">${s.name}</option>`);
+            });
+        } catch (error) {
+            console.error('Error loading dropdowns:', error);
+        }
+    }
+
+    async function loadSections() {
+        const classId = $('#classId').val();
+        const sectionSelect = $('#sectionId');
+        sectionSelect.find('option:not(:first)').remove();
+        sectionSelect.prop('disabled', true);
+
+        if (!classId) return;
+
+        try {
+            const response = await fetch(`${API_BASE}/SMSSection/byClass/${classId}`);
+            if (response.ok) {
+                const sections = await response.json();
+                sections.forEach(s => {
+                    sectionSelect.append(`<option value="${s.viD}">${s.vName}</option>`);
+                });
+                sectionSelect.prop('disabled', false);
+            }
+        } catch (error) {
+            console.error('Error loading sections:', error);
+        }
+    }
+
+    async function loadStudents() {
+        const classId = $('#classId').val();
+        const sectionId = $('#sectionId').val();
+        const examId = $('#examId').val();
+        const subjectId = $('#subjectId').val();
+
+        if (!classId || !sectionId) {
+            toastWarning('Please select Class and Section');
+            return;
+        }
+
+        if (!examId || !subjectId) {
+            toastWarning('Please select Exam and Subject');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/Student/byClassSection?classId=${classId}&sectionId=${sectionId}`);
+            if (response.ok) {
+                students = await response.json();
+                renderMarksGrid(students);
+            } else {
+                // Mock data
+                students = [
+                    { id: 1, rollNo: '001', studentName: 'Ahmed Khan', marks: '', attendance: 'P' },
+                    { id: 2, rollNo: '002', studentName: 'Sara Ali', marks: '', attendance: 'P' },
+                    { id: 3, rollNo: '003', studentName: 'Muhammad Hassan', marks: '', attendance: 'P' }
+                ];
+                renderMarksGrid(students);
+            }
+        } catch (error) {
+            console.error('Error loading students:', error);
+            toastError('Error loading students');
+        }
+    }
+
+    function renderMarksGrid(studentList) {
+        const tbody = $('#marksBody');
+        tbody.empty();
+
+        if (studentList.length === 0) {
+            tbody.html('<tr><td colspan="4" class="text-center text-muted py-4">No students found</td></tr>');
+            return;
+        }
+
+        const totalMarks = parseInt($('#totalMarks').val()) || 100;
+
+        studentList.forEach((student, index) => {
+            const row = `
+                <tr data-student-id="${student.id}">
+                    <td><strong>${student.rollNo || index + 1}</strong></td>
+                    <td>${student.studentName || student.name || '-'}</td>
+                    <td class="text-center">
+                        <input type="number" class="form-control form-control-sm marks-input"
+                               data-student-id="${student.id}"
+                               value="${student.marks || ''}"
+                               min="0" max="${totalMarks}"
+                               placeholder="0-${totalMarks}"
+                               onchange="validateMarks(this, ${totalMarks})" />
+                    </td>
+                    <td class="text-center">
+                        <span class="badge ${student.attendance === 'P' ? 'bg-success' : (student.attendance === 'A' ? 'bg-danger' : 'bg-info')}">
+                            ${student.attendance === 'P' ? 'Present' : (student.attendance === 'A' ? 'Absent' : 'Leave')}
+                        </span>
+                    </td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+    }
+
+    function validateMarks(input, maxMarks) {
+        const value = parseInt($(input).val());
+        if (value < 0) $(input).val(0);
+        if (value > maxMarks) $(input).val(maxMarks);
+
+        const studentId = $(input).data('student-id');
+        const student = students.find(s => s.id === studentId);
+        if (student) {
+            student.marks = $(input).val();
+        }
+    }
+
+    async function saveMarks() {
+        const classId = $('#classId').val();
+        const sectionId = $('#sectionId').val();
+        const examId = $('#examId').val();
+        const subjectId = $('#subjectId').val();
+        const examDate = $('#examDate').val();
+        const totalMarks = $('#totalMarks').val();
+
+        if (!classId || !sectionId || !examId || !subjectId || !examDate) {
+            toastWarning('Please fill all required fields');
+            return;
+        }
+
+        // Collect marks from inputs
+        const marksData = [];
+        $('.marks-input').each(function () {
+            const studentId = $(this).data('student-id');
+            const marks = $(this).val();
+            if (marks !== '') {
+                marksData.push({
+                    studentId: studentId,
+                    examId: parseInt(examId),
+                    subjectId: parseInt(subjectId),
+                    marksObtained: parseFloat(marks),
+                    totalMarks: parseFloat(totalMarks),
+                    examDate: examDate
+                });
+            }
+        });
+
+        if (marksData.length === 0) {
+            toastWarning('Please enter marks for at least one student');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/ExamResult/bulk`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(marksData)
+            });
+
+            if (response.ok) {
+                toastSuccess('Marks saved successfully!');
+            } else {
+                const error = await response.text();
+                toastError(error || 'Failed to save marks');
+            }
+        } catch (error) {
+            console.error('Error saving marks:', error);
+            toastError('Error saving marks');
+        }
+    }
+
+    function printAwardList() {
+        window.print();
+    }
+
+    function printDetailedReport() {
+        const classId = $('#classId').val();
+        const sectionId = $('#sectionId').val();
+        const examId = $('#examId').val();
+        const subjectId = $('#subjectId').val();
+
+        if (classId && sectionId && examId && subjectId) {
+            window.open(`/exam/results/${examId}?classId=${classId}&sectionId=${sectionId}&subjectId=${subjectId}`, '_blank');
+        } else {
+            toastWarning('Please select all filters first');
+        }
+    }
+
+    // Update total marks when exam changes
+    $('#examId').on('change', function () {
+        const selectedOption = $(this).find('option:selected');
+        const totalMarks = selectedOption.data('total');
+        if (totalMarks) {
+            $('#totalMarks').val(totalMarks);
+        }
+    });
+
+    // Re-render grid when total marks changes
+    $('#totalMarks').on('change', function () {
+        if (students.length > 0) {
+            renderMarksGrid(students);
+        }
+    });
+</script>
+}

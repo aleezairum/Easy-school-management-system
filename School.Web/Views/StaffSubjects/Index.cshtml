@@ -1,0 +1,414 @@
+@{
+    ViewData["Title"] = "Staff Subjects";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<div class="card" style="border-radius: 16px; border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+    <div class="card-body p-4">
+        <!-- Header Section: Staff Member Selection -->
+        <div class="form-section mb-4">
+            <h6 class="mb-3">Select Staff Member</h6>
+            <div class="row">
+                <div class="col-md-4">
+                    <label for="staffMemberId" class="form-label">Staff Member <span class="text-danger">*</span></label>
+                    <select class="form-select" id="staffMemberId" required>
+                        <option value="">-- Select Staff Member --</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <hr />
+
+        <!-- Assignment Input Section -->
+        <div class="form-section mb-4">
+            <h6 class="mb-3">Add Subject Assignment</h6>
+            <div class="row g-3 align-items-end">
+                <div class="col-md-2">
+                    <label for="classId" class="form-label">Class <span class="text-danger">*</span></label>
+                    <select class="form-select" id="classId" required onchange="loadSections()">
+                        <option value="">-- Select Class --</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="sectionId" class="form-label">Section <span class="text-danger">*</span></label>
+                    <select class="form-select" id="sectionId" required disabled>
+                        <option value="">-- Select Section --</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="subjectId" class="form-label">Subject <span class="text-danger">*</span></label>
+                    <select class="form-select" id="subjectId" required>
+                        <option value="">-- Select Subject --</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="lectureNo" class="form-label">Lecture No <span class="text-danger">*</span></label>
+                    <select class="form-select" id="lectureNo" required>
+                        <option value="">-- Select --</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-primary w-100" id="btnAddAssignment" onclick="addAssignment()" disabled>
+                        <i class="bi bi-plus-lg me-1"></i> Add
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <hr />
+
+        <!-- Assigned Subjects Grid -->
+        <div class="grid-section">
+            <h6 class="mb-3">Assigned Subjects</h6>
+            <div class="table-responsive">
+                <table class="table table-hover" id="assignmentsTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">Sr#</th>
+                            <th>Class</th>
+                            <th>Section</th>
+                            <th>Subject</th>
+                            <th>Lecture No</th>
+                            <th class="text-center" style="width: 100px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="assignmentsBody">
+                        <tr id="emptyRow">
+                            <td colspan="6" class="text-center text-muted py-4">No subjects assigned yet. Use the form above to add assignments.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+            <button type="button" class="btn btn-secondary" onclick="resetForm()">
+                <i class="bi bi-x-lg me-1"></i> Reset
+            </button>
+            <button type="button" class="btn btn-primary" id="btnSave" onclick="saveAssignments()" disabled>
+                <i class="bi bi-check-lg me-1"></i> Save
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const API_BASE = 'http://localhost:5266/api';
+
+    // In-memory store for assignments
+    let assignments = [];
+    let assignmentCounter = 0;
+
+    // On page load
+    $(document).ready(function () {
+        loadStaffMembers();
+        loadClasses();
+        loadSubjects();
+
+        // Enable/disable Add button based on field values
+        $('#classId, #sectionId, #subjectId, #lectureNo').on('change', validateAddButton);
+    });
+
+    // Load staff members dropdown
+    async function loadStaffMembers() {
+        try {
+            const response = await fetch(`${API_BASE}/Employee`);
+            if (response.ok) {
+                const staff = await response.json();
+                const select = $('#staffMemberId');
+                select.find('option:not(:first)').remove();
+                staff.forEach(s => {
+                    select.append(`<option value="${s.id}">${s.fullName || s.name}</option>`);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading staff members:', error);
+        }
+    }
+
+    // Load classes dropdown
+    async function loadClasses() {
+        try {
+            const response = await fetch(`${API_BASE}/SMSClass`);
+            if (response.ok) {
+                const classes = await response.json();
+                const select = $('#classId');
+                select.find('option:not(:first)').remove();
+                classes.forEach(c => {
+                    select.append(`<option value="${c.viD}">${c.vName}</option>`);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading classes:', error);
+        }
+    }
+
+    // Load sections based on selected class
+    async function loadSections() {
+        const classId = $('#classId').val();
+        const sectionSelect = $('#sectionId');
+
+        sectionSelect.find('option:not(:first)').remove();
+        sectionSelect.prop('disabled', true);
+
+        if (!classId) {
+            validateAddButton();
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/SMSSection/byClass/${classId}`);
+            if (response.ok) {
+                const sections = await response.json();
+                sections.forEach(s => {
+                    sectionSelect.append(`<option value="${s.viD}">${s.vName}</option>`);
+                });
+                sectionSelect.prop('disabled', false);
+            }
+        } catch (error) {
+            console.error('Error loading sections:', error);
+        }
+
+        validateAddButton();
+    }
+
+    // Load subjects dropdown
+    async function loadSubjects() {
+        try {
+            const response = await fetch(`${API_BASE}/Subject`);
+            if (response.ok) {
+                const subjects = await response.json();
+                const select = $('#subjectId');
+                select.find('option:not(:first)').remove();
+                subjects.forEach(s => {
+                    select.append(`<option value="${s.id}">${s.name}</option>`);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading subjects:', error);
+        }
+    }
+
+    // Validate if Add button should be enabled
+    function validateAddButton() {
+        const classId = $('#classId').val();
+        const sectionId = $('#sectionId').val();
+        const subjectId = $('#subjectId').val();
+        const lectureNo = $('#lectureNo').val();
+
+        const isValid = classId && sectionId && subjectId && lectureNo;
+        $('#btnAddAssignment').prop('disabled', !isValid);
+    }
+
+    // Check for duplicate assignment
+    function isDuplicate(classId, sectionId, subjectId, lectureNo) {
+        return assignments.some(a =>
+            a.classId === classId &&
+            a.sectionId === sectionId &&
+            a.subjectId === subjectId &&
+            a.lectureNo === lectureNo
+        );
+    }
+
+    // Add assignment to the grid
+    function addAssignment() {
+        const classId = $('#classId').val();
+        const sectionId = $('#sectionId').val();
+        const subjectId = $('#subjectId').val();
+        const lectureNo = $('#lectureNo').val();
+
+        // Get display text
+        const className = $('#classId option:selected').text();
+        const sectionName = $('#sectionId option:selected').text();
+        const subjectName = $('#subjectId option:selected').text();
+
+        // Check for duplicates
+        if (isDuplicate(classId, sectionId, subjectId, lectureNo)) {
+            toastWarning('This combination of Class, Section, Subject, and Lecture No already exists.', 'Duplicate Entry');
+            return;
+        }
+
+        // Add to assignments array
+        const assignment = {
+            id: ++assignmentCounter,
+            classId: classId,
+            className: className,
+            sectionId: sectionId,
+            sectionName: sectionName,
+            subjectId: subjectId,
+            subjectName: subjectName,
+            lectureNo: lectureNo
+        };
+        assignments.push(assignment);
+
+        // Render the grid
+        renderAssignmentsGrid();
+
+        // Clear input fields
+        clearInputFields();
+
+        // Enable save button
+        updateSaveButton();
+
+        toastSuccess('Assignment added successfully.');
+    }
+
+    // Remove assignment from the grid
+    function removeAssignment(id) {
+        assignments = assignments.filter(a => a.id !== id);
+        renderAssignmentsGrid();
+        updateSaveButton();
+        toastInfo('Assignment removed.');
+    }
+
+    // Render the assignments grid
+    function renderAssignmentsGrid() {
+        const tbody = $('#assignmentsBody');
+        tbody.empty();
+
+        if (assignments.length === 0) {
+            tbody.html('<tr id="emptyRow"><td colspan="6" class="text-center text-muted py-4">No subjects assigned yet. Use the form above to add assignments.</td></tr>');
+            return;
+        }
+
+        assignments.forEach((assignment, index) => {
+            const row = `
+                <tr data-id="${assignment.id}">
+                    <td>${index + 1}</td>
+                    <td>${assignment.className}</td>
+                    <td>${assignment.sectionName}</td>
+                    <td>${assignment.subjectName}</td>
+                    <td>${assignment.lectureNo}</td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-sm btn-danger" onclick="removeAssignment(${assignment.id})" title="Remove">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+    }
+
+    // Clear input fields after adding
+    function clearInputFields() {
+        $('#classId').val('');
+        $('#sectionId').val('').prop('disabled', true);
+        $('#subjectId').val('');
+        $('#lectureNo').val('');
+        validateAddButton();
+    }
+
+    // Update save button state
+    function updateSaveButton() {
+        const staffMemberId = $('#staffMemberId').val();
+        const hasAssignments = assignments.length > 0;
+        $('#btnSave').prop('disabled', !(staffMemberId && hasAssignments));
+    }
+
+    // Staff member change handler
+    $('#staffMemberId').on('change', function () {
+        updateSaveButton();
+        // Optionally load existing assignments for the selected staff member
+        loadExistingAssignments($(this).val());
+    });
+
+    // Load existing assignments for a staff member
+    async function loadExistingAssignments(staffId) {
+        if (!staffId) {
+            assignments = [];
+            assignmentCounter = 0;
+            renderAssignmentsGrid();
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/StaffSubject/byStaff/${staffId}`);
+            if (response.ok) {
+                const existingAssignments = await response.json();
+                assignments = existingAssignments.map((a, index) => ({
+                    id: ++assignmentCounter,
+                    classId: a.classId,
+                    className: a.className,
+                    sectionId: a.sectionId,
+                    sectionName: a.sectionName,
+                    subjectId: a.subjectId,
+                    subjectName: a.subjectName,
+                    lectureNo: a.lectureNo
+                }));
+                renderAssignmentsGrid();
+                updateSaveButton();
+            }
+        } catch (error) {
+            console.error('Error loading existing assignments:', error);
+        }
+    }
+
+    // Reset entire form
+    function resetForm() {
+        $('#staffMemberId').val('');
+        assignments = [];
+        assignmentCounter = 0;
+        renderAssignmentsGrid();
+        clearInputFields();
+        updateSaveButton();
+        toastInfo('Form has been reset.');
+    }
+
+    // Save all assignments
+    async function saveAssignments() {
+        const staffMemberId = $('#staffMemberId').val();
+
+        if (!staffMemberId) {
+            toastError('Please select a staff member.');
+            return;
+        }
+
+        if (assignments.length === 0) {
+            toastError('Please add at least one subject assignment.');
+            return;
+        }
+
+        const payload = {
+            staffId: staffMemberId,
+            assignments: assignments.map(a => ({
+                classId: a.classId,
+                sectionId: a.sectionId,
+                subjectId: a.subjectId,
+                lectureNo: parseInt(a.lectureNo)
+            }))
+        };
+
+        try {
+            const response = await fetch(`${API_BASE}/StaffSubject`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                toastSuccess('Staff subject assignments saved successfully.');
+            } else {
+                const error = await response.text();
+                toastError(error || 'Failed to save assignments.');
+            }
+        } catch (error) {
+            console.error('Error saving assignments:', error);
+            toastError('An error occurred while saving assignments.');
+        }
+    }
+</script>
+}

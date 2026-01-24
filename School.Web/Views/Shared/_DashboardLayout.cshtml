@@ -116,7 +116,7 @@
         }
 
         .menu-section {
-            margin-bottom: 24px;
+            margin-bottom: 8px;
         }
 
         .menu-section-title {
@@ -125,8 +125,115 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 1px;
-            padding: 0 12px;
-            margin-bottom: 8px;
+            padding: 8px 12px;
+            margin-bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .menu-section-title:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .menu-section-title .section-toggle {
+            font-size: 12px;
+            transition: transform 0.3s ease;
+        }
+
+        .menu-section.collapsed .menu-section-title .section-toggle {
+            transform: rotate(-90deg);
+        }
+
+        .menu-section-items {
+            overflow: hidden;
+            max-height: 500px;
+            transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
+            opacity: 1;
+            padding-top: 4px;
+        }
+
+        .menu-section.collapsed .menu-section-items {
+            max-height: 0;
+            opacity: 0;
+            padding-top: 0;
+        }
+
+        /* Sub-menu styles */
+        .menu-item-parent {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 10px;
+            margin-bottom: 4px;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .menu-item-parent:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .menu-item-parent .parent-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .menu-item-parent .parent-left i {
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .menu-item-parent .submenu-toggle {
+            font-size: 12px;
+            transition: transform 0.3s ease;
+        }
+
+        .menu-item-parent.expanded {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .menu-item-parent.expanded .submenu-toggle {
+            transform: rotate(180deg);
+        }
+
+        .submenu {
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.3s ease;
+            padding-left: 20px;
+        }
+
+        .submenu.open {
+            max-height: 500px;
+        }
+
+        .submenu .menu-item {
+            padding: 10px 16px 10px 24px;
+            font-size: 13px;
+            border-left: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0 10px 10px 0;
+            margin-left: 12px;
+        }
+
+        .submenu .menu-item:hover {
+            border-left-color: rgba(255, 255, 255, 0.6);
+        }
+
+        .submenu .menu-item.active {
+            border-left-color: #ffffff;
+            background: rgba(255, 255, 255, 0.2);
         }
 
         .menu-item {
@@ -759,6 +866,110 @@
             from { width: 100%; }
             to { width: 0%; }
         }
+
+        /* ==================== GLOBAL BUTTON STYLES ==================== */
+        /* Primary Button - Main actions (Save) */
+        .btn-primary {
+            background: linear-gradient(135deg, #008649 0%, #006d3b 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: 600;
+            font-size: 14px;
+            color: white;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 134, 73, 0.4);
+            background: linear-gradient(135deg, #006d3b 0%, #005a30 100%);
+            color: white;
+        }
+
+        /* Secondary Button - Cancel/Close actions */
+        .btn-secondary {
+            background: #f1f5f9;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #64748b;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+            border-color: #cbd5e1;
+            color: #475569;
+        }
+
+        /* Success Button - Save & Print, Confirm actions */
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: 600;
+            font-size: 14px;
+            color: white;
+            transition: all 0.2s;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: white;
+        }
+
+        /* Info Button - Edit actions in tables */
+        .btn-info {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: 600;
+            font-size: 14px;
+            color: white;
+            transition: all 0.2s;
+        }
+
+        .btn-info:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
+            color: white;
+        }
+
+        /* Danger Button - Delete actions */
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: 600;
+            font-size: 14px;
+            color: white;
+            transition: all 0.2s;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+            color: white;
+        }
+
+        /* Small buttons for table actions */
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 13px;
+            border-radius: 8px;
+        }
+
+        .btn-sm:hover {
+            transform: translateY(-1px);
+        }
     </style>
     @await RenderSectionAsync("Styles", required: false)
 </head>
@@ -1008,6 +1219,50 @@
             }
         }
 
+        // Toggle menu section collapse/expand
+        function toggleMenuSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            if (section) {
+                section.classList.toggle('collapsed');
+                // Save state to localStorage
+                if (section.classList.contains('collapsed')) {
+                    localStorage.setItem(`sidebar-${sectionId}`, 'collapsed');
+                } else {
+                    localStorage.removeItem(`sidebar-${sectionId}`);
+                }
+            }
+        }
+
+        // Toggle submenu collapse/expand (accordion behavior - only one open at a time)
+        function toggleSubmenu(submenuId) {
+            const submenu = document.getElementById(submenuId);
+            const parentItem = submenu?.previousElementSibling;
+
+            if (submenu && parentItem) {
+                const isCurrentlyOpen = submenu.classList.contains('open');
+
+                // Close all other submenus first (accordion behavior)
+                document.querySelectorAll('.submenu.open').forEach(openSubmenu => {
+                    if (openSubmenu.id !== submenuId) {
+                        openSubmenu.classList.remove('open');
+                        openSubmenu.previousElementSibling?.classList.remove('expanded');
+                        localStorage.removeItem(`sidebar-${openSubmenu.id}`);
+                    }
+                });
+
+                // Toggle current submenu
+                submenu.classList.toggle('open');
+                parentItem.classList.toggle('expanded');
+
+                // Save state to localStorage
+                if (submenu.classList.contains('open')) {
+                    localStorage.setItem(`sidebar-${submenuId}`, 'open');
+                } else {
+                    localStorage.removeItem(`sidebar-${submenuId}`);
+                }
+            }
+        }
+
         // Restore sidebar state on page load
         function restoreSidebarState() {
             const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
@@ -1134,27 +1389,78 @@
                     let menuHtml = '';
 
                     const currentPath = window.location.pathname;
+                    let globalFirstSubmenu = true; // Track first submenu globally for default expansion
 
-                    data.menuSections.forEach(section => {
-                        menuHtml += `<div class="menu-section">`;
-                        menuHtml += `<div class="menu-section-title">${section.title}</div>`;
+                    data.menuSections.forEach((section, index) => {
+                        const sectionId = `menu-section-${index}`;
+                        const isCollapsed = localStorage.getItem(`sidebar-${sectionId}`) === 'collapsed';
+                        const collapsedClass = isCollapsed ? 'collapsed' : '';
+
+                        menuHtml += `<div class="menu-section ${collapsedClass}" id="${sectionId}">`;
+                        menuHtml += `<div class="menu-section-title" onclick="toggleMenuSection('${sectionId}')">
+                            <span>${section.title}</span>
+                            <i class="bi bi-chevron-down section-toggle"></i>
+                        </div>`;
+                        menuHtml += `<div class="menu-section-items">`;
 
                         section.items.forEach(item => {
-                            const isActive = currentPath.toLowerCase().startsWith(item.url.toLowerCase()) ||
-                                           (item.url === '/Dashboard' && currentPath === '/');
-                            const activeClass = isActive ? 'active' : '';
-                            const badgeHtml = item.badge ? `<span class="badge">${item.badge}</span>` : '';
+                            // Check if item has children (sub-menu)
+                            if (item.children && item.children.length > 0) {
+                                const submenuId = `submenu-${item.id}`;
+                                // Check if any child is active (current page)
+                                const hasActiveChild = item.children.some(child =>
+                                    currentPath.toLowerCase().startsWith(child.url.toLowerCase())
+                                );
+                                // First submenu expanded by default, others only if has active child
+                                const isSubmenuOpen = hasActiveChild || globalFirstSubmenu;
+                                const expandedClass = isSubmenuOpen ? 'expanded' : '';
+                                const openClass = isSubmenuOpen ? 'open' : '';
+                                globalFirstSubmenu = false; // Only first submenu gets default expansion
 
-                            menuHtml += `
-                                <a href="${item.url}" class="menu-item ${activeClass}">
-                                    <i class="bi ${item.icon}"></i>
-                                    ${item.title}
-                                    ${badgeHtml}
-                                </a>
-                            `;
+                                menuHtml += `
+                                    <div class="menu-item-parent ${expandedClass}" onclick="toggleSubmenu('${submenuId}')">
+                                        <div class="parent-left">
+                                            <i class="bi ${item.icon}"></i>
+                                            <span>${item.title}</span>
+                                        </div>
+                                        <i class="bi bi-chevron-down submenu-toggle"></i>
+                                    </div>
+                                    <div class="submenu ${openClass}" id="${submenuId}">
+                                `;
+
+                                item.children.forEach(child => {
+                                    const isChildActive = currentPath.toLowerCase().startsWith(child.url.toLowerCase());
+                                    const childActiveClass = isChildActive ? 'active' : '';
+                                    const childBadgeHtml = child.badge ? `<span class="badge">${child.badge}</span>` : '';
+
+                                    menuHtml += `
+                                        <a href="${child.url}" class="menu-item ${childActiveClass}">
+                                            <i class="bi ${child.icon}"></i>
+                                            <span>${child.title}</span>
+                                            ${childBadgeHtml}
+                                        </a>
+                                    `;
+                                });
+
+                                menuHtml += `</div>`;
+                            } else {
+                                // Regular menu item without children
+                                const isActive = currentPath.toLowerCase().startsWith(item.url.toLowerCase()) ||
+                                               (item.url === '/Dashboard' && currentPath === '/');
+                                const activeClass = isActive ? 'active' : '';
+                                const badgeHtml = item.badge ? `<span class="badge">${item.badge}</span>` : '';
+
+                                menuHtml += `
+                                    <a href="${item.url}" class="menu-item ${activeClass}">
+                                        <i class="bi ${item.icon}"></i>
+                                        <span>${item.title}</span>
+                                        ${badgeHtml}
+                                    </a>
+                                `;
+                            }
                         });
 
-                        menuHtml += `</div>`;
+                        menuHtml += `</div></div>`;
                     });
 
                     menuContainer.innerHTML = menuHtml;

@@ -27,5 +27,13 @@ namespace School.Web.Controllers
             ViewData["ExamId"] = examId;
             return View();
         }
+
+        [Route("exam/marks-entry")]
+        [Route("exam/award-list")]
+        public IActionResult MarksEntry()
+        {
+            ViewData["Title"] = "Award List - Marks Entry";
+            return View();
+        }
     }
 }

@@ -1,0 +1,413 @@
+@{
+    ViewData["Title"] = "Apply Fee";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<div class="container-fluid">
+    <div id="alertContainer"></div>
+
+    <div class="card" style="border-radius: 16px; border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+        <div class="card-header d-flex justify-content-between align-items-center" style="background: white; border-bottom: 1px solid #e2e8f0; padding: 20px 24px; border-radius: 16px 16px 0 0;">
+            <h5 style="margin: 0; font-weight: 600; color: #1e293b;"><i class="bi bi-currency-dollar me-2"></i>Apply Fee</h5>
+            <a href="/feevoucher" class="btn btn-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back
+            </a>
+        </div>
+        <div class="card-body p-4">
+            <!-- Top Section - Application Details -->
+            <div class="filter-section" style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-2">
+                        <label for="applyDate" class="form-label">Apply Date <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="applyDate" required />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Choose</label>
+                        <div class="d-flex gap-3 pt-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="applyChoice" id="choiceStudent" value="student" checked onchange="toggleChoiceFields()">
+                                <label class="form-check-label" for="choiceStudent">Student</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="applyChoice" id="choiceSection" value="section" onchange="toggleChoiceFields()">
+                                <label class="form-check-label" for="choiceSection">Section</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="applyChoice" id="choiceClass" value="class" onchange="toggleChoiceFields()">
+                                <label class="form-check-label" for="choiceClass">Class</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="applyChoice" id="choiceAll" value="all" onchange="toggleChoiceFields()">
+                                <label class="form-check-label" for="choiceAll">All</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Student Selection Section -->
+            <div class="filter-section" style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-2" id="classField">
+                        <label for="classId" class="form-label">Class <span class="text-danger">*</span></label>
+                        <select class="form-select" id="classId" required onchange="loadSections()">
+                            <option value="">-- Select Class --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2" id="sectionField">
+                        <label for="sectionId" class="form-label">Section <span class="text-danger">*</span></label>
+                        <select class="form-select" id="sectionId" required disabled onchange="loadStudents()">
+                            <option value="">-- Select Section --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2" id="rollNoField">
+                        <label for="rollNo" class="form-label">Roll No</label>
+                        <select class="form-select" id="rollNo" onchange="selectStudentByRoll()">
+                            <option value="">-- Select Roll --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3" id="studentField">
+                        <label for="studentId" class="form-label">Student</label>
+                        <select class="form-select" id="studentId">
+                            <option value="">-- Select Student --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-primary w-100" onclick="loadPreview()">
+                            <i class="bi bi-search me-1"></i> Preview
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fee Details Section -->
+            <div class="filter-section" style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label for="feeTypeId" class="form-label">Fee Type <span class="text-danger">*</span></label>
+                        <select class="form-select" id="feeTypeId" required>
+                            <option value="">-- Select Fee Type --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="feeAmount" class="form-label">Amount</label>
+                        <input type="number" class="form-control" id="feeAmount" min="0" placeholder="0.00" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview Grid -->
+            <div class="grid-section">
+                <h6 class="mb-3" style="font-weight: 600; color: #475569;">Selected Students Preview</h6>
+                <div class="table-responsive">
+                    <table class="table table-hover" id="previewTable">
+                        <thead>
+                            <tr style="background: #f8fafc;">
+                                <th style="width: 60px;">Sr#</th>
+                                <th>Class</th>
+                                <th>Section</th>
+                                <th>Roll No</th>
+                                <th>Student Name</th>
+                            </tr>
+                        </thead>
+                        <tbody id="previewBody">
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">Select options and click Preview to see students</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div class="mt-4">
+                <label for="description" class="form-label">Description</label>
+                <input type="text" class="form-control" id="description" placeholder="Optional note or comment" />
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                <a href="/feevoucher" class="btn btn-secondary">
+                    <i class="bi bi-x-lg me-1"></i> Close
+                </a>
+                <button type="button" class="btn btn-primary" id="btnApply" onclick="applyFee()">
+                    <i class="bi bi-check-lg me-1"></i> Apply
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const API_BASE = 'http://localhost:5266/api';
+    let previewStudents = [];
+
+    $(document).ready(function () {
+        $('#applyDate').val(new Date().toISOString().split('T')[0]);
+        loadDropdowns();
+        toggleChoiceFields();
+    });
+
+    async function loadDropdowns() {
+        try {
+            const [classes, feeTypes] = await Promise.all([
+                fetch(`${API_BASE}/SMSClass`).then(r => r.ok ? r.json() : []),
+                fetch(`${API_BASE}/FeeType`).then(r => r.ok ? r.json() : [
+                    { id: 1, name: 'Tuition Fee' },
+                    { id: 2, name: 'Transport Fee' },
+                    { id: 3, name: 'Exam Fee' },
+                    { id: 4, name: 'Sports Fee' },
+                    { id: 5, name: 'Lab Fee' }
+                ])
+            ]);
+
+            const classSelect = $('#classId');
+            classSelect.find('option:not(:first)').remove();
+            classes.forEach(c => {
+                classSelect.append(`<option value="${c.viD}">${c.vName}</option>`);
+            });
+
+            const feeTypeSelect = $('#feeTypeId');
+            feeTypeSelect.find('option:not(:first)').remove();
+            feeTypes.forEach(f => {
+                feeTypeSelect.append(`<option value="${f.id}" data-amount="${f.amount || 0}">${f.name}</option>`);
+            });
+        } catch (error) {
+            console.error('Error loading dropdowns:', error);
+        }
+    }
+
+    function toggleChoiceFields() {
+        const choice = $('input[name="applyChoice"]:checked').val();
+
+        $('#classField').toggle(choice !== 'all');
+        $('#sectionField').toggle(choice === 'section' || choice === 'student');
+        $('#rollNoField').toggle(choice === 'student');
+        $('#studentField').toggle(choice === 'student');
+
+        // Reset fields
+        if (choice === 'all') {
+            $('#classId').val('');
+        }
+        if (choice === 'class' || choice === 'all') {
+            $('#sectionId').val('').prop('disabled', true);
+        }
+        if (choice !== 'student') {
+            $('#rollNo').val('');
+            $('#studentId').val('');
+        }
+    }
+
+    async function loadSections() {
+        const classId = $('#classId').val();
+        const sectionSelect = $('#sectionId');
+        sectionSelect.find('option:not(:first)').remove();
+        sectionSelect.prop('disabled', true);
+
+        if (!classId) return;
+
+        try {
+            const response = await fetch(`${API_BASE}/SMSSection/byClass/${classId}`);
+            if (response.ok) {
+                const sections = await response.json();
+                sections.forEach(s => {
+                    sectionSelect.append(`<option value="${s.viD}">${s.vName}</option>`);
+                });
+                sectionSelect.prop('disabled', false);
+            }
+        } catch (error) {
+            console.error('Error loading sections:', error);
+        }
+    }
+
+    async function loadStudents() {
+        const classId = $('#classId').val();
+        const sectionId = $('#sectionId').val();
+        const rollSelect = $('#rollNo');
+        const studentSelect = $('#studentId');
+
+        rollSelect.find('option:not(:first)').remove();
+        studentSelect.find('option:not(:first)').remove();
+
+        if (!classId || !sectionId) return;
+
+        try {
+            const response = await fetch(`${API_BASE}/Student/byClassSection?classId=${classId}&sectionId=${sectionId}`);
+            if (response.ok) {
+                const students = await response.json();
+                students.forEach(s => {
+                    rollSelect.append(`<option value="${s.id}" data-name="${s.studentName || s.name}">${s.rollNo || '-'}</option>`);
+                    studentSelect.append(`<option value="${s.id}" data-roll="${s.rollNo}">${s.studentName || s.name}</option>`);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading students:', error);
+        }
+    }
+
+    function selectStudentByRoll() {
+        const rollOption = $('#rollNo option:selected');
+        const studentId = rollOption.val();
+        if (studentId) {
+            $('#studentId').val(studentId);
+        }
+    }
+
+    async function loadPreview() {
+        const choice = $('input[name="applyChoice"]:checked').val();
+        const classId = $('#classId').val();
+        const sectionId = $('#sectionId').val();
+        const studentId = $('#studentId').val();
+
+        previewStudents = [];
+
+        try {
+            if (choice === 'student' && studentId) {
+                // Single student
+                const className = $('#classId option:selected').text();
+                const sectionName = $('#sectionId option:selected').text();
+                const studentName = $('#studentId option:selected').text();
+                const rollNo = $('#rollNo option:selected').text();
+
+                previewStudents = [{
+                    id: studentId,
+                    className: className,
+                    sectionName: sectionName,
+                    rollNo: rollNo,
+                    studentName: studentName
+                }];
+            } else if (choice === 'section' && classId && sectionId) {
+                // All students in section
+                const response = await fetch(`${API_BASE}/Student/byClassSection?classId=${classId}&sectionId=${sectionId}`);
+                if (response.ok) {
+                    const students = await response.json();
+                    const className = $('#classId option:selected').text();
+                    const sectionName = $('#sectionId option:selected').text();
+                    previewStudents = students.map(s => ({
+                        id: s.id,
+                        className: className,
+                        sectionName: sectionName,
+                        rollNo: s.rollNo || '-',
+                        studentName: s.studentName || s.name
+                    }));
+                }
+            } else if (choice === 'class' && classId) {
+                // All students in class (all sections)
+                const response = await fetch(`${API_BASE}/Student/byClass/${classId}`);
+                if (response.ok) {
+                    const students = await response.json();
+                    const className = $('#classId option:selected').text();
+                    previewStudents = students.map(s => ({
+                        id: s.id,
+                        className: className,
+                        sectionName: s.sectionName || '-',
+                        rollNo: s.rollNo || '-',
+                        studentName: s.studentName || s.name
+                    }));
+                }
+            } else if (choice === 'all') {
+                // All students
+                const response = await fetch(`${API_BASE}/Student`);
+                if (response.ok) {
+                    const students = await response.json();
+                    previewStudents = students.map(s => ({
+                        id: s.id,
+                        className: s.className || '-',
+                        sectionName: s.sectionName || '-',
+                        rollNo: s.rollNo || '-',
+                        studentName: s.studentName || s.name
+                    }));
+                }
+            }
+
+            renderPreviewGrid();
+        } catch (error) {
+            console.error('Error loading preview:', error);
+            toastError('Error loading preview');
+        }
+    }
+
+    function renderPreviewGrid() {
+        const tbody = $('#previewBody');
+        tbody.empty();
+
+        if (previewStudents.length === 0) {
+            tbody.html('<tr><td colspan="5" class="text-center text-muted py-4">No students found for selected criteria</td></tr>');
+            return;
+        }
+
+        previewStudents.forEach((student, index) => {
+            const row = `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${student.className}</td>
+                    <td>${student.sectionName}</td>
+                    <td><strong>${student.rollNo}</strong></td>
+                    <td>${student.studentName}</td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+    }
+
+    async function applyFee() {
+        const applyDate = $('#applyDate').val();
+        const feeTypeId = $('#feeTypeId').val();
+        const feeAmount = $('#feeAmount').val();
+        const description = $('#description').val();
+
+        if (!applyDate) {
+            toastWarning('Please select Apply Date');
+            return;
+        }
+
+        if (!feeTypeId) {
+            toastWarning('Please select Fee Type');
+            return;
+        }
+
+        if (previewStudents.length === 0) {
+            toastWarning('Please preview and select students first');
+            return;
+        }
+
+        const feeData = {
+            applyDate: applyDate,
+            feeTypeId: parseInt(feeTypeId),
+            amount: parseFloat(feeAmount) || 0,
+            description: description,
+            studentIds: previewStudents.map(s => s.id)
+        };
+
+        try {
+            const response = await fetch(`${API_BASE}/ChallanVoucher/apply`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(feeData)
+            });
+
+            if (response.ok) {
+                toastSuccess(`Fee applied successfully to ${previewStudents.length} student(s)!`);
+                previewStudents = [];
+                renderPreviewGrid();
+            } else {
+                const error = await response.text();
+                toastError(error || 'Failed to apply fee');
+            }
+        } catch (error) {
+            console.error('Error applying fee:', error);
+            toastError('Error applying fee');
+        }
+    }
+
+    // Update amount when fee type changes
+    $('#feeTypeId').on('change', function () {
+        const selectedOption = $(this).find('option:selected');
+        const amount = selectedOption.data('amount');
+        if (amount) {
+            $('#feeAmount').val(amount);
+        }
+    });
+</script>
+}

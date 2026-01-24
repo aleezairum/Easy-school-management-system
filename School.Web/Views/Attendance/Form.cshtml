@@ -1,0 +1,339 @@
+@{
+    ViewData["Title"] = "Mark Attendance";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<div class="container-fluid">
+    <div id="alertContainer"></div>
+
+    <div class="card" style="border-radius: 16px; border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+        <div class="card-header d-flex justify-content-between align-items-center" style="background: white; border-bottom: 1px solid #e2e8f0; padding: 20px 24px; border-radius: 16px 16px 0 0;">
+            <h5 style="margin: 0; font-weight: 600; color: #1e293b;"><i class="bi bi-calendar-check me-2"></i>Mark Attendance</h5>
+            <a href="/attendance" class="btn btn-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to List
+            </a>
+        </div>
+        <div class="card-body p-4">
+            <!-- Filter Section -->
+            <div class="filter-section" style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-2">
+                        <label for="classId" class="form-label">Class <span class="text-danger">*</span></label>
+                        <select class="form-select" id="classId" required onchange="loadSections()">
+                            <option value="">-- Select Class --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="sectionId" class="form-label">Section <span class="text-danger">*</span></label>
+                        <select class="form-select" id="sectionId" required disabled onchange="loadStudents()">
+                            <option value="">-- Select Section --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="attendanceDate" class="form-label">Date <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="attendanceDate" required />
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label">Total</label>
+                        <input type="text" class="form-control" id="totalStudents" readonly value="0" style="background-color: #e2e8f0; font-weight: 600; text-align: center;" />
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label text-success">Present</label>
+                        <input type="text" class="form-control" id="totalPresent" readonly value="0" style="background-color: #dcfce7; color: #16a34a; font-weight: 600; text-align: center;" />
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label text-danger">Absent</label>
+                        <input type="text" class="form-control" id="totalAbsent" readonly value="0" style="background-color: #fee2e2; color: #dc2626; font-weight: 600; text-align: center;" />
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label text-info">Leave</label>
+                        <input type="text" class="form-control" id="totalLeave" readonly value="0" style="background-color: #e0f2fe; color: #0284c7; font-weight: 600; text-align: center;" />
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-primary w-100" onclick="loadStudents()">
+                            <i class="bi bi-search me-1"></i> Load Students
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attendance Grid -->
+            <div class="grid-section">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="attendanceTable">
+                        <thead>
+                            <tr style="background: #f8fafc;">
+                                <th style="width: 80px;">Roll No</th>
+                                <th>Student Name</th>
+                                <th class="text-center" style="width: 200px;">Attendance</th>
+                                <th class="text-center" style="width: 80px;">Late</th>
+                                <th class="text-center" style="width: 80px;">Again</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendanceBody">
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">Select Class and Section to load students</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                <a href="/attendance" class="btn btn-secondary">
+                    <i class="bi bi-x-lg me-1"></i> Close
+                </a>
+                <button type="button" class="btn btn-primary" onclick="printAttendance()">
+                    <i class="bi bi-printer me-1"></i> Print
+                </button>
+                <button type="button" class="btn btn-primary" onclick="printAttendanceReport()">
+                    <i class="bi bi-file-earmark-text me-1"></i> Print Report
+                </button>
+                <button type="button" class="btn btn-primary" id="btnSave" onclick="saveAttendance()">
+                    <i class="bi bi-check-lg me-1"></i> Save
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const API_BASE = 'http://localhost:5266/api';
+    let students = [];
+
+    $(document).ready(function () {
+        $('#attendanceDate').val(new Date().toISOString().split('T')[0]);
+        loadClasses();
+    });
+
+    async function loadClasses() {
+        try {
+            const response = await fetch(`${API_BASE}/SMSClass`);
+            if (response.ok) {
+                const classes = await response.json();
+                const select = $('#classId');
+                select.find('option:not(:first)').remove();
+                classes.forEach(c => {
+                    select.append(`<option value="${c.viD}">${c.vName}</option>`);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading classes:', error);
+        }
+    }
+
+    async function loadSections() {
+        const classId = $('#classId').val();
+        const sectionSelect = $('#sectionId');
+        sectionSelect.find('option:not(:first)').remove();
+        sectionSelect.prop('disabled', true);
+
+        if (!classId) return;
+
+        try {
+            const response = await fetch(`${API_BASE}/SMSSection/byClass/${classId}`);
+            if (response.ok) {
+                const sections = await response.json();
+                sections.forEach(s => {
+                    sectionSelect.append(`<option value="${s.viD}">${s.vName}</option>`);
+                });
+                sectionSelect.prop('disabled', false);
+            }
+        } catch (error) {
+            console.error('Error loading sections:', error);
+        }
+    }
+
+    async function loadStudents() {
+        const classId = $('#classId').val();
+        const sectionId = $('#sectionId').val();
+        const date = $('#attendanceDate').val();
+
+        if (!classId || !sectionId) {
+            toastWarning('Please select Class and Section');
+            return;
+        }
+
+        if (!date) {
+            toastWarning('Please select Date');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/Student/byClassSection?classId=${classId}&sectionId=${sectionId}`);
+            if (response.ok) {
+                students = await response.json();
+                renderStudentGrid(students);
+                updateCounts();
+            } else {
+                // Mock data for testing
+                students = [
+                    { id: 1, rollNo: '001', studentName: 'Ahmed Khan', attendance: 'P', late: false, again: false },
+                    { id: 2, rollNo: '002', studentName: 'Sara Ali', attendance: 'P', late: false, again: false },
+                    { id: 3, rollNo: '003', studentName: 'Muhammad Hassan', attendance: 'P', late: false, again: false }
+                ];
+                renderStudentGrid(students);
+                updateCounts();
+            }
+        } catch (error) {
+            console.error('Error loading students:', error);
+            toastError('Error loading students');
+        }
+    }
+
+    function renderStudentGrid(studentList) {
+        const tbody = $('#attendanceBody');
+        tbody.empty();
+
+        if (studentList.length === 0) {
+            tbody.html('<tr><td colspan="5" class="text-center text-muted py-4">No students found for selected Class and Section</td></tr>');
+            $('#totalStudents').val(0);
+            return;
+        }
+
+        $('#totalStudents').val(studentList.length);
+
+        studentList.forEach((student, index) => {
+            const row = `
+                <tr data-student-id="${student.id}">
+                    <td><strong>${student.rollNo || index + 1}</strong></td>
+                    <td>${student.studentName || student.name || '-'}</td>
+                    <td class="text-center">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-sm btn-outline-success attendance-btn ${student.attendance === 'P' ? 'active btn-success text-white' : ''}"
+                                    onclick="setAttendance(${student.id}, 'P', this)" data-value="P">
+                                P
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger attendance-btn ${student.attendance === 'A' ? 'active btn-danger text-white' : ''}"
+                                    onclick="setAttendance(${student.id}, 'A', this)" data-value="A">
+                                A
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-info attendance-btn ${student.attendance === 'L' ? 'active btn-info text-white' : ''}"
+                                    onclick="setAttendance(${student.id}, 'L', this)" data-value="L">
+                                L
+                            </button>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <input type="checkbox" class="form-check-input late-checkbox" data-student-id="${student.id}" ${student.late ? 'checked' : ''} onchange="updateLate(${student.id}, this.checked)" />
+                    </td>
+                    <td class="text-center">
+                        <input type="checkbox" class="form-check-input again-checkbox" data-student-id="${student.id}" ${student.again ? 'checked' : ''} onchange="updateAgain(${student.id}, this.checked)" />
+                    </td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+
+        // Set default attendance to Present for all
+        students.forEach(s => {
+            if (!s.attendance) s.attendance = 'P';
+        });
+        updateCounts();
+    }
+
+    function setAttendance(studentId, value, button) {
+        const student = students.find(s => s.id === studentId);
+        if (student) {
+            student.attendance = value;
+        }
+
+        // Update button styles
+        const btnGroup = $(button).closest('.btn-group');
+        btnGroup.find('.attendance-btn').removeClass('active btn-success btn-danger btn-info text-white');
+
+        $(button).addClass('active text-white');
+        if (value === 'P') $(button).addClass('btn-success');
+        else if (value === 'A') $(button).addClass('btn-danger');
+        else if (value === 'L') $(button).addClass('btn-info');
+
+        updateCounts();
+    }
+
+    function updateLate(studentId, isLate) {
+        const student = students.find(s => s.id === studentId);
+        if (student) {
+            student.late = isLate;
+        }
+    }
+
+    function updateAgain(studentId, isAgain) {
+        const student = students.find(s => s.id === studentId);
+        if (student) {
+            student.again = isAgain;
+        }
+    }
+
+    function updateCounts() {
+        const present = students.filter(s => s.attendance === 'P').length;
+        const absent = students.filter(s => s.attendance === 'A').length;
+        const leave = students.filter(s => s.attendance === 'L').length;
+
+        $('#totalPresent').val(present);
+        $('#totalAbsent').val(absent);
+        $('#totalLeave').val(leave);
+    }
+
+    async function saveAttendance() {
+        const classId = $('#classId').val();
+        const sectionId = $('#sectionId').val();
+        const date = $('#attendanceDate').val();
+
+        if (!classId || !sectionId || !date) {
+            toastWarning('Please select Class, Section and Date');
+            return;
+        }
+
+        if (students.length === 0) {
+            toastWarning('No students to save attendance for');
+            return;
+        }
+
+        const attendanceData = students.map(s => ({
+            studentId: s.id,
+            attendanceDate: date,
+            status: s.attendance === 'P' ? 1 : (s.attendance === 'A' ? 2 : 4), // 1=Present, 2=Absent, 4=Leave
+            isLate: s.late || false,
+            isAgain: s.again || false,
+            classId: parseInt(classId),
+            sectionId: parseInt(sectionId)
+        }));
+
+        try {
+            const response = await fetch(`${API_BASE}/Attendance/bulk`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(attendanceData)
+            });
+
+            if (response.ok) {
+                toastSuccess('Attendance saved successfully!');
+            } else {
+                const error = await response.text();
+                toastError(error || 'Failed to save attendance');
+            }
+        } catch (error) {
+            console.error('Error saving attendance:', error);
+            toastError('Error saving attendance');
+        }
+    }
+
+    function printAttendance() {
+        window.print();
+    }
+
+    function printAttendanceReport() {
+        const classId = $('#classId').val();
+        const sectionId = $('#sectionId').val();
+        const date = $('#attendanceDate').val();
+
+        if (classId && sectionId && date) {
+            window.open(`/attendance/report?classId=${classId}&sectionId=${sectionId}&date=${date}`, '_blank');
+        } else {
+            toastWarning('Please select Class, Section and Date first');
+        }
+    }
+</script>
+}

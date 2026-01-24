@@ -12,9 +12,10 @@ namespace School.Web.Controllers
         }
 
         [Route("attendance/bulk")]
-        public IActionResult Bulk()
+        [Route("attendance/form")]
+        public IActionResult Form()
         {
-            ViewData["Title"] = "Bulk Attendance Entry";
+            ViewData["Title"] = "Mark Attendance";
             return View();
         }
 

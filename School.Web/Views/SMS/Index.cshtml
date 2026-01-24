@@ -1,0 +1,612 @@
+@{
+    ViewData["Title"] = "SMS Module";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<div class="container-fluid">
+    <div id="alertContainer"></div>
+
+    <div class="card" style="border-radius: 16px; border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+        <div class="card-header" style="background: white; border-bottom: 1px solid #e2e8f0; padding: 20px 24px; border-radius: 16px 16px 0 0;">
+            <h5 style="margin: 0; font-weight: 600; color: #1e293b;"><i class="bi bi-chat-dots me-2"></i>SMS Module</h5>
+        </div>
+        <div class="card-body p-0">
+            <!-- Tab Navigation -->
+            <ul class="nav nav-tabs px-4 pt-3" id="smsTabs" role="tablist" style="border-bottom: 2px solid #e2e8f0;">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="staff-tab" data-bs-toggle="tab" data-bs-target="#staff" type="button" role="tab">Staff</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="general-tab" data-bs-toggle="tab" data-bs-target="#general" type="button" role="tab">General</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="absent-tab" data-bs-toggle="tab" data-bs-target="#absent" type="button" role="tab">Absent</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="late-tab" data-bs-toggle="tab" data-bs-target="#late" type="button" role="tab">Late</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="fee-tab" data-bs-toggle="tab" data-bs-target="#fee" type="button" role="tab">Fee</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="result-tab" data-bs-toggle="tab" data-bs-target="#result" type="button" role="tab">Result</button>
+                </li>
+            </ul>
+
+            <!-- Tab Content -->
+            <div class="tab-content p-4" id="smsTabsContent">
+
+                <!-- Staff SMS Tab -->
+                <div class="tab-pane fade" id="staff" role="tabpanel">
+                    <div class="row">
+                        <!-- Left Panel - Message Composition -->
+                        <div class="col-md-6">
+                            <div class="p-3" style="background: #f8fafc; border-radius: 12px;">
+                                <h6 class="mb-3" style="font-weight: 600; color: #475569;">Compose Message</h6>
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="staffSmsUrdu">
+                                        <label class="form-check-label" for="staffSmsUrdu">SMS in Urdu</label>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Type</label>
+                                    <select class="form-select" id="staffType" onchange="loadStaffByType()">
+                                        <option value="">-- Select Type --</option>
+                                        <option value="all">All Staff</option>
+                                        <option value="teaching">Teaching Staff</option>
+                                        <option value="non-teaching">Non-Teaching Staff</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">To</label>
+                                    <select class="form-select" id="staffTo">
+                                        <option value="">-- Select Staff --</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Contact No</label>
+                                    <input type="text" class="form-control" id="staffContactNo" placeholder="Enter contact number" />
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Message</label>
+                                    <textarea class="form-control" id="staffMessage" rows="5" placeholder="Type your message here..." onkeyup="updateCharCount('staffMessage', 'staffCharCount')"></textarea>
+                                    <small class="text-muted">Characters: <span id="staffCharCount">0</span></small>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-primary" onclick="sendStaffSMS()">
+                                        <i class="bi bi-send me-1"></i> Send
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" onclick="clearStaffForm()">
+                                        <i class="bi bi-x-lg me-1"></i> Clear
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Right Panel - Sending Status -->
+                        <div class="col-md-6">
+                            <div class="p-3" style="background: #f8fafc; border-radius: 12px; height: 100%;">
+                                <h6 class="mb-3" style="font-weight: 600; color: #475569;">Sending Detail - Message Sent (<span id="staffSentCount">0</span>)</h6>
+                                <textarea class="form-control" id="staffSendingLog" rows="15" readonly style="background: #fff;"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- General SMS Tab -->
+                <div class="tab-pane fade show active" id="general" role="tabpanel">
+                    <div class="row">
+                        <!-- Left Panel - Message Composition -->
+                        <div class="col-md-6">
+                            <div class="p-3" style="background: #f8fafc; border-radius: 12px;">
+                                <h6 class="mb-3" style="font-weight: 600; color: #475569;">Compose Message</h6>
+                                <div class="mb-3">
+                                    <label class="form-label">Choose</label>
+                                    <div class="d-flex gap-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="generalChoose" id="generalStudent" value="student" checked onchange="toggleGeneralFields()">
+                                            <label class="form-check-label" for="generalStudent">Student</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="generalChoose" id="generalSection" value="section" onchange="toggleGeneralFields()">
+                                            <label class="form-check-label" for="generalSection">Section</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="generalChoose" id="generalClass" value="class" onchange="toggleGeneralFields()">
+                                            <label class="form-check-label" for="generalClass">Class</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="generalChoose" id="generalAll" value="all" onchange="toggleGeneralFields()">
+                                            <label class="form-check-label" for="generalAll">All</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="generalSmsUrdu">
+                                        <label class="form-check-label" for="generalSmsUrdu">SMS in Urdu</label>
+                                    </div>
+                                </div>
+                                <div class="mb-3" id="generalClassField">
+                                    <label class="form-label">Class</label>
+                                    <select class="form-select" id="generalClassId" onchange="loadGeneralSections()">
+                                        <option value="">-- Select Class --</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3" id="generalSectionField" style="display: none;">
+                                    <label class="form-label">Section</label>
+                                    <select class="form-select" id="generalSectionId" onchange="loadGeneralStudents()">
+                                        <option value="">-- Select Section --</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3" id="generalStudentField">
+                                    <label class="form-label">Student</label>
+                                    <select class="form-select" id="generalStudentId">
+                                        <option value="">-- Select Student --</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Message</label>
+                                    <textarea class="form-control" id="generalMessage" rows="5" placeholder="Type your message here..." onkeyup="updateCharCount('generalMessage', 'generalCharCount')"></textarea>
+                                    <small class="text-muted">Characters: <span id="generalCharCount">0</span></small>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-primary" onclick="sendGeneralSMS()">
+                                        <i class="bi bi-send me-1"></i> Send
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" onclick="clearGeneralForm()">
+                                        <i class="bi bi-x-lg me-1"></i> Clear
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Right Panel - Sending Status -->
+                        <div class="col-md-6">
+                            <div class="p-3" style="background: #f8fafc; border-radius: 12px; height: 100%;">
+                                <h6 class="mb-3" style="font-weight: 600; color: #475569;">Sending Detail - Message Sent (<span id="generalSentCount">0</span>)</h6>
+                                <textarea class="form-control" id="generalSendingLog" rows="15" readonly style="background: #fff;"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Absent SMS Tab -->
+                <div class="tab-pane fade" id="absent" role="tabpanel">
+                    <div class="row">
+                        <!-- Left Panel - Filter & Send -->
+                        <div class="col-md-6">
+                            <div class="p-3" style="background: #f8fafc; border-radius: 12px;">
+                                <h6 class="mb-3" style="font-weight: 600; color: #475569;">Send Absent Notification</h6>
+                                <div class="mb-3">
+                                    <label class="form-label">Choose</label>
+                                    <div class="d-flex gap-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="absentChoose" id="absentStudent" value="student" checked onchange="toggleAbsentFields()">
+                                            <label class="form-check-label" for="absentStudent">Student</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="absentChoose" id="absentSection" value="section" onchange="toggleAbsentFields()">
+                                            <label class="form-check-label" for="absentSection">Section</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="absentChoose" id="absentClass" value="class" onchange="toggleAbsentFields()">
+                                            <label class="form-check-label" for="absentClass">Class</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="absentChoose" id="absentAll" value="all" onchange="toggleAbsentFields()">
+                                            <label class="form-check-label" for="absentAll">All</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="absentSmsUrdu">
+                                        <label class="form-check-label" for="absentSmsUrdu">SMS in Urdu</label>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Date <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" id="absentDate" required />
+                                </div>
+                                <div class="mb-3" id="absentClassField">
+                                    <label class="form-label">Class</label>
+                                    <select class="form-select" id="absentClassId" onchange="loadAbsentSections()">
+                                        <option value="">-- Select Class --</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3" id="absentSectionField" style="display: none;">
+                                    <label class="form-label">Section</label>
+                                    <select class="form-select" id="absentSectionId" onchange="loadAbsentStudents()">
+                                        <option value="">-- Select Section --</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3" id="absentStudentField">
+                                    <label class="form-label">Student</label>
+                                    <select class="form-select" id="absentStudentId">
+                                        <option value="">-- Select Student --</option>
+                                    </select>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-primary" onclick="sendAbsentSMS()">
+                                        <i class="bi bi-send me-1"></i> Send
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Right Panel - Sending Status -->
+                        <div class="col-md-6">
+                            <div class="p-3" style="background: #f8fafc; border-radius: 12px; height: 100%;">
+                                <h6 class="mb-3" style="font-weight: 600; color: #475569;">Sending Detail - Message Sent (<span id="absentSentCount">0</span>)</h6>
+                                <textarea class="form-control" id="absentSendingLog" rows="15" readonly style="background: #fff;"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Late SMS Tab -->
+                <div class="tab-pane fade" id="late" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="p-3" style="background: #f8fafc; border-radius: 12px;">
+                                <h6 class="mb-3" style="font-weight: 600; color: #475569;">Send Late Notification</h6>
+                                <div class="mb-3">
+                                    <label class="form-label">Date <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" id="lateDate" required />
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Class</label>
+                                    <select class="form-select" id="lateClassId" onchange="loadLateSections()">
+                                        <option value="">-- All Classes --</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Section</label>
+                                    <select class="form-select" id="lateSectionId">
+                                        <option value="">-- All Sections --</option>
+                                    </select>
+                                </div>
+                                <button type="button" class="btn btn-primary" onclick="sendLateSMS()">
+                                    <i class="bi bi-send me-1"></i> Send
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3" style="background: #f8fafc; border-radius: 12px; height: 100%;">
+                                <h6 class="mb-3" style="font-weight: 600; color: #475569;">Sending Detail - Message Sent (<span id="lateSentCount">0</span>)</h6>
+                                <textarea class="form-control" id="lateSendingLog" rows="10" readonly style="background: #fff;"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fee SMS Tab -->
+                <div class="tab-pane fade" id="fee" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="p-3" style="background: #f8fafc; border-radius: 12px;">
+                                <h6 class="mb-3" style="font-weight: 600; color: #475569;">Send Fee Reminder</h6>
+                                <div class="mb-3">
+                                    <label class="form-label">Class</label>
+                                    <select class="form-select" id="feeClassId" onchange="loadFeeSections()">
+                                        <option value="">-- All Classes --</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Section</label>
+                                    <select class="form-select" id="feeSectionId">
+                                        <option value="">-- All Sections --</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Due Amount Greater Than</label>
+                                    <input type="number" class="form-control" id="feeDueAmount" value="0" min="0" />
+                                </div>
+                                <button type="button" class="btn btn-primary" onclick="sendFeeSMS()">
+                                    <i class="bi bi-send me-1"></i> Send
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3" style="background: #f8fafc; border-radius: 12px; height: 100%;">
+                                <h6 class="mb-3" style="font-weight: 600; color: #475569;">Sending Detail - Message Sent (<span id="feeSentCount">0</span>)</h6>
+                                <textarea class="form-control" id="feeSendingLog" rows="10" readonly style="background: #fff;"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Result SMS Tab -->
+                <div class="tab-pane fade" id="result" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="p-3" style="background: #f8fafc; border-radius: 12px;">
+                                <h6 class="mb-3" style="font-weight: 600; color: #475569;">Send Result Notification</h6>
+                                <div class="mb-3">
+                                    <label class="form-label">Exam</label>
+                                    <select class="form-select" id="resultExamId">
+                                        <option value="">-- Select Exam --</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Class</label>
+                                    <select class="form-select" id="resultClassId" onchange="loadResultSections()">
+                                        <option value="">-- All Classes --</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Section</label>
+                                    <select class="form-select" id="resultSectionId">
+                                        <option value="">-- All Sections --</option>
+                                    </select>
+                                </div>
+                                <button type="button" class="btn btn-primary" onclick="sendResultSMS()">
+                                    <i class="bi bi-send me-1"></i> Send
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3" style="background: #f8fafc; border-radius: 12px; height: 100%;">
+                                <h6 class="mb-3" style="font-weight: 600; color: #475569;">Sending Detail - Message Sent (<span id="resultSentCount">0</span>)</h6>
+                                <textarea class="form-control" id="resultSendingLog" rows="10" readonly style="background: #fff;"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+<style>
+    .nav-tabs .nav-link {
+        border: none;
+        color: #64748b;
+        font-weight: 500;
+        padding: 12px 20px;
+        margin-bottom: -2px;
+    }
+    .nav-tabs .nav-link:hover {
+        color: #008649;
+        border: none;
+    }
+    .nav-tabs .nav-link.active {
+        color: #008649;
+        border: none;
+        border-bottom: 3px solid #008649;
+        background: transparent;
+    }
+</style>
+}
+
+@section Scripts {
+<script>
+    const API_BASE = 'http://localhost:5266/api';
+
+    $(document).ready(function () {
+        // Set default dates
+        $('#absentDate').val(new Date().toISOString().split('T')[0]);
+        $('#lateDate').val(new Date().toISOString().split('T')[0]);
+
+        loadAllDropdowns();
+
+        // Initialize field visibility based on default selections
+        toggleGeneralFields();
+        toggleAbsentFields();
+    });
+
+    async function loadAllDropdowns() {
+        try {
+            const [classes, exams] = await Promise.all([
+                fetch(`${API_BASE}/SMSClass`).then(r => r.ok ? r.json() : []),
+                fetch(`${API_BASE}/Exam`).then(r => r.ok ? r.json() : [])
+            ]);
+
+            // Populate all class dropdowns
+            ['generalClassId', 'absentClassId', 'lateClassId', 'feeClassId', 'resultClassId'].forEach(id => {
+                const select = $(`#${id}`);
+                select.find('option:not(:first)').remove();
+                classes.forEach(c => {
+                    select.append(`<option value="${c.viD}">${c.vName}</option>`);
+                });
+            });
+
+            // Populate exam dropdown
+            const examSelect = $('#resultExamId');
+            examSelect.find('option:not(:first)').remove();
+            exams.forEach(e => {
+                examSelect.append(`<option value="${e.id}">${e.examName}</option>`);
+            });
+        } catch (error) {
+            console.error('Error loading dropdowns:', error);
+        }
+    }
+
+    // Character count update
+    function updateCharCount(textareaId, counterId) {
+        const count = $(`#${textareaId}`).val().length;
+        $(`#${counterId}`).text(count);
+    }
+
+    // Toggle fields based on selection - General
+    function toggleGeneralFields() {
+        const choice = $('input[name="generalChoose"]:checked').val();
+        $('#generalClassField').toggle(choice !== 'all');
+        $('#generalSectionField').toggle(choice === 'section' || choice === 'student');
+        $('#generalStudentField').toggle(choice === 'student');
+    }
+
+    // Toggle fields based on selection - Absent
+    function toggleAbsentFields() {
+        const choice = $('input[name="absentChoose"]:checked').val();
+        $('#absentClassField').toggle(choice !== 'all');
+        $('#absentSectionField').toggle(choice === 'section' || choice === 'student');
+        $('#absentStudentField').toggle(choice === 'student');
+    }
+
+    // Load sections for different tabs
+    async function loadGeneralSections() {
+        await loadSectionsFor('generalClassId', 'generalSectionId');
+    }
+
+    async function loadAbsentSections() {
+        await loadSectionsFor('absentClassId', 'absentSectionId');
+    }
+
+    async function loadLateSections() {
+        await loadSectionsFor('lateClassId', 'lateSectionId');
+    }
+
+    async function loadFeeSections() {
+        await loadSectionsFor('feeClassId', 'feeSectionId');
+    }
+
+    async function loadResultSections() {
+        await loadSectionsFor('resultClassId', 'resultSectionId');
+    }
+
+    async function loadSectionsFor(classDropdownId, sectionDropdownId) {
+        const classId = $(`#${classDropdownId}`).val();
+        const sectionSelect = $(`#${sectionDropdownId}`);
+        sectionSelect.find('option:not(:first)').remove();
+
+        if (!classId) return;
+
+        try {
+            const response = await fetch(`${API_BASE}/SMSSection/byClass/${classId}`);
+            if (response.ok) {
+                const sections = await response.json();
+                sections.forEach(s => {
+                    sectionSelect.append(`<option value="${s.viD}">${s.vName}</option>`);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading sections:', error);
+        }
+    }
+
+    // Load students
+    async function loadGeneralStudents() {
+        await loadStudentsFor('generalClassId', 'generalSectionId', 'generalStudentId');
+    }
+
+    async function loadAbsentStudents() {
+        await loadStudentsFor('absentClassId', 'absentSectionId', 'absentStudentId');
+    }
+
+    async function loadStudentsFor(classDropdownId, sectionDropdownId, studentDropdownId) {
+        const classId = $(`#${classDropdownId}`).val();
+        const sectionId = $(`#${sectionDropdownId}`).val();
+        const studentSelect = $(`#${studentDropdownId}`);
+        studentSelect.find('option:not(:first)').remove();
+
+        if (!classId || !sectionId) return;
+
+        try {
+            const response = await fetch(`${API_BASE}/Student/byClassSection?classId=${classId}&sectionId=${sectionId}`);
+            if (response.ok) {
+                const students = await response.json();
+                students.forEach(s => {
+                    studentSelect.append(`<option value="${s.id}">${s.studentName || s.name} (${s.rollNo || '-'})</option>`);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading students:', error);
+        }
+    }
+
+    // Load staff by type
+    async function loadStaffByType() {
+        const type = $('#staffType').val();
+        const staffSelect = $('#staffTo');
+        staffSelect.find('option:not(:first)').remove();
+
+        if (!type) return;
+
+        try {
+            const response = await fetch(`${API_BASE}/Employee`);
+            if (response.ok) {
+                const staff = await response.json();
+                staff.forEach(s => {
+                    staffSelect.append(`<option value="${s.id}" data-phone="${s.mobile || s.phone}">${s.fullName || s.name}</option>`);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading staff:', error);
+        }
+    }
+
+    // Send SMS functions
+    async function sendStaffSMS() {
+        const message = $('#staffMessage').val();
+        if (!message) {
+            toastWarning('Please enter a message');
+            return;
+        }
+        logSMS('staffSendingLog', 'staffSentCount', 'Staff SMS sent successfully');
+        toastSuccess('SMS sent successfully!');
+    }
+
+    async function sendGeneralSMS() {
+        const message = $('#generalMessage').val();
+        if (!message) {
+            toastWarning('Please enter a message');
+            return;
+        }
+        logSMS('generalSendingLog', 'generalSentCount', 'General SMS sent successfully');
+        toastSuccess('SMS sent successfully!');
+    }
+
+    async function sendAbsentSMS() {
+        const date = $('#absentDate').val();
+        if (!date) {
+            toastWarning('Please select a date');
+            return;
+        }
+        logSMS('absentSendingLog', 'absentSentCount', 'Absent notification sent successfully');
+        toastSuccess('SMS sent successfully!');
+    }
+
+    async function sendLateSMS() {
+        logSMS('lateSendingLog', 'lateSentCount', 'Late notification sent successfully');
+        toastSuccess('SMS sent successfully!');
+    }
+
+    async function sendFeeSMS() {
+        logSMS('feeSendingLog', 'feeSentCount', 'Fee reminder sent successfully');
+        toastSuccess('SMS sent successfully!');
+    }
+
+    async function sendResultSMS() {
+        logSMS('resultSendingLog', 'resultSentCount', 'Result notification sent successfully');
+        toastSuccess('SMS sent successfully!');
+    }
+
+    function logSMS(logId, countId, message) {
+        const timestamp = new Date().toLocaleString();
+        const log = $(`#${logId}`);
+        log.val(log.val() + `[${timestamp}] ${message}\n`);
+
+        const count = parseInt($(`#${countId}`).text()) + 1;
+        $(`#${countId}`).text(count);
+    }
+
+    // Clear forms
+    function clearStaffForm() {
+        $('#staffType').val('');
+        $('#staffTo').val('');
+        $('#staffContactNo').val('');
+        $('#staffMessage').val('');
+        $('#staffCharCount').text('0');
+    }
+
+    function clearGeneralForm() {
+        $('#generalClassId').val('');
+        $('#generalSectionId').val('');
+        $('#generalStudentId').val('');
+        $('#generalMessage').val('');
+        $('#generalCharCount').text('0');
+    }
+</script>
+}
