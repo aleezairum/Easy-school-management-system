@@ -1,4 +1,3 @@
-using School.API.Data.DBModels.Accounts;
 
 namespace School.API.DTOs
 {
@@ -33,8 +32,6 @@ namespace School.API.DTOs
         public decimal TotalAmount { get; set; }
         public decimal PaidAmount { get; set; }
         public decimal BalanceAmount { get; set; }
-        public ChallanStatus Status { get; set; }
-        public string StatusName => Status.ToString();
         public string? Remarks { get; set; }
         public int? ForMonth { get; set; }
         public int? ForYear { get; set; }
@@ -54,7 +51,6 @@ namespace School.API.DTOs
         public decimal TotalAmount { get; set; }
         public decimal PaidAmount { get; set; }
         public decimal BalanceAmount { get; set; }
-        public ChallanStatus Status { get; set; }
         public string StatusName { get; set; } = string.Empty;
     }
 
@@ -103,7 +99,6 @@ namespace School.API.DTOs
         public decimal ArrearsAmount { get; set; }
         public decimal Discount { get; set; }
         public decimal LateFee { get; set; }
-        public ChallanStatus Status { get; set; }
         public string? Remarks { get; set; }
         public int? ForMonth { get; set; }
         public int? ForYear { get; set; }

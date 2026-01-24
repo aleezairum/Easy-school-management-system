@@ -7,11 +7,11 @@ using School.API.Services.Interfaces.Academic;
 [ApiController]
 [Route("api/[controller]")]
 //[Authorize]
-public class AcademicSessionYearController : ControllerBase
+public class ClassController : ControllerBase
 {
-    private readonly IAcademicSessionYearService _service;
+    private readonly ISMSClassService _service;
 
-    public AcademicSessionYearController(IAcademicSessionYearService service)
+    public ClassController(ISMSClassService service)
     {
         _service = service;
     }
@@ -36,7 +36,7 @@ public class AcademicSessionYearController : ControllerBase
         return record == null ? NotFound() : Ok(record);
     }
     [HttpPost]
-    public async Task<IActionResult> Save(AcademicSessionYearSaveDto dto)
+    public async Task<IActionResult> Save(SMSClassSaveDto dto)
     {
         int userId = 1; // later from JWT
         string userIp = HttpContext.Connection.RemoteIpAddress?.ToString();

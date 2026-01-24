@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using School.API.Data.DBModels.Academic;
-using School.API.Data.DBModels.Accounts;
 using School.API.Data.DBModels.HR;
 using School.API.DTOs.Academic;
 using School.API.DTOs.Common;
@@ -25,7 +24,7 @@ namespace School.API.Data
         public DbSet<SMSClass> SMSClasses { get; set; }
         public DbSet<SMSSection> SMSSections { get; set; }
         public DbSet<SMSSubject> SMSSubjects { get; set; }
-        public DbSet<AcademicSessionYear> AcademicSessionYear { get; set; }
+        public DbSet<AcademicSessionYear> AcademicSessionYears { get; set; }
         public DbSet<Admission> Admissions { get; set; }
         public DbSet<Student> Students { get; set; }
         public DbSet<TimeTable> TimeTables { get; set; }
@@ -41,9 +40,9 @@ namespace School.API.Data
         public DbSet<Salary> Salaries { get; set; }
 
         // Accounts entities
-        public DbSet<PaymentMethod> PaymentMethods { get; set; }
-        public DbSet<ChallanVoucher> ChallanVouchers { get; set; }
-        public DbSet<FeeVoucher> FeeVouchers { get; set; }
+        //public DbSet<PaymentMethod> PaymentMethods { get; set; }
+        //public DbSet<ChallanVoucher> ChallanVouchers { get; set; }
+        //public DbSet<FeeVoucher> FeeVouchers { get; set; }
 
         // Keyless entities
         public DbSet<ResponseDto> AcademicSessionYearResponses { get; set; }
@@ -55,6 +54,7 @@ namespace School.API.Data
             // Keyless entity
             modelBuilder.Entity<ResponseDto>().HasNoKey();
             modelBuilder.Entity<AcademicSessionYearSaveDto>().HasNoKey();
+            modelBuilder.Entity<SMSClassSaveDto>().HasNoKey();
             modelBuilder.Entity<SMSSectionSaveDto>().HasNoKey();
 
             // Menu configuration

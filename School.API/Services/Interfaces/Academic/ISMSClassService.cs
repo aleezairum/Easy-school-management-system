@@ -4,15 +4,15 @@ using School.API.DTOs.Common;
 
 namespace School.API.Services.Interfaces.Academic
 {
-    public interface IAcademicSessionYearService
+    public interface ISMSClassService
     {
         Task<ResponseDto> SaveAsync(
-            AcademicSessionYearSaveDto dto,
+            SMSClassSaveDto dto,
             int userId,
             string userIp);
 
-        Task<List<AcademicSessionYear>> GetAllAsync();
-        Task<AcademicSessionYear?> GetByIdAsync(int id);
+        Task<List<SMSClass>> GetAllAsync();
+        Task<SMSClass?> GetByIdAsync(int id);
         Task<ResponseDto?> DeleteByIdAsync(int id);
     }
 }

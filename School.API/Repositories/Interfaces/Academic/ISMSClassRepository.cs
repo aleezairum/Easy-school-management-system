@@ -2,17 +2,17 @@
 using School.API.DTOs.Academic;
 using School.API.DTOs.Common;
 
-namespace School.API.Services.Interfaces.Academic
+namespace School.API.Repositories.Interfaces.Academic
 {
-    public interface IAcademicSessionYearService
+    public interface ISMSClassRepository
     {
         Task<ResponseDto> SaveAsync(
-            AcademicSessionYearSaveDto dto,
+            SMSClassSaveDto dto,
             int userId,
             string userIp);
 
-        Task<List<AcademicSessionYear>> GetAllAsync();
-        Task<AcademicSessionYear?> GetByIdAsync(int id);
+        Task<List<SMSClass>> GetAllAsync();
+        Task<SMSClass?> GetByIdAsync(int id);
         Task<ResponseDto?> DeleteByIdAsync(int id);
     }
 }

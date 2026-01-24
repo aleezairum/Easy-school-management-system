@@ -17,10 +17,6 @@ using School.API.Services.Interfaces.HR;
 using School.API.Services.Implementations.HR;
 using School.API.Repositories.Interfaces.HR;
 using School.API.Repositories.Implementations.HR;
-using School.API.Services.Interfaces.Accounts;
-using School.API.Services.Implementations.Accounts;
-using School.API.Repositories.Interfaces.Accounts;
-using School.API.Repositories.Implementations.Accounts;
 var builder = WebApplication.CreateBuilder(args);
 
 // Database
@@ -48,7 +44,11 @@ builder.Services.AddAuthorization();
 // Dependency Injection
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAcademicSessionYearRepository, AcademicSessionYearRepository>();
-builder.Services.AddScoped<ISMSSectionService, AcademicSessionYearService>();
+builder.Services.AddScoped<IAcademicSessionYearService, AcademicSessionYearService>();
+builder.Services.AddScoped<ISMSSectionRepository, SMSSectionRepository>();
+builder.Services.AddScoped<ISMSSectionService, SMSSectionService>();
+builder.Services.AddScoped<ISMSClassRepository, SMSClassRepository>();
+builder.Services.AddScoped<ISMSClassService, SMSClassService>();
 builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddScoped<IStudentService, StudentService>();
 
@@ -73,12 +73,12 @@ builder.Services.AddScoped<IExamRepository, ExamRepository>();
 builder.Services.AddScoped<IExamService, ExamService>();
 
 // Accounts Services
-builder.Services.AddScoped<IPaymentMethodRepository, PaymentMethodRepository>();
-builder.Services.AddScoped<IPaymentMethodService, PaymentMethodService>();
-builder.Services.AddScoped<IChallanVoucherRepository, ChallanVoucherRepository>();
-builder.Services.AddScoped<IChallanVoucherService, ChallanVoucherService>();
-builder.Services.AddScoped<IFeeVoucherRepository, FeeVoucherRepository>();
-builder.Services.AddScoped<IFeeVoucherService, FeeVoucherService>();
+//builder.Services.AddScoped<IPaymentMethodRepository, PaymentMethodRepository>();
+//builder.Services.AddScoped<IPaymentMethodService, PaymentMethodService>();
+//builder.Services.AddScoped<IChallanVoucherRepository, ChallanVoucherRepository>();
+//builder.Services.AddScoped<IChallanVoucherService, ChallanVoucherService>();
+//builder.Services.AddScoped<IFeeVoucherRepository, FeeVoucherRepository>();
+//builder.Services.AddScoped<IFeeVoucherService, FeeVoucherService>();
 
 // Controllers
 builder.Services.AddControllers()

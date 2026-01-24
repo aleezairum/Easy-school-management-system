@@ -9,20 +9,20 @@ using School.API.Repositories.Interfaces.Academic;
 
 namespace School.API.Repositories.Implementations.Academic
 {
-    public class AcademicSessionYearRepository : IAcademicSessionYearRepository
+    public class SMSClassRepository : ISMSClassRepository
     {
         private readonly SchoolDbContext _context;
 
-        public AcademicSessionYearRepository(SchoolDbContext context)
+        public SMSClassRepository(SchoolDbContext context)
         {
             _context = context;
         }
 
-        public async Task<List<AcademicSessionYear>> GetAllAsync()
+        public async Task<List<SMSClass>> GetAllAsync()
         {
             var resultList = await _context
-                .Set<AcademicSessionYear>()
-                .FromSqlRaw("EXEC SpGet_AcademicSessionYear @VID={0}", 0) // 0 to get all
+                .Set<SMSClass>()
+                .FromSqlRaw("EXEC SpGet_SMSClass @VID={0}", 0) // 0 to get all
                 .AsNoTracking()
                 .ToListAsync();
 
@@ -30,11 +30,11 @@ namespace School.API.Repositories.Implementations.Academic
         }
 
 
-        public async Task<AcademicSessionYear?> GetByIdAsync(int vid)
+        public async Task<SMSClass?> GetByIdAsync(int vid)
         {
             var resultList = await _context
-                .Set<AcademicSessionYear>()
-                .FromSqlRaw("EXEC SpGet_AcademicSessionYear @VID={0}", vid)
+                .Set<SMSClass>()
+                .FromSqlRaw("EXEC SpGet_SMSClass @VID={0}", vid)
                 .AsNoTracking()
                 .ToListAsync();
 
@@ -45,7 +45,7 @@ namespace School.API.Repositories.Implementations.Academic
         {
             var resultList = await _context
                 .Set<ResponseDto>()
-                .FromSqlRaw("EXEC SpDelete_AcademicSessionYear @VID={0}", vid)
+                .FromSqlRaw("EXEC SpDelete_SMSClass @VID={0}", vid)
                 .AsNoTracking()
                 .ToListAsync();
 
@@ -53,18 +53,15 @@ namespace School.API.Repositories.Implementations.Academic
         }
 
 
-        public async Task<ResponseDto> SaveAsync(AcademicSessionYearSaveDto dto, int userId, string userIp)
+        public async Task<ResponseDto> SaveAsync(SMSClassSaveDto dto, int userId, string userIp)
         {
             // Execute the stored procedure
             var resultList = await _context
                 .Set<ResponseDto>()
                 .FromSqlRaw(
-                    "EXEC SpSave_AcademicSessionYear @VID={0}, @VName={1}, @DateFrom={2}, @DateTo={3}, @IsCurrent={4}, @IsActive={5}, @UserID={6}, @UserIP={7}",
+                    "EXEC SpSave_SMSClass @VID={0}, @VName={1}, @IsActive={2}, @UserID={3}, @UserIP={4}",
                     dto.VID,
                     dto.VName,
-                    dto.DateFrom,
-                    dto.DateTo,
-                    dto.IsCurrent,
                     dto.IsActive,
                     userId,
                     userIp)
