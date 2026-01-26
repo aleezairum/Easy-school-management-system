@@ -17,11 +17,11 @@
             <!-- Top Section - Application Details -->
             <div class="filter-section" style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
                 <div class="row g-3 align-items-end">
-                    <div class="col-md-2">
+                    <div class="col-lg-2 col-md-4 col-sm-6 col-12">
                         <label for="applyDate" class="form-label">Apply Date <span class="text-danger">*</span></label>
                         <input type="date" class="form-control" id="applyDate" required />
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-lg-4 col-md-6 col-12">
                         <label class="form-label">Choose</label>
                         <div class="d-flex gap-3 pt-2">
                             <div class="form-check">
@@ -48,31 +48,31 @@
             <!-- Student Selection Section -->
             <div class="filter-section" style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
                 <div class="row g-3 align-items-end">
-                    <div class="col-md-2" id="classField">
+                    <div class="col-lg-2 col-md-4 col-sm-6 col-12" id="classField">
                         <label for="classId" class="form-label">Class <span class="text-danger">*</span></label>
                         <select class="form-select" id="classId" required onchange="loadSections()">
                             <option value="">-- Select Class --</option>
                         </select>
                     </div>
-                    <div class="col-md-2" id="sectionField">
+                    <div class="col-lg-2 col-md-4 col-sm-6 col-12" id="sectionField">
                         <label for="sectionId" class="form-label">Section <span class="text-danger">*</span></label>
                         <select class="form-select" id="sectionId" required disabled onchange="loadStudents()">
                             <option value="">-- Select Section --</option>
                         </select>
                     </div>
-                    <div class="col-md-2" id="rollNoField">
+                    <div class="col-lg-2 col-md-4 col-sm-6 col-12" id="rollNoField">
                         <label for="rollNo" class="form-label">Roll No</label>
                         <select class="form-select" id="rollNo" onchange="selectStudentByRoll()">
                             <option value="">-- Select Roll --</option>
                         </select>
                     </div>
-                    <div class="col-md-3" id="studentField">
+                    <div class="col-lg-3 col-md-4 col-sm-6 col-12" id="studentField">
                         <label for="studentId" class="form-label">Student</label>
                         <select class="form-select" id="studentId">
                             <option value="">-- Select Student --</option>
                         </select>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-lg-2 col-md-4 col-sm-6 col-12">
                         <button type="button" class="btn btn-primary w-100" onclick="loadPreview()">
                             <i class="bi bi-search me-1"></i> Preview
                         </button>
@@ -83,13 +83,13 @@
             <!-- Fee Details Section -->
             <div class="filter-section" style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
                 <div class="row g-3 align-items-end">
-                    <div class="col-md-3">
+                    <div class="col-lg-3 col-md-4 col-sm-6 col-12">
                         <label for="feeTypeId" class="form-label">Fee Type <span class="text-danger">*</span></label>
                         <select class="form-select" id="feeTypeId" required>
                             <option value="">-- Select Fee Type --</option>
                         </select>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-lg-2 col-md-4 col-sm-6 col-12">
                         <label for="feeAmount" class="form-label">Amount</label>
                         <input type="number" class="form-control" id="feeAmount" min="0" placeholder="0.00" />
                     </div>

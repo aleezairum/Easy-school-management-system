@@ -12,7 +12,7 @@
         </div>
         <div class="card-body p-0">
             <!-- Tab Navigation -->
-            <ul class="nav nav-tabs px-4 pt-3" id="smsTabs" role="tablist" style="border-bottom: 2px solid #e2e8f0; flex-wrap: wrap;">
+            <ul class="nav nav-tabs px-4 pt-3" id="smsTabs" role="tablist" style="border-bottom: 2px solid #e2e8f0;">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="staff-tab" data-bs-toggle="tab" data-bs-target="#staff" type="button" role="tab">Staff</button>
                 </li>
@@ -55,7 +55,7 @@
                 <div class="tab-pane fade" id="staff" role="tabpanel">
                     <div class="row">
                         <!-- Left Panel - Message Composition -->
-                        <div class="col-md-6">
+                        <div class="col-lg-6 col-12">
                             <div class="p-3" style="background: #f8fafc; border-radius: 12px;">
                                 <h6 class="mb-3" style="font-weight: 600; color: #475569;">Compose Message</h6>
                                 <div class="mb-3">
@@ -101,10 +101,10 @@
                             </div>
                         </div>
                         <!-- Right Panel - Sending Status -->
-                        <div class="col-md-6">
+                        <div class="col-lg-6 col-12">
                             <div class="p-3" style="background: #f8fafc; border-radius: 12px; height: 100%;">
                                 <h6 class="mb-3" style="font-weight: 600; color: #475569;">Sending Detail - Message Sent (<span id="staffSentCount">0</span>)</h6>
-                                <textarea class="form-control" id="staffSendingLog" rows="15" readonly style="background: #fff;"></textarea>
+                                <textarea class="form-control" id="staffSendingLog" rows="10" readonly style="background: #fff;"></textarea>
                             </div>
                         </div>
                     </div>
@@ -114,7 +114,7 @@
                 <div class="tab-pane fade show active" id="general" role="tabpanel">
                     <div class="row">
                         <!-- Left Panel - Message Composition -->
-                        <div class="col-md-6">
+                        <div class="col-lg-6 col-12">
                             <div class="p-3" style="background: #f8fafc; border-radius: 12px;">
                                 <h6 class="mb-3" style="font-weight: 600; color: #475569;">Compose Message</h6>
                                 <div class="mb-3">
@@ -178,10 +178,10 @@
                             </div>
                         </div>
                         <!-- Right Panel - Sending Status -->
-                        <div class="col-md-6">
+                        <div class="col-lg-6 col-12">
                             <div class="p-3" style="background: #f8fafc; border-radius: 12px; height: 100%;">
                                 <h6 class="mb-3" style="font-weight: 600; color: #475569;">Sending Detail - Message Sent (<span id="generalSentCount">0</span>)</h6>
-                                <textarea class="form-control" id="generalSendingLog" rows="15" readonly style="background: #fff;"></textarea>
+                                <textarea class="form-control" id="generalSendingLog" rows="10" readonly style="background: #fff;"></textarea>
                             </div>
                         </div>
                     </div>
@@ -191,7 +191,7 @@
                 <div class="tab-pane fade" id="absent" role="tabpanel">
                     <div class="row">
                         <!-- Left Panel - Filter & Send -->
-                        <div class="col-md-6">
+                        <div class="col-lg-6 col-12">
                             <div class="p-3" style="background: #f8fafc; border-radius: 12px;">
                                 <h6 class="mb-3" style="font-weight: 600; color: #475569;">Send Absent Notification</h6>
                                 <div class="mb-3">
@@ -251,10 +251,10 @@
                             </div>
                         </div>
                         <!-- Right Panel - Sending Status -->
-                        <div class="col-md-6">
+                        <div class="col-lg-6 col-12">
                             <div class="p-3" style="background: #f8fafc; border-radius: 12px; height: 100%;">
                                 <h6 class="mb-3" style="font-weight: 600; color: #475569;">Sending Detail - Message Sent (<span id="absentSentCount">0</span>)</h6>
-                                <textarea class="form-control" id="absentSendingLog" rows="15" readonly style="background: #fff;"></textarea>
+                                <textarea class="form-control" id="absentSendingLog" rows="10" readonly style="background: #fff;"></textarea>
                             </div>
                         </div>
                     </div>
@@ -263,7 +263,7 @@
                 <!-- TAB 4: LATE SMS -->
                 <div class="tab-pane fade" id="late" role="tabpanel">
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-lg-6 col-12">
                             <div class="p-3" style="background: #f8fafc; border-radius: 12px;">
                                 <h6 class="mb-3" style="font-weight: 600; color: #475569;">Send Late Notification</h6>
                                 <div class="mb-3">
@@ -322,10 +322,10 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-lg-6 col-12">
                             <div class="p-3" style="background: #f8fafc; border-radius: 12px; height: 100%;">
                                 <h6 class="mb-3" style="font-weight: 600; color: #475569;">Sending Detail - Message Sent (<span id="lateSentCount">0</span>)</h6>
-                                <textarea class="form-control" id="lateSendingLog" rows="15" readonly style="background: #fff;"></textarea>
+                                <textarea class="form-control" id="lateSendingLog" rows="10" readonly style="background: #fff;"></textarea>
                             </div>
                         </div>
                     </div>
@@ -334,7 +334,7 @@
                 <!-- TAB 5: AGAIN SMS -->
                 <div class="tab-pane fade" id="again" role="tabpanel">
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-lg-6 col-12">
                             <div class="p-3" style="background: #f8fafc; border-radius: 12px;">
                                 <h6 class="mb-3" style="font-weight: 600; color: #475569;">Send Again Notification</h6>
                                 <div class="mb-3">
@@ -393,10 +393,10 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-lg-6 col-12">
                             <div class="p-3" style="background: #f8fafc; border-radius: 12px; height: 100%;">
                                 <h6 class="mb-3" style="font-weight: 600; color: #475569;">Sending Detail - Message Sent (<span id="againSentCount">0</span>)</h6>
-                                <textarea class="form-control" id="againSendingLog" rows="15" readonly style="background: #fff;"></textarea>
+                                <textarea class="form-control" id="againSendingLog" rows="10" readonly style="background: #fff;"></textarea>
                             </div>
                         </div>
                     </div>
@@ -405,7 +405,7 @@
                 <!-- TAB 6: FEE SMS -->
                 <div class="tab-pane fade" id="fee" role="tabpanel">
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-lg-6 col-12">
                             <div class="p-3" style="background: #f8fafc; border-radius: 12px;">
                                 <h6 class="mb-3" style="font-weight: 600; color: #475569;">Send Fee Reminder</h6>
                                 <div class="mb-3">
@@ -490,10 +490,10 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-lg-6 col-12">
                             <div class="p-3" style="background: #f8fafc; border-radius: 12px; height: 100%;">
                                 <h6 class="mb-3" style="font-weight: 600; color: #475569;">Sending Detail - Message Sent (<span id="feeSentCount">0</span>)</h6>
-                                <textarea class="form-control" id="feeSendingLog" rows="15" readonly style="background: #fff;"></textarea>
+                                <textarea class="form-control" id="feeSendingLog" rows="10" readonly style="background: #fff;"></textarea>
                             </div>
                         </div>
                     </div>
@@ -502,7 +502,7 @@
                 <!-- TAB 7: RESULT SMS -->
                 <div class="tab-pane fade" id="result" role="tabpanel">
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-lg-6 col-12">
                             <div class="p-3" style="background: #f8fafc; border-radius: 12px;">
                                 <h6 class="mb-3" style="font-weight: 600; color: #475569;">Send Result Notification</h6>
                                 <div class="mb-3">
@@ -579,10 +579,10 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-lg-6 col-12">
                             <div class="p-3" style="background: #f8fafc; border-radius: 12px; height: 100%;">
                                 <h6 class="mb-3" style="font-weight: 600; color: #475569;">Sending Detail - Message Sent (<span id="resultSentCount">0</span>)</h6>
-                                <textarea class="form-control" id="resultSendingLog" rows="15" readonly style="background: #fff;"></textarea>
+                                <textarea class="form-control" id="resultSendingLog" rows="10" readonly style="background: #fff;"></textarea>
                             </div>
                         </div>
                     </div>
@@ -591,7 +591,7 @@
                 <!-- TAB 8: FROM TO SMS -->
                 <div class="tab-pane fade" id="fromto" role="tabpanel">
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-lg-6 col-12">
                             <div class="p-3" style="background: #f8fafc; border-radius: 12px;">
                                 <h6 class="mb-3" style="font-weight: 600; color: #475569;">Send SMS for Date Range</h6>
                                 <div class="mb-3">
@@ -674,10 +674,10 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-lg-6 col-12">
                             <div class="p-3" style="background: #f8fafc; border-radius: 12px; height: 100%;">
                                 <h6 class="mb-3" style="font-weight: 600; color: #475569;">Sending Detail - Message Sent (<span id="fromtoSentCount">0</span>)</h6>
-                                <textarea class="form-control" id="fromtoSendingLog" rows="15" readonly style="background: #fff;"></textarea>
+                                <textarea class="form-control" id="fromtoSendingLog" rows="10" readonly style="background: #fff;"></textarea>
                             </div>
                         </div>
                     </div>
@@ -686,7 +686,7 @@
                 <!-- TAB 9: FROM EXCEL SMS -->
                 <div class="tab-pane fade" id="fromexcel" role="tabpanel">
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-lg-6 col-12">
                             <div class="p-3" style="background: #f8fafc; border-radius: 12px;">
                                 <h6 class="mb-3" style="font-weight: 600; color: #475569;">Upload & Send SMS from Excel</h6>
                                 <div class="mb-3">
@@ -732,10 +732,10 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-lg-6 col-12">
                             <div class="p-3" style="background: #f8fafc; border-radius: 12px; height: 100%;">
                                 <h6 class="mb-3" style="font-weight: 600; color: #475569;">Sending Detail - Message Sent (<span id="excelSentCount">0</span>)</h6>
-                                <textarea class="form-control" id="excelSendingLog" rows="15" readonly style="background: #fff;"></textarea>
+                                <textarea class="form-control" id="excelSendingLog" rows="10" readonly style="background: #fff;"></textarea>
                             </div>
                         </div>
                     </div>
@@ -744,7 +744,7 @@
                 <!-- TAB 10: RCARD SMS -->
                 <div class="tab-pane fade" id="rcard" role="tabpanel">
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-lg-6 col-12">
                             <div class="p-3" style="background: #f8fafc; border-radius: 12px;">
                                 <h6 class="mb-3" style="font-weight: 600; color: #475569;">Send Report Card Notification</h6>
                                 <div class="mb-3">
@@ -819,10 +819,10 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-lg-6 col-12">
                             <div class="p-3" style="background: #f8fafc; border-radius: 12px; height: 100%;">
                                 <h6 class="mb-3" style="font-weight: 600; color: #475569;">Sending Detail - Message Sent (<span id="rcardSentCount">0</span>)</h6>
-                                <textarea class="form-control" id="rcardSendingLog" rows="15" readonly style="background: #fff;"></textarea>
+                                <textarea class="form-control" id="rcardSendingLog" rows="10" readonly style="background: #fff;"></textarea>
                             </div>
                         </div>
                     </div>
@@ -834,15 +834,15 @@
                         <h6 class="mb-3" style="font-weight: 600; color: #475569;">SMS Sending History</h6>
                         <!-- Filter Section -->
                         <div class="row g-3 mb-4">
-                            <div class="col-md-2">
+                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
                                 <label class="form-label">From Date</label>
                                 <input type="date" class="form-control" id="historyFromDate" />
                             </div>
-                            <div class="col-md-2">
+                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
                                 <label class="form-label">To Date</label>
                                 <input type="date" class="form-control" id="historyToDate" />
                             </div>
-                            <div class="col-md-2">
+                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
                                 <label class="form-label">Recipient Type</label>
                                 <select class="form-select" id="historyRecipientType">
                                     <option value="">All</option>
@@ -852,7 +852,7 @@
                                     <option value="class">Class</option>
                                 </select>
                             </div>
-                            <div class="col-md-2">
+                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
                                 <label class="form-label">Status</label>
                                 <select class="form-select" id="historyStatus">
                                     <option value="">All</option>
@@ -861,11 +861,11 @@
                                     <option value="pending">Pending</option>
                                 </select>
                             </div>
-                            <div class="col-md-2">
+                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
                                 <label class="form-label">Search</label>
                                 <input type="text" class="form-control" id="historySearch" placeholder="Search..." />
                             </div>
-                            <div class="col-md-2 d-flex align-items-end gap-2">
+                            <div class="col-lg-2 col-md-4 col-sm-6 col-12 d-flex align-items-end gap-2">
                                 <button type="button" class="btn btn-primary" onclick="filterHistory()">
                                     <i class="bi bi-search me-1"></i> Filter
                                 </button>
@@ -917,6 +917,7 @@
         padding: 12px 16px;
         margin-bottom: -2px;
         font-size: 14px;
+        white-space: nowrap;
     }
     .nav-tabs .nav-link:hover {
         color: #008649;
@@ -927,6 +928,28 @@
         border: none;
         border-bottom: 3px solid #008649;
         background: transparent;
+    }
+    @@media (max-width: 991px) {
+        .nav-tabs {
+            flex-wrap: nowrap !important;
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .nav-tabs::-webkit-scrollbar {
+            display: none;
+        }
+        .nav-tabs .nav-link {
+            padding: 10px 14px;
+            font-size: 13px;
+        }
+    }
+    @@media (max-width: 767px) {
+        .nav-tabs .nav-link {
+            padding: 8px 12px;
+            font-size: 12px;
+        }
     }
 </style>
 }

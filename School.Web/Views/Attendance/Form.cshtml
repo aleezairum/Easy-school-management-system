@@ -17,39 +17,39 @@
             <!-- Filter Section -->
             <div class="filter-section" style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
                 <div class="row g-3 align-items-end">
-                    <div class="col-md-2">
+                    <div class="col-lg-2 col-md-3 col-sm-6 col-12">
                         <label for="classId" class="form-label">Class <span class="text-danger">*</span></label>
                         <select class="form-select" id="classId" required onchange="loadSections()">
                             <option value="">-- Select Class --</option>
                         </select>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-lg-2 col-md-3 col-sm-6 col-12">
                         <label for="sectionId" class="form-label">Section <span class="text-danger">*</span></label>
                         <select class="form-select" id="sectionId" required disabled onchange="loadStudents()">
                             <option value="">-- Select Section --</option>
                         </select>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-lg-2 col-md-3 col-sm-6 col-12">
                         <label for="attendanceDate" class="form-label">Date <span class="text-danger">*</span></label>
                         <input type="date" class="form-control" id="attendanceDate" required />
                     </div>
-                    <div class="col-md-1">
+                    <div class="col-lg-1 col-md-3 col-sm-6 col-12">
                         <label class="form-label">Total</label>
                         <input type="text" class="form-control" id="totalStudents" readonly value="0" style="background-color: #e2e8f0; font-weight: 600; text-align: center;" />
                     </div>
-                    <div class="col-md-1">
+                    <div class="col-lg-1 col-md-3 col-sm-6 col-12">
                         <label class="form-label text-success">Present</label>
                         <input type="text" class="form-control" id="totalPresent" readonly value="0" style="background-color: #dcfce7; color: #16a34a; font-weight: 600; text-align: center;" />
                     </div>
-                    <div class="col-md-1">
+                    <div class="col-lg-1 col-md-3 col-sm-6 col-12">
                         <label class="form-label text-danger">Absent</label>
                         <input type="text" class="form-control" id="totalAbsent" readonly value="0" style="background-color: #fee2e2; color: #dc2626; font-weight: 600; text-align: center;" />
                     </div>
-                    <div class="col-md-1">
+                    <div class="col-lg-1 col-md-3 col-sm-6 col-12">
                         <label class="form-label text-info">Leave</label>
                         <input type="text" class="form-control" id="totalLeave" readonly value="0" style="background-color: #e0f2fe; color: #0284c7; font-weight: 600; text-align: center;" />
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-lg-2 col-md-3 col-sm-6 col-12">
                         <button type="button" class="btn btn-primary w-100" onclick="loadStudents()">
                             <i class="bi bi-search me-1"></i> Load Students
                         </button>
@@ -63,11 +63,11 @@
                     <table class="table table-hover" id="attendanceTable">
                         <thead>
                             <tr style="background: #f8fafc;">
-                                <th style="width: 80px;">Roll No</th>
+                                <th>Roll No</th>
                                 <th>Student Name</th>
-                                <th class="text-center" style="width: 200px;">Attendance</th>
-                                <th class="text-center" style="width: 80px;">Late</th>
-                                <th class="text-center" style="width: 80px;">Again</th>
+                                <th class="text-center">Attendance</th>
+                                <th class="text-center">Late</th>
+                                <th class="text-center">Again</th>
                             </tr>
                         </thead>
                         <tbody id="attendanceBody">
@@ -97,6 +97,23 @@
         </div>
     </div>
 </div>
+
+@section Styles {
+<style>
+    @@media (max-width: 767px) {
+        .btn-group .btn {
+            min-width: 40px;
+            min-height: 40px;
+            padding: 8px;
+        }
+        .form-check {
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+        }
+    }
+</style>
+}
 
 @section Scripts {
 <script>

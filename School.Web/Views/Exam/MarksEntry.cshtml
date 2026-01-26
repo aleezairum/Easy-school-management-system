@@ -18,46 +18,46 @@
             <div class="filter-section" style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
                 <div class="row g-3">
                     <!-- Left Column -->
-                    <div class="col-md-6">
+                    <div class="col-lg-6 col-12">
                         <div class="row g-3">
-                            <div class="col-md-4">
+                            <div class="col-lg-4 col-md-6 col-12">
                                 <label for="classId" class="form-label">Class <span class="text-danger">*</span></label>
                                 <select class="form-select" id="classId" required onchange="loadSections()">
                                     <option value="">-- Select Class --</option>
                                 </select>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-lg-4 col-md-6 col-12">
                                 <label for="sectionId" class="form-label">Section <span class="text-danger">*</span></label>
                                 <select class="form-select" id="sectionId" required disabled onchange="loadStudents()">
                                     <option value="">-- Select Section --</option>
                                 </select>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-lg-4 col-md-6 col-12">
                                 <label for="examDate" class="form-label">Date <span class="text-danger">*</span></label>
                                 <input type="date" class="form-control" id="examDate" required />
                             </div>
                         </div>
                     </div>
                     <!-- Right Column -->
-                    <div class="col-md-6">
+                    <div class="col-lg-6 col-12">
                         <div class="row g-3">
-                            <div class="col-md-3">
+                            <div class="col-lg-3 col-md-4 col-sm-6 col-12">
                                 <label for="examId" class="form-label">Exam <span class="text-danger">*</span></label>
                                 <select class="form-select" id="examId" required>
                                     <option value="">-- Select Exam --</option>
                                 </select>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-lg-3 col-md-4 col-sm-6 col-12">
                                 <label for="subjectId" class="form-label">Subject <span class="text-danger">*</span></label>
                                 <select class="form-select" id="subjectId" required>
                                     <option value="">-- Select Subject --</option>
                                 </select>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-lg-3 col-md-4 col-sm-6 col-12">
                                 <label for="totalMarks" class="form-label">Total Marks <span class="text-danger">*</span></label>
                                 <input type="number" class="form-control" id="totalMarks" value="100" min="1" required />
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-lg-3 col-md-4 col-sm-6 col-12">
                                 <label for="passPercentage" class="form-label">Pass %</label>
                                 <div class="input-group">
                                     <input type="number" class="form-control" id="passPercentage" value="40" min="0" max="100" />
