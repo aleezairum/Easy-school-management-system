@@ -15,6 +15,7 @@ namespace School.API.DTOs
     public class MenuSectionDto
     {
         public string Title { get; set; } = string.Empty;
+        public string Icon { get; set; } = string.Empty;
         public List<MenuItemDto> Items { get; set; } = new();
     }
 

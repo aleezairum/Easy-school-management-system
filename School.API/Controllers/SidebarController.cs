@@ -21,6 +21,7 @@ namespace School.API.Controllers
                     new MenuSectionDto
                     {
                         Title = "User Management",
+                        Icon = "bi-person-gear",
                         Items = new List<MenuItemDto>
                         {
                             new MenuItemDto { Id = 1, Title = "Pages", Icon = "bi-file-earmark-text-fill", Url = "/Pages", Order = 1, Section = "User Management" },
@@ -32,6 +33,7 @@ namespace School.API.Controllers
                     new MenuSectionDto
                     {
                         Title = "Academic",
+                        Icon = "bi-mortarboard-fill",
                         Items = new List<MenuItemDto>
                         {
                             // 2.1 Setups (with children)
@@ -78,6 +80,7 @@ namespace School.API.Controllers
                     new MenuSectionDto
                     {
                         Title = "HR Payroll",
+                        Icon = "bi-briefcase-fill",
                         Items = new List<MenuItemDto>
                         {
                             new MenuItemDto { Id = 15, Title = "Employee", Icon = "bi-person-vcard-fill", Url = "/Employee", Order = 1, Section = "HR Payroll" },
@@ -88,6 +91,7 @@ namespace School.API.Controllers
                     new MenuSectionDto
                     {
                         Title = "Fee Management",
+                        Icon = "bi-wallet-fill",
                         Items = new List<MenuItemDto>
                         {
                             new MenuItemDto { Id = 17, Title = "Payment Method", Icon = "bi-credit-card-fill", Url = "/PaymentMethod", Order = 1, Section = "Fee Management" },
@@ -100,6 +104,7 @@ namespace School.API.Controllers
                     new MenuSectionDto
                     {
                         Title = "SMS",
+                        Icon = "bi-envelope-fill",
                         Items = new List<MenuItemDto>
                         {
                             new MenuItemDto { Id = 24, Title = "SMS Module", Icon = "bi-chat-dots-fill", Url = "/sms", Order = 1, Section = "SMS" }
