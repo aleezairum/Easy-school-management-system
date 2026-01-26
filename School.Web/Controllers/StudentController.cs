@@ -17,6 +17,13 @@ namespace School.Web.Controllers
             _httpClient = httpClientFactory.CreateClient();
         }
 
+        [Route("Student")]
+        public IActionResult Index()
+        {
+            ViewData["Title"] = "Students";
+            return View();
+        }
+
         [Route("student/list")]
         public async Task<IActionResult> List()
         {

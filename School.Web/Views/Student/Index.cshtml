@@ -1,0 +1,282 @@
+@{
+    ViewData["Title"] = "Students";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<div class="container-fluid">
+    <div id="alertContainer"></div>
+
+    <div class="card" style="border-radius: 16px; border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+        <div class="card-header d-flex justify-content-between align-items-center" style="background: white; border-bottom: 1px solid #e2e8f0; padding: 20px 24px; border-radius: 16px 16px 0 0;">
+            <h5 style="margin: 0; font-weight: 600; color: #1e293b;"><i class="bi bi-mortarboard-fill me-2"></i>Students</h5>
+            <a href="/student/form" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-1"></i> Add Student
+            </a>
+        </div>
+        <div class="card-body position-relative p-4">
+            <div id="loadingOverlay" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); z-index: 100; border-radius: 16px; align-items: center; justify-content: center;">
+                <div class="spinner-border text-success" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+
+            <!-- Filter Section -->
+            <div class="filter-section" style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label for="searchName" class="form-label">Search</label>
+                        <input type="text" class="form-control" id="searchName" placeholder="Search by name, reg no, roll no..." />
+                    </div>
+                    <div class="col-md-2">
+                        <label for="filterClass" class="form-label">Class</label>
+                        <select class="form-select" id="filterClass" onchange="loadFilterSections()">
+                            <option value="">All Classes</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="filterSection" class="form-label">Section</label>
+                        <select class="form-select" id="filterSection">
+                            <option value="">All Sections</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="filterStatus" class="form-label">Status</label>
+                        <select class="form-select" id="filterStatus">
+                            <option value="">All Status</option>
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                            <option value="Left">Left</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-primary" onclick="loadStudents()">
+                            <i class="bi bi-search me-1"></i> Search
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grid Section -->
+            <div class="table-responsive">
+                <table class="table table-hover" id="studentsTable">
+                    <thead>
+                        <tr style="background: #f8fafc;">
+                            <th style="width: 60px;">Sr#</th>
+                            <th style="width: 60px;">Photo</th>
+                            <th>Reg No</th>
+                            <th>Roll No</th>
+                            <th>Student Name</th>
+                            <th>Father's Name</th>
+                            <th>Class</th>
+                            <th>Section</th>
+                            <th>Mobile</th>
+                            <th class="text-center" style="width: 100px;">Status</th>
+                            <th class="text-center" style="width: 150px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentsBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const API_BASE = 'http://localhost:5266/api';
+
+    $(document).ready(function () {
+        loadDropdowns();
+        loadStudents();
+    });
+
+    async function loadDropdowns() {
+        try {
+            const response = await fetch(`${API_BASE}/SMSClass`);
+            if (response.ok) {
+                const classes = await response.json();
+                const select = $('#filterClass');
+                classes.forEach(c => {
+                    select.append(`<option value="${c.viD}">${c.vName}</option>`);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading dropdowns:', error);
+        }
+    }
+
+    async function loadFilterSections() {
+        const classId = $('#filterClass').val();
+        const sectionSelect = $('#filterSection');
+        sectionSelect.find('option:not(:first)').remove();
+
+        if (!classId) return;
+
+        try {
+            const response = await fetch(`${API_BASE}/SMSSection/byClass/${classId}`);
+            if (response.ok) {
+                const sections = await response.json();
+                sections.forEach(s => {
+                    sectionSelect.append(`<option value="${s.viD}">${s.vName}</option>`);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading sections:', error);
+        }
+    }
+
+    async function loadStudents() {
+        showLoading();
+        try {
+            const response = await fetch(`${API_BASE}/Student`);
+            if (response.ok) {
+                let data = await response.json();
+
+                // Apply filters
+                const search = $('#searchName').val().toLowerCase();
+                const classFilter = $('#filterClass option:selected').text();
+                const classVal = $('#filterClass').val();
+                const sectionFilter = $('#filterSection option:selected').text();
+                const sectionVal = $('#filterSection').val();
+                const status = $('#filterStatus').val();
+
+                if (search) {
+                    data = data.filter(s =>
+                        (s.nameOfStudent && s.nameOfStudent.toLowerCase().includes(search)) ||
+                        (s.studentName && s.studentName.toLowerCase().includes(search)) ||
+                        (s.registrationNo && s.registrationNo.toLowerCase().includes(search)) ||
+                        (s.rollNo && s.rollNo.toLowerCase().includes(search)) ||
+                        (s.fatherName && s.fatherName.toLowerCase().includes(search)) ||
+                        (s.fatherMobile && s.fatherMobile.includes(search))
+                    );
+                }
+
+                if (classVal) {
+                    data = data.filter(s =>
+                        (s.currentClass && s.currentClass === classFilter) ||
+                        (s.classId && s.classId.toString() === classVal)
+                    );
+                }
+
+                if (sectionVal) {
+                    data = data.filter(s =>
+                        (s.section && s.section === sectionFilter) ||
+                        (s.sectionId && s.sectionId.toString() === sectionVal)
+                    );
+                }
+
+                if (status) {
+                    data = data.filter(s => s.status === status);
+                }
+
+                renderList(data);
+            } else {
+                showAlert('Failed to load students', 'danger');
+            }
+        } catch (error) {
+            console.error('Error loading students:', error);
+            showAlert('Error loading students: ' + error.message, 'danger');
+        } finally {
+            hideLoading();
+        }
+    }
+
+    function renderList(items) {
+        const tbody = $('#studentsBody');
+        tbody.empty();
+
+        if (items.length === 0) {
+            tbody.html('<tr><td colspan="11" class="text-center text-muted py-4">No students found.</td></tr>');
+            return;
+        }
+
+        items.forEach((item, index) => {
+            const photo = item.studentPhoto
+                ? `<img src="${item.studentPhoto}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid #e2e8f0;" />`
+                : `<div style="width:40px;height:40px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:18px;"><i class="bi bi-person"></i></div>`;
+
+            let statusBadge = '';
+            if (item.status === 'Active') {
+                statusBadge = '<span class="badge bg-success">Active</span>';
+            } else if (item.status === 'Left') {
+                statusBadge = '<span class="badge bg-warning text-dark">Left</span>';
+            } else {
+                statusBadge = `<span class="badge bg-secondary">${item.status || 'N/A'}</span>`;
+            }
+
+            const name = item.nameOfStudent || item.studentName || item.name || '-';
+
+            const row = `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${photo}</td>
+                    <td><strong>${item.registrationNo || '-'}</strong></td>
+                    <td>${item.rollNo || '-'}</td>
+                    <td>${name}</td>
+                    <td>${item.fatherName || '-'}</td>
+                    <td>${item.currentClass || item.className || '-'}</td>
+                    <td>${item.section || item.sectionName || '-'}</td>
+                    <td>${item.fatherMobile || item.mobile || '-'}</td>
+                    <td class="text-center">${statusBadge}</td>
+                    <td class="text-center">
+                        <a href="/student/form/${item.id}" class="btn btn-sm btn-info me-1" title="Edit">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <button type="button" class="btn btn-sm btn-danger" onclick="deleteStudent(${item.id}, '${(name || '').replace(/'/g, "\\'")}')" title="Delete">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+    }
+
+    async function deleteStudent(id, name) {
+        if (!confirm(`Are you sure you want to delete student "${name}"?`)) {
+            return;
+        }
+
+        showLoading();
+        try {
+            const response = await fetch(`${API_BASE}/Student/${id}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (response.ok) {
+                toastSuccess('Student deleted successfully!');
+                await loadStudents();
+            } else {
+                const error = await response.text();
+                toastError(error || 'Failed to delete student');
+            }
+        } catch (error) {
+            console.error('Error deleting student:', error);
+            toastError('Error deleting student');
+        } finally {
+            hideLoading();
+        }
+    }
+
+    function showLoading() {
+        $('#loadingOverlay').css('display', 'flex');
+    }
+
+    function hideLoading() {
+        $('#loadingOverlay').css('display', 'none');
+    }
+
+    function showAlert(message, type) {
+        const alert = `
+            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+        $('#alertContainer').html(alert);
+        setTimeout(() => { $('.alert').alert('close'); }, 5000);
+    }
+</script>
+}

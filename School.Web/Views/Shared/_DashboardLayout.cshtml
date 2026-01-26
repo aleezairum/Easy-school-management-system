@@ -1224,11 +1224,11 @@
             const section = document.getElementById(sectionId);
             if (section) {
                 section.classList.toggle('collapsed');
-                // Save state to localStorage
+                // Save state to localStorage (expanded = user opened it)
                 if (section.classList.contains('collapsed')) {
-                    localStorage.setItem(`sidebar-${sectionId}`, 'collapsed');
-                } else {
                     localStorage.removeItem(`sidebar-${sectionId}`);
+                } else {
+                    localStorage.setItem(`sidebar-${sectionId}`, 'expanded');
                 }
             }
         }
@@ -1389,12 +1389,13 @@
                     let menuHtml = '';
 
                     const currentPath = window.location.pathname;
-                    let globalFirstSubmenu = true; // Track first submenu globally for default expansion
+                    // No submenu expanded by default - user must click to expand
 
                     data.menuSections.forEach((section, index) => {
                         const sectionId = `menu-section-${index}`;
-                        const isCollapsed = localStorage.getItem(`sidebar-${sectionId}`) === 'collapsed';
-                        const collapsedClass = isCollapsed ? 'collapsed' : '';
+                        // All sections collapsed by default - only expand if user manually opened
+                        const isExpanded = localStorage.getItem(`sidebar-${sectionId}`) === 'expanded';
+                        const collapsedClass = isExpanded ? '' : 'collapsed';
 
                         menuHtml += `<div class="menu-section ${collapsedClass}" id="${sectionId}">`;
                         menuHtml += `<div class="menu-section-title" onclick="toggleMenuSection('${sectionId}')">
@@ -1407,15 +1408,9 @@
                             // Check if item has children (sub-menu)
                             if (item.children && item.children.length > 0) {
                                 const submenuId = `submenu-${item.id}`;
-                                // Check if any child is active (current page)
-                                const hasActiveChild = item.children.some(child =>
-                                    currentPath.toLowerCase().startsWith(child.url.toLowerCase())
-                                );
-                                // First submenu expanded by default, others only if has active child
-                                const isSubmenuOpen = hasActiveChild || globalFirstSubmenu;
-                                const expandedClass = isSubmenuOpen ? 'expanded' : '';
-                                const openClass = isSubmenuOpen ? 'open' : '';
-                                globalFirstSubmenu = false; // Only first submenu gets default expansion
+                                // All submenus collapsed on load - user must expand manually
+                                const expandedClass = '';
+                                const openClass = '';
 
                                 menuHtml += `
                                     <div class="menu-item-parent ${expandedClass}" onclick="toggleSubmenu('${submenuId}')">
