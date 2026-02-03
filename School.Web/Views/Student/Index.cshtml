@@ -7,13 +7,12 @@
     <div id="alertContainer"></div>
 
     <div class="card" style="border-radius: 16px; border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
-        <div class="card-header d-flex justify-content-between align-items-center" style="background: white; border-bottom: 1px solid #e2e8f0; padding: 20px 24px; border-radius: 16px 16px 0 0;">
-            <h5 style="margin: 0; font-weight: 600; color: #1e293b;"><i class="bi bi-mortarboard-fill me-2"></i>Students</h5>
-            <a href="/student/form" class="btn btn-primary">
-                <i class="bi bi-plus-lg me-1"></i> Add Student
-            </a>
-        </div>
         <div class="card-body position-relative p-4">
+            <div class="d-flex justify-content-end mb-3">
+                <a href="/student/form" class="btn btn-primary">
+                    <i class="bi bi-plus-lg me-1"></i> Add Student
+                </a>
+            </div>
             <div id="loadingOverlay" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); z-index: 100; border-radius: 16px; align-items: center; justify-content: center;">
                 <div class="spinner-border text-success" role="status">
                     <span class="visually-hidden">Loading...</span>
@@ -269,14 +268,15 @@
     }
 
     function showAlert(message, type) {
-        const alert = `
-            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        `;
-        $('#alertContainer').html(alert);
-        setTimeout(() => { $('.alert').alert('close'); }, 5000);
+        if (type === 'success') {
+            toastSuccess(message);
+        } else if (type === 'danger' || type === 'error') {
+            toastError(message);
+        } else if (type === 'warning') {
+            toastWarning(message);
+        } else {
+            toastInfo(message);
+        }
     }
 </script>
 }

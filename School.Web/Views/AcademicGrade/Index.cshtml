@@ -236,9 +236,6 @@
 
     <!-- Academic Grades Card -->
     <div class="card">
-        <div class="card-header">
-            <h5><i class="bi bi-mortarboard me-2"></i>Academic Grades</h5>
-        </div>
         <div class="card-body position-relative">
             <div id="loadingOverlay" class="loading-overlay" style="display: none;">
                 <div class="spinner-border text-success" role="status">
@@ -515,16 +512,15 @@
         }
 
         function showAlert(message, type) {
-            const alert = `
-                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                    ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            `;
-            $('#alertContainer').html(alert);
-            setTimeout(() => {
-                $('.alert').alert('close');
-            }, 5000);
+            if (type === 'success') {
+                toastSuccess(message);
+            } else if (type === 'danger' || type === 'error') {
+                toastError(message);
+            } else if (type === 'warning') {
+                toastWarning(message);
+            } else {
+                toastInfo(message);
+            }
         }
     </script>
 }

@@ -120,18 +120,18 @@
         }
 
         .menu-section-title {
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 11px;
+            color: #ffffff;
+            font-size: 14px;
             font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            padding: 8px 12px;
+            text-transform: none;
+            letter-spacing: 0;
+            padding: 12px 16px;
             margin-bottom: 0;
             display: flex;
             align-items: center;
             justify-content: space-between;
             cursor: pointer;
-            border-radius: 8px;
+            border-radius: 10px;
             transition: all 0.2s ease;
             user-select: none;
         }
@@ -1614,7 +1614,7 @@
             const sessionId = document.getElementById('sessionSelect').value;
 
             if (!instituteId || !sessionId) {
-                alert('Please select both Institute and Session');
+                toastWarning('Please select both Institute and Session');
                 return;
             }
 
