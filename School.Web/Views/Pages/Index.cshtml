@@ -852,20 +852,12 @@
 
         // Show Success Message
         function showSuccess(message) {
-            const alert = document.getElementById('successAlert');
-            document.getElementById('successMessage').textContent = message;
-            alert.style.display = 'block';
-            document.getElementById('errorAlert').style.display = 'none';
-            setTimeout(() => alert.style.display = 'none', 3000);
+            toastSuccess(message);
         }
 
         // Show Error Message
         function showError(message) {
-            const alert = document.getElementById('errorAlert');
-            document.getElementById('errorMessage').textContent = message;
-            alert.style.display = 'block';
-            document.getElementById('successAlert').style.display = 'none';
-            setTimeout(() => alert.style.display = 'none', 5000);
+            toastError(message);
         }
     </script>
 }
