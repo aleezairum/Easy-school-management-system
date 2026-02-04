@@ -102,10 +102,11 @@ var app = builder.Build();
 
 // Middleware
 //app.UseHttpsRedirection();
+//app.UsePathBase("/EasySchool"); 
 app.UseRouting();
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
-app.MapControllers();
+app.MapControllers(); 
 app.Run();
 

@@ -1366,6 +1366,8 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/common.js"></script>
+
     <script>
         // ==================== TOAST NOTIFICATION SYSTEM ====================
         const Toast = {
@@ -1445,7 +1447,7 @@
         function toastError(message, title) { return Toast.error(message, title); }
         function toastWarning(message, title) { return Toast.warning(message, title); }
         function toastInfo(message, title) { return Toast.info(message, title); }
-    </script>
+	</script>
     <script>
         // Toggle Sidebar collapse/expand
         function toggleSidebar() {
@@ -1636,7 +1638,8 @@
 
         // Load sidebar data from API
         function loadSidebarData() {
-            fetch('http://localhost:5266/api/sidebar')
+            //fetch('http://68.178.166.149:5266/api/sidebar')
+            fetch(`${API_BASE}/sidebar`)
                 .then(response => response.json())
                 .then(data => {
                     // Update institute name and tagline
