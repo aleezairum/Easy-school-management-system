@@ -338,7 +338,7 @@
     <script>
         //const API_BASE = 'http://localhost:5266/api';
         let editingSectionId = 0;
-
+        filterClass
         $(document).ready(function () {
             loadClasses();
             loadSections();
@@ -347,7 +347,7 @@
         // Load classes for dropdown
         async function loadClasses() {
             try {
-                const response = await fetch(`${API_BASE}/class/dropdown`);
+                const response = await fetch(`${API_BASE}/class`);
                 if (response.ok) {
                     const classes = await response.json();
                     const formSelect = $('#classId');
@@ -357,8 +357,8 @@
                     filterSelect.find('option:not(:first)').remove();
 
                     classes.forEach(cls => {
-                        formSelect.append(`<option value="${cls.viD}">${cls.vName}</option>`);
-                        filterSelect.append(`<option value="${cls.viD}">${cls.vName}</option>`);
+                        formSelect.append(`<option value="${cls.vid}">${cls.vName}</option>`);
+                        filterSelect.append(`<option value="${cls.vid}">${cls.vName}</option>`);
                     });
                 }
             } catch (error) {
@@ -371,7 +371,7 @@
             showLoading();
             try {
                 const filterClass = $('#filterClass').val();
-                let url = `${API_BASE}/section`;
+                let url = `${API_BASE}/Section`;
                 if (filterClass) {
                     url += `?classId=${filterClass}`;
                 }
@@ -403,7 +403,7 @@
 
             sections.forEach((section, index) => {
                 const row = `
-                    <tr data-id="${section.viD}" class="${editingSectionId === section.viD ? 'selected' : ''}">
+                    <tr data-id="${section.vid}" class="${editingSectionId === section.vid ? 'selected' : ''}">
                         <td>${index + 1}</td>
                         <td><strong>${section.vName}</strong></td>
                         <td><span class="badge bg-info">${section.className}</span></td>
@@ -413,10 +413,10 @@
                             </span>
                         </td>
                         <td class="text-center">
-                            <button type="button" class="btn btn-sm btn-info me-1" onclick="editSection(${section.viD})" title="Edit">
+                            <button type="button" class="btn btn-sm btn-info me-1" onclick="editSection(${section.vid})" title="Edit">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <button type="button" class="btn btn-sm btn-danger" onclick="deleteSection(${section.viD}, '${section.vName}')" title="Delete">
+                            <button type="button" class="btn btn-sm btn-danger" onclick="deleteSection(${section.vid}, '${section.vName}')" title="Delete">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </td>
@@ -488,7 +488,7 @@
 
         // Populate form with section data
         function populateForm(data) {
-            $('#sectionId').val(data.viD);
+            $('#sectionId').val(data.vid);
             $('#classId').val(data.classID);
             $('#sectionName').val(data.vName);
             $('#isActive').prop('checked', data.isActive);
@@ -535,21 +535,12 @@
             showLoading();
             try {
                 let response;
-                if (sectionId === 0) {
-                    // Create new section
                     response = await fetch(`${API_BASE}/section`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(data)
                     });
-                } else {
-                    // Update existing section
-                    response = await fetch(`${API_BASE}/section/${sectionId}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(data)
-                    });
-                }
+                
 
                 if (response.ok) {
                     showAlert(sectionId === 0 ? 'Section created successfully!' : 'Section updated successfully!', 'success');

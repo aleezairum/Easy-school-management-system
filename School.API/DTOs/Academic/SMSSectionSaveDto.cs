@@ -4,6 +4,7 @@
     {
         public int VID { get; set; }
         public string? VName { get; set; }
+        public string? ClassName { get; set; }
         public int ClassID { get; set; }
         public bool? IsActive { get; set; }
         public int? InsertedBy { get; set; }
