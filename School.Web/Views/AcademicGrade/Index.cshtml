@@ -11,19 +11,6 @@
         margin-bottom: 24px;
     }
 
-    .card-header {
-        background: white;
-        border-bottom: 1px solid #e2e8f0;
-        padding: 20px 24px;
-        border-radius: 16px 16px 0 0 !important;
-    }
-
-    .card-header h5 {
-        margin: 0;
-        font-weight: 600;
-        color: #1e293b;
-    }
-
     .card-body {
         padding: 24px;
     }
@@ -59,6 +46,10 @@
     .form-check-input:checked {
         background-color: #008649;
         border-color: #008649;
+    }
+
+    .form-check-input:focus {
+        box-shadow: 0 0 0 4px rgba(0, 134, 73, 0.1);
     }
 
     .btn-primary {
@@ -97,16 +88,16 @@
     .btn-info {
         background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
         border: none;
-        border-radius: 10px;
-        padding: 10px 20px;
+        border-radius: 8px;
+        padding: 6px 12px;
         font-weight: 600;
-        font-size: 14px;
+        font-size: 13px;
         color: white;
         transition: all 0.2s;
     }
 
     .btn-info:hover {
-        transform: translateY(-2px);
+        transform: translateY(-1px);
         box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
         color: white;
     }
@@ -114,16 +105,16 @@
     .btn-danger {
         background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
         border: none;
-        border-radius: 10px;
-        padding: 10px 20px;
+        border-radius: 8px;
+        padding: 6px 12px;
         font-weight: 600;
-        font-size: 14px;
+        font-size: 13px;
         color: white;
         transition: all 0.2s;
     }
 
     .btn-danger:hover {
-        transform: translateY(-2px);
+        transform: translateY(-1px);
         box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
         color: white;
     }
@@ -158,22 +149,6 @@
     .table tbody tr.selected {
         background: #ecfdf5;
         border-left: 3px solid #008649;
-    }
-
-    .alert {
-        border-radius: 12px;
-        border: none;
-        padding: 16px 20px;
-    }
-
-    .alert-success {
-        background: #dcfce7;
-        color: #166534;
-    }
-
-    .alert-danger {
-        background: #fee2e2;
-        color: #991b1b;
     }
 
     .loading-overlay {
@@ -228,6 +203,183 @@
         padding-bottom: 8px;
         border-bottom: 2px solid #e2e8f0;
     }
+
+    /* Save Button - Solid green */
+    .btn-save {
+        background-color: #00A651;
+        color: white;
+        font-weight: 600;
+        font-size: 14px;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-save:hover {
+        background-color: #008F45;
+    }
+
+    .btn-save:active {
+        background-color: #007A3A;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-save:disabled {
+        background-color: #CCCCCC;
+        cursor: not-allowed;
+    }
+
+    /* Clear Button - Outlined ghost */
+    .btn-clear {
+        background-color: transparent;
+        color: #6B7280;
+        font-weight: 600;
+        font-size: 14px;
+        padding: 12px 24px;
+        border: 2px solid #D1D5DB;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-clear:hover {
+        background-color: #F3F4F6;
+        border-color: #9CA3AF;
+    }
+
+    .btn-clear:active {
+        background-color: #E5E7EB;
+    }
+
+    /* ==================== TABLET (<=991px) ==================== */
+    @@media (max-width: 991px) {
+        .card-body {
+            padding: 16px;
+        }
+
+        .form-section {
+            padding: 16px;
+        }
+
+        .row.g-3 > [class*="col-md-2"] {
+            flex: 0 0 33.333%;
+            max-width: 33.333%;
+        }
+    }
+
+    /* ==================== MOBILE (<=767px) ==================== */
+    @@media (max-width: 767px) {
+        .card-body {
+            padding: 12px;
+        }
+
+        .form-section {
+            padding: 14px;
+        }
+
+        .form-section-title {
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+
+        .row.g-3 > [class*="col-md-2"] {
+            flex: 0 0 50%;
+            max-width: 50%;
+        }
+
+        .form-label {
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .form-control {
+            padding: 8px 12px;
+            font-size: 13px;
+        }
+
+        /* Action row: stack vertically on mobile */
+        .d-flex.justify-content-end.gap-3 {
+            flex-wrap: wrap;
+            justify-content: flex-start !important;
+            gap: 10px !important;
+        }
+
+        .btn-save, .btn-clear {
+            padding: 10px 20px;
+            font-size: 13px;
+        }
+
+        .grid-section {
+            margin-top: 16px;
+        }
+
+        .grid-section-title {
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+
+        .table thead th {
+            padding: 10px 8px;
+            font-size: 11px;
+            letter-spacing: 0;
+        }
+
+        .table tbody td {
+            padding: 10px 8px;
+            font-size: 13px;
+        }
+
+        .btn.btn-sm {
+            padding: 6px 8px;
+            font-size: 12px;
+        }
+    }
+
+    /* ==================== SMALL MOBILE (<=480px) ==================== */
+    @@media (max-width: 480px) {
+        .card-body {
+            padding: 10px;
+        }
+
+        .form-section {
+            padding: 12px;
+        }
+
+        .row.g-3 > [class*="col-md-2"] {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+
+        .d-flex.justify-content-end.gap-3 {
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+
+        .btn-save, .btn-clear {
+            flex: 1;
+            justify-content: center;
+            padding: 10px 16px;
+            font-size: 13px;
+        }
+
+        .table thead th {
+            padding: 8px 6px;
+            font-size: 10px;
+        }
+
+        .table tbody td {
+            padding: 8px 6px;
+            font-size: 12px;
+        }
+    }
 </style>
 
 <div class="container-fluid">
@@ -253,36 +405,43 @@
 
                     <div class="row g-3 align-items-end">
                         <div class="col-md-2">
-                            <label for="code" class="form-label">Grade Code <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="code" name="Code"
-                                   placeholder="e.g., A-1" required />
-                        </div>
-                        <div class="col-md-3">
                             <label for="name" class="form-label">Grade Name <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="name" name="Name"
-                                   placeholder="e.g., Academic Grade 1" required />
+                                   placeholder="e.g., A+, A, B+" required />
                         </div>
                         <div class="col-md-2">
-                            <label for="qualification" class="form-label">Qualification</label>
-                            <input type="text" class="form-control" id="qualification" name="Qualification"
-                                   placeholder="e.g., Ph.D" />
+                            <label for="minPercentage" class="form-label">Min % <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="minPercentage" name="MinPercentage"
+                                   placeholder="0" min="0" max="100" step="1" required />
                         </div>
                         <div class="col-md-2">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="isActive" name="IsActive" checked />
-                                <label class="form-check-label" for="isActive">Active</label>
-                            </div>
+                            <label for="maxPercentage" class="form-label">Max % <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="maxPercentage" name="MaxPercentage"
+                                   placeholder="100" min="0" max="100" step="1" required />
                         </div>
-                        <div class="col-md-3">
-                            <div class="d-flex gap-2">
-                                <button type="button" class="btn btn-primary" onclick="saveAcademicGrade()">
-                                    <i class="bi bi-check-lg me-1"></i> Save
-                                </button>
-                                <button type="button" class="btn btn-secondary" onclick="resetForm()">
-                                    <i class="bi bi-x-lg me-1"></i> Clear
-                                </button>
-                            </div>
+                        <div class="col-md-2">
+                            <label for="gradePoint" class="form-label">Grade Point <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="gradePoint" name="GradePoint"
+                                   placeholder="4.0" min="0" max="4" step="0.1" required />
                         </div>
+                        <div class="col-md-2">
+                            <label for="remarks" class="form-label">Remarks</label>
+                            <input type="text" class="form-control" id="remarks" name="Remarks"
+                                   placeholder="e.g., Excellent" />
+                        </div>
+                    </div>
+                    <!-- Action Row: Active + Buttons aligned right -->
+                    <div class="d-flex align-items-center justify-content-end gap-3 mt-3">
+                        <label class="form-check d-flex align-items-center gap-2 mb-0">
+                            <input class="form-check-input" type="checkbox" id="isActive" name="IsActive" checked />
+                            <span class="form-check-label fw-medium" style="color: #374151;">Active</span>
+                        </label>
+                        <button type="button" class="btn-save" onclick="saveAcademicGrade()">
+                            <i class="bi bi-check-lg"></i> Save
+                        </button>
+                        <button type="button" class="btn-clear" onclick="resetForm()">
+                            <i class="bi bi-x-lg"></i> Clear
+                        </button>
                     </div>
                 </form>
             </div>
@@ -296,11 +455,13 @@
                     <table class="table table-hover" id="academicgradesTable">
                         <thead>
                             <tr>
-                                <th style="width: 60px;">Sr#</th>
-                                <th>Grade Code</th>
+                                <th style="width: 60px;">SR#</th>
                                 <th>Grade Name</th>
-                                <th>Qualification</th>
-                                <th class="text-center" style="width: 100px;">Status</th>
+                                <th class="text-center">Min %</th>
+                                <th class="text-center">Max %</th>
+                                <th class="text-center">Grade Point</th>
+                                <th>Remarks</th>
+                                <th class="text-center" style="width: 90px;">Active</th>
                                 <th class="text-center" style="width: 150px;">Actions</th>
                             </tr>
                         </thead>
@@ -316,9 +477,7 @@
 <script src="~/js/common.js"></script>
 
 @section Scripts {
-    
     <script>
-        
         let editingId = 0;
 
         $(document).ready(function () {
@@ -348,7 +507,7 @@
             tbody.empty();
 
             if (items.length === 0) {
-                tbody.html('<tr><td colspan="6" class="text-center text-muted py-4">No academic grades found. Add a new grade using the form above.</td></tr>');
+                tbody.html('<tr><td colspan="8" class="text-center text-muted py-4">No academic grades found. Add a new grade using the form above.</td></tr>');
                 return;
             }
 
@@ -356,12 +515,14 @@
                 const row = `
                     <tr data-id="${item.id}" class="${editingId === item.id ? 'selected' : ''}">
                         <td>${index + 1}</td>
-                        <td><strong>${item.code}</strong></td>
-                        <td>${item.name}</td>
-                        <td>${item.qualification || '-'}</td>
+                        <td><strong>${item.name}</strong></td>
+                        <td class="text-center">${item.minPercentage != null ? item.minPercentage : '-'}</td>
+                        <td class="text-center">${item.maxPercentage != null ? item.maxPercentage : '-'}</td>
+                        <td class="text-center"><strong>${item.gradePoint != null ? item.gradePoint : '-'}</strong></td>
+                        <td>${item.remarks || '-'}</td>
                         <td class="text-center">
                             <span class="badge ${item.isActive ? 'bg-success' : 'bg-secondary'}">
-                                ${item.isActive ? 'Active' : 'Inactive'}
+                                ${item.isActive ? 'TRUE' : 'FALSE'}
                             </span>
                         </td>
                         <td class="text-center">
@@ -437,17 +598,21 @@
 
         function populateForm(data) {
             $('#gradeId').val(data.id);
-            $('#code').val(data.code);
             $('#name').val(data.name);
-            $('#qualification').val(data.qualification);
+            $('#minPercentage').val(data.minPercentage);
+            $('#maxPercentage').val(data.maxPercentage);
+            $('#gradePoint').val(data.gradePoint);
+            $('#remarks').val(data.remarks);
             $('#isActive').prop('checked', data.isActive);
         }
 
         function resetForm() {
             $('#gradeId').val('0');
-            $('#code').val('');
             $('#name').val('');
-            $('#qualification').val('');
+            $('#minPercentage').val('');
+            $('#maxPercentage').val('');
+            $('#gradePoint').val('');
+            $('#remarks').val('');
             $('#isActive').prop('checked', true);
             $('#formTitle').text('Add New Academic Grade');
             editingId = 0;
@@ -455,20 +620,36 @@
         }
 
         async function saveAcademicGrade() {
-            const code = $('#code').val().trim();
             const name = $('#name').val().trim();
+            const minPct = $('#minPercentage').val();
+            const maxPct = $('#maxPercentage').val();
+            const point = $('#gradePoint').val();
 
-            if (!code || !name) {
-                showAlert('Please enter grade code and name', 'danger');
+            if (!name) {
+                showAlert('Please enter a grade name', 'danger');
+                $('#name').focus();
+                return;
+            }
+
+            if (minPct === '' || maxPct === '' || point === '') {
+                showAlert('Please fill in Min %, Max %, and Grade Point', 'danger');
+                return;
+            }
+
+            if (parseFloat(minPct) > parseFloat(maxPct)) {
+                showAlert('Min % cannot be greater than Max %', 'danger');
+                $('#minPercentage').focus();
                 return;
             }
 
             const id = parseInt($('#gradeId').val()) || 0;
             const data = {
-                Id: id,
-                Code: code,
+                Code: name,
                 Name: name,
-                Qualification: $('#qualification').val().trim(),
+                MinPercentage: parseFloat(minPct),
+                MaxPercentage: parseFloat(maxPct),
+                GradePoint: parseFloat(point),
+                Remarks: $('#remarks').val().trim(),
                 IsActive: $('#isActive').is(':checked')
             };
 
@@ -490,7 +671,7 @@
                 }
 
                 if (response.ok) {
-                    showAlert('Academic grade saved successfully!', 'success');
+                    showAlert(id === 0 ? 'Academic grade created successfully!' : 'Academic grade updated successfully!', 'success');
                     resetForm();
                     await loadAcademicGrades();
                 } else {

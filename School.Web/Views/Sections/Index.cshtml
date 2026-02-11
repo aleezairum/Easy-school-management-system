@@ -317,9 +317,9 @@
                     <table class="table table-hover" id="sectionsTable">
                         <thead>
                             <tr>
-                                <th style="width: 60px;">Sr#</th>
-                                <th>Section Name</th>
+                                <th style="width: 60px;">SR#</th>
                                 <th>Class</th>
+                                <th>Section Name</th>
                                 <th class="text-center" style="width: 100px;">Status</th>
                                 <th class="text-center" style="width: 150px;">Actions</th>
                             </tr>
@@ -338,7 +338,7 @@
     <script>
         //const API_BASE = 'http://localhost:5266/api';
         let editingSectionId = 0;
-        filterClass
+
         $(document).ready(function () {
             loadClasses();
             loadSections();
@@ -405,8 +405,8 @@
                 const row = `
                     <tr data-id="${section.vid}" class="${editingSectionId === section.vid ? 'selected' : ''}">
                         <td>${index + 1}</td>
+                        <td><span class="badge bg-primary">${section.className}</span></td>
                         <td><strong>${section.vName}</strong></td>
-                        <td><span class="badge bg-info">${section.className}</span></td>
                         <td class="text-center">
                             <span class="badge ${section.isActive ? 'bg-success' : 'bg-secondary'}">
                                 ${section.isActive ? 'Active' : 'Inactive'}

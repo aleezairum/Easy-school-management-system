@@ -23,6 +23,16 @@ namespace School.API.Data.DBModels.HR
         [MaxLength(100)]
         public string? Qualification { get; set; }
 
+        public decimal? MinPercentage { get; set; }
+
+        public decimal? MaxPercentage { get; set; }
+
+        [Column(TypeName = "decimal(4,2)")]
+        public decimal? GradePoint { get; set; }
+
+        [MaxLength(100)]
+        public string? Remarks { get; set; }
+
         public int? SortOrder { get; set; }
 
         public bool IsActive { get; set; } = true;

@@ -26,6 +26,10 @@ namespace School.API.Repositories.Implementations.HR
                     Code = a.Code,
                     Name = a.Name,
                     Qualification = a.Qualification,
+                    MinPercentage = a.MinPercentage,
+                    MaxPercentage = a.MaxPercentage,
+                    GradePoint = a.GradePoint,
+                    Remarks = a.Remarks,
                     SortOrder = a.SortOrder,
                     IsActive = a.IsActive,
                     EmployeeCount = a.Employees != null ? a.Employees.Count : 0
@@ -44,6 +48,10 @@ namespace School.API.Repositories.Implementations.HR
                     Name = a.Name,
                     Description = a.Description,
                     Qualification = a.Qualification,
+                    MinPercentage = a.MinPercentage,
+                    MaxPercentage = a.MaxPercentage,
+                    GradePoint = a.GradePoint,
+                    Remarks = a.Remarks,
                     SortOrder = a.SortOrder,
                     IsActive = a.IsActive,
                     CreatedAt = a.CreatedAt,
@@ -60,6 +68,10 @@ namespace School.API.Repositories.Implementations.HR
                 Name = dto.Name,
                 Description = dto.Description,
                 Qualification = dto.Qualification,
+                MinPercentage = dto.MinPercentage,
+                MaxPercentage = dto.MaxPercentage,
+                GradePoint = dto.GradePoint,
+                Remarks = dto.Remarks,
                 SortOrder = dto.SortOrder,
                 IsActive = dto.IsActive,
                 CreatedAt = DateTime.UtcNow
@@ -79,6 +91,10 @@ namespace School.API.Repositories.Implementations.HR
             academicGrade.Name = dto.Name;
             academicGrade.Description = dto.Description;
             academicGrade.Qualification = dto.Qualification;
+            academicGrade.MinPercentage = dto.MinPercentage;
+            academicGrade.MaxPercentage = dto.MaxPercentage;
+            academicGrade.GradePoint = dto.GradePoint;
+            academicGrade.Remarks = dto.Remarks;
             academicGrade.SortOrder = dto.SortOrder;
             academicGrade.IsActive = dto.IsActive;
             academicGrade.UpdatedAt = DateTime.UtcNow;

@@ -7,6 +7,10 @@ namespace School.API.DTOs
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
         public string? Qualification { get; set; }
+        public decimal? MinPercentage { get; set; }
+        public decimal? MaxPercentage { get; set; }
+        public decimal? GradePoint { get; set; }
+        public string? Remarks { get; set; }
         public int? SortOrder { get; set; }
         public bool IsActive { get; set; }
         public DateTime CreatedAt { get; set; }
@@ -19,6 +23,10 @@ namespace School.API.DTOs
         public string Code { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
         public string? Qualification { get; set; }
+        public decimal? MinPercentage { get; set; }
+        public decimal? MaxPercentage { get; set; }
+        public decimal? GradePoint { get; set; }
+        public string? Remarks { get; set; }
         public int? SortOrder { get; set; }
         public bool IsActive { get; set; }
         public int EmployeeCount { get; set; }
@@ -30,6 +38,10 @@ namespace School.API.DTOs
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
         public string? Qualification { get; set; }
+        public decimal? MinPercentage { get; set; }
+        public decimal? MaxPercentage { get; set; }
+        public decimal? GradePoint { get; set; }
+        public string? Remarks { get; set; }
         public int? SortOrder { get; set; }
         public bool IsActive { get; set; } = true;
     }
@@ -40,6 +52,10 @@ namespace School.API.DTOs
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
         public string? Qualification { get; set; }
+        public decimal? MinPercentage { get; set; }
+        public decimal? MaxPercentage { get; set; }
+        public decimal? GradePoint { get; set; }
+        public string? Remarks { get; set; }
         public int? SortOrder { get; set; }
         public bool IsActive { get; set; }
     }
