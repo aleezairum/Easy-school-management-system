@@ -7,6 +7,9 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
     <style>
         *, body {
             font-family: 'Inter', sans-serif;
@@ -1218,6 +1221,98 @@
                 padding: 8px 14px;
             }
         }
+
+        /* ==================== SELECT2 THEME OVERRIDES ==================== */
+        .select2-container--bootstrap-5 .select2-selection {
+            border: 2px solid #e2e8f0 !important;
+            border-radius: 10px !important;
+            padding: 6px 10px !important;
+            min-height: 44px !important;
+            font-size: 14px !important;
+            transition: all 0.2s;
+        }
+
+        .select2-container--bootstrap-5.select2-container--focus .select2-selection,
+        .select2-container--bootstrap-5.select2-container--open .select2-selection {
+            border-color: #008649 !important;
+            box-shadow: 0 0 0 4px rgba(0, 134, 73, 0.1) !important;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+            color: #1e293b;
+            line-height: 30px;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__placeholder {
+            color: #94a3b8;
+        }
+
+        .select2-container--bootstrap-5 .select2-dropdown {
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+            overflow: hidden;
+        }
+
+        .select2-container--bootstrap-5 .select2-search--dropdown .select2-search__field {
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+
+        .select2-container--bootstrap-5 .select2-search--dropdown .select2-search__field:focus {
+            border-color: #008649;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 134, 73, 0.1);
+        }
+
+        .select2-container--bootstrap-5 .select2-results__option--highlighted.select2-results__option--selectable {
+            background-color: #008649 !important;
+            color: white;
+        }
+
+        .select2-container--bootstrap-5 .select2-results__option--selected {
+            background-color: #ecfdf5 !important;
+            color: #008649;
+        }
+
+        .select2-container--bootstrap-5 .select2-results__option {
+            padding: 10px 14px;
+            font-size: 14px;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection__clear {
+            color: #94a3b8;
+            font-size: 18px;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection__clear:hover {
+            color: #ef4444;
+        }
+
+        /* Fix Select2 inside modals */
+        .modal .select2-container {
+            z-index: 1060;
+        }
+
+        .select2-container--bootstrap-5 .select2-dropdown {
+            z-index: 1061;
+        }
+
+        /* Responsive Select2 */
+        @@media (max-width: 767px) {
+            .select2-container--bootstrap-5 .select2-selection {
+                min-height: 40px !important;
+                padding: 4px 8px !important;
+                font-size: 13px !important;
+            }
+
+            .select2-container--bootstrap-5 .select2-results__option {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+        }
     </style>
     @await RenderSectionAsync("Styles", required: false)
 </head>
@@ -1368,6 +1463,7 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="~/js/common.js"></script>
 
     <script>
@@ -1741,6 +1837,102 @@
             restoreSidebarState();
         });
     </script>
+
+    <!-- Select2 Global Init -->
+    <script>
+        // Initialize Select2 on a single select element
+        function applySelect2(el) {
+            const $el = $(el);
+            if ($el.hasClass('select2-hidden-accessible')) return;
+            $el.select2({
+                theme: 'bootstrap-5',
+                placeholder: $el.find('option:first').text() || '-- Select --',
+                allowClear: true,
+                width: '100%',
+                dropdownParent: $el.closest('.modal').length ? $el.closest('.modal') : $(document.body)
+            });
+        }
+
+        // Initialize Select2 on all select.form-select elements
+        function initSelect2() {
+            $('select.form-select').each(function () {
+                applySelect2(this);
+            });
+        }
+
+        // Re-initialize a specific select after its options are dynamically updated
+        function refreshSelect2(selector) {
+            const $el = $(selector);
+            if ($el.hasClass('select2-hidden-accessible')) {
+                $el.select2('destroy');
+            }
+            applySelect2($el[0]);
+        }
+
+        // Run on page load
+        $(document).ready(function () {
+            // Delay to let page scripts populate dropdowns first
+            setTimeout(initSelect2, 500);
+
+            // Track selects that need re-init after option changes
+            let pendingRefresh = new Set();
+            let refreshTimer = null;
+
+            function scheduleRefresh(selectEl) {
+                pendingRefresh.add(selectEl);
+                if (refreshTimer) clearTimeout(refreshTimer);
+                refreshTimer = setTimeout(function () {
+                    pendingRefresh.forEach(function (el) {
+                        const $el = $(el);
+                        if ($el.hasClass('select2-hidden-accessible')) {
+                            const val = $el.val();
+                            $el.select2('destroy');
+                            applySelect2(el);
+                            if (val) $el.val(val).trigger('change.select2');
+                        } else {
+                            applySelect2(el);
+                        }
+                    });
+                    pendingRefresh.clear();
+                }, 200);
+            }
+
+            // Watch for new selects AND option changes in existing selects
+            const observer = new MutationObserver(function (mutations) {
+                mutations.forEach(function (mutation) {
+                    // Options added/removed inside an existing <select>
+                    if (mutation.target.tagName === 'SELECT' && mutation.target.classList.contains('form-select')) {
+                        scheduleRefresh(mutation.target);
+                        return;
+                    }
+
+                    // New nodes added to DOM
+                    mutation.addedNodes.forEach(function (node) {
+                        if (node.nodeType !== 1) return;
+
+                        // New <option> inside a <select>
+                        if (node.tagName === 'OPTION' && node.parentElement && node.parentElement.tagName === 'SELECT' && node.parentElement.classList.contains('form-select')) {
+                            scheduleRefresh(node.parentElement);
+                            return;
+                        }
+
+                        // New <select> element
+                        if (node.tagName === 'SELECT' && node.classList.contains('form-select')) {
+                            scheduleRefresh(node);
+                        }
+
+                        // New container with selects inside
+                        $(node).find('select.form-select').each(function () {
+                            scheduleRefresh(this);
+                        });
+                    });
+                });
+            });
+
+            observer.observe(document.body, { childList: true, subtree: true });
+        });
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

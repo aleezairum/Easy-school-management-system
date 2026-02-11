@@ -301,7 +301,7 @@
                         <label for="filterClass" class="form-label mb-0 me-2"><i class="bi bi-funnel me-1"></i>Filter by Class:</label>
                     </div>
                     <div class="col-md-4">
-                        <select class="form-select" id="filterClass" onchange="loadSections()">
+                        <select class="form-select" id="filterClass" onchange="filterSections()">
                             <option value="">All Classes</option>
                         </select>
                     </div>
@@ -338,6 +338,7 @@
     <script>
         //const API_BASE = 'http://localhost:5266/api';
         let editingSectionId = 0;
+        let allSections = [];
 
         $(document).ready(function () {
             loadClasses();
@@ -366,20 +367,14 @@
             }
         }
 
-        // Load sections
+        // Load all sections from API (once)
         async function loadSections() {
             showLoading();
             try {
-                const filterClass = $('#filterClass').val();
-                let url = `${API_BASE}/Section`;
-                if (filterClass) {
-                    url += `?classId=${filterClass}`;
-                }
-
-                const response = await fetch(url);
+                const response = await fetch(`${API_BASE}/Section`);
                 if (response.ok) {
-                    const sections = await response.json();
-                    renderSectionsList(sections);
+                    allSections = await response.json();
+                    filterSections();
                 } else {
                     showAlert('Failed to load sections', 'danger');
                 }
@@ -389,6 +384,16 @@
             } finally {
                 hideLoading();
             }
+        }
+
+        // Client-side filter by class
+        function filterSections() {
+            const filterClass = $('#filterClass').val();
+            let filtered = allSections;
+            if (filterClass) {
+                filtered = allSections.filter(s => String(s.classID) === String(filterClass));
+            }
+            renderSectionsList(filtered);
         }
 
         // Render sections list table
