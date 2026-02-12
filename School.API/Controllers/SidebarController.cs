@@ -94,10 +94,12 @@ namespace School.API.Controllers
                         Icon = "bi-wallet-fill",
                         Items = new List<MenuItemDto>
                         {
-                            new MenuItemDto { Id = 17, Title = "Payment Method", Icon = "bi-credit-card-fill", Url = "/PaymentMethod", Order = 1, Section = "Fee Management" },
-                            new MenuItemDto { Id = 18, Title = "Challan Voucher", Icon = "bi-receipt-cutoff", Url = "/ChallanVoucher", Order = 2, Section = "Fee Management" },
-                            new MenuItemDto { Id = 19, Title = "Fee Voucher", Icon = "bi-receipt", Url = "/FeeVoucher", Order = 3, Section = "Fee Management" },
-                            new MenuItemDto { Id = 23, Title = "Apply Fee", Icon = "bi-currency-dollar", Url = "/apply-fee", Order = 4, Section = "Fee Management" }
+                            new MenuItemDto { Id = 25, Title = "Fee Type", Icon = "bi-tags-fill", Url = "/FeeType", Order = 1, Section = "Fee Management" },
+                            new MenuItemDto { Id = 26, Title = "Fee Structure", Icon = "bi-clipboard-data", Url = "/FeeStructure", Order = 2, Section = "Fee Management" },
+                            new MenuItemDto { Id = 17, Title = "Payment Method", Icon = "bi-credit-card-fill", Url = "/PaymentMethod", Order = 3, Section = "Fee Management" },
+                            new MenuItemDto { Id = 18, Title = "Challan Voucher", Icon = "bi-receipt-cutoff", Url = "/ChallanVoucher", Order = 4, Section = "Fee Management" },
+                            new MenuItemDto { Id = 19, Title = "Fee Voucher", Icon = "bi-receipt", Url = "/FeeVoucher", Order = 5, Section = "Fee Management" },
+                            new MenuItemDto { Id = 23, Title = "Apply Fee", Icon = "bi-currency-dollar", Url = "/apply-fee", Order = 6, Section = "Fee Management" }
                         }
                     },
                     // 5. SMS Module

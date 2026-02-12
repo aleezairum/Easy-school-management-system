@@ -109,7 +109,7 @@ namespace School.Web.Controllers
                 else
                 {
                     TempData["Error"] = "Student not found.";
-                    return RedirectToAction("List");
+                    return RedirectToAction("Index");
                 }
             }
             catch
@@ -139,7 +139,7 @@ namespace School.Web.Controllers
                     if (existsResult.GetProperty("exists").GetBoolean())
                     {
                         TempData["Error"] = "A student record already exists for this admission.";
-                        return RedirectToAction("List");
+                        return RedirectToAction("Index");
                     }
                 }
             }
@@ -282,7 +282,7 @@ namespace School.Web.Controllers
                     TempData["Success"] = model.Id > 0
                         ? "Student updated successfully!"
                         : "Student created successfully!";
-                    return RedirectToAction("List");
+                    return RedirectToAction("Index");
                 }
                 else
                 {
@@ -321,7 +321,7 @@ namespace School.Web.Controllers
                 if (response.IsSuccessStatusCode)
                 {
                     TempData["Success"] = "Student created successfully from admission!";
-                    return RedirectToAction("List");
+                    return RedirectToAction("Index");
                 }
                 else
                 {
@@ -359,7 +359,7 @@ namespace School.Web.Controllers
                 TempData["Error"] = "An error occurred while deleting the student.";
             }
 
-            return RedirectToAction("List");
+            return RedirectToAction("Index");
         }
     }
 }

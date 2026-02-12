@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using School.API.Data.DBModels.Academic;
+using School.API.Data.DBModels.Accounts;
 using School.API.Data.DBModels.HR;
 using School.API.DTOs.Academic;
+using School.API.DTOs.Accounts;
 using School.API.DTOs.Common;
 using School.API.Models;
 
@@ -40,6 +42,8 @@ namespace School.API.Data
         public DbSet<Salary> Salaries { get; set; }
 
         // Accounts entities
+        public DbSet<FeeType> FeeTypes { get; set; }
+        public DbSet<FeeStructure> FeeStructures { get; set; }
         //public DbSet<PaymentMethod> PaymentMethods { get; set; }
         //public DbSet<ChallanVoucher> ChallanVouchers { get; set; }
         //public DbSet<FeeVoucher> FeeVouchers { get; set; }
@@ -56,6 +60,8 @@ namespace School.API.Data
             modelBuilder.Entity<AcademicSessionYearSaveDto>().HasNoKey();
             modelBuilder.Entity<SMSClassSaveDto>().HasNoKey();
             modelBuilder.Entity<SMSSectionSaveDto>().HasNoKey();
+            modelBuilder.Entity<FeeTypeSaveDto>().HasNoKey();
+            modelBuilder.Entity<FeeStructureSaveDto>().HasNoKey();
 
             // Menu configuration
             modelBuilder.Entity<Menu>(entity =>
