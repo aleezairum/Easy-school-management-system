@@ -483,6 +483,70 @@
         }
     }
 
+<<<<<<< HEAD
+=======
+    /* Photo Upload Styles */
+    .photo-upload-container {
+        display: flex;
+        align-items: flex-start;
+        gap: 20px;
+        padding: 10px 0;
+    }
+
+    .photo-preview-wrapper {
+        width: 120px;
+        height: 150px;
+        border: 2px dashed #e2e8f0;
+        border-radius: 8px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f8fafc;
+    }
+
+    .photo-preview-wrapper img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .photo-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        color: #94a3b8;
+    }
+
+    .photo-placeholder i {
+        font-size: 40px;
+    }
+
+    .photo-placeholder span {
+        font-size: 11px;
+        text-align: center;
+    }
+
+    .photo-upload-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .photo-file-input {
+        display: none;
+    }
+
+    .photo-help-text {
+        color: #64748b;
+    }
+
+    .photo-help-text small {
+        font-size: 11px;
+    }
+
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
     /* Responsive adjustments */
     @@media (max-width: 1200px) {
         .wizard-step .step-label {
@@ -597,6 +661,7 @@
 
 <div class="container-fluid">
     <!-- Alert Messages -->
+<<<<<<< HEAD
     <div id="alertContainer"></div>
 
     <!-- Admission Form Card -->
@@ -608,6 +673,33 @@
             </button>
         </div>
         <div class="card-body position-relative">
+=======
+    <div id="alertContainer">
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle me-2"></i>@TempData["Success"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle me-2"></i>@TempData["Error"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+    </div>
+
+    <!-- Form Card -->
+    <div class="card">
+        <div class="card-body position-relative">
+            <div class="d-flex justify-content-end mb-3 no-print">
+                <button type="button" class="btn btn-info" onclick="window.print()">
+                    <i class="bi bi-printer me-1"></i> Print
+                </button>
+            </div>
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
             <div id="loadingOverlay" class="loading-overlay" style="display: none;">
                 <div class="spinner-border text-success" role="status">
                     <span class="visually-hidden">Loading...</span>
@@ -683,7 +775,11 @@
                 </button>
             </div>
 
+<<<<<<< HEAD
             @using (Html.BeginForm("Save", "Admission", FormMethod.Post, new { id = "admissionForm" }))
+=======
+            @using (Html.BeginForm("Save", "Admission", FormMethod.Post, new { id = "admissionForm", enctype = "multipart/form-data" }))
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
             {
                 <!-- Tab Content -->
                 <div class="tab-content" id="admissionTabsContent">
@@ -755,6 +851,36 @@
                                 <td class="lbl">Religion</td>
                                 <td class="val">@Html.TextBoxFor(m => m.Religion, new { @placeholder = "Religion" })</td>
                             </tr>
+<<<<<<< HEAD
+=======
+                            <tr>
+                                <td class="lbl">Student Photo</td>
+                                <td class="val" colspan="3">
+                                    <div class="photo-upload-container">
+                                        <div class="photo-preview-wrapper">
+                                            <img id="photoPreview" src="" alt="Photo Preview" style="display: none;" />
+                                            <div id="photoPlaceholder" class="photo-placeholder">
+                                                <i class="bi bi-person-bounding-box"></i>
+                                                <span>No photo selected</span>
+                                            </div>
+                                        </div>
+                                        <div class="photo-upload-controls">
+                                            <input type="file" name="PhotoFile" id="PhotoFile" accept=".jpg,.jpeg,.png" class="photo-file-input" />
+                                            <label for="PhotoFile" class="btn btn-outline-primary btn-sm">
+                                                <i class="bi bi-upload me-1"></i> Choose Photo
+                                            </label>
+                                            <button type="button" class="btn btn-secondary btn-sm" id="removePhoto" style="display: none;">
+                                                <i class="bi bi-x-lg me-1"></i> Remove
+                                            </button>
+                                            <div class="photo-help-text">
+                                                <small>Allowed: JPG, JPEG, PNG (Max 2MB)</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @Html.HiddenFor(m => m.StudentPhoto)
+                                </td>
+                            </tr>
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
                         </table>
                         <div class="tab-navigation">
                             <button type="button" class="btn btn-secondary" onclick="prevTab()">
@@ -1049,7 +1175,10 @@
 
 @section Scripts {
     <script>
+<<<<<<< HEAD
         const API_BASE = 'http://localhost:5266/api';
+=======
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
         const tabNames = ['Basic Information', 'Student Information', "Father's Information", "Mother's Information", "Guardian's Information", 'Address Information', 'Previous School', 'Office Use Only'];
         const tabs = ['basic', 'student', 'father', 'mother', 'guardian', 'address', 'previous', 'office'];
         let currentTabIndex = 0;
@@ -1142,6 +1271,7 @@
 
         // Show alert
         function showAlert(message, type) {
+<<<<<<< HEAD
             const alert = `
                 <div class="alert alert-${type} alert-dismissible fade show" role="alert">
                     ${message}
@@ -1154,6 +1284,17 @@
             setTimeout(() => {
                 $('.alert').alert('close');
             }, 5000);
+=======
+            if (type === 'success') {
+                toastSuccess(message);
+            } else if (type === 'danger' || type === 'error') {
+                toastError(message);
+            } else if (type === 'warning') {
+                toastWarning(message);
+            } else {
+                toastInfo(message);
+            }
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
         }
 
         // Keyboard navigation
@@ -1169,5 +1310,48 @@
                 prevTab();
             }
         });
+<<<<<<< HEAD
+=======
+
+        // Photo upload preview
+        $('#PhotoFile').on('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Validate file type
+                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+                if (!allowedTypes.includes(file.type)) {
+                    showAlert('Please select a valid image file (JPG, JPEG, or PNG).', 'danger');
+                    this.value = '';
+                    return;
+                }
+
+                // Validate file size (2MB max)
+                const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+                if (file.size > maxSize) {
+                    showAlert('File size must be less than 2MB.', 'danger');
+                    this.value = '';
+                    return;
+                }
+
+                // Show preview
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    $('#photoPreview').attr('src', event.target.result).show();
+                    $('#photoPlaceholder').hide();
+                    $('#removePhoto').show();
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Remove photo
+        $('#removePhoto').on('click', function () {
+            $('#PhotoFile').val('');
+            $('#photoPreview').attr('src', '').hide();
+            $('#photoPlaceholder').show();
+            $('#removePhoto').hide();
+            $('#StudentPhoto').val('');
+        });
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
     </script>
 }

@@ -1,13 +1,31 @@
+<<<<<<< HEAD
+=======
+using Microsoft.AspNetCore.Http;
+
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
 namespace School.Web.Models
 {
     public class AdmissionFormViewModel
     {
+<<<<<<< HEAD
+=======
+        // Form Type: "Admission" or "Student"
+        public string FormType { get; set; } = "Admission";
+
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
         // Row 1
         public string? DateOfAdmission { get; set; }
         public string? AdmissionNo { get; set; }
 
+<<<<<<< HEAD
         // Row 2
         public string? ClassSought { get; set; }
+=======
+        // Row 2 - Admission uses ClassSought, Student uses CurrentClass
+        public string? ClassSought { get; set; }
+        public string? CurrentClass { get; set; }
+        public string? Section { get; set; }
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
 
         // Student Name
         public string? NameOfStudent { get; set; }
@@ -39,6 +57,13 @@ namespace School.Web.Models
         public string? Gender { get; set; }
         public string? Religion { get; set; }
 
+<<<<<<< HEAD
+=======
+        // Student Photo
+        public string? StudentPhoto { get; set; }
+        public IFormFile? PhotoFile { get; set; }
+
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
         // Address
         public string? PresentAddress { get; set; }
         public string? PresentAddressUrdu { get; set; }
@@ -68,5 +93,16 @@ namespace School.Web.Models
         public string? TestPercentage { get; set; }
         public string? TestGrade { get; set; }
         public string? Remarks { get; set; }
+<<<<<<< HEAD
+=======
+
+        // Student-specific fields
+        public string? BloodGroup { get; set; }
+        public string? Nationality { get; set; }
+        public string? Email { get; set; }
+        public string? MonthlyFee { get; set; }
+        public string? FeeCategory { get; set; }
+        public string? Status { get; set; } = "Pending"; // Admission: Pending/Approved/Rejected, Student: Active/Inactive/Left
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
     }
 }

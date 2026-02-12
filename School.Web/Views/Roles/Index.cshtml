@@ -344,18 +344,27 @@
 
     <!-- Role Permissions Card -->
     <div class="card">
+<<<<<<< HEAD
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5><i class="bi bi-shield-lock me-2"></i>Role Permissions</h5>
             <div class="d-flex gap-2">
                 <button type="button" class="btn btn-success" onclick="openAddRoleModal()">
+=======
+        <div class="card-body position-relative">
+            <div class="d-flex justify-content-end gap-2 mb-3">
+                <button type="button" class="btn btn-primary" onclick="openAddRoleModal()">
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
                     <i class="bi bi-plus-lg me-1"></i> Add Role
                 </button>
                 <button type="button" class="btn btn-primary" id="btnSavePermissions" onclick="savePermissions()" style="display: none;">
                     <i class="bi bi-check-lg me-1"></i> Save Permissions
                 </button>
             </div>
+<<<<<<< HEAD
         </div>
         <div class="card-body position-relative">
+=======
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
             <div id="loadingOverlay" class="loading-overlay" style="display: none;">
                 <div class="spinner-border text-success" role="status">
                     <span class="visually-hidden">Loading...</span>
@@ -482,7 +491,11 @@
 
 @section Scripts {
     <script>
+<<<<<<< HEAD
         const API_BASE = 'http://localhost:5266/api';
+=======
+        //const API_BASE = 'http://localhost:5266/api';
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
         let allMenus = [];
         let currentRoleData = null;
         let addRoleModal = null;
@@ -830,6 +843,7 @@
         }
 
         function showAlert(message, type) {
+<<<<<<< HEAD
             const alert = `
                 <div class="alert alert-${type} alert-dismissible fade show" role="alert">
                     ${message}
@@ -842,6 +856,17 @@
             setTimeout(() => {
                 $('.alert').alert('close');
             }, 5000);
+=======
+            if (type === 'success') {
+                toastSuccess(message);
+            } else if (type === 'danger' || type === 'error') {
+                toastError(message);
+            } else if (type === 'warning') {
+                toastWarning(message);
+            } else {
+                toastInfo(message);
+            }
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
         }
     </script>
 }

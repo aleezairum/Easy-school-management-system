@@ -248,9 +248,12 @@
 
     <!-- Sections Card -->
     <div class="card">
+<<<<<<< HEAD
         <div class="card-header">
             <h5><i class="bi bi-diagram-3-fill me-2"></i>Section Management</h5>
         </div>
+=======
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
         <div class="card-body position-relative">
             <div id="loadingOverlay" class="loading-overlay" style="display: none;">
                 <div class="spinner-border text-success" role="status">
@@ -304,7 +307,11 @@
                         <label for="filterClass" class="form-label mb-0 me-2"><i class="bi bi-funnel me-1"></i>Filter by Class:</label>
                     </div>
                     <div class="col-md-4">
+<<<<<<< HEAD
                         <select class="form-select" id="filterClass" onchange="loadSections()">
+=======
+                        <select class="form-select" id="filterClass" onchange="filterSections()">
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
                             <option value="">All Classes</option>
                         </select>
                     </div>
@@ -320,9 +327,15 @@
                     <table class="table table-hover" id="sectionsTable">
                         <thead>
                             <tr>
+<<<<<<< HEAD
                                 <th style="width: 60px;">Sr#</th>
                                 <th>Section Name</th>
                                 <th>Class</th>
+=======
+                                <th style="width: 60px;">SR#</th>
+                                <th>Class</th>
+                                <th>Section Name</th>
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
                                 <th class="text-center" style="width: 100px;">Status</th>
                                 <th class="text-center" style="width: 150px;">Actions</th>
                             </tr>
@@ -339,8 +352,14 @@
 
 @section Scripts {
     <script>
+<<<<<<< HEAD
         const API_BASE = 'http://localhost:5266/api';
         let editingSectionId = 0;
+=======
+        //const API_BASE = 'http://localhost:5266/api';
+        let editingSectionId = 0;
+        let allSections = [];
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
 
         $(document).ready(function () {
             loadClasses();
@@ -350,7 +369,11 @@
         // Load classes for dropdown
         async function loadClasses() {
             try {
+<<<<<<< HEAD
                 const response = await fetch(`${API_BASE}/class/dropdown`);
+=======
+                const response = await fetch(`${API_BASE}/class`);
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
                 if (response.ok) {
                     const classes = await response.json();
                     const formSelect = $('#classId');
@@ -360,8 +383,13 @@
                     filterSelect.find('option:not(:first)').remove();
 
                     classes.forEach(cls => {
+<<<<<<< HEAD
                         formSelect.append(`<option value="${cls.viD}">${cls.vName}</option>`);
                         filterSelect.append(`<option value="${cls.viD}">${cls.vName}</option>`);
+=======
+                        formSelect.append(`<option value="${cls.vid}">${cls.vName}</option>`);
+                        filterSelect.append(`<option value="${cls.vid}">${cls.vName}</option>`);
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
                     });
                 }
             } catch (error) {
@@ -369,6 +397,7 @@
             }
         }
 
+<<<<<<< HEAD
         // Load sections
         async function loadSections() {
             showLoading();
@@ -383,6 +412,16 @@
                 if (response.ok) {
                     const sections = await response.json();
                     renderSectionsList(sections);
+=======
+        // Load all sections from API (once)
+        async function loadSections() {
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/Section`);
+                if (response.ok) {
+                    allSections = await response.json();
+                    filterSections();
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
                 } else {
                     showAlert('Failed to load sections', 'danger');
                 }
@@ -394,6 +433,19 @@
             }
         }
 
+<<<<<<< HEAD
+=======
+        // Client-side filter by class
+        function filterSections() {
+            const filterClass = $('#filterClass').val();
+            let filtered = allSections;
+            if (filterClass) {
+                filtered = allSections.filter(s => String(s.classID) === String(filterClass));
+            }
+            renderSectionsList(filtered);
+        }
+
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
         // Render sections list table
         function renderSectionsList(sections) {
             const tbody = $('#sectionsBody');
@@ -406,20 +458,34 @@
 
             sections.forEach((section, index) => {
                 const row = `
+<<<<<<< HEAD
                     <tr data-id="${section.viD}" class="${editingSectionId === section.viD ? 'selected' : ''}">
                         <td>${index + 1}</td>
                         <td><strong>${section.vName}</strong></td>
                         <td><span class="badge bg-info">${section.className}</span></td>
+=======
+                    <tr data-id="${section.vid}" class="${editingSectionId === section.vid ? 'selected' : ''}">
+                        <td>${index + 1}</td>
+                        <td><span class="badge bg-primary">${section.className}</span></td>
+                        <td><strong>${section.vName}</strong></td>
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
                         <td class="text-center">
                             <span class="badge ${section.isActive ? 'bg-success' : 'bg-secondary'}">
                                 ${section.isActive ? 'Active' : 'Inactive'}
                             </span>
                         </td>
                         <td class="text-center">
+<<<<<<< HEAD
                             <button type="button" class="btn btn-sm btn-info me-1" onclick="editSection(${section.viD})" title="Edit">
                                 <i class="bi bi-pencil"></i>
                             </button>
                             <button type="button" class="btn btn-sm btn-danger" onclick="deleteSection(${section.viD}, '${section.vName}')" title="Delete">
+=======
+                            <button type="button" class="btn btn-sm btn-info me-1" onclick="editSection(${section.vid})" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-danger" onclick="deleteSection(${section.vid}, '${section.vName}')" title="Delete">
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
                                 <i class="bi bi-trash"></i>
                             </button>
                         </td>
@@ -491,7 +557,11 @@
 
         // Populate form with section data
         function populateForm(data) {
+<<<<<<< HEAD
             $('#sectionId').val(data.viD);
+=======
+            $('#sectionId').val(data.vid);
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
             $('#classId').val(data.classID);
             $('#sectionName').val(data.vName);
             $('#isActive').prop('checked', data.isActive);
@@ -538,13 +608,17 @@
             showLoading();
             try {
                 let response;
+<<<<<<< HEAD
                 if (sectionId === 0) {
                     // Create new section
+=======
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
                     response = await fetch(`${API_BASE}/section`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(data)
                     });
+<<<<<<< HEAD
                 } else {
                     // Update existing section
                     response = await fetch(`${API_BASE}/section/${sectionId}`, {
@@ -553,6 +627,9 @@
                         body: JSON.stringify(data)
                     });
                 }
+=======
+                
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
 
                 if (response.ok) {
                     showAlert(sectionId === 0 ? 'Section created successfully!' : 'Section updated successfully!', 'success');
@@ -580,6 +657,7 @@
         }
 
         function showAlert(message, type) {
+<<<<<<< HEAD
             const alert = `
                 <div class="alert alert-${type} alert-dismissible fade show" role="alert">
                     ${message}
@@ -592,6 +670,17 @@
             setTimeout(() => {
                 $('.alert').alert('close');
             }, 5000);
+=======
+            if (type === 'success') {
+                toastSuccess(message);
+            } else if (type === 'danger' || type === 'error') {
+                toastError(message);
+            } else if (type === 'warning') {
+                toastWarning(message);
+            } else {
+                toastInfo(message);
+            }
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
         }
     </script>
 }

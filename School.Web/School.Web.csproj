@@ -11,6 +11,13 @@
   </ItemGroup>
 
   <ItemGroup>
+<<<<<<< HEAD
+=======
+    <None Include="wwwroot\js\common.js" />
+  </ItemGroup>
+
+  <ItemGroup>
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
     <PackageReference Include="Microsoft.VisualStudio.TextManager.Interop.9.0" Version="17.14.40260" />
   </ItemGroup>
 

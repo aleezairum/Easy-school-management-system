@@ -5,7 +5,14 @@
       "Bash(dotnet add:*)",
       "Bash(if not exist \"E:\\easy-school-management-system\\School.Web\\wwwroot\\images\" mkdir \"E:\\easy-school-management-system\\School.Web\\wwwroot\\images\")",
       "Bash(ls -la \"E:\\easy-school-management-system\\School.Web\"\" | grep -E \"^d \")",
+<<<<<<< HEAD
       "Bash(dotnet build:*)"
+=======
+      "Bash(dotnet build:*)",
+      "Bash(dir:*)",
+      "Bash(tasklist:*)",
+      "Bash(findstr:*)"
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
     ],
     "deny": [],
     "ask": []

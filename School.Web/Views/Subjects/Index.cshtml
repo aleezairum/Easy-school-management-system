@@ -248,9 +248,12 @@
 
     <!-- Subjects Card -->
     <div class="card">
+<<<<<<< HEAD
         <div class="card-header">
             <h5><i class="bi bi-journal-bookmark-fill me-2"></i>Subject Management</h5>
         </div>
+=======
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
         <div class="card-body position-relative">
             <div id="loadingOverlay" class="loading-overlay" style="display: none;">
                 <div class="spinner-border text-success" role="status">
@@ -339,7 +342,11 @@
 
 @section Scripts {
     <script>
+<<<<<<< HEAD
         const API_BASE = 'http://localhost:5266/api';
+=======
+        //const API_BASE = 'http://localhost:5266/api';
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
         let editingSubjectId = 0;
 
         $(document).ready(function () {
@@ -580,6 +587,7 @@
         }
 
         function showAlert(message, type) {
+<<<<<<< HEAD
             const alert = `
                 <div class="alert alert-${type} alert-dismissible fade show" role="alert">
                     ${message}
@@ -592,6 +600,17 @@
             setTimeout(() => {
                 $('.alert').alert('close');
             }, 5000);
+=======
+            if (type === 'success') {
+                toastSuccess(message);
+            } else if (type === 'danger' || type === 'error') {
+                toastError(message);
+            } else if (type === 'warning') {
+                toastWarning(message);
+            } else {
+                toastInfo(message);
+            }
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
         }
     </script>
 }

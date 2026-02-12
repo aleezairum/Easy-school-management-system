@@ -7,8 +7,16 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<<<<<<< HEAD
     <style>
         * {
+=======
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    <style>
+        *, body {
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
             font-family: 'Inter', sans-serif;
         }
 
@@ -90,8 +98,14 @@
         }
 
         .sidebar-brand-text span {
+<<<<<<< HEAD
             color: var(--text-secondary);
             font-size: 12px;
+=======
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 500;
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
         }
 
         .sidebar-menu {
@@ -116,6 +130,7 @@
         }
 
         .menu-section {
+<<<<<<< HEAD
             margin-bottom: 24px;
         }
 
@@ -127,6 +142,130 @@
             letter-spacing: 1px;
             padding: 0 12px;
             margin-bottom: 8px;
+=======
+            margin-bottom: 8px;
+        }
+
+        .menu-section-title {
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: none;
+            letter-spacing: 0;
+            padding: 12px 16px;
+            margin-bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .menu-section-title:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .menu-section-title span .bi {
+            font-size: 14px;
+        }
+
+        .menu-section-title .section-toggle {
+            font-size: 12px;
+            transition: transform 0.3s ease;
+        }
+
+        .menu-section.collapsed .menu-section-title .section-toggle {
+            transform: rotate(-90deg);
+        }
+
+        .menu-section-items {
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
+            opacity: 0;
+            padding-top: 0;
+        }
+
+        .menu-section:not(.collapsed) .menu-section-items {
+            max-height: 500px;
+            opacity: 1;
+            padding-top: 4px;
+        }
+
+        /* Sub-menu styles */
+        .menu-item-parent {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 10px;
+            margin-bottom: 4px;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .menu-item-parent:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .menu-item-parent .parent-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .menu-item-parent .parent-left i {
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .menu-item-parent .submenu-toggle {
+            font-size: 12px;
+            transition: transform 0.3s ease;
+        }
+
+        .menu-item-parent.expanded {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .menu-item-parent.expanded .submenu-toggle {
+            transform: rotate(180deg);
+        }
+
+        .submenu {
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.3s ease;
+            padding-left: 20px;
+        }
+
+        .submenu.open {
+            max-height: 500px;
+        }
+
+        .submenu .menu-item {
+            padding: 10px 16px 10px 24px;
+            font-size: 14px;
+            border-left: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0 10px 10px 0;
+            margin-left: 12px;
+        }
+
+        .submenu .menu-item:hover {
+            border-left-color: rgba(255, 255, 255, 0.6);
+        }
+
+        .submenu .menu-item.active {
+            border-left-color: #ffffff;
+            background: rgba(255, 255, 255, 0.2);
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
         }
 
         .menu-item {
@@ -596,10 +735,623 @@
             background: var(--border-color);
             margin: 8px 0;
         }
+<<<<<<< HEAD
+=======
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 400px;
+        }
+
+        .toast-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            border-left: 4px solid;
+            animation: slideIn 0.3s ease;
+            min-width: 320px;
+        }
+
+        .toast-item.hiding {
+            animation: slideOut 0.3s ease forwards;
+        }
+
+        @@keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @@keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        .toast-item.success {
+            border-left-color: #10b981;
+            background: #f0fdf4;
+        }
+
+        .toast-item.error {
+            border-left-color: #ef4444;
+            background: #fef2f2;
+        }
+
+        .toast-item.warning {
+            border-left-color: #f59e0b;
+            background: #fffbeb;
+        }
+
+        .toast-item.info {
+            border-left-color: #3b82f6;
+            background: #eff6ff;
+        }
+
+        .toast-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .toast-item.success .toast-icon {
+            background: #dcfce7;
+            color: #10b981;
+        }
+
+        .toast-item.error .toast-icon {
+            background: #fee2e2;
+            color: #ef4444;
+        }
+
+        .toast-item.warning .toast-icon {
+            background: #fef3c7;
+            color: #f59e0b;
+        }
+
+        .toast-item.info .toast-icon {
+            background: #dbeafe;
+            color: #3b82f6;
+        }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: #1e293b;
+            margin-bottom: 2px;
+        }
+
+        .toast-message {
+            font-size: 13px;
+            color: #64748b;
+            line-height: 1.4;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 0;
+            font-size: 18px;
+            line-height: 1;
+            transition: color 0.2s;
+        }
+
+        .toast-close:hover {
+            color: #475569;
+        }
+
+        .toast-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            border-radius: 0 0 0 12px;
+            animation: progress linear forwards;
+        }
+
+        .toast-item.success .toast-progress {
+            background: #10b981;
+        }
+
+        .toast-item.error .toast-progress {
+            background: #ef4444;
+        }
+
+        .toast-item.warning .toast-progress {
+            background: #f59e0b;
+        }
+
+        .toast-item.info .toast-progress {
+            background: #3b82f6;
+        }
+
+        @@keyframes progress {
+            from { width: 100%; }
+            to { width: 0%; }
+        }
+
+        /* ==================== GLOBAL BUTTON STYLES ==================== */
+        /* Primary Button - Main actions (Save) */
+        .btn-primary {
+            background: linear-gradient(135deg, #008649 0%, #006d3b 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: 600;
+            font-size: 14px;
+            color: white;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 134, 73, 0.4);
+            background: linear-gradient(135deg, #006d3b 0%, #005a30 100%);
+            color: white;
+        }
+
+        /* Secondary Button - Cancel/Close actions */
+        .btn-secondary {
+            background: #f1f5f9;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #64748b;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+            border-color: #cbd5e1;
+            color: #475569;
+        }
+
+        /* Success Button - Save & Print, Confirm actions */
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: 600;
+            font-size: 14px;
+            color: white;
+            transition: all 0.2s;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: white;
+        }
+
+        /* Info Button - Edit actions in tables */
+        .btn-info {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: 600;
+            font-size: 14px;
+            color: white;
+            transition: all 0.2s;
+        }
+
+        .btn-info:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
+            color: white;
+        }
+
+        /* Danger Button - Delete actions */
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: 600;
+            font-size: 14px;
+            color: white;
+            transition: all 0.2s;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+            color: white;
+        }
+
+        /* Small buttons for table actions */
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 13px;
+            border-radius: 8px;
+        }
+
+        .btn-sm:hover {
+            transform: translateY(-1px);
+        }
+
+        /* Mobile sidebar overlay backdrop */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        .sidebar-overlay.active {
+            display: block;
+        }
+
+        /* ==================== RESPONSIVE - TABLET (<=991px) ==================== */
+        @@media (max-width: 991px) {
+            .sidebar {
+                transform: translateX(-100%);
+                z-index: 1001;
+            }
+
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+
+            .sidebar.collapsed {
+                transform: translateX(-100%);
+                width: var(--sidebar-width);
+            }
+
+            .sidebar.collapsed.mobile-open {
+                transform: translateX(0);
+            }
+
+            .main-content,
+            .main-content.expanded {
+                margin-left: 0;
+            }
+
+            .top-header {
+                padding: 12px 20px;
+            }
+
+            .header-search input {
+                width: 200px;
+            }
+
+            .content-area {
+                padding: 20px;
+            }
+
+            .welcome-banner {
+                padding: 24px;
+            }
+
+            .welcome-banner h2 {
+                font-size: 22px;
+            }
+
+            .welcome-banner .date-display {
+                right: 24px;
+            }
+
+            .welcome-banner .date-display .day {
+                font-size: 34px;
+            }
+
+            .user-dropdown {
+                width: 260px;
+            }
+
+            .toast-container {
+                max-width: 350px;
+            }
+
+            .toast-item {
+                min-width: 280px;
+            }
+        }
+
+        /* ==================== RESPONSIVE - MOBILE (<=767px) ==================== */
+        @@media (max-width: 767px) {
+            .top-header {
+                padding: 10px 16px;
+            }
+
+            .header-search {
+                display: none;
+            }
+
+            .header-btn {
+                width: 38px;
+                height: 38px;
+            }
+
+            .hamburger-btn {
+                width: 38px;
+                height: 38px;
+                font-size: 18px;
+            }
+
+            .page-title h4 {
+                font-size: 16px;
+            }
+
+            .page-title .breadcrumb {
+                font-size: 11px;
+            }
+
+            .content-area {
+                padding: 16px;
+            }
+
+            .welcome-banner {
+                padding: 20px;
+                margin-bottom: 20px;
+            }
+
+            .welcome-banner h2 {
+                font-size: 18px;
+            }
+
+            .welcome-banner p {
+                font-size: 13px;
+            }
+
+            .welcome-banner .date-display {
+                position: static;
+                transform: none;
+                text-align: left;
+                margin-top: 12px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .welcome-banner .date-display .day {
+                font-size: 28px;
+            }
+
+            .welcome-banner .date-display .month-year {
+                font-size: 12px;
+            }
+
+            .welcome-banner::before,
+            .welcome-banner::after {
+                display: none;
+            }
+
+            .header-user-name {
+                display: none;
+            }
+
+            .header-user {
+                padding: 8px;
+            }
+
+            .user-dropdown {
+                width: 240px;
+                right: -10px;
+            }
+
+            .toast-container {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                max-width: 100%;
+            }
+
+            .toast-item {
+                min-width: auto;
+                width: 100%;
+            }
+
+            /* Global form responsive */
+            .card-header {
+                flex-direction: column;
+                gap: 12px;
+                align-items: flex-start !important;
+            }
+
+            .card-header .btn {
+                width: 100%;
+            }
+
+            /* Global table touch-friendly */
+            .table td, .table th {
+                padding: 10px 8px;
+                font-size: 13px;
+            }
+
+            .btn-sm {
+                padding: 8px 10px;
+                font-size: 12px;
+                min-height: 36px;
+                min-width: 36px;
+            }
+        }
+
+        /* ==================== RESPONSIVE - SMALL MOBILE (<=480px) ==================== */
+        @@media (max-width: 480px) {
+            .content-area {
+                padding: 12px;
+            }
+
+            .welcome-banner {
+                padding: 16px;
+                margin-bottom: 16px;
+                border-radius: 12px;
+            }
+
+            .welcome-banner h2 {
+                font-size: 16px;
+            }
+
+            .top-header {
+                padding: 8px 12px;
+            }
+
+            .page-title h4 {
+                font-size: 14px;
+            }
+
+            .toast-container {
+                top: 8px;
+                right: 8px;
+                left: 8px;
+            }
+
+            .toast-item {
+                padding: 12px 14px;
+            }
+
+            /* Buttons full width on very small screens */
+            .d-flex.gap-2 .btn {
+                font-size: 13px;
+                padding: 8px 14px;
+            }
+        }
+
+        /* ==================== SELECT2 THEME OVERRIDES ==================== */
+        .select2-container--bootstrap-5 .select2-selection {
+            border: 2px solid #e2e8f0 !important;
+            border-radius: 10px !important;
+            padding: 6px 10px !important;
+            min-height: 44px !important;
+            font-size: 14px !important;
+            transition: all 0.2s;
+        }
+
+        .select2-container--bootstrap-5.select2-container--focus .select2-selection,
+        .select2-container--bootstrap-5.select2-container--open .select2-selection {
+            border-color: #008649 !important;
+            box-shadow: 0 0 0 4px rgba(0, 134, 73, 0.1) !important;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+            color: #1e293b;
+            line-height: 30px;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__placeholder {
+            color: #94a3b8;
+        }
+
+        .select2-container--bootstrap-5 .select2-dropdown {
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+            overflow: hidden;
+        }
+
+        .select2-container--bootstrap-5 .select2-search--dropdown .select2-search__field {
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+
+        .select2-container--bootstrap-5 .select2-search--dropdown .select2-search__field:focus {
+            border-color: #008649;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 134, 73, 0.1);
+        }
+
+        .select2-container--bootstrap-5 .select2-results__option--highlighted.select2-results__option--selectable {
+            background-color: #008649 !important;
+            color: white;
+        }
+
+        .select2-container--bootstrap-5 .select2-results__option--selected {
+            background-color: #ecfdf5 !important;
+            color: #008649;
+        }
+
+        .select2-container--bootstrap-5 .select2-results__option {
+            padding: 10px 14px;
+            font-size: 14px;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection__clear {
+            color: #94a3b8;
+            font-size: 18px;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection__clear:hover {
+            color: #ef4444;
+        }
+
+        /* Fix Select2 inside modals */
+        .modal .select2-container {
+            z-index: 1060;
+        }
+
+        .select2-container--bootstrap-5 .select2-dropdown {
+            z-index: 1061;
+        }
+
+        /* Responsive Select2 */
+        @@media (max-width: 767px) {
+            .select2-container--bootstrap-5 .select2-selection {
+                min-height: 40px !important;
+                padding: 4px 8px !important;
+                font-size: 13px !important;
+            }
+
+            .select2-container--bootstrap-5 .select2-results__option {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+        }
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
     </style>
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
+<<<<<<< HEAD
+=======
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeMobileSidebar()"></div>
+
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
     <div class="wrapper">
         <!-- Sidebar -->
         <nav class="sidebar">
@@ -624,6 +1376,7 @@
                 </div>
             </div>
 
+<<<<<<< HEAD
             <div class="sidebar-footer">
                 <div class="user-profile">
                     <div class="user-avatar">A</div>
@@ -633,6 +1386,8 @@
                     </div>
                 </div>
             </div>
+=======
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
         </nav>
 
         <!-- Main Content -->
@@ -740,12 +1495,99 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<<<<<<< HEAD
+=======
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="~/js/common.js"></script>
+
+    <script>
+        // ==================== TOAST NOTIFICATION SYSTEM ====================
+        const Toast = {
+            container: null,
+
+            init() {
+                this.container = document.getElementById('toastContainer');
+            },
+
+            show(type, title, message, duration = 5000) {
+                if (!this.container) this.init();
+
+                const icons = {
+                    success: 'bi-check-lg',
+                    error: 'bi-x-lg',
+                    warning: 'bi-exclamation-lg',
+                    info: 'bi-info-lg'
+                };
+
+                const id = 'toast-' + Date.now();
+                const toast = document.createElement('div');
+                toast.className = `toast-item ${type}`;
+                toast.id = id;
+                toast.style.position = 'relative';
+                toast.style.overflow = 'hidden';
+
+                toast.innerHTML = `
+                    <div class="toast-icon">
+                        <i class="bi ${icons[type]}"></i>
+                    </div>
+                    <div class="toast-content">
+                        <div class="toast-title">${title}</div>
+                        <div class="toast-message">${message}</div>
+                    </div>
+                    <button class="toast-close" onclick="Toast.close('${id}')">&times;</button>
+                    <div class="toast-progress" style="animation-duration: ${duration}ms;"></div>
+                `;
+
+                this.container.appendChild(toast);
+
+                // Auto remove after duration
+                setTimeout(() => this.close(id), duration);
+
+                return id;
+            },
+
+            close(id) {
+                const toast = document.getElementById(id);
+                if (toast) {
+                    toast.classList.add('hiding');
+                    setTimeout(() => toast.remove(), 300);
+                }
+            },
+
+            success(message, title = 'Success') {
+                return this.show('success', title, message);
+            },
+
+            error(message, title = 'Error') {
+                return this.show('error', title, message, 7000);
+            },
+
+            warning(message, title = 'Warning') {
+                return this.show('warning', title, message);
+            },
+
+            info(message, title = 'Info') {
+                return this.show('info', title, message);
+            }
+        };
+
+        // Initialize toast on page load
+        document.addEventListener('DOMContentLoaded', () => Toast.init());
+
+        // Global function aliases for easy use
+        function toastSuccess(message, title) { return Toast.success(message, title); }
+        function toastError(message, title) { return Toast.error(message, title); }
+        function toastWarning(message, title) { return Toast.warning(message, title); }
+        function toastInfo(message, title) { return Toast.info(message, title); }
+	</script>
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
     <script>
         // Toggle Sidebar collapse/expand
         function toggleSidebar() {
             const sidebar = document.querySelector('.sidebar');
             const mainContent = document.querySelector('.main-content');
             const hamburgerIcon = document.getElementById('hamburgerIcon');
+<<<<<<< HEAD
 
             sidebar.classList.toggle('collapsed');
             mainContent.classList.toggle('expanded');
@@ -759,6 +1601,80 @@
                 hamburgerIcon.classList.remove('bi-chevron-right');
                 hamburgerIcon.classList.add('bi-list');
                 localStorage.setItem('sidebarCollapsed', 'false');
+=======
+            const overlay = document.getElementById('sidebarOverlay');
+            const isMobile = window.innerWidth <= 991;
+
+            if (isMobile) {
+                // Mobile: slide sidebar in/out with overlay
+                sidebar.classList.toggle('mobile-open');
+                overlay.classList.toggle('active');
+            } else {
+                // Desktop: collapse/expand sidebar
+                sidebar.classList.toggle('collapsed');
+                mainContent.classList.toggle('expanded');
+
+                if (sidebar.classList.contains('collapsed')) {
+                    hamburgerIcon.classList.remove('bi-list');
+                    hamburgerIcon.classList.add('bi-chevron-right');
+                    localStorage.setItem('sidebarCollapsed', 'true');
+                } else {
+                    hamburgerIcon.classList.remove('bi-chevron-right');
+                    hamburgerIcon.classList.add('bi-list');
+                    localStorage.setItem('sidebarCollapsed', 'false');
+                }
+            }
+        }
+
+        function closeMobileSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.remove('mobile-open');
+            overlay.classList.remove('active');
+        }
+
+        // Toggle menu section collapse/expand
+        function toggleMenuSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            if (section) {
+                section.classList.toggle('collapsed');
+                // Save state to localStorage (expanded = user opened it)
+                if (section.classList.contains('collapsed')) {
+                    localStorage.removeItem(`sidebar-${sectionId}`);
+                } else {
+                    localStorage.setItem(`sidebar-${sectionId}`, 'expanded');
+                }
+            }
+        }
+
+        // Toggle submenu collapse/expand (accordion behavior - only one open at a time)
+        function toggleSubmenu(submenuId) {
+            const submenu = document.getElementById(submenuId);
+            const parentItem = submenu?.previousElementSibling;
+
+            if (submenu && parentItem) {
+                const isCurrentlyOpen = submenu.classList.contains('open');
+
+                // Close all other submenus first (accordion behavior)
+                document.querySelectorAll('.submenu.open').forEach(openSubmenu => {
+                    if (openSubmenu.id !== submenuId) {
+                        openSubmenu.classList.remove('open');
+                        openSubmenu.previousElementSibling?.classList.remove('expanded');
+                        localStorage.removeItem(`sidebar-${openSubmenu.id}`);
+                    }
+                });
+
+                // Toggle current submenu
+                submenu.classList.toggle('open');
+                parentItem.classList.toggle('expanded');
+
+                // Save state to localStorage
+                if (submenu.classList.contains('open')) {
+                    localStorage.setItem(`sidebar-${submenuId}`, 'open');
+                } else {
+                    localStorage.removeItem(`sidebar-${submenuId}`);
+                }
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
             }
         }
 
@@ -849,7 +1765,11 @@
             const sessionId = document.getElementById('sessionSelect').value;
 
             if (!instituteId || !sessionId) {
+<<<<<<< HEAD
                 alert('Please select both Institute and Session');
+=======
+                toastWarning('Please select both Institute and Session');
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
                 return;
             }
 
@@ -871,7 +1791,12 @@
 
         // Load sidebar data from API
         function loadSidebarData() {
+<<<<<<< HEAD
             fetch('http://localhost:5266/api/sidebar')
+=======
+            //fetch('http://68.178.166.149:5266/api/sidebar')
+            fetch(`${API_BASE}/sidebar`)
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
                 .then(response => response.json())
                 .then(data => {
                     // Update institute name and tagline
@@ -888,6 +1813,7 @@
                     let menuHtml = '';
 
                     const currentPath = window.location.pathname;
+<<<<<<< HEAD
 
                     data.menuSections.forEach(section => {
                         menuHtml += `<div class="menu-section">`;
@@ -909,6 +1835,75 @@
                         });
 
                         menuHtml += `</div>`;
+=======
+                    // No submenu expanded by default - user must click to expand
+
+                    data.menuSections.forEach((section, index) => {
+                        const sectionId = `menu-section-${index}`;
+                        // All sections collapsed by default - only expand if user manually opened
+                        const isExpanded = localStorage.getItem(`sidebar-${sectionId}`) === 'expanded';
+                        const collapsedClass = isExpanded ? '' : 'collapsed';
+
+                        menuHtml += `<div class="menu-section ${collapsedClass}" id="${sectionId}">`;
+                        menuHtml += `<div class="menu-section-title" onclick="toggleMenuSection('${sectionId}')">
+                            <span><i class="bi ${section.icon} me-2"></i>${section.title}</span>
+                            <i class="bi bi-chevron-down section-toggle"></i>
+                        </div>`;
+                        menuHtml += `<div class="menu-section-items">`;
+
+                        section.items.forEach(item => {
+                            // Check if item has children (sub-menu)
+                            if (item.children && item.children.length > 0) {
+                                const submenuId = `submenu-${item.id}`;
+                                // All submenus collapsed on load - user must expand manually
+                                const expandedClass = '';
+                                const openClass = '';
+
+                                menuHtml += `
+                                    <div class="menu-item-parent ${expandedClass}" onclick="toggleSubmenu('${submenuId}')">
+                                        <div class="parent-left">
+                                            <i class="bi ${item.icon}"></i>
+                                            <span>${item.title}</span>
+                                        </div>
+                                        <i class="bi bi-chevron-down submenu-toggle"></i>
+                                    </div>
+                                    <div class="submenu ${openClass}" id="${submenuId}">
+                                `;
+
+                                item.children.forEach(child => {
+                                    const isChildActive = currentPath.toLowerCase().startsWith(child.url.toLowerCase());
+                                    const childActiveClass = isChildActive ? 'active' : '';
+                                    const childBadgeHtml = child.badge ? `<span class="badge">${child.badge}</span>` : '';
+
+                                    menuHtml += `
+                                        <a href="${child.url}" class="menu-item ${childActiveClass}">
+                                            <i class="bi ${child.icon}"></i>
+                                            <span>${child.title}</span>
+                                            ${childBadgeHtml}
+                                        </a>
+                                    `;
+                                });
+
+                                menuHtml += `</div>`;
+                            } else {
+                                // Regular menu item without children
+                                const isActive = currentPath.toLowerCase().startsWith(item.url.toLowerCase()) ||
+                                               (item.url === '/Dashboard' && currentPath === '/');
+                                const activeClass = isActive ? 'active' : '';
+                                const badgeHtml = item.badge ? `<span class="badge">${item.badge}</span>` : '';
+
+                                menuHtml += `
+                                    <a href="${item.url}" class="menu-item ${activeClass}">
+                                        <i class="bi ${item.icon}"></i>
+                                        <span>${item.title}</span>
+                                        ${badgeHtml}
+                                    </a>
+                                `;
+                            }
+                        });
+
+                        menuHtml += `</div></div>`;
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
                     });
 
                     menuContainer.innerHTML = menuHtml;
@@ -925,6 +1920,108 @@
             restoreSidebarState();
         });
     </script>
+<<<<<<< HEAD
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
+=======
+
+    <!-- Select2 Global Init -->
+    <script>
+        // Initialize Select2 on a single select element
+        function applySelect2(el) {
+            const $el = $(el);
+            if ($el.hasClass('select2-hidden-accessible')) return;
+            $el.select2({
+                theme: 'bootstrap-5',
+                placeholder: $el.find('option:first').text() || '-- Select --',
+                allowClear: true,
+                width: '100%',
+                dropdownParent: $el.closest('.modal').length ? $el.closest('.modal') : $(document.body)
+            });
+        }
+
+        // Initialize Select2 on all select.form-select elements
+        function initSelect2() {
+            $('select.form-select').each(function () {
+                applySelect2(this);
+            });
+        }
+
+        // Re-initialize a specific select after its options are dynamically updated
+        function refreshSelect2(selector) {
+            const $el = $(selector);
+            if ($el.hasClass('select2-hidden-accessible')) {
+                $el.select2('destroy');
+            }
+            applySelect2($el[0]);
+        }
+
+        // Run on page load
+        $(document).ready(function () {
+            // Delay to let page scripts populate dropdowns first
+            setTimeout(initSelect2, 500);
+
+            // Track selects that need re-init after option changes
+            let pendingRefresh = new Set();
+            let refreshTimer = null;
+
+            function scheduleRefresh(selectEl) {
+                pendingRefresh.add(selectEl);
+                if (refreshTimer) clearTimeout(refreshTimer);
+                refreshTimer = setTimeout(function () {
+                    pendingRefresh.forEach(function (el) {
+                        const $el = $(el);
+                        if ($el.hasClass('select2-hidden-accessible')) {
+                            const val = $el.val();
+                            $el.select2('destroy');
+                            applySelect2(el);
+                            if (val) $el.val(val).trigger('change.select2');
+                        } else {
+                            applySelect2(el);
+                        }
+                    });
+                    pendingRefresh.clear();
+                }, 200);
+            }
+
+            // Watch for new selects AND option changes in existing selects
+            const observer = new MutationObserver(function (mutations) {
+                mutations.forEach(function (mutation) {
+                    // Options added/removed inside an existing <select>
+                    if (mutation.target.tagName === 'SELECT' && mutation.target.classList.contains('form-select')) {
+                        scheduleRefresh(mutation.target);
+                        return;
+                    }
+
+                    // New nodes added to DOM
+                    mutation.addedNodes.forEach(function (node) {
+                        if (node.nodeType !== 1) return;
+
+                        // New <option> inside a <select>
+                        if (node.tagName === 'OPTION' && node.parentElement && node.parentElement.tagName === 'SELECT' && node.parentElement.classList.contains('form-select')) {
+                            scheduleRefresh(node.parentElement);
+                            return;
+                        }
+
+                        // New <select> element
+                        if (node.tagName === 'SELECT' && node.classList.contains('form-select')) {
+                            scheduleRefresh(node);
+                        }
+
+                        // New container with selects inside
+                        $(node).find('select.form-select').each(function () {
+                            scheduleRefresh(this);
+                        });
+                    });
+                });
+            });
+
+            observer.observe(document.body, { childList: true, subtree: true });
+        });
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68

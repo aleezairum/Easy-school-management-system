@@ -1,5 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+<<<<<<< HEAD
+=======
+using School.API.Data.DBModels.HR;
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
 
 namespace School.API.Models
 {

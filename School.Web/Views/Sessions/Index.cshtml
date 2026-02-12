@@ -298,7 +298,7 @@
                     <input type="hidden" id="sessionId" name="Id" value="0" />
 
                     <div class="row g-3 align-items-end">
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <label for="sessionName" class="form-label">Session Name <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="sessionName" name="SessionName"
                                    placeholder="e.g., 2024-2025" required />
@@ -311,7 +311,6 @@
                             <label for="endDate" class="form-label">End Date <span class="text-danger">*</span></label>
                             <input type="date" class="form-control" id="endDate" name="EndDate" required />
                         </div>
-                        <div class="col-md-2">
                             <div class="d-flex gap-4">
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" id="isCurrent" name="IsCurrent" />
@@ -367,7 +366,6 @@
 
 @section Scripts {
     <script>
-        const API_BASE = 'http://localhost:5266/api';
         let editingSessionId = 0;
 
         $(document).ready(function () {
@@ -664,18 +662,6 @@
         }
 
         function showAlert(message, type) {
-            const alert = `
-                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                    ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            `;
-            $('#alertContainer').html(alert);
-
-            // Auto-hide after 5 seconds
-            setTimeout(() => {
-                $('.alert').alert('close');
-            }, 5000);
         }
     </script>
 }

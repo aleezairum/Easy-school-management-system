@@ -7,6 +7,90 @@
   </PropertyGroup>
 
   <ItemGroup>
+<<<<<<< HEAD
+=======
+    <Compile Remove="Controllers\HR\**" />
+    <Compile Remove="Controllers\UserManagement\**" />
+    <Compile Remove="Data\DBModels\UserManagement\**" />
+    <Compile Remove="DTOs\AcademicSessionYear\**" />
+    <Compile Remove="DTOs\Auth\**" />
+    <Compile Remove="DTOs\HR\**" />
+    <Compile Remove="DTOs\UserManagement\**" />
+    <Compile Remove="Helpers\**" />
+    <Compile Remove="Middlewares\**" />
+    <Compile Remove="Repositories\Implementations\UserManagement\**" />
+    <Compile Remove="Repositories\Interfaces\UserManagement\**" />
+    <Compile Remove="Services\Implementations\UserManagement\**" />
+    <Compile Remove="Services\Interfaces\UserManagement\**" />
+    <Content Remove="Controllers\HR\**" />
+    <Content Remove="Controllers\UserManagement\**" />
+    <Content Remove="Data\DBModels\UserManagement\**" />
+    <Content Remove="DTOs\AcademicSessionYear\**" />
+    <Content Remove="DTOs\Auth\**" />
+    <Content Remove="DTOs\HR\**" />
+    <Content Remove="DTOs\UserManagement\**" />
+    <Content Remove="Helpers\**" />
+    <Content Remove="Middlewares\**" />
+    <Content Remove="Repositories\Implementations\UserManagement\**" />
+    <Content Remove="Repositories\Interfaces\UserManagement\**" />
+    <Content Remove="Services\Implementations\UserManagement\**" />
+    <Content Remove="Services\Interfaces\UserManagement\**" />
+    <EmbeddedResource Remove="Controllers\HR\**" />
+    <EmbeddedResource Remove="Controllers\UserManagement\**" />
+    <EmbeddedResource Remove="Data\DBModels\UserManagement\**" />
+    <EmbeddedResource Remove="DTOs\AcademicSessionYear\**" />
+    <EmbeddedResource Remove="DTOs\Auth\**" />
+    <EmbeddedResource Remove="DTOs\HR\**" />
+    <EmbeddedResource Remove="DTOs\UserManagement\**" />
+    <EmbeddedResource Remove="Helpers\**" />
+    <EmbeddedResource Remove="Middlewares\**" />
+    <EmbeddedResource Remove="Repositories\Implementations\UserManagement\**" />
+    <EmbeddedResource Remove="Repositories\Interfaces\UserManagement\**" />
+    <EmbeddedResource Remove="Services\Implementations\UserManagement\**" />
+    <EmbeddedResource Remove="Services\Interfaces\UserManagement\**" />
+    <None Remove="Controllers\HR\**" />
+    <None Remove="Controllers\UserManagement\**" />
+    <None Remove="Data\DBModels\UserManagement\**" />
+    <None Remove="DTOs\AcademicSessionYear\**" />
+    <None Remove="DTOs\Auth\**" />
+    <None Remove="DTOs\HR\**" />
+    <None Remove="DTOs\UserManagement\**" />
+    <None Remove="Helpers\**" />
+    <None Remove="Middlewares\**" />
+    <None Remove="Repositories\Implementations\UserManagement\**" />
+    <None Remove="Repositories\Interfaces\UserManagement\**" />
+    <None Remove="Services\Implementations\UserManagement\**" />
+    <None Remove="Services\Interfaces\UserManagement\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Controllers\11ClassController.cs" />
+    <!-- Exclude old Accounts files but keep FeeType -->
+    <Compile Remove="Data\DBModels\Accounts\PaymentMethod.cs" />
+    <Compile Remove="Data\DBModels\Accounts\ChallanVoucher.cs" />
+    <Compile Remove="Data\DBModels\Accounts\FeeVoucher.cs" />
+    <Compile Remove="Controllers\Accounts\PaymentMethodController.cs" />
+    <Compile Remove="Controllers\Accounts\ChallanVoucherController.cs" />
+    <Compile Remove="Controllers\Accounts\FeeVoucherController.cs" />
+    <Compile Remove="DTOs\Accounts\PaymentMethod*" />
+    <Compile Remove="DTOs\Accounts\ChallanVoucher*" />
+    <Compile Remove="DTOs\Accounts\FeeVoucher*" />
+    <Compile Remove="Repositories\Interfaces\Accounts\IPaymentMethodRepository.cs" />
+    <Compile Remove="Repositories\Interfaces\Accounts\IChallanVoucherRepository.cs" />
+    <Compile Remove="Repositories\Interfaces\Accounts\IFeeVoucherRepository.cs" />
+    <Compile Remove="Repositories\Implementations\Accounts\PaymentMethodRepository.cs" />
+    <Compile Remove="Repositories\Implementations\Accounts\ChallanVoucherRepository.cs" />
+    <Compile Remove="Repositories\Implementations\Accounts\FeeVoucherRepository.cs" />
+    <Compile Remove="Services\Interfaces\Accounts\IPaymentMethodService.cs" />
+    <Compile Remove="Services\Interfaces\Accounts\IChallanVoucherService.cs" />
+    <Compile Remove="Services\Interfaces\Accounts\IFeeVoucherService.cs" />
+    <Compile Remove="Services\Implementations\Accounts\PaymentMethodService.cs" />
+    <Compile Remove="Services\Implementations\Accounts\ChallanVoucherService.cs" />
+    <Compile Remove="Services\Implementations\Accounts\FeeVoucherService.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.8" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.8" />
@@ -18,6 +102,7 @@
   </ItemGroup>
 
   <ItemGroup>
+<<<<<<< HEAD
     <Folder Include="Controllers\HR\" />
     <Folder Include="Controllers\Accounts\" />
     <Folder Include="Controllers\UserManagement\" />
@@ -43,6 +128,12 @@
     <Folder Include="Services\Interfaces\Accounts\" />
     <Folder Include="Services\Interfaces\HR\" />
     <Folder Include="Services\Interfaces\UserManagement\" />
+=======
+    <Folder Include="Repositories\Implementations\HR\" />
+    <Folder Include="Repositories\Interfaces\HR\" />
+    <Folder Include="Services\Implementations\HR\" />
+    <Folder Include="Services\Interfaces\HR\" />
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
   </ItemGroup>
 
 </Project>

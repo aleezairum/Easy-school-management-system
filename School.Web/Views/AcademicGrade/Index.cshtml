@@ -1,0 +1,709 @@
+@{
+    ViewData["Title"] = "Academic Grades";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<style>
+    .card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        margin-bottom: 24px;
+    }
+
+    .card-body {
+        padding: 24px;
+    }
+
+    .form-label {
+        font-weight: 500;
+        color: #475569;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+
+    .form-control, .form-select {
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #008649;
+        box-shadow: 0 0 0 4px rgba(0, 134, 73, 0.1);
+    }
+
+    .form-check-input {
+        width: 18px;
+        height: 18px;
+        border: 2px solid #cbd5e1;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .form-check-input:checked {
+        background-color: #008649;
+        border-color: #008649;
+    }
+
+    .form-check-input:focus {
+        box-shadow: 0 0 0 4px rgba(0, 134, 73, 0.1);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #008649 0%, #006d3b 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 134, 73, 0.4);
+        background: linear-gradient(135deg, #006d3b 0%, #005a30 100%);
+    }
+
+    .btn-secondary {
+        background: #f1f5f9;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-weight: 600;
+        font-size: 14px;
+        color: #64748b;
+        transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+        background: #e2e8f0;
+        border-color: #cbd5e1;
+        color: #475569;
+    }
+
+    .btn-info {
+        background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-weight: 600;
+        font-size: 13px;
+        color: white;
+        transition: all 0.2s;
+    }
+
+    .btn-info:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
+        color: white;
+    }
+
+    .btn-danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-weight: 600;
+        font-size: 13px;
+        color: white;
+        transition: all 0.2s;
+    }
+
+    .btn-danger:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        color: white;
+    }
+
+    .table {
+        margin-bottom: 0;
+    }
+
+    .table thead th {
+        background: #f8fafc;
+        border-bottom: 2px solid #e2e8f0;
+        padding: 14px 16px;
+        font-weight: 600;
+        font-size: 13px;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+    }
+
+    .table tbody td {
+        padding: 12px 16px;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 14px;
+    }
+
+    .table tbody tr:hover {
+        background: #f8fafc;
+    }
+
+    .table tbody tr.selected {
+        background: #ecfdf5;
+        border-left: 3px solid #008649;
+    }
+
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        border-radius: 16px;
+    }
+
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+        border-width: 0.3rem;
+    }
+
+    .form-section {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .form-section-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .grid-section {
+        margin-top: 24px;
+    }
+
+    .grid-section-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    /* Save Button - Solid green */
+    .btn-save {
+        background-color: #00A651;
+        color: white;
+        font-weight: 600;
+        font-size: 14px;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-save:hover {
+        background-color: #008F45;
+    }
+
+    .btn-save:active {
+        background-color: #007A3A;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-save:disabled {
+        background-color: #CCCCCC;
+        cursor: not-allowed;
+    }
+
+    /* Clear Button - Outlined ghost */
+    .btn-clear {
+        background-color: transparent;
+        color: #6B7280;
+        font-weight: 600;
+        font-size: 14px;
+        padding: 12px 24px;
+        border: 2px solid #D1D5DB;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-clear:hover {
+        background-color: #F3F4F6;
+        border-color: #9CA3AF;
+    }
+
+    .btn-clear:active {
+        background-color: #E5E7EB;
+    }
+
+    /* ==================== TABLET (<=991px) ==================== */
+    @@media (max-width: 991px) {
+        .card-body {
+            padding: 16px;
+        }
+
+        .form-section {
+            padding: 16px;
+        }
+
+        .row.g-3 > [class*="col-md-2"] {
+            flex: 0 0 33.333%;
+            max-width: 33.333%;
+        }
+    }
+
+    /* ==================== MOBILE (<=767px) ==================== */
+    @@media (max-width: 767px) {
+        .card-body {
+            padding: 12px;
+        }
+
+        .form-section {
+            padding: 14px;
+        }
+
+        .form-section-title {
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+
+        .row.g-3 > [class*="col-md-2"] {
+            flex: 0 0 50%;
+            max-width: 50%;
+        }
+
+        .form-label {
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .form-control {
+            padding: 8px 12px;
+            font-size: 13px;
+        }
+
+        /* Action row: stack vertically on mobile */
+        .d-flex.justify-content-end.gap-3 {
+            flex-wrap: wrap;
+            justify-content: flex-start !important;
+            gap: 10px !important;
+        }
+
+        .btn-save, .btn-clear {
+            padding: 10px 20px;
+            font-size: 13px;
+        }
+
+        .grid-section {
+            margin-top: 16px;
+        }
+
+        .grid-section-title {
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+
+        .table thead th {
+            padding: 10px 8px;
+            font-size: 11px;
+            letter-spacing: 0;
+        }
+
+        .table tbody td {
+            padding: 10px 8px;
+            font-size: 13px;
+        }
+
+        .btn.btn-sm {
+            padding: 6px 8px;
+            font-size: 12px;
+        }
+    }
+
+    /* ==================== SMALL MOBILE (<=480px) ==================== */
+    @@media (max-width: 480px) {
+        .card-body {
+            padding: 10px;
+        }
+
+        .form-section {
+            padding: 12px;
+        }
+
+        .row.g-3 > [class*="col-md-2"] {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+
+        .d-flex.justify-content-end.gap-3 {
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+
+        .btn-save, .btn-clear {
+            flex: 1;
+            justify-content: center;
+            padding: 10px 16px;
+            font-size: 13px;
+        }
+
+        .table thead th {
+            padding: 8px 6px;
+            font-size: 10px;
+        }
+
+        .table tbody td {
+            padding: 8px 6px;
+            font-size: 12px;
+        }
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Alert Messages -->
+    <div id="alertContainer"></div>
+
+    <!-- Academic Grades Card -->
+    <div class="card">
+        <div class="card-body position-relative">
+            <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+                <div class="spinner-border text-success" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+
+            <!-- Form Section -->
+            <div class="form-section">
+                <div class="form-section-title">
+                    <i class="bi bi-pencil-square me-2"></i><span id="formTitle">Add New Academic Grade</span>
+                </div>
+                <form id="academicgradeForm">
+                    <input type="hidden" id="gradeId" name="Id" value="0" />
+
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-2">
+                            <label for="name" class="form-label">Grade Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" name="Name"
+                                   placeholder="e.g., A+, A, B+" required />
+                        </div>
+                        <div class="col-md-2">
+                            <label for="minPercentage" class="form-label">Min % <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="minPercentage" name="MinPercentage"
+                                   placeholder="0" min="0" max="100" step="1" required />
+                        </div>
+                        <div class="col-md-2">
+                            <label for="maxPercentage" class="form-label">Max % <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="maxPercentage" name="MaxPercentage"
+                                   placeholder="100" min="0" max="100" step="1" required />
+                        </div>
+                        <div class="col-md-2">
+                            <label for="gradePoint" class="form-label">Grade Point <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="gradePoint" name="GradePoint"
+                                   placeholder="4.0" min="0" max="4" step="0.1" required />
+                        </div>
+                        <div class="col-md-2">
+                            <label for="remarks" class="form-label">Remarks</label>
+                            <input type="text" class="form-control" id="remarks" name="Remarks"
+                                   placeholder="e.g., Excellent" />
+                        </div>
+                    </div>
+                    <!-- Action Row: Active + Buttons aligned right -->
+                    <div class="d-flex align-items-center justify-content-end gap-3 mt-3">
+                        <label class="form-check d-flex align-items-center gap-2 mb-0">
+                            <input class="form-check-input" type="checkbox" id="isActive" name="IsActive" checked />
+                            <span class="form-check-label fw-medium" style="color: #374151;">Active</span>
+                        </label>
+                        <button type="button" class="btn-save" onclick="saveAcademicGrade()">
+                            <i class="bi bi-check-lg"></i> Save
+                        </button>
+                        <button type="button" class="btn-clear" onclick="resetForm()">
+                            <i class="bi bi-x-lg"></i> Clear
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Grid Section -->
+            <div class="grid-section">
+                <div class="grid-section-title">
+                    <i class="bi bi-table me-2"></i>Academic Grades List
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover" id="academicgradesTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 60px;">SR#</th>
+                                <th>Grade Name</th>
+                                <th class="text-center">Min %</th>
+                                <th class="text-center">Max %</th>
+                                <th class="text-center">Grade Point</th>
+                                <th>Remarks</th>
+                                <th class="text-center" style="width: 90px;">Active</th>
+                                <th class="text-center" style="width: 150px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="academicgradesBody">
+                            <!-- Academic Grades will be loaded dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="~/js/common.js"></script>
+
+@section Scripts {
+    <script>
+        let editingId = 0;
+
+        $(document).ready(function () {
+            loadAcademicGrades();
+        });
+
+        async function loadAcademicGrades() {
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/AcademicGrade`);
+                if (response.ok) {
+                    const data = await response.json();
+                    renderList(data);
+                } else {
+                    showAlert('Failed to load academic grades', 'danger');
+                }
+            } catch (error) {
+                console.error('Error loading academic grades:', error);
+                showAlert('Error loading academic grades: ' + error.message, 'danger');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function renderList(items) {
+            const tbody = $('#academicgradesBody');
+            tbody.empty();
+
+            if (items.length === 0) {
+                tbody.html('<tr><td colspan="8" class="text-center text-muted py-4">No academic grades found. Add a new grade using the form above.</td></tr>');
+                return;
+            }
+
+            items.forEach((item, index) => {
+                const row = `
+                    <tr data-id="${item.id}" class="${editingId === item.id ? 'selected' : ''}">
+                        <td>${index + 1}</td>
+                        <td><strong>${item.name}</strong></td>
+                        <td class="text-center">${item.minPercentage != null ? item.minPercentage : '-'}</td>
+                        <td class="text-center">${item.maxPercentage != null ? item.maxPercentage : '-'}</td>
+                        <td class="text-center"><strong>${item.gradePoint != null ? item.gradePoint : '-'}</strong></td>
+                        <td>${item.remarks || '-'}</td>
+                        <td class="text-center">
+                            <span class="badge ${item.isActive ? 'bg-success' : 'bg-secondary'}">
+                                ${item.isActive ? 'TRUE' : 'FALSE'}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-sm btn-info me-1" onclick="editAcademicGrade(${item.id})" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-danger" onclick="deleteAcademicGrade(${item.id}, '${item.name}')" title="Delete">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.append(row);
+            });
+        }
+
+        async function editAcademicGrade(id) {
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/AcademicGrade/${id}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    populateForm(data);
+                    editingId = id;
+                    $('#formTitle').text('Edit Academic Grade');
+
+                    $('#academicgradesBody tr').removeClass('selected');
+                    $(`#academicgradesBody tr[data-id="${id}"]`).addClass('selected');
+
+                    $('html, body').animate({
+                        scrollTop: $('.form-section').offset().top - 100
+                    }, 300);
+                } else {
+                    showAlert('Failed to load academic grade', 'danger');
+                }
+            } catch (error) {
+                console.error('Error loading academic grade:', error);
+                showAlert('Error loading academic grade: ' + error.message, 'danger');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function deleteAcademicGrade(id, name) {
+            if (!confirm(`Are you sure you want to delete "${name}"?`)) {
+                return;
+            }
+
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/AcademicGrade/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (response.ok) {
+                    showAlert('Academic grade deleted successfully!', 'success');
+                    if (editingId === id) {
+                        resetForm();
+                    }
+                    await loadAcademicGrades();
+                } else {
+                    const error = await response.json();
+                    showAlert(error.message || 'Failed to delete academic grade', 'danger');
+                }
+            } catch (error) {
+                console.error('Error deleting academic grade:', error);
+                showAlert('Error deleting academic grade: ' + error.message, 'danger');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function populateForm(data) {
+            $('#gradeId').val(data.id);
+            $('#name').val(data.name);
+            $('#minPercentage').val(data.minPercentage);
+            $('#maxPercentage').val(data.maxPercentage);
+            $('#gradePoint').val(data.gradePoint);
+            $('#remarks').val(data.remarks);
+            $('#isActive').prop('checked', data.isActive);
+        }
+
+        function resetForm() {
+            $('#gradeId').val('0');
+            $('#name').val('');
+            $('#minPercentage').val('');
+            $('#maxPercentage').val('');
+            $('#gradePoint').val('');
+            $('#remarks').val('');
+            $('#isActive').prop('checked', true);
+            $('#formTitle').text('Add New Academic Grade');
+            editingId = 0;
+            $('#academicgradesBody tr').removeClass('selected');
+        }
+
+        async function saveAcademicGrade() {
+            const name = $('#name').val().trim();
+            const minPct = $('#minPercentage').val();
+            const maxPct = $('#maxPercentage').val();
+            const point = $('#gradePoint').val();
+
+            if (!name) {
+                showAlert('Please enter a grade name', 'danger');
+                $('#name').focus();
+                return;
+            }
+
+            if (minPct === '' || maxPct === '' || point === '') {
+                showAlert('Please fill in Min %, Max %, and Grade Point', 'danger');
+                return;
+            }
+
+            if (parseFloat(minPct) > parseFloat(maxPct)) {
+                showAlert('Min % cannot be greater than Max %', 'danger');
+                $('#minPercentage').focus();
+                return;
+            }
+
+            const id = parseInt($('#gradeId').val()) || 0;
+            const data = {
+                Code: name,
+                Name: name,
+                MinPercentage: parseFloat(minPct),
+                MaxPercentage: parseFloat(maxPct),
+                GradePoint: parseFloat(point),
+                Remarks: $('#remarks').val().trim(),
+                IsActive: $('#isActive').is(':checked')
+            };
+
+            showLoading();
+            try {
+                let response;
+                if (id === 0) {
+                    response = await fetch(`${API_BASE}/AcademicGrade`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                } else {
+                    response = await fetch(`${API_BASE}/AcademicGrade/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                }
+
+                if (response.ok) {
+                    showAlert(id === 0 ? 'Academic grade created successfully!' : 'Academic grade updated successfully!', 'success');
+                    resetForm();
+                    await loadAcademicGrades();
+                } else {
+                    const error = await response.json();
+                    showAlert(error.message || 'Failed to save academic grade', 'danger');
+                }
+            } catch (error) {
+                console.error('Error saving academic grade:', error);
+                showAlert('Error saving academic grade: ' + error.message, 'danger');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function showLoading() {
+            $('#loadingOverlay').show();
+        }
+
+        function hideLoading() {
+            $('#loadingOverlay').hide();
+        }
+
+        function showAlert(message, type) {
+            if (type === 'success') {
+                toastSuccess(message);
+            } else if (type === 'danger' || type === 'error') {
+                toastError(message);
+            } else if (type === 'warning') {
+                toastWarning(message);
+            } else {
+                toastInfo(message);
+            }
+        }
+    </script>
+}

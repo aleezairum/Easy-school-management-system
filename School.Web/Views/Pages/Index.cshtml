@@ -372,7 +372,10 @@
             border-color: #008649;
             box-shadow: 0 0 0 4px rgba(0, 134, 73, 0.1);
             outline: none;
+<<<<<<< HEAD
 
+=======
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
         }
 
         .search-box i {
@@ -853,20 +856,28 @@
 
         // Show Success Message
         function showSuccess(message) {
+<<<<<<< HEAD
             const alert = document.getElementById('successAlert');
             document.getElementById('successMessage').textContent = message;
             alert.style.display = 'block';
             document.getElementById('errorAlert').style.display = 'none';
             setTimeout(() => alert.style.display = 'none', 3000);
+=======
+            toastSuccess(message);
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
         }
 
         // Show Error Message
         function showError(message) {
+<<<<<<< HEAD
             const alert = document.getElementById('errorAlert');
             document.getElementById('errorMessage').textContent = message;
             alert.style.display = 'block';
             document.getElementById('successAlert').style.display = 'none';
             setTimeout(() => alert.style.display = 'none', 5000);
+=======
+            toastError(message);
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
         }
     </script>
 }

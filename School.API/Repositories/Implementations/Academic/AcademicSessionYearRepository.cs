@@ -18,10 +18,17 @@ namespace School.API.Repositories.Implementations.Academic
             _context = context;
         }
 
+<<<<<<< HEAD
         public async Task<List<AcademicSessionYearSaveDto>> GetAllAsync()
         {
             var resultList = await _context
                 .Set<AcademicSessionYearSaveDto>()
+=======
+        public async Task<List<AcademicSessionYear>> GetAllAsync()
+        {
+            var resultList = await _context
+                .Set<AcademicSessionYear>()
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
                 .FromSqlRaw("EXEC SpGet_AcademicSessionYear @VID={0}", 0) // 0 to get all
                 .AsNoTracking()
                 .ToListAsync();
@@ -30,10 +37,17 @@ namespace School.API.Repositories.Implementations.Academic
         }
 
 
+<<<<<<< HEAD
         public async Task<AcademicSessionYearSaveDto?> GetByIdAsync(int vid)
         {
             var resultList = await _context
                 .Set<AcademicSessionYearSaveDto>()
+=======
+        public async Task<AcademicSessionYear?> GetByIdAsync(int vid)
+        {
+            var resultList = await _context
+                .Set<AcademicSessionYear>()
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
                 .FromSqlRaw("EXEC SpGet_AcademicSessionYear @VID={0}", vid)
                 .AsNoTracking()
                 .ToListAsync();

@@ -240,9 +240,12 @@
 
     <!-- Classes Card -->
     <div class="card">
+<<<<<<< HEAD
         <div class="card-header">
             <h5><i class="bi bi-door-open-fill me-2"></i>Class Management</h5>
         </div>
+=======
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
         <div class="card-body position-relative">
             <div id="loadingOverlay" class="loading-overlay" style="display: none;">
                 <div class="spinner-border text-success" role="status">
@@ -310,7 +313,10 @@
 
 @section Scripts {
     <script>
+<<<<<<< HEAD
         const API_BASE = 'http://localhost:5266/api';
+=======
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
         let editingClassId = 0;
 
         $(document).ready(function () {
@@ -348,7 +354,11 @@
 
             classes.forEach((cls, index) => {
                 const row = `
+<<<<<<< HEAD
                     <tr data-id="${cls.viD}" class="${editingClassId === cls.viD ? 'selected' : ''}">
+=======
+                    <tr data-id="${cls.vid}" class="${editingClassId === cls.vid ? 'selected' : ''}">
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
                         <td>${index + 1}</td>
                         <td><strong>${cls.vName}</strong></td>
                         <td class="text-center">
@@ -357,10 +367,17 @@
                             </span>
                         </td>
                         <td class="text-center">
+<<<<<<< HEAD
                             <button type="button" class="btn btn-sm btn-info me-1" onclick="editClass(${cls.viD})" title="Edit">
                                 <i class="bi bi-pencil"></i>
                             </button>
                             <button type="button" class="btn btn-sm btn-danger" onclick="deleteClass(${cls.viD}, '${cls.vName}')" title="Delete">
+=======
+                            <button type="button" class="btn btn-sm btn-info me-1" onclick="editClass(${cls.vid})" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-danger" onclick="deleteClass(${cls.vid}, '${cls.vName}')" title="Delete">
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
                                 <i class="bi bi-trash"></i>
                             </button>
                         </td>
@@ -432,7 +449,11 @@
 
         // Populate form with class data
         function populateForm(data) {
+<<<<<<< HEAD
             $('#classId').val(data.viD);
+=======
+            $('#classId').val(data.vid);
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
             $('#className').val(data.vName);
             $('#isActive').prop('checked', data.isActive);
         }
@@ -469,13 +490,17 @@
             showLoading();
             try {
                 let response;
+<<<<<<< HEAD
                 if (classId === 0) {
                     // Create new class
+=======
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
                     response = await fetch(`${API_BASE}/class`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(data)
                     });
+<<<<<<< HEAD
                 } else {
                     // Update existing class
                     response = await fetch(`${API_BASE}/class/${classId}`, {
@@ -484,6 +509,9 @@
                         body: JSON.stringify(data)
                     });
                 }
+=======
+                
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
 
                 if (response.ok) {
                     showAlert(classId === 0 ? 'Class created successfully!' : 'Class updated successfully!', 'success');
@@ -511,6 +539,7 @@
         }
 
         function showAlert(message, type) {
+<<<<<<< HEAD
             const alert = `
                 <div class="alert alert-${type} alert-dismissible fade show" role="alert">
                     ${message}
@@ -523,6 +552,17 @@
             setTimeout(() => {
                 $('.alert').alert('close');
             }, 5000);
+=======
+            if (type === 'success') {
+                toastSuccess(message);
+            } else if (type === 'danger' || type === 'error') {
+                toastError(message);
+            } else if (type === 'warning') {
+                toastWarning(message);
+            } else {
+                toastInfo(message);
+            }
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
         }
     </script>
 }

@@ -83,6 +83,13 @@ namespace School.API.Models
         [MaxLength(50)]
         public string? Religion { get; set; }
 
+<<<<<<< HEAD
+=======
+        // Student Photo
+        [MaxLength(255)]
+        public string? StudentPhoto { get; set; }
+
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
         // Address
         [MaxLength(500)]
         public string? PresentAddress { get; set; }

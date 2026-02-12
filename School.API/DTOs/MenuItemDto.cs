@@ -9,11 +9,19 @@ namespace School.API.DTOs
         public string? Badge { get; set; }
         public int Order { get; set; }
         public string Section { get; set; } = string.Empty;
+<<<<<<< HEAD
+=======
+        public List<MenuItemDto>? Children { get; set; }
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
     }
 
     public class MenuSectionDto
     {
         public string Title { get; set; } = string.Empty;
+<<<<<<< HEAD
+=======
+        public string Icon { get; set; } = string.Empty;
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
         public List<MenuItemDto> Items { get; set; } = new();
     }
 

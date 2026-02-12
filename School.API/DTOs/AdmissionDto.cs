@@ -39,6 +39,12 @@ namespace School.API.DTOs
         public string? Gender { get; set; }
         public string? Religion { get; set; }
 
+<<<<<<< HEAD
+=======
+        // Student Photo
+        public string? StudentPhoto { get; set; }
+
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
         // Address
         public string? PresentAddress { get; set; }
         public string? PresentAddressUrdu { get; set; }
@@ -124,6 +130,12 @@ namespace School.API.DTOs
         public string? Gender { get; set; }
         public string? Religion { get; set; }
 
+<<<<<<< HEAD
+=======
+        // Student Photo
+        public string? StudentPhoto { get; set; }
+
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
         // Address
         public string? PresentAddress { get; set; }
         public string? PresentAddressUrdu { get; set; }
@@ -194,6 +206,12 @@ namespace School.API.DTOs
         public string? Gender { get; set; }
         public string? Religion { get; set; }
 
+<<<<<<< HEAD
+=======
+        // Student Photo
+        public string? StudentPhoto { get; set; }
+
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
         // Address
         public string? PresentAddress { get; set; }
         public string? PresentAddressUrdu { get; set; }

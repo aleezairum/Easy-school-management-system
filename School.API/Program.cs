@@ -9,6 +9,21 @@ using School.API.Services.Interfaces.Academic;
 using School.API.Services.Implementations.Academic;
 using School.API.Repositories.Implementations.Academic;
 using School.API.Repositories.Interfaces.Academic;
+<<<<<<< HEAD
+=======
+using School.API.Services.Interfaces.Student;
+using School.API.Services.Implementations.Student;
+using School.API.Repositories.Interfaces.Student;
+using School.API.Repositories.Implementations.Student;
+using School.API.Services.Interfaces.HR;
+using School.API.Services.Implementations.HR;
+using School.API.Repositories.Interfaces.HR;
+using School.API.Repositories.Implementations.HR;
+using School.API.Services.Interfaces.Accounts;
+using School.API.Services.Implementations.Accounts;
+using School.API.Repositories.Interfaces.Accounts;
+using School.API.Repositories.Implementations.Accounts;
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
 var builder = WebApplication.CreateBuilder(args);
 
 // Database
@@ -37,6 +52,47 @@ builder.Services.AddAuthorization();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAcademicSessionYearRepository, AcademicSessionYearRepository>();
 builder.Services.AddScoped<IAcademicSessionYearService, AcademicSessionYearService>();
+<<<<<<< HEAD
+=======
+builder.Services.AddScoped<ISMSSectionRepository, SMSSectionRepository>();
+builder.Services.AddScoped<ISMSSectionService, SMSSectionService>();
+builder.Services.AddScoped<ISMSClassRepository, SMSClassRepository>();
+builder.Services.AddScoped<ISMSClassService, SMSClassService>();
+builder.Services.AddScoped<IStudentRepository, StudentRepository>();
+builder.Services.AddScoped<IStudentService, StudentService>();
+
+// HR Services
+builder.Services.AddScoped<IDesignationRepository, DesignationRepository>();
+builder.Services.AddScoped<IDesignationService, DesignationService>();
+builder.Services.AddScoped<IHRGradeRepository, HRGradeRepository>();
+builder.Services.AddScoped<IHRGradeService, HRGradeService>();
+builder.Services.AddScoped<IAcademicGradeRepository, AcademicGradeRepository>();
+builder.Services.AddScoped<IAcademicGradeService, AcademicGradeService>();
+builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+builder.Services.AddScoped<IEmployeeService, EmployeeService>();
+builder.Services.AddScoped<ISalaryRepository, SalaryRepository>();
+builder.Services.AddScoped<ISalaryService, SalaryService>();
+
+// Academic Services (new)
+builder.Services.AddScoped<ITimeTableRepository, TimeTableRepository>();
+builder.Services.AddScoped<ITimeTableService, TimeTableService>();
+builder.Services.AddScoped<IAttendanceRepository, AttendanceRepository>();
+builder.Services.AddScoped<IAttendanceService, AttendanceService>();
+builder.Services.AddScoped<IExamRepository, ExamRepository>();
+builder.Services.AddScoped<IExamService, ExamService>();
+
+// Accounts Services
+builder.Services.AddScoped<IFeeTypeRepository, FeeTypeRepository>();
+builder.Services.AddScoped<IFeeTypeService, FeeTypeService>();
+builder.Services.AddScoped<IFeeStructureRepository, FeeStructureRepository>();
+builder.Services.AddScoped<IFeeStructureService, FeeStructureService>();
+//builder.Services.AddScoped<IPaymentMethodRepository, PaymentMethodRepository>();
+//builder.Services.AddScoped<IPaymentMethodService, PaymentMethodService>();
+//builder.Services.AddScoped<IChallanVoucherRepository, ChallanVoucherRepository>();
+//builder.Services.AddScoped<IChallanVoucherService, ChallanVoucherService>();
+//builder.Services.AddScoped<IFeeVoucherRepository, FeeVoucherRepository>();
+//builder.Services.AddScoped<IFeeVoucherService, FeeVoucherService>();
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
 
 // Controllers
 builder.Services.AddControllers()
@@ -49,6 +105,7 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddCors(options =>
 {
+<<<<<<< HEAD
     options.AddPolicy("AllowAll", policy =>
     {
         policy.AllowAnyOrigin()
@@ -59,14 +116,31 @@ builder.Services.AddCors(options =>
 
 
 
+=======
+    options.AddPolicy("AllowAll",
+        p => p.AllowAnyOrigin()
+              .AllowAnyHeader()
+
+              .AllowAnyMethod());
+});
+
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
 var app = builder.Build();
 
 // Middleware
 //app.UseHttpsRedirection();
+<<<<<<< HEAD
+=======
+//app.UsePathBase("/EasySchool"); 
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
 app.UseRouting();
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
+<<<<<<< HEAD
 app.MapControllers();
+=======
+app.MapControllers(); 
+>>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
 app.Run();
 
