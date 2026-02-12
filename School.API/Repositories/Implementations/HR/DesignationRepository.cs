@@ -28,7 +28,7 @@ namespace School.API.Repositories.Implementations.HR
                     Description = d.Description,
                     SortOrder = d.SortOrder,
                     IsActive = d.IsActive,
-                    EmployeeCount = d.Employees != null ? d.Employees.Count : 0
+                    //EmployeeCount = d.Employees != null ? d.Employees.Count : 0
                 })
                 .ToListAsync();
         }

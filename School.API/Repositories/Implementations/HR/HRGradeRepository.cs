@@ -29,7 +29,7 @@ namespace School.API.Repositories.Implementations.HR
                     MaxSalary = h.MaxSalary,
                     SortOrder = h.SortOrder,
                     IsActive = h.IsActive,
-                    EmployeeCount = h.Employees != null ? h.Employees.Count : 0
+                    //EmployeeCount = h.Employees != null ? h.Employees.Count : 0
                 })
                 .ToListAsync();
         }

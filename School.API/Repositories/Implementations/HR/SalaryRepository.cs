@@ -15,122 +15,122 @@ namespace School.API.Repositories.Implementations.HR
             _context = context;
         }
 
-        public async Task<IEnumerable<SalaryListDto>> GetAllAsync()
-        {
-            return await _context.Salaries
-                .Include(s => s.Employee)
-                    .ThenInclude(e => e!.Designation)
-                .OrderByDescending(s => s.Year)
-                .ThenByDescending(s => s.Month)
-                .ThenBy(s => s.Employee!.FirstName)
-                .Select(s => new SalaryListDto
-                {
-                    Id = s.Id,
-                    EmployeeName = s.Employee != null ? s.Employee.FirstName + " " + s.Employee.LastName : null,
-                    EmployeeCode = s.Employee != null ? s.Employee.EmployeeCode : null,
-                    DesignationName = s.Employee != null && s.Employee.Designation != null ? s.Employee.Designation.Name : null,
-                    MonthYear = $"{GetMonthName(s.Month)} {s.Year}",
-                    BasicSalary = s.BasicSalary,
-                    GrossSalary = s.BasicSalary + s.HouseRentAllowance + s.MedicalAllowance + s.TransportAllowance + s.OtherAllowances + s.Overtime + s.Bonus,
-                    TotalDeductions = s.TaxDeduction + s.ProvidentFund + s.LoanDeduction + s.OtherDeductions,
-                    NetSalary = s.NetSalary,
-                    Status = s.Status,
-                    StatusName = s.Status.ToString()
-                })
-                .ToListAsync();
-        }
+        //public async Task<IEnumerable<SalaryListDto>> GetAllAsync()
+        //{
+        //    return await _context.Salaries
+        //        .Include(s => s.Employee)
+        //            .ThenInclude(e => e!.Designation)
+        //        .OrderByDescending(s => s.Year)
+        //        .ThenByDescending(s => s.Month)
+        //        .ThenBy(s => s.Employee!.FirstName)
+        //        .Select(s => new SalaryListDto
+        //        {
+        //            Id = s.Id,
+        //            EmployeeName = s.Employee != null ? s.Employee.FirstName + " " + s.Employee.LastName : null,
+        //            EmployeeCode = s.Employee != null ? s.Employee.EmployeeCode : null,
+        //            DesignationName = s.Employee != null && s.Employee.Designation != null ? s.Employee.Designation.Name : null,
+        //            MonthYear = $"{GetMonthName(s.Month)} {s.Year}",
+        //            BasicSalary = s.BasicSalary,
+        //            GrossSalary = s.BasicSalary + s.HouseRentAllowance + s.MedicalAllowance + s.TransportAllowance + s.OtherAllowances + s.Overtime + s.Bonus,
+        //            TotalDeductions = s.TaxDeduction + s.ProvidentFund + s.LoanDeduction + s.OtherDeductions,
+        //            NetSalary = s.NetSalary,
+        //            Status = s.Status,
+        //            StatusName = s.Status.ToString()
+        //        })
+        //        .ToListAsync();
+        //}
 
-        public async Task<SalaryDto?> GetByIdAsync(int id)
-        {
-            return await _context.Salaries
-                .Include(s => s.Employee)
-                    .ThenInclude(e => e!.Designation)
-                .Where(s => s.Id == id)
-                .Select(s => new SalaryDto
-                {
-                    Id = s.Id,
-                    EmployeeId = s.EmployeeId,
-                    EmployeeName = s.Employee != null ? s.Employee.FirstName + " " + s.Employee.LastName : null,
-                    EmployeeCode = s.Employee != null ? s.Employee.EmployeeCode : null,
-                    DesignationName = s.Employee != null && s.Employee.Designation != null ? s.Employee.Designation.Name : null,
-                    Month = s.Month,
-                    Year = s.Year,
-                    BasicSalary = s.BasicSalary,
-                    HouseRentAllowance = s.HouseRentAllowance,
-                    MedicalAllowance = s.MedicalAllowance,
-                    TransportAllowance = s.TransportAllowance,
-                    OtherAllowances = s.OtherAllowances,
-                    TaxDeduction = s.TaxDeduction,
-                    ProvidentFund = s.ProvidentFund,
-                    LoanDeduction = s.LoanDeduction,
-                    OtherDeductions = s.OtherDeductions,
-                    Overtime = s.Overtime,
-                    Bonus = s.Bonus,
-                    TotalAllowances = s.HouseRentAllowance + s.MedicalAllowance + s.TransportAllowance + s.OtherAllowances,
-                    TotalDeductions = s.TaxDeduction + s.ProvidentFund + s.LoanDeduction + s.OtherDeductions,
-                    GrossSalary = s.BasicSalary + s.HouseRentAllowance + s.MedicalAllowance + s.TransportAllowance + s.OtherAllowances + s.Overtime + s.Bonus,
-                    NetSalary = s.NetSalary,
-                    Status = s.Status,
-                    PaymentDate = s.PaymentDate,
-                    PaymentReference = s.PaymentReference,
-                    Remarks = s.Remarks,
-                    WorkingDays = s.WorkingDays,
-                    PresentDays = s.PresentDays,
-                    AbsentDays = s.AbsentDays,
-                    LeaveDays = s.LeaveDays,
-                    CreatedAt = s.CreatedAt
-                })
-                .FirstOrDefaultAsync();
-        }
+        //public async Task<SalaryDto?> GetByIdAsync(int id)
+        //{
+        //    return await _context.Salaries
+        //        .Include(s => s.Employee)
+        //            .ThenInclude(e => e!.Designation)
+        //        .Where(s => s.Id == id)
+        //        .Select(s => new SalaryDto
+        //        {
+        //            Id = s.Id,
+        //            EmployeeId = s.EmployeeId,
+        //            EmployeeName = s.Employee != null ? s.Employee.FirstName + " " + s.Employee.LastName : null,
+        //            EmployeeCode = s.Employee != null ? s.Employee.EmployeeCode : null,
+        //            DesignationName = s.Employee != null && s.Employee.Designation != null ? s.Employee.Designation.Name : null,
+        //            Month = s.Month,
+        //            Year = s.Year,
+        //            BasicSalary = s.BasicSalary,
+        //            HouseRentAllowance = s.HouseRentAllowance,
+        //            MedicalAllowance = s.MedicalAllowance,
+        //            TransportAllowance = s.TransportAllowance,
+        //            OtherAllowances = s.OtherAllowances,
+        //            TaxDeduction = s.TaxDeduction,
+        //            ProvidentFund = s.ProvidentFund,
+        //            LoanDeduction = s.LoanDeduction,
+        //            OtherDeductions = s.OtherDeductions,
+        //            Overtime = s.Overtime,
+        //            Bonus = s.Bonus,
+        //            TotalAllowances = s.HouseRentAllowance + s.MedicalAllowance + s.TransportAllowance + s.OtherAllowances,
+        //            TotalDeductions = s.TaxDeduction + s.ProvidentFund + s.LoanDeduction + s.OtherDeductions,
+        //            GrossSalary = s.BasicSalary + s.HouseRentAllowance + s.MedicalAllowance + s.TransportAllowance + s.OtherAllowances + s.Overtime + s.Bonus,
+        //            NetSalary = s.NetSalary,
+        //            Status = s.Status,
+        //            PaymentDate = s.PaymentDate,
+        //            PaymentReference = s.PaymentReference,
+        //            Remarks = s.Remarks,
+        //            WorkingDays = s.WorkingDays,
+        //            PresentDays = s.PresentDays,
+        //            AbsentDays = s.AbsentDays,
+        //            LeaveDays = s.LeaveDays,
+        //            CreatedAt = s.CreatedAt
+        //        })
+        //        .FirstOrDefaultAsync();
+        //}
 
-        public async Task<IEnumerable<SalaryListDto>> GetByMonthYearAsync(int month, int year)
-        {
-            return await _context.Salaries
-                .Include(s => s.Employee)
-                    .ThenInclude(e => e!.Designation)
-                .Where(s => s.Month == month && s.Year == year)
-                .OrderBy(s => s.Employee!.FirstName)
-                .Select(s => new SalaryListDto
-                {
-                    Id = s.Id,
-                    EmployeeName = s.Employee != null ? s.Employee.FirstName + " " + s.Employee.LastName : null,
-                    EmployeeCode = s.Employee != null ? s.Employee.EmployeeCode : null,
-                    DesignationName = s.Employee != null && s.Employee.Designation != null ? s.Employee.Designation.Name : null,
-                    MonthYear = $"{GetMonthName(s.Month)} {s.Year}",
-                    BasicSalary = s.BasicSalary,
-                    GrossSalary = s.BasicSalary + s.HouseRentAllowance + s.MedicalAllowance + s.TransportAllowance + s.OtherAllowances + s.Overtime + s.Bonus,
-                    TotalDeductions = s.TaxDeduction + s.ProvidentFund + s.LoanDeduction + s.OtherDeductions,
-                    NetSalary = s.NetSalary,
-                    Status = s.Status,
-                    StatusName = s.Status.ToString()
-                })
-                .ToListAsync();
-        }
+        //public async Task<IEnumerable<SalaryListDto>> GetByMonthYearAsync(int month, int year)
+        //{
+        //    return await _context.Salaries
+        //        .Include(s => s.Employee)
+        //            .ThenInclude(e => e!.Designation)
+        //        .Where(s => s.Month == month && s.Year == year)
+        //        .OrderBy(s => s.Employee!.FirstName)
+        //        .Select(s => new SalaryListDto
+        //        {
+        //            Id = s.Id,
+        //            EmployeeName = s.Employee != null ? s.Employee.FirstName + " " + s.Employee.LastName : null,
+        //            EmployeeCode = s.Employee != null ? s.Employee.EmployeeCode : null,
+        //            DesignationName = s.Employee != null && s.Employee.Designation != null ? s.Employee.Designation.Name : null,
+        //            MonthYear = $"{GetMonthName(s.Month)} {s.Year}",
+        //            BasicSalary = s.BasicSalary,
+        //            GrossSalary = s.BasicSalary + s.HouseRentAllowance + s.MedicalAllowance + s.TransportAllowance + s.OtherAllowances + s.Overtime + s.Bonus,
+        //            TotalDeductions = s.TaxDeduction + s.ProvidentFund + s.LoanDeduction + s.OtherDeductions,
+        //            NetSalary = s.NetSalary,
+        //            Status = s.Status,
+        //            StatusName = s.Status.ToString()
+        //        })
+        //        .ToListAsync();
+        //}
 
-        public async Task<IEnumerable<SalaryListDto>> GetByEmployeeAsync(int employeeId)
-        {
-            return await _context.Salaries
-                .Include(s => s.Employee)
-                    .ThenInclude(e => e!.Designation)
-                .Where(s => s.EmployeeId == employeeId)
-                .OrderByDescending(s => s.Year)
-                .ThenByDescending(s => s.Month)
-                .Select(s => new SalaryListDto
-                {
-                    Id = s.Id,
-                    EmployeeName = s.Employee != null ? s.Employee.FirstName + " " + s.Employee.LastName : null,
-                    EmployeeCode = s.Employee != null ? s.Employee.EmployeeCode : null,
-                    DesignationName = s.Employee != null && s.Employee.Designation != null ? s.Employee.Designation.Name : null,
-                    MonthYear = $"{GetMonthName(s.Month)} {s.Year}",
-                    BasicSalary = s.BasicSalary,
-                    GrossSalary = s.BasicSalary + s.HouseRentAllowance + s.MedicalAllowance + s.TransportAllowance + s.OtherAllowances + s.Overtime + s.Bonus,
-                    TotalDeductions = s.TaxDeduction + s.ProvidentFund + s.LoanDeduction + s.OtherDeductions,
-                    NetSalary = s.NetSalary,
-                    Status = s.Status,
-                    StatusName = s.Status.ToString()
-                })
-                .ToListAsync();
-        }
+        //public async Task<IEnumerable<SalaryListDto>> GetByEmployeeAsync(int employeeId)
+        //{
+        //    return await _context.Salaries
+        //        .Include(s => s.Employee)
+        //            .ThenInclude(e => e!.Designation)
+        //        .Where(s => s.EmployeeId == employeeId)
+        //        .OrderByDescending(s => s.Year)
+        //        .ThenByDescending(s => s.Month)
+        //        .Select(s => new SalaryListDto
+        //        {
+        //            Id = s.Id,
+        //            EmployeeName = s.Employee != null ? s.Employee.FirstName + " " + s.Employee.LastName : null,
+        //            EmployeeCode = s.Employee != null ? s.Employee.EmployeeCode : null,
+        //            DesignationName = s.Employee != null && s.Employee.Designation != null ? s.Employee.Designation.Name : null,
+        //            MonthYear = $"{GetMonthName(s.Month)} {s.Year}",
+        //            BasicSalary = s.BasicSalary,
+        //            GrossSalary = s.BasicSalary + s.HouseRentAllowance + s.MedicalAllowance + s.TransportAllowance + s.OtherAllowances + s.Overtime + s.Bonus,
+        //            TotalDeductions = s.TaxDeduction + s.ProvidentFund + s.LoanDeduction + s.OtherDeductions,
+        //            NetSalary = s.NetSalary,
+        //            Status = s.Status,
+        //            StatusName = s.Status.ToString()
+        //        })
+        //        .ToListAsync();
+        //}
 
         public async Task<Salary> CreateAsync(CreateSalaryDto dto)
         {

@@ -19,8 +19,8 @@ namespace School.API.Data.DBModels.HR
 
         public int EmployeeId { get; set; }
 
-        [ForeignKey("EmployeeId")]
-        public virtual Employee? Employee { get; set; }
+        //[ForeignKey("EmployeeId")]
+        //public virtual Employee? Employee { get; set; }
 
         [Required]
         public int Month { get; set; }

@@ -75,6 +75,8 @@
     <Compile Remove="DTOs\Accounts\PaymentMethod*" />
     <Compile Remove="DTOs\Accounts\ChallanVoucher*" />
     <Compile Remove="DTOs\Accounts\FeeVoucher*" />
+    <Compile Remove="Data\DBModels\HR\Employee.cs" />
+    <Compile Remove="DTOs\EmployeeDto.cs" />
     <Compile Remove="Repositories\Interfaces\Accounts\IPaymentMethodRepository.cs" />
     <Compile Remove="Repositories\Interfaces\Accounts\IChallanVoucherRepository.cs" />
     <Compile Remove="Repositories\Interfaces\Accounts\IFeeVoucherRepository.cs" />
@@ -105,12 +107,7 @@
     <Folder Include="Controllers\Accounts\" />
     <Folder Include="Data\DBModels\Accounts\" />
     <Folder Include="Data\DBModels\HR\" />
-    <Folder Include="Data\DBModels\UserManagement\" />
-    <Folder Include="DTOs\AcademicSessionYear\" />
     <Folder Include="DTOs\Accounts\" />
-    <Folder Include="DTOs\Auth\" />
-    <Folder Include="DTOs\HR\" />
-    <Folder Include="DTOs\UserManagement\" />
     <Folder Include="Repositories\Implementations\Accounts\" />
     <Folder Include="Repositories\Implementations\HR\" />
     <Folder Include="Repositories\Implementations\UserManagement\" />

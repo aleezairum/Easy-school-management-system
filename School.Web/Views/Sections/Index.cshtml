@@ -353,8 +353,7 @@
 @section Scripts {
     <script>
 
-        //const API_BASE = 'http://localhost:5266/api';
-        let editingSectionId = 0;
+        
 
         ////const API_BASE = 'http://localhost:5266/api';
         let editingSectionId = 0;
@@ -370,7 +369,7 @@
         async function loadClasses() {
             try {
 
-                const response = await fetch(`${API_BASE}/class/dropdown`);
+                //const response = await fetch(`${API_BASE}/class/dropdown`);
 
                 const response = await fetch(`${API_BASE}/class`);
 
@@ -464,10 +463,7 @@
                         <td><strong>${section.vName}</strong></td>
                         <td><span class="badge bg-info">${section.className}</span></td>
 
-                    <tr data-id="${section.vid}" class="${editingSectionId === section.vid ? 'selected' : ''}">
-                        <td>${index + 1}</td>
-                        <td><span class="badge bg-primary">${section.className}</span></td>
-                        <td><strong>${section.vName}</strong></td>
+                   
 
                         <td class="text-center">
                             <span class="badge ${section.isActive ? 'bg-success' : 'bg-secondary'}">

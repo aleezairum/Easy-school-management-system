@@ -27,8 +27,8 @@ namespace School.API.Data.DBModels.Academic
 
         public int TeacherId { get; set; }
 
-        [ForeignKey("TeacherId")]
-        public virtual Employee? Teacher { get; set; }
+        //[ForeignKey("TeacherId")]
+        //public virtual Employee? Teacher { get; set; }
 
         public int SessionId { get; set; }
 

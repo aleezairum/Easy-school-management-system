@@ -2,6 +2,7 @@ namespace School.API.DTOs
 {
     public class EmployeeDto
     {
+        
         public int Id { get; set; }
         public string EmployeeCode { get; set; } = string.Empty;
         public string FirstName { get; set; } = string.Empty;

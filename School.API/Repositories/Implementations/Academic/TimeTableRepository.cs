@@ -15,116 +15,116 @@ namespace School.API.Repositories.Implementations.Academic
             _context = context;
         }
 
-        public async Task<IEnumerable<TimeTableListDto>> GetAllAsync()
-        {
-            return await _context.TimeTables
-                .Include(t => t.Class)
-                .Include(t => t.Section)
-                .Include(t => t.Subject)
-                .Include(t => t.Teacher)
-                .OrderBy(t => t.DayOfWeek)
-                .ThenBy(t => t.PeriodNumber)
-                .Select(t => new TimeTableListDto
-                {
-                    Id = t.Id,
-                    ClassName = t.Class != null ? t.Class.VName : null,
-                    SectionName = t.Section != null ? t.Section.VName : null,
-                    SubjectName = t.Subject != null ? t.Subject.VName : null,
-                    TeacherName = t.Teacher != null ? t.Teacher.FirstName + " " + t.Teacher.LastName : null,
-                    DayName = t.DayOfWeek.ToString(),
-                    PeriodNumber = t.PeriodNumber,
-                    StartTime = t.StartTime.ToString(@"hh\:mm"),
-                    EndTime = t.EndTime.ToString(@"hh\:mm"),
-                    RoomNumber = t.RoomNumber,
-                    IsActive = t.IsActive
-                })
-                .ToListAsync();
-        }
+        //public async Task<IEnumerable<TimeTableListDto>> GetAllAsync()
+        //{
+        //    return await _context.TimeTables
+        //        .Include(t => t.Class)
+        //        .Include(t => t.Section)
+        //        .Include(t => t.Subject)
+        //        .Include(t => t.Teacher)
+        //        .OrderBy(t => t.DayOfWeek)
+        //        .ThenBy(t => t.PeriodNumber)
+        //        .Select(t => new TimeTableListDto
+        //        {
+        //            Id = t.Id,
+        //            ClassName = t.Class != null ? t.Class.VName : null,
+        //            SectionName = t.Section != null ? t.Section.VName : null,
+        //            SubjectName = t.Subject != null ? t.Subject.VName : null,
+        //            TeacherName = t.Teacher != null ? t.Teacher.FirstName + " " + t.Teacher.LastName : null,
+        //            DayName = t.DayOfWeek.ToString(),
+        //            PeriodNumber = t.PeriodNumber,
+        //            StartTime = t.StartTime.ToString(@"hh\:mm"),
+        //            EndTime = t.EndTime.ToString(@"hh\:mm"),
+        //            RoomNumber = t.RoomNumber,
+        //            IsActive = t.IsActive
+        //        })
+        //        .ToListAsync();
+        //}
 
-        public async Task<TimeTableDto?> GetByIdAsync(int id)
-        {
-            return await _context.TimeTables
-                .Include(t => t.Class)
-                .Include(t => t.Section)
-                .Include(t => t.Subject)
-                .Include(t => t.Teacher)
-                .Include(t => t.Session)
-                .Where(t => t.Id == id)
-                .Select(t => new TimeTableDto
-                {
-                    Id = t.Id,
-                    ClassId = t.ClassId,
-                    ClassName = t.Class != null ? t.Class.VName : null,
-                    SectionId = t.SectionId,
-                    SectionName = t.Section != null ? t.Section.VName : null,
-                    SubjectId = t.SubjectId,
-                    SubjectName = t.Subject != null ? t.Subject.VName : null,
-                    TeacherId = t.TeacherId,
-                    TeacherName = t.Teacher != null ? t.Teacher.FirstName + " " + t.Teacher.LastName : null,
-                    SessionId = t.SessionId,
-                    SessionName = t.Session != null ? t.Session.VName : null,
-                    DayOfWeek = t.DayOfWeek,
-                    PeriodNumber = t.PeriodNumber,
-                    StartTime = t.StartTime,
-                    EndTime = t.EndTime,
-                    RoomNumber = t.RoomNumber,
-                    IsActive = t.IsActive,
-                    CreatedAt = t.CreatedAt,
-                    UpdatedAt = t.UpdatedAt
-                })
-                .FirstOrDefaultAsync();
-        }
+        //public async Task<TimeTableDto?> GetByIdAsync(int id)
+        //{
+        //    return await _context.TimeTables
+        //        .Include(t => t.Class)
+        //        .Include(t => t.Section)
+        //        .Include(t => t.Subject)
+        //        .Include(t => t.Teacher)
+        //        .Include(t => t.Session)
+        //        .Where(t => t.Id == id)
+        //        .Select(t => new TimeTableDto
+        //        {
+        //            Id = t.Id,
+        //            ClassId = t.ClassId,
+        //            ClassName = t.Class != null ? t.Class.VName : null,
+        //            SectionId = t.SectionId,
+        //            SectionName = t.Section != null ? t.Section.VName : null,
+        //            SubjectId = t.SubjectId,
+        //            SubjectName = t.Subject != null ? t.Subject.VName : null,
+        //            TeacherId = t.TeacherId,
+        //            TeacherName = t.Teacher != null ? t.Teacher.FirstName + " " + t.Teacher.LastName : null,
+        //            SessionId = t.SessionId,
+        //            SessionName = t.Session != null ? t.Session.VName : null,
+        //            DayOfWeek = t.DayOfWeek,
+        //            PeriodNumber = t.PeriodNumber,
+        //            StartTime = t.StartTime,
+        //            EndTime = t.EndTime,
+        //            RoomNumber = t.RoomNumber,
+        //            IsActive = t.IsActive,
+        //            CreatedAt = t.CreatedAt,
+        //            UpdatedAt = t.UpdatedAt
+        //        })
+        //        .FirstOrDefaultAsync();
+        //}
 
-        public async Task<IEnumerable<TimeTableListDto>> GetByClassSectionAsync(int classId, int sectionId, int sessionId)
-        {
-            return await _context.TimeTables
-                .Include(t => t.Subject)
-                .Include(t => t.Teacher)
-                .Where(t => t.ClassId == classId && t.SectionId == sectionId && t.SessionId == sessionId && t.IsActive)
-                .OrderBy(t => t.DayOfWeek)
-                .ThenBy(t => t.PeriodNumber)
-                .Select(t => new TimeTableListDto
-                {
-                    Id = t.Id,
-                    ClassName = t.Class != null ? t.Class.VName : null,
-                    SectionName = t.Section != null ? t.Section.VName : null,
-                    SubjectName = t.Subject != null ? t.Subject.VName : null,
-                    TeacherName = t.Teacher != null ? t.Teacher.FirstName + " " + t.Teacher.LastName : null,
-                    DayName = t.DayOfWeek.ToString(),
-                    PeriodNumber = t.PeriodNumber,
-                    StartTime = t.StartTime.ToString(@"hh\:mm"),
-                    EndTime = t.EndTime.ToString(@"hh\:mm"),
-                    RoomNumber = t.RoomNumber,
-                    IsActive = t.IsActive
-                })
-                .ToListAsync();
-        }
+        //public async Task<IEnumerable<TimeTableListDto>> GetByClassSectionAsync(int classId, int sectionId, int sessionId)
+        //{
+        //    return await _context.TimeTables
+        //        .Include(t => t.Subject)
+        //        .Include(t => t.Teacher)
+        //        .Where(t => t.ClassId == classId && t.SectionId == sectionId && t.SessionId == sessionId && t.IsActive)
+        //        .OrderBy(t => t.DayOfWeek)
+        //        .ThenBy(t => t.PeriodNumber)
+        //        .Select(t => new TimeTableListDto
+        //        {
+        //            Id = t.Id,
+        //            ClassName = t.Class != null ? t.Class.VName : null,
+        //            SectionName = t.Section != null ? t.Section.VName : null,
+        //            SubjectName = t.Subject != null ? t.Subject.VName : null,
+        //            TeacherName = t.Teacher != null ? t.Teacher.FirstName + " " + t.Teacher.LastName : null,
+        //            DayName = t.DayOfWeek.ToString(),
+        //            PeriodNumber = t.PeriodNumber,
+        //            StartTime = t.StartTime.ToString(@"hh\:mm"),
+        //            EndTime = t.EndTime.ToString(@"hh\:mm"),
+        //            RoomNumber = t.RoomNumber,
+        //            IsActive = t.IsActive
+        //        })
+        //        .ToListAsync();
+        //}
 
-        public async Task<IEnumerable<TimeTableListDto>> GetByTeacherAsync(int teacherId, int sessionId)
-        {
-            return await _context.TimeTables
-                .Include(t => t.Class)
-                .Include(t => t.Section)
-                .Include(t => t.Subject)
-                .Where(t => t.TeacherId == teacherId && t.SessionId == sessionId && t.IsActive)
-                .OrderBy(t => t.DayOfWeek)
-                .ThenBy(t => t.PeriodNumber)
-                .Select(t => new TimeTableListDto
-                {
-                    Id = t.Id,
-                    ClassName = t.Class != null ? t.Class.VName : null,
-                    SectionName = t.Section != null ? t.Section.VName : null,
-                    SubjectName = t.Subject != null ? t.Subject.VName : null,
-                    TeacherName = t.Teacher != null ? t.Teacher.FirstName + " " + t.Teacher.LastName : null,
-                    DayName = t.DayOfWeek.ToString(),
-                    PeriodNumber = t.PeriodNumber,
-                    StartTime = t.StartTime.ToString(@"hh\:mm"),
-                    EndTime = t.EndTime.ToString(@"hh\:mm"),
-                    RoomNumber = t.RoomNumber,
-                    IsActive = t.IsActive
-                })
-                .ToListAsync();
-        }
+        //public async Task<IEnumerable<TimeTableListDto>> GetByTeacherAsync(int teacherId, int sessionId)
+        //{
+        //    return await _context.TimeTables
+        //        .Include(t => t.Class)
+        //        .Include(t => t.Section)
+        //        .Include(t => t.Subject)
+        //        .Where(t => t.TeacherId == teacherId && t.SessionId == sessionId && t.IsActive)
+        //        .OrderBy(t => t.DayOfWeek)
+        //        .ThenBy(t => t.PeriodNumber)
+        //        .Select(t => new TimeTableListDto
+        //        {
+        //            Id = t.Id,
+        //            ClassName = t.Class != null ? t.Class.VName : null,
+        //            SectionName = t.Section != null ? t.Section.VName : null,
+        //            SubjectName = t.Subject != null ? t.Subject.VName : null,
+        //            TeacherName = t.Teacher != null ? t.Teacher.FirstName + " " + t.Teacher.LastName : null,
+        //            DayName = t.DayOfWeek.ToString(),
+        //            PeriodNumber = t.PeriodNumber,
+        //            StartTime = t.StartTime.ToString(@"hh\:mm"),
+        //            EndTime = t.EndTime.ToString(@"hh\:mm"),
+        //            RoomNumber = t.RoomNumber,
+        //            IsActive = t.IsActive
+        //        })
+        //        .ToListAsync();
+        //}
 
         public async Task<TimeTable> CreateAsync(CreateTimeTableDto dto)
         {

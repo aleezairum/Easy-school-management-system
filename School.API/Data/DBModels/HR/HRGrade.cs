@@ -35,6 +35,6 @@ namespace School.API.Data.DBModels.HR
         public DateTime? UpdatedAt { get; set; }
 
         // Navigation property
-        public virtual ICollection<Employee>? Employees { get; set; }
+        //public virtual ICollection<Employee>? Employees { get; set; }
     }
 }
