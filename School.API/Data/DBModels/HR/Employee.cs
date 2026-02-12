@@ -128,7 +128,7 @@ namespace School.API.Data.DBModels.HR
         public virtual HRGrade? HRGrade { get; set; }
 
         [ForeignKey("AcademicGradeId")]
-        public virtual AcademicGrade? AcademicGrade { get; set; }
+        //public virtual AcademicGrade? AcademicGrade { get; set; }
 
         // User navigation property for bidirectional relationship
         public virtual User? User { get; set; }

@@ -10,8 +10,6 @@
     <Compile Remove="Controllers\Accounts\**" />
     <Compile Remove="Controllers\HR\**" />
     <Compile Remove="Controllers\UserManagement\**" />
-    <Compile Remove="Data\DBModels\Accounts\**" />
-    <Compile Remove="Data\DBModels\UserManagement\**" />
     <Compile Remove="DTOs\AcademicSessionYear\**" />
     <Compile Remove="DTOs\Accounts\**" />
     <Compile Remove="DTOs\Auth\**" />
@@ -30,8 +28,6 @@
     <Content Remove="Controllers\Accounts\**" />
     <Content Remove="Controllers\HR\**" />
     <Content Remove="Controllers\UserManagement\**" />
-    <Content Remove="Data\DBModels\Accounts\**" />
-    <Content Remove="Data\DBModels\UserManagement\**" />
     <Content Remove="DTOs\AcademicSessionYear\**" />
     <Content Remove="DTOs\Accounts\**" />
     <Content Remove="DTOs\Auth\**" />
@@ -50,8 +46,6 @@
     <EmbeddedResource Remove="Controllers\Accounts\**" />
     <EmbeddedResource Remove="Controllers\HR\**" />
     <EmbeddedResource Remove="Controllers\UserManagement\**" />
-    <EmbeddedResource Remove="Data\DBModels\Accounts\**" />
-    <EmbeddedResource Remove="Data\DBModels\UserManagement\**" />
     <EmbeddedResource Remove="DTOs\AcademicSessionYear\**" />
     <EmbeddedResource Remove="DTOs\Accounts\**" />
     <EmbeddedResource Remove="DTOs\Auth\**" />
@@ -70,8 +64,6 @@
     <None Remove="Controllers\Accounts\**" />
     <None Remove="Controllers\HR\**" />
     <None Remove="Controllers\UserManagement\**" />
-    <None Remove="Data\DBModels\Accounts\**" />
-    <None Remove="Data\DBModels\UserManagement\**" />
     <None Remove="DTOs\AcademicSessionYear\**" />
     <None Remove="DTOs\Accounts\**" />
     <None Remove="DTOs\Auth\**" />
@@ -105,7 +97,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Data\DBModels\HR\" />
     <Folder Include="Repositories\Implementations\HR\" />
     <Folder Include="Repositories\Interfaces\HR\" />
     <Folder Include="Services\Implementations\HR\" />

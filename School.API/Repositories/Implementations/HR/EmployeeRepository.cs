@@ -45,7 +45,7 @@ namespace School.API.Repositories.Implementations.HR
             return await _context.Employees
                 .Include(e => e.Designation)
                 .Include(e => e.HRGrade)
-                .Include(e => e.AcademicGrade)
+                //.Include(e => e.AcademicGrade)
                 .Where(e => e.Id == id)
                 .Select(e => new EmployeeDto
                 {
@@ -76,7 +76,7 @@ namespace School.API.Repositories.Implementations.HR
                     HRGradeId = e.HRGradeId,
                     HRGradeName = e.HRGrade != null ? e.HRGrade.Name : null,
                     AcademicGradeId = e.AcademicGradeId,
-                    AcademicGradeName = e.AcademicGrade != null ? e.AcademicGrade.Name : null,
+                    //AcademicGradeName = e.AcademicGrade != null ? e.AcademicGrade.Name : null,
                     BasicSalary = e.BasicSalary,
                     Allowances = e.Allowances,
                     Deductions = e.Deductions,

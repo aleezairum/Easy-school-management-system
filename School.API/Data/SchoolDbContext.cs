@@ -35,7 +35,7 @@ namespace School.API.Data
         // HR entities
         public DbSet<Designation> Designations { get; set; }
         public DbSet<HRGrade> HRGrades { get; set; }
-        public DbSet<AcademicGrade> AcademicGrades { get; set; }
+        //public DbSet<AcademicGrade> AcademicGrades { get; set; }
         public DbSet<Employee> Employees { get; set; }
         public DbSet<Salary> Salaries { get; set; }
 
