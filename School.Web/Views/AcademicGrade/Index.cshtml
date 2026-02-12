@@ -474,17 +474,18 @@
         </div>
     </div>
 </div>
-<script src="~/js/common.js"></script>
+@* <script src="~/js/common.js"></script> *@
 
 @section Scripts {
     <script>
         let editingId = 0;
-
+        
         $(document).ready(function () {
             loadAcademicGrades();
         });
 
         async function loadAcademicGrades() {
+            debugger;
             showLoading();
             try {
                 const response = await fetch(`${API_BASE}/AcademicGrade`);

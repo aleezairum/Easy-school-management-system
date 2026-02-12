@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using School.API.Data.DBModels.Academic;
 using School.API.Data.DBModels.HR;
+using School.API.DTOs;
 using School.API.DTOs.Academic;
 using School.API.DTOs.Common;
 using School.API.Models;
@@ -25,6 +26,7 @@ namespace School.API.Data
         public DbSet<SMSSection> SMSSections { get; set; }
         public DbSet<SMSSubject> SMSSubjects { get; set; }
         public DbSet<AcademicSessionYear> AcademicSessionYears { get; set; }
+        public DbSet<AcademicGrades> AcademicGrades { get; set; }
         public DbSet<Admission> Admissions { get; set; }
         public DbSet<Student> Students { get; set; }
         public DbSet<TimeTable> TimeTables { get; set; }
@@ -35,7 +37,6 @@ namespace School.API.Data
         // HR entities
         public DbSet<Designation> Designations { get; set; }
         public DbSet<HRGrade> HRGrades { get; set; }
-        //public DbSet<AcademicGrade> AcademicGrades { get; set; }
         public DbSet<Employee> Employees { get; set; }
         public DbSet<Salary> Salaries { get; set; }
 
@@ -56,6 +57,7 @@ namespace School.API.Data
             modelBuilder.Entity<AcademicSessionYearSaveDto>().HasNoKey();
             modelBuilder.Entity<SMSClassSaveDto>().HasNoKey();
             modelBuilder.Entity<SMSSectionSaveDto>().HasNoKey();
+            modelBuilder.Entity<AcademicGradeSaveDto>().HasNoKey();
 
             // Menu configuration
             modelBuilder.Entity<Menu>(entity =>

@@ -18,10 +18,10 @@ namespace School.API.Repositories.Implementations.Academic
             _context = context;
         }
 
-        public async Task<List<AcademicGradeSaveDto>> GetAllAsync()
+        public async Task<List<AcademicGrades>> GetAllAsync()
         {
             var resultList = await _context
-                .Set<AcademicGradeSaveDto>()
+                .Set<AcademicGrades>()
                 .FromSqlRaw("EXEC SpGet_AcademicGrades @VID={0}", 0) // 0 to get all
                 .AsNoTracking()
                 .ToListAsync();
@@ -30,10 +30,10 @@ namespace School.API.Repositories.Implementations.Academic
         }
 
 
-        public async Task<AcademicGradeSaveDto?> GetByIdAsync(int vid)
+        public async Task<AcademicGrades?> GetByIdAsync(int vid)
         {
             var resultList = await _context
-                .Set<AcademicGradeSaveDto>()
+                .Set<AcademicGrades>()
                 .FromSqlRaw("EXEC SpGet_AcademicGrades @VID={0}", vid)
                 .AsNoTracking()
                 .ToListAsync();
@@ -59,9 +59,9 @@ namespace School.API.Repositories.Implementations.Academic
             var resultList = await _context
                 .Set<ResponseDto>()
                 .FromSqlRaw(
-                    "EXEC SpSave_AcademicGrades @GradeID={0}, @GradeName={1}, @MinPercentage={2}, @MaxPercentage={3}, @GradePoint={4}, @Remarks={5}, @IsActive={6}, @UserID={7}, @UserIP={8}",
-                    dto.GradeID,
-                    dto.GradeName,
+                    "EXEC SpSave_AcademicGrades @VID={0}, @VName={1}, @MinPercentage={2}, @MaxPercentage={3}, @GradePoint={4}, @Remarks={5}, @IsActive={6}, @UserID={7}, @UserIP={8}",
+                    dto.VID,
+                    dto.VName,
                     dto.MinPercentage,
                     dto.MaxPercentage,
                     dto.GradePoint,
@@ -77,14 +77,6 @@ namespace School.API.Repositories.Implementations.Academic
             return result;
         }
 
-        Task<List<AcademicGrades>> IAcademicGradeRepository.GetAllAsync()
-        {
-            throw new NotImplementedException();
-        }
-
-        Task<AcademicGrades?> IAcademicGradeRepository.GetByIdAsync(int id)
-        {
-            throw new NotImplementedException();
-        }
+       
     }
 }

@@ -31,14 +31,6 @@ namespace School.API.Services.Implementations.Academic
         public Task<ResponseDto?> DeleteByIdAsync(int id)
            => _repo.DeleteByIdAsync(id);
 
-        Task<List<AcademicGrades>> IAcademicGradeService.GetAllAsync()
-        {
-            throw new NotImplementedException();
-        }
-
-        Task<AcademicGrades?> IAcademicGradeService.GetByIdAsync(int id)
-        {
-            throw new NotImplementedException();
-        }
+        
     }
 }

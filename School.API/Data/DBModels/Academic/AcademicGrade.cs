@@ -4,9 +4,10 @@ namespace School.API.Data.DBModels.Academic
 {
     public class AcademicGrades
     {
-        public int GradeID { get; set; }
+        [Key]
+        public int VID { get; set; }
 
-        public string GradeName { get; set; }
+        public string VName { get; set; }
 
         public decimal MinPercentage { get; set; }
 
@@ -19,15 +20,10 @@ namespace School.API.Data.DBModels.Academic
         public bool IsActive { get; set; }
 
         public int? InsertedBy { get; set; }
-
         public DateTime? InsertedDate { get; set; }
-
         public string InsertedIp { get; set; }
-
         public int? UpdatedBy { get; set; }
-
         public DateTime? UpdatedDate { get; set; }
-
         public string UpdatedIp { get; set; }
 
     }

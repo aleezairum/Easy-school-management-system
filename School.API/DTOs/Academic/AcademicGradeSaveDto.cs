@@ -2,9 +2,9 @@ namespace School.API.DTOs
 {
     public class AcademicGradeSaveDto
     {
-        public int GradeID { get; set; }
+        public int VID { get; set; }
 
-        public string GradeName { get; set; }
+        public string VName { get; set; }
 
         public decimal MinPercentage { get; set; }
 
