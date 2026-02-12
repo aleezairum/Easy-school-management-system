@@ -39,8 +39,11 @@ namespace School.API.DTOs
         public string? Gender { get; set; }
         public string? Religion { get; set; }
 
+
+
         // Student Photo
         public string? StudentPhoto { get; set; }
+
 
         // Address
         public string? PresentAddress { get; set; }
@@ -127,8 +130,11 @@ namespace School.API.DTOs
         public string? Gender { get; set; }
         public string? Religion { get; set; }
 
+
+
         // Student Photo
         public string? StudentPhoto { get; set; }
+
 
         // Address
         public string? PresentAddress { get; set; }
@@ -200,8 +206,11 @@ namespace School.API.DTOs
         public string? Gender { get; set; }
         public string? Religion { get; set; }
 
+
+
         // Student Photo
         public string? StudentPhoto { get; set; }
+
 
         // Address
         public string? PresentAddress { get; set; }

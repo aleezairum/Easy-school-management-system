@@ -1,6 +1,6 @@
--- =============================================
+-- ===
 -- School Management System - Database Tables
--- =============================================
+-- ===
 
 -- Create Database (if not exists)
 IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'SchoolManagementDB')
@@ -12,9 +12,9 @@ GO
 USE SchoolManagementDB;
 GO
 
--- =============================================
+-- ===
 -- Table: Menus
--- =============================================
+-- ===
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Menus]') AND type in (N'U'))
 BEGIN
     CREATE TABLE [dbo].[Menus] (
@@ -36,9 +36,9 @@ BEGIN
 END
 GO
 
--- =============================================
+-- ===
 -- Table: Roles
--- =============================================
+-- ===
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Roles]') AND type in (N'U'))
 BEGIN
     CREATE TABLE [dbo].[Roles] (
@@ -53,9 +53,9 @@ BEGIN
 END
 GO
 
--- =============================================
+-- ===
 -- Table: RolePermissions
--- =============================================
+-- ===
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[RolePermissions]') AND type in (N'U'))
 BEGIN
     CREATE TABLE [dbo].[RolePermissions] (
@@ -78,9 +78,9 @@ BEGIN
 END
 GO
 
--- =============================================
+-- ===
 -- Table: Employees
--- =============================================
+-- ===
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Employees]') AND type in (N'U'))
 BEGIN
     CREATE TABLE [dbo].[Employees] (
@@ -100,9 +100,9 @@ BEGIN
 END
 GO
 
--- =============================================
+-- ===
 -- Table: Users
--- =============================================
+-- ===
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Users]') AND type in (N'U'))
 BEGIN
     CREATE TABLE [dbo].[Users] (
@@ -121,9 +121,9 @@ BEGIN
 END
 GO
 
--- =============================================
+-- ===
 -- Table: UserRoles
--- =============================================
+-- ===
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[UserRoles]') AND type in (N'U'))
 BEGIN
     CREATE TABLE [dbo].[UserRoles] (
@@ -138,9 +138,9 @@ BEGIN
 END
 GO
 
--- =============================================
+-- ===
 -- Table: Sessions
--- =============================================
+-- ===
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Sessions]') AND type in (N'U'))
 BEGIN
     CREATE TABLE [dbo].[Sessions] (
@@ -157,9 +157,9 @@ BEGIN
 END
 GO
 
--- =============================================
+-- ===
 -- Table: SMSClass
--- =============================================
+-- ===
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SMSClass]') AND type in (N'U'))
 BEGIN
     CREATE TABLE [dbo].[SMSClass] (
@@ -177,9 +177,9 @@ BEGIN
 END
 GO
 
--- =============================================
+-- ===
 -- Table: SMSSection
--- =============================================
+-- ===
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SMSSection]') AND type in (N'U'))
 BEGIN
     CREATE TABLE [dbo].[SMSSection] (
@@ -201,9 +201,9 @@ BEGIN
 END
 GO
 
--- =============================================
+-- ===
 -- Table: SMSSubject
--- =============================================
+-- ===
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SMSSubject]') AND type in (N'U'))
 BEGIN
     CREATE TABLE [dbo].[SMSSubject] (
@@ -225,9 +225,9 @@ BEGIN
 END
 GO
 
--- =============================================
+-- ===
 -- Table: Institutes
--- =============================================
+-- ===
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Institutes]') AND type in (N'U'))
 BEGIN
     CREATE TABLE [dbo].[Institutes] (
@@ -247,9 +247,9 @@ BEGIN
 END
 GO
 
--- =============================================
+-- ===
 -- Table: Admissions
--- =============================================
+-- ===
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Admissions]') AND type in (N'U'))
 BEGIN
     CREATE TABLE [dbo].[Admissions] (
@@ -333,9 +333,9 @@ BEGIN
 END
 GO
 
--- =============================================
+-- ===
 -- Seed Data: Menus
--- =============================================
+-- ===
 SET IDENTITY_INSERT [dbo].[Menus] ON;
 
 -- Level 0 - Main Categories
@@ -429,9 +429,9 @@ SELECT 36, '----> Backup & Restore', '/Settings/Backup', 'bi-cloud-arrow-up-fill
 SET IDENTITY_INSERT [dbo].[Menus] OFF;
 GO
 
--- =============================================
+-- ===
 -- Seed Data: Roles
--- =============================================
+-- ===
 SET IDENTITY_INSERT [dbo].[Roles] ON;
 
 INSERT INTO [dbo].[Roles] ([Id], [RoleName], [Description], [IsActive])
@@ -450,9 +450,9 @@ SELECT 6, 'Receptionist', 'Limited access to student and visitor management', 1 
 SET IDENTITY_INSERT [dbo].[Roles] OFF;
 GO
 
--- =============================================
+-- ===
 -- Seed Data: Employees
--- =============================================
+-- ===
 SET IDENTITY_INSERT [dbo].[Employees] ON;
 
 INSERT INTO [dbo].[Employees] ([Id], [EmployeeCode], [FirstName], [LastName], [Email], [Phone], [Department], [Designation], [IsActive])
@@ -479,9 +479,9 @@ SELECT 10, 'EMP010', 'Jennifer', 'Thomas', 'jennifer.t@school.com', '123-456-789
 SET IDENTITY_INSERT [dbo].[Employees] OFF;
 GO
 
--- =============================================
+-- ===
 -- Seed Data: Sessions
--- =============================================
+-- ===
 SET IDENTITY_INSERT [dbo].[Sessions] ON;
 
 INSERT INTO [dbo].[Sessions] ([Id], [SessionName], [StartDate], [EndDate], [IsCurrent], [IsActive])
@@ -494,9 +494,9 @@ SELECT 3, '2025-2026', '2025-04-01', '2026-03-31', 0, 1 WHERE NOT EXISTS (SELECT
 SET IDENTITY_INSERT [dbo].[Sessions] OFF;
 GO
 
--- =============================================
+-- ===
 -- Seed Data: Default Admin User
--- =============================================
+-- ===
 -- Password: admin123 (SHA256 hash)
 INSERT INTO [dbo].[Users] ([EmployeeId], [UserFullName], [UserLogin], [PasswordHash], [IsActive])
 SELECT 1, 'Admin User', 'admin@school.com', 'jZae727K08KaOmKSgOaGzww/XVqGr/PKEgIMkjrcbJI=', 1

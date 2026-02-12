@@ -240,6 +240,12 @@
 
     <!-- Classes Card -->
     <div class="card">
+
+        <div class="card-header">
+            <h5><i class="bi bi-door-open-fill me-2"></i>Class Management</h5>
+        </div>
+
+
         <div class="card-body position-relative">
             <div id="loadingOverlay" class="loading-overlay" style="display: none;">
                 <div class="spinner-border text-success" role="status">
@@ -307,6 +313,10 @@
 
 @section Scripts {
     <script>
+
+        //const API_BASE = 'http://localhost:5266/api';
+
+
         let editingClassId = 0;
 
         $(document).ready(function () {
@@ -344,7 +354,11 @@
 
             classes.forEach((cls, index) => {
                 const row = `
+
+                    <tr data-id="${cls.viD}" class="${editingClassId === cls.viD ? 'selected' : ''}">
+
                     <tr data-id="${cls.vid}" class="${editingClassId === cls.vid ? 'selected' : ''}">
+
                         <td>${index + 1}</td>
                         <td><strong>${cls.vName}</strong></td>
                         <td class="text-center">
@@ -353,10 +367,17 @@
                             </span>
                         </td>
                         <td class="text-center">
+
+                            <button type="button" class="btn btn-sm btn-info me-1" onclick="editClass(${cls.viD})" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-danger" onclick="deleteClass(${cls.viD}, '${cls.vName}')" title="Delete">
+
                             <button type="button" class="btn btn-sm btn-info me-1" onclick="editClass(${cls.vid})" title="Edit">
                                 <i class="bi bi-pencil"></i>
                             </button>
                             <button type="button" class="btn btn-sm btn-danger" onclick="deleteClass(${cls.vid}, '${cls.vName}')" title="Delete">
+
                                 <i class="bi bi-trash"></i>
                             </button>
                         </td>
@@ -428,7 +449,11 @@
 
         // Populate form with class data
         function populateForm(data) {
+
+            $('#classId').val(data.viD);
+
             $('#classId').val(data.vid);
+
             $('#className').val(data.vName);
             $('#isActive').prop('checked', data.isActive);
         }
@@ -465,12 +490,28 @@
             showLoading();
             try {
                 let response;
+
+                if (classId === 0) {
+                    // Create new class
+
+
                     response = await fetch(`${API_BASE}/class`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(data)
                     });
+
+                } else {
+                    // Update existing class
+                    response = await fetch(`${API_BASE}/class/${classId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                }
+
                 
+
 
                 if (response.ok) {
                     showAlert(classId === 0 ? 'Class created successfully!' : 'Class updated successfully!', 'success');
@@ -498,6 +539,20 @@
         }
 
         function showAlert(message, type) {
+
+            const alert = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+            $('#alertContainer').html(alert);
+
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                $('.alert').alert('close');
+            }, 5000);
+
             if (type === 'success') {
                 toastSuccess(message);
             } else if (type === 'danger' || type === 'error') {
@@ -507,6 +562,7 @@
             } else {
                 toastInfo(message);
             }
+
         }
     </script>
 }

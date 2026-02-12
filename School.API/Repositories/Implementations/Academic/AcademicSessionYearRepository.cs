@@ -18,10 +18,13 @@ namespace School.API.Repositories.Implementations.Academic
             _context = context;
         }
 
+
+        
         public async Task<List<AcademicSessionYear>> GetAllAsync()
         {
             var resultList = await _context
                 .Set<AcademicSessionYear>()
+
                 .FromSqlRaw("EXEC SpGet_AcademicSessionYear @VID={0}", 0) // 0 to get all
                 .AsNoTracking()
                 .ToListAsync();
@@ -30,10 +33,13 @@ namespace School.API.Repositories.Implementations.Academic
         }
 
 
+
+       
         public async Task<AcademicSessionYear?> GetByIdAsync(int vid)
         {
             var resultList = await _context
                 .Set<AcademicSessionYear>()
+
                 .FromSqlRaw("EXEC SpGet_AcademicSessionYear @VID={0}", vid)
                 .AsNoTracking()
                 .ToListAsync();

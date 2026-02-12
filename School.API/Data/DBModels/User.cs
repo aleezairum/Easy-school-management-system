@@ -1,6 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+
+
 using School.API.Data.DBModels.HR;
+
 
 namespace School.API.Models
 {

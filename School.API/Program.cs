@@ -9,6 +9,8 @@ using School.API.Services.Interfaces.Academic;
 using School.API.Services.Implementations.Academic;
 using School.API.Repositories.Implementations.Academic;
 using School.API.Repositories.Interfaces.Academic;
+
+
 using School.API.Services.Interfaces.Student;
 using School.API.Services.Implementations.Student;
 using School.API.Repositories.Interfaces.Student;
@@ -17,6 +19,11 @@ using School.API.Services.Interfaces.HR;
 using School.API.Services.Implementations.HR;
 using School.API.Repositories.Interfaces.HR;
 using School.API.Repositories.Implementations.HR;
+using School.API.Services.Interfaces.Accounts;
+using School.API.Services.Implementations.Accounts;
+using School.API.Repositories.Interfaces.Accounts;
+using School.API.Repositories.Implementations.Accounts;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Database
@@ -45,6 +52,8 @@ builder.Services.AddAuthorization();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAcademicSessionYearRepository, AcademicSessionYearRepository>();
 builder.Services.AddScoped<IAcademicSessionYearService, AcademicSessionYearService>();
+
+
 builder.Services.AddScoped<ISMSSectionRepository, SMSSectionRepository>();
 builder.Services.AddScoped<ISMSSectionService, SMSSectionService>();
 builder.Services.AddScoped<ISMSClassRepository, SMSClassRepository>();
@@ -73,12 +82,17 @@ builder.Services.AddScoped<IExamRepository, ExamRepository>();
 builder.Services.AddScoped<IExamService, ExamService>();
 
 // Accounts Services
+builder.Services.AddScoped<IFeeTypeRepository, FeeTypeRepository>();
+builder.Services.AddScoped<IFeeTypeService, FeeTypeService>();
+builder.Services.AddScoped<IFeeStructureRepository, FeeStructureRepository>();
+builder.Services.AddScoped<IFeeStructureService, FeeStructureService>();
 //builder.Services.AddScoped<IPaymentMethodRepository, PaymentMethodRepository>();
 //builder.Services.AddScoped<IPaymentMethodService, PaymentMethodService>();
 //builder.Services.AddScoped<IChallanVoucherRepository, ChallanVoucherRepository>();
 //builder.Services.AddScoped<IChallanVoucherService, ChallanVoucherService>();
 //builder.Services.AddScoped<IFeeVoucherRepository, FeeVoucherRepository>();
 //builder.Services.AddScoped<IFeeVoucherService, FeeVoucherService>();
+
 
 // Controllers
 builder.Services.AddControllers()
@@ -91,22 +105,34 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll",
-        p => p.AllowAnyOrigin()
-              .AllowAnyHeader()
 
-              .AllowAnyMethod());
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
 });
+
+
+
 
 var app = builder.Build();
 
 // Middleware
 //app.UseHttpsRedirection();
+
+
 //app.UsePathBase("/EasySchool"); 
+
 app.UseRouting();
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapControllers();
+
 app.MapControllers(); 
+
 app.Run();
 

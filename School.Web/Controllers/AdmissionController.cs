@@ -5,12 +5,15 @@ namespace School.Web.Controllers
 {
     public class AdmissionController : Controller
     {
+
+
         private readonly IWebHostEnvironment _webHostEnvironment;
 
         public AdmissionController(IWebHostEnvironment webHostEnvironment)
         {
             _webHostEnvironment = webHostEnvironment;
         }
+
 
         [Route("admission/form")]
         public IActionResult Form()
@@ -27,6 +30,8 @@ namespace School.Web.Controllers
             var model = new AdmissionFormViewModel();
             return View("FormPrint", model);
         }
+
+
 
         [HttpPost]
         [Route("admission/save")]
@@ -90,5 +95,6 @@ namespace School.Web.Controllers
                 return View("Form", model);
             }
         }
+
     }
 }

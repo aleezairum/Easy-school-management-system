@@ -21,10 +21,14 @@ namespace School.API.Services.Implementations.Academic
             string userIp)
             => _repo.SaveAsync(dto, userId, userIp);
 
+
+       
+
         public Task<List<AcademicSessionYear>> GetAllAsync()
             => _repo.GetAllAsync();
 
         public Task<AcademicSessionYear?> GetByIdAsync(int id)
+
             => _repo.GetByIdAsync(id);
 
         public Task<ResponseDto?> DeleteByIdAsync(int id)

@@ -210,23 +210,23 @@ namespace School.API.Controllers
         }
 
         // GET: api/UsersApi/employees
-        [HttpGet("employees")]
-        public async Task<ActionResult<IEnumerable<EmployeeDropdownDto>>> GetEmployeesForDropdown()
-        {
-            var employees = await _context.Employees
-                .Where(e => e.IsActive)
-                .OrderBy(e => e.FirstName)
-                .ThenBy(e => e.LastName)
-                .Select(e => new EmployeeDropdownDto
-                {
-                    Id = e.Id,
-                    FullName = e.FirstName + " " + (e.LastName ?? ""),
-                    EmployeeCode = e.EmployeeCode
-                })
-                .ToListAsync();
+        //[HttpGet("employees")]
+        //public async Task<ActionResult<IEnumerable<EmployeeDropdownDto>>> GetEmployeesForDropdown()
+        //{
+        //    var employees = await _context.Employees
+        //        .Where(e => e.IsActive)
+        //        .OrderBy(e => e.FirstName)
+        //        .ThenBy(e => e.LastName)
+        //        .Select(e => new EmployeeDropdownDto
+        //        {
+        //            Id = e.Id,
+        //            FullName = e.FirstName + " " + (e.LastName ?? ""),
+        //            EmployeeCode = e.EmployeeCode
+        //        })
+        //        .ToListAsync();
 
-            return Ok(employees);
-        }
+        //    return Ok(employees);
+        //}
 
         // GET: api/UsersApi/roles
         [HttpGet("roles")]

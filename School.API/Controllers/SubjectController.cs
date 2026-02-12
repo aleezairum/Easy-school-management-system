@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using School.API.Data;
 using School.API.Data.DBModels;
+using School.API.Data.DBModels.Academic;
 using School.API.DTOs;
 
 namespace School.API.Controllers
@@ -68,6 +69,60 @@ namespace School.API.Controllers
         }
 
         // POST: api/subject
+
+        [HttpPost]
+        public async Task<ActionResult<SubjectDto>> CreateSubject(CreateSubjectDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.VName))
+            {
+                return BadRequest(new { message = "Subject name is required" });
+            }
+
+            if (dto.ClassID <= 0)
+            {
+                return BadRequest(new { message = "Please select a class" });
+            }
+
+            // Validate class exists
+            var classExists = await _context.SMSClasses.AnyAsync(c => c.VID == dto.ClassID);
+            if (!classExists)
+            {
+                return BadRequest(new { message = "Invalid class selected" });
+            }
+
+            // Check for duplicate within the same class
+            var existing = await _context.SMSSubjects
+                .FirstOrDefaultAsync(s => s.ClassID == dto.ClassID && s.VName.ToLower() == dto.VName.Trim().ToLower());
+
+            if (existing != null)
+            {
+                return BadRequest(new { message = "A subject with this name already exists in the selected class" });
+            }
+
+            var subject = new SMSSubject
+            {
+                VName = dto.VName.Trim(),
+                ClassID = dto.ClassID,
+                IsActive = dto.IsActive,
+                InsertedDate = DateTime.UtcNow
+            };
+
+            _context.SMSSubjects.Add(subject);
+            await _context.SaveChangesAsync();
+
+            // Reload with class info
+            await _context.Entry(subject).Reference(s => s.Class).LoadAsync();
+
+            return CreatedAtAction(nameof(GetSubject), new { id = subject.VID }, new SubjectDto
+            {
+                VID = subject.VID,
+                VName = subject.VName,
+                ClassID = subject.ClassID,
+                ClassName = subject.Class!.VName,
+                IsActive = subject.IsActive
+            });
+        }
+
         //[HttpPost]
         //public async Task<ActionResult<SubjectDto>> CreateSubject(CreateSubjectDto dto)
         //{
@@ -120,6 +175,7 @@ namespace School.API.Controllers
         //        IsActive = subject.IsActive
         //    });
         //}
+
 
         // PUT: api/subject/5
         [HttpPut("{id}")]

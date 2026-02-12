@@ -372,6 +372,10 @@
             border-color: #008649;
             box-shadow: 0 0 0 4px rgba(0, 134, 73, 0.1);
             outline: none;
+
+
+
+
         }
 
         .search-box i {
@@ -564,7 +568,7 @@
 
 @section Scripts {
     <script>
-        const API_BASE = 'http://localhost:5266/api/pages';
+        const API_BASE1 = `${API_BASE}/pages`;
         let selectedPageId = null;
 
         // Load page tree on page load
@@ -575,7 +579,7 @@
 
         // Load Page Tree
         function loadPageTree() {
-            fetch(`${API_BASE}/tree`)
+            fetch(`${API_BASE1}/tree`)
                 .then(response => response.json())
                 .then(data => {
                     const container = document.getElementById('pageTree');
@@ -641,7 +645,7 @@
 
         // Load Page Details
         function loadPageDetails(id) {
-            fetch(`${API_BASE}/${id}`)
+            fetch(`${API_BASE1}/${id}`)
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('pageId').value = data.id;
@@ -666,7 +670,7 @@
 
         // Load Next SrNo
         function loadNextSrNo() {
-            fetch(`${API_BASE}/next-srno`)
+            fetch(`${API_BASE1}/next-srno`)
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('srNo').value = data.srNo;
@@ -716,7 +720,7 @@
                 return;
             }
 
-            const url = pageId > 0 ? `${API_BASE}/${pageId}` : API_BASE;
+            const url = pageId > 0 ? `${API_BASE1}/${pageId}` : API_BASE1;
             const method = pageId > 0 ? 'PUT' : 'POST';
 
             fetch(url, {
@@ -753,7 +757,7 @@
                 displayOrder: 0
             };
 
-            fetch(`${API_BASE}/sibling/${selectedPageId}`, {
+            fetch(`${API_BASE1}/sibling/${selectedPageId}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
@@ -787,7 +791,7 @@
                 displayOrder: 0
             };
 
-            fetch(`${API_BASE}/child/${selectedPageId}`, {
+            fetch(`${API_BASE1}/child/${selectedPageId}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
@@ -816,7 +820,7 @@
                 return;
             }
 
-            fetch(`${API_BASE}/${pageId}`, { method: 'DELETE' })
+            fetch(`${API_BASE1}/${pageId}`, { method: 'DELETE' })
             .then(response => response.json())
             .then(result => {
                 if (result.message.includes('Cannot')) {
@@ -852,12 +856,28 @@
 
         // Show Success Message
         function showSuccess(message) {
+
+            const alert = document.getElementById('successAlert');
+            document.getElementById('successMessage').textContent = message;
+            alert.style.display = 'block';
+            document.getElementById('errorAlert').style.display = 'none';
+            setTimeout(() => alert.style.display = 'none', 3000);
+
             toastSuccess(message);
+
         }
 
         // Show Error Message
         function showError(message) {
+
+            const alert = document.getElementById('errorAlert');
+            document.getElementById('errorMessage').textContent = message;
+            alert.style.display = 'block';
+            document.getElementById('successAlert').style.display = 'none';
+            setTimeout(() => alert.style.display = 'none', 5000);
+
             toastError(message);
+
         }
     </script>
 }

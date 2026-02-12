@@ -1,20 +1,30 @@
+
+
 using Microsoft.AspNetCore.Http;
+
 
 namespace School.Web.Models
 {
     public class AdmissionFormViewModel
     {
+
+
         // Form Type: "Admission" or "Student"
         public string FormType { get; set; } = "Admission";
+
 
         // Row 1
         public string? DateOfAdmission { get; set; }
         public string? AdmissionNo { get; set; }
 
-        // Row 2 - Admission uses ClassSought, Student uses CurrentClass
+
+        // Row 2
         public string? ClassSought { get; set; }
-        public string? CurrentClass { get; set; }
+
+        // Row 2 - Admission uses ClassSought, Student uses CurrentClass
+       public string? CurrentClass { get; set; }
         public string? Section { get; set; }
+
 
         // Student Name
         public string? NameOfStudent { get; set; }
@@ -46,9 +56,12 @@ namespace School.Web.Models
         public string? Gender { get; set; }
         public string? Religion { get; set; }
 
+
+
         // Student Photo
         public string? StudentPhoto { get; set; }
         public IFormFile? PhotoFile { get; set; }
+
 
         // Address
         public string? PresentAddress { get; set; }
@@ -80,6 +93,8 @@ namespace School.Web.Models
         public string? TestGrade { get; set; }
         public string? Remarks { get; set; }
 
+
+
         // Student-specific fields
         public string? BloodGroup { get; set; }
         public string? Nationality { get; set; }
@@ -87,5 +102,6 @@ namespace School.Web.Models
         public string? MonthlyFee { get; set; }
         public string? FeeCategory { get; set; }
         public string? Status { get; set; } = "Pending"; // Admission: Pending/Approved/Rejected, Student: Active/Inactive/Left
+
     }
 }

@@ -279,6 +279,9 @@
 
     <!-- Sessions Card -->
     <div class="card">
+        <div class="card-header">
+            <h5><i class="bi bi-calendar-range me-2"></i>Academic Sessions</h5>
+        </div>
         <div class="card-body position-relative">
             <div id="loadingOverlay" class="loading-overlay" style="display: none;">
                 <div class="spinner-border text-success" role="status">
@@ -295,43 +298,70 @@
                     <input type="hidden" id="sessionId" name="Id" value="0" />
 
                     <div class="row g-3 align-items-end">
+
                         <div class="col-md-2">
-                            <label for="sessionName" class="form-label">Session Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="sessionName" name="SessionName"
-                                   placeholder="e.g., 2024-2025" required />
+                            <label for="sessionName" class="form-label">
+                                Session Name <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="sessionName"
+                                   name="SessionName" placeholder="e.g., 2024-2025" required />
                         </div>
+
                         <div class="col-md-2">
-                            <label for="startDate" class="form-label">Start Date <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control" id="startDate" name="StartDate" required />
+                            <label for="startDate" class="form-label">
+                                Start Date <span class="text-danger">*</span>
+                            </label>
+                            <input type="date" class="form-control" id="startDate"
+                                   name="StartDate" required />
                         </div>
+
                         <div class="col-md-2">
-                            <label for="endDate" class="form-label">End Date <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control" id="endDate" name="EndDate" required />
+                            <label for="endDate" class="form-label">
+                                End Date <span class="text-danger">*</span>
+                            </label>
+                            <input type="date" class="form-control" id="endDate"
+                                   name="EndDate" required />
                         </div>
+
+                        <!-- ✅ Checkbox Column -->
                         <div class="col-md-3">
                             <div class="d-flex gap-4">
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="isCurrent" name="IsCurrent" />
-                                    <label class="form-check-label" for="isCurrent">Current</label>
+                                    <input class="form-check-input" type="checkbox"
+                                           id="isCurrent" name="IsCurrent" />
+                                    <label class="form-check-label" for="isCurrent">
+                                        Current
+                                    </label>
                                 </div>
+
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="isActive" name="IsActive" checked />
-                                    <label class="form-check-label" for="isActive">Active</label>
+                                    <input class="form-check-input" type="checkbox"
+                                           id="isActive" name="IsActive" checked />
+                                    <label class="form-check-label" for="isActive">
+                                        Active
+                                    </label>
                                 </div>
                             </div>
                         </div>
+
+                        <!-- ✅ Button Column -->
                         <div class="col-md-3">
                             <div class="d-flex gap-2">
-                                <button type="button" class="btn btn-primary" onclick="saveSession()">
+                                <button type="button" class="btn btn-primary"
+                                        onclick="saveSession()">
                                     <i class="bi bi-check-lg me-1"></i> Save
                                 </button>
-                                <button type="button" class="btn btn-secondary" onclick="resetForm()">
+
+                                <button type="button" class="btn btn-secondary"
+                                        onclick="resetForm()">
                                     <i class="bi bi-x-lg me-1"></i> Clear
                                 </button>
                             </div>
                         </div>
+
                     </div>
                 </form>
+
             </div>
 
             <!-- Grid Section -->
@@ -364,7 +394,6 @@
 
 @section Scripts {
     <script>
-        ////const API_BASE = 'http://localhost:5266/api';
         let editingSessionId = 0;
 
         $(document).ready(function () {
@@ -661,15 +690,6 @@
         }
 
         function showAlert(message, type) {
-            if (type === 'success') {
-                toastSuccess(message);
-            } else if (type === 'danger' || type === 'error') {
-                toastError(message);
-            } else if (type === 'warning') {
-                toastWarning(message);
-            } else {
-                toastInfo(message);
-            }
         }
     </script>
 }
