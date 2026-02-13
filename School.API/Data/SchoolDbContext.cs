@@ -1,16 +1,11 @@
 using Microsoft.EntityFrameworkCore;
-
 using School.API.Data.DBModels;
-using School.API.Data.DBModels.Academic;
-using School.API.DTOs.Academic;
-
 using School.API.Data.DBModels.Academic;
 using School.API.Data.DBModels.Accounts;
 using School.API.Data.DBModels.HR;
 using School.API.DTOs;
 using School.API.DTOs.Academic;
 using School.API.DTOs.Accounts;
-
 using School.API.DTOs.Common;
 using School.API.Models;
 
@@ -21,13 +16,6 @@ namespace School.API.Data
         public SchoolDbContext(DbContextOptions<SchoolDbContext> options) : base(options)
         {
         }
-
-        
-        
-        public DbSet<ResponseDto> AcademicSessionYearResponses { get; set; }
-
-        public DbSet<AcademicSessionYear> AcademicSessionYear { get; set; }
-
 
         // Core entities
         public DbSet<Menu> Menus { get; set; }
@@ -52,7 +40,7 @@ namespace School.API.Data
         // HR entities
         public DbSet<Designation> Designations { get; set; }
         public DbSet<HRGrade> HRGrades { get; set; }
-        //public DbSet<Employee> Employees { get; set; }
+        public DbSet<Employee> Employees { get; set; }
         public DbSet<Salary> Salaries { get; set; }
 
         // Accounts entities
@@ -60,8 +48,8 @@ namespace School.API.Data
         public DbSet<FeeStructure> FeeStructures { get; set; }
 
         // Keyless entities
-        
-        
+        public DbSet<ResponseDto> AcademicSessionYearResponses { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -69,11 +57,11 @@ namespace School.API.Data
             // Keyless entity
             modelBuilder.Entity<ResponseDto>().HasNoKey();
             modelBuilder.Entity<AcademicSessionYearSaveDto>().HasNoKey();
-
-
             modelBuilder.Entity<SMSClassSaveDto>().HasNoKey();
             modelBuilder.Entity<SMSSectionSaveDto>().HasNoKey();
             modelBuilder.Entity<AcademicGradeSaveDto>().HasNoKey();
+            modelBuilder.Entity<FeeTypeSaveDto>().HasNoKey();
+            modelBuilder.Entity<FeeStructureSaveDto>().HasNoKey();
 
             // Menu configuration
             modelBuilder.Entity<Menu>(entity =>
@@ -120,8 +108,6 @@ namespace School.API.Data
                     .HasForeignKey(ur => ur.RoleId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
-
-
 
             // Student configuration
             modelBuilder.Entity<Student>(entity =>
