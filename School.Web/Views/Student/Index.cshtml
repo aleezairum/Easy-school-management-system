@@ -3,24 +3,176 @@
     Layout = "~/Views/Shared/_DashboardLayout.cshtml";
 }
 
+<style>
+    .card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        margin-bottom: 24px;
+    }
+
+    .card-header {
+        background: white;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 20px 24px;
+        border-radius: 16px 16px 0 0 !important;
+    }
+
+    .card-header h5 {
+        margin: 0;
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .card-body {
+        padding: 24px;
+    }
+
+    .form-label {
+        font-weight: 500;
+        color: #475569;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+
+    .form-control, .form-select {
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #008649;
+        box-shadow: 0 0 0 4px rgba(0, 134, 73, 0.1);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #008649 0%, #006d3b 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 134, 73, 0.4);
+        background: linear-gradient(135deg, #006d3b 0%, #005a30 100%);
+    }
+
+    .btn-info {
+        background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-weight: 600;
+        font-size: 13px;
+        color: white;
+        transition: all 0.2s;
+    }
+
+    .btn-info:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
+        color: white;
+    }
+
+    .btn-danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-weight: 600;
+        font-size: 13px;
+        color: white;
+        transition: all 0.2s;
+    }
+
+    .btn-danger:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        color: white;
+    }
+
+    .table {
+        margin-bottom: 0;
+    }
+
+    .table thead th {
+        background: #f8fafc;
+        border-bottom: 2px solid #e2e8f0;
+        padding: 14px 16px;
+        font-weight: 600;
+        font-size: 13px;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+    }
+
+    .table tbody td {
+        padding: 12px 16px;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 14px;
+    }
+
+    .table tbody tr:hover {
+        background: #f8fafc;
+    }
+
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        border-radius: 16px;
+    }
+
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+        border-width: 0.3rem;
+    }
+
+    .filter-section {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+</style>
+
 <div class="container-fluid">
+    <!-- Alert Messages -->
     <div id="alertContainer"></div>
 
-    <div class="card" style="border-radius: 16px; border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
-        <div class="card-body position-relative p-4">
+    <!-- Students Card -->
+    <div class="card">
+        <div class="card-body position-relative">
             <div class="d-flex justify-content-end mb-3">
                 <a href="/student/form" class="btn btn-primary">
                     <i class="bi bi-plus-lg me-1"></i> Add Student
                 </a>
             </div>
-            <div id="loadingOverlay" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); z-index: 100; border-radius: 16px; align-items: center; justify-content: center;">
+            <div id="loadingOverlay" class="loading-overlay" style="display: none;">
                 <div class="spinner-border text-success" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
             </div>
 
             <!-- Filter Section -->
-            <div class="filter-section" style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+            <div class="filter-section">
                 <div class="row g-3 align-items-end">
                     <div class="col-lg-3 col-md-4 col-sm-6 col-12">
                         <label for="searchName" class="form-label">Search</label>
@@ -59,7 +211,7 @@
             <div class="table-responsive">
                 <table class="table table-hover" id="studentsTable">
                     <thead>
-                        <tr style="background: #f8fafc;">
+                        <tr>
                             <th style="width: 60px;">Sr#</th>
                             <th style="width: 60px;">Photo</th>
                             <th>Reg No</th>

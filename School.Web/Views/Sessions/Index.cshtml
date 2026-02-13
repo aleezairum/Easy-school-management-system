@@ -279,9 +279,6 @@
 
     <!-- Sessions Card -->
     <div class="card">
-        <div class="card-header">
-            <h5><i class="bi bi-calendar-range me-2"></i>Academic Sessions</h5>
-        </div>
         <div class="card-body position-relative">
             <div id="loadingOverlay" class="loading-overlay" style="display: none;">
                 <div class="spinner-border text-success" role="status">
@@ -690,6 +687,15 @@
         }
 
         function showAlert(message, type) {
+            if (type === 'success') {
+                toastSuccess(message);
+            } else if (type === 'danger' || type === 'error') {
+                toastError(message);
+            } else if (type === 'warning') {
+                toastWarning(message);
+            } else {
+                toastInfo(message);
+            }
         }
     </script>
 }
