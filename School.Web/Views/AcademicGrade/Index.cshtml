@@ -511,12 +511,12 @@
                 tbody.html('<tr><td colspan="8" class="text-center text-muted py-4">No academic grades found. Add a new grade using the form above.</td></tr>');
                 return;
             }
-
+            console.log(items);
             items.forEach((item, index) => {
                 const row = `
-                    <tr data-id="${item.id}" class="${editingId === item.id ? 'selected' : ''}">
+                    <tr data-id="${item.vid}" class="${editingId === item.vid ? 'selected' : ''}">
                         <td>${index + 1}</td>
-                        <td><strong>${item.name}</strong></td>
+                        <td><strong>${item.vName}</strong></td>
                         <td class="text-center">${item.minPercentage != null ? item.minPercentage : '-'}</td>
                         <td class="text-center">${item.maxPercentage != null ? item.maxPercentage : '-'}</td>
                         <td class="text-center"><strong>${item.gradePoint != null ? item.gradePoint : '-'}</strong></td>
@@ -527,10 +527,10 @@
                             </span>
                         </td>
                         <td class="text-center">
-                            <button type="button" class="btn btn-sm btn-info me-1" onclick="editAcademicGrade(${item.id})" title="Edit">
+                            <button type="button" class="btn btn-sm btn-info me-1" onclick="editAcademicGrade(${item.vid})" title="Edit">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <button type="button" class="btn btn-sm btn-danger" onclick="deleteAcademicGrade(${item.id}, '${item.name}')" title="Delete">
+                            <button type="button" class="btn btn-sm btn-danger" onclick="deleteAcademicGrade(${item.vid}, '${item.vName}')" title="Delete">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </td>
@@ -598,8 +598,8 @@
         }
 
         function populateForm(data) {
-            $('#gradeId').val(data.id);
-            $('#name').val(data.name);
+            $('#gradeId').val(data.vid);
+            $('#name').val(data.vName);
             $('#minPercentage').val(data.minPercentage);
             $('#maxPercentage').val(data.maxPercentage);
             $('#gradePoint').val(data.gradePoint);
@@ -645,8 +645,8 @@
 
             const id = parseInt($('#gradeId').val()) || 0;
             const data = {
-                Code: name,
-                Name: name,
+                VID: id,
+                VName: name,
                 MinPercentage: parseFloat(minPct),
                 MaxPercentage: parseFloat(maxPct),
                 GradePoint: parseFloat(point),
@@ -657,20 +657,11 @@
             showLoading();
             try {
                 let response;
-                if (id === 0) {
-                    response = await fetch(`${API_BASE}/AcademicGrade`, {
+                response = await fetch(`${API_BASE}/AcademicGrade`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(data)
                     });
-                } else {
-                    response = await fetch(`${API_BASE}/AcademicGrade/${id}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(data)
-                    });
-                }
-
                 if (response.ok) {
                     showAlert(id === 0 ? 'Academic grade created successfully!' : 'Academic grade updated successfully!', 'success');
                     resetForm();

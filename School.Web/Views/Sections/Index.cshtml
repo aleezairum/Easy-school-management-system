@@ -301,13 +301,9 @@
                         <label for="filterClass" class="form-label mb-0 me-2"><i class="bi bi-funnel me-1"></i>Filter by Class:</label>
                     </div>
                     <div class="col-md-4">
-
-                        <select class="form-select" id="filterClass" onchange="loadSections()">
-
-                        <select class="form-select" id="filterClass" onchange="filterSections()">
-
+                         <select class="form-select" id="filterClass" onchange="loadSections(); filterSections();">
                             <option value="">All Classes</option>
-                        </select>
+                         </select>
                     </div>
                 </div>
             </div>
@@ -323,13 +319,8 @@
                             <tr>
 
                                 <th style="width: 60px;">Sr#</th>
-                                <th>Section Name</th>
                                 <th>Class</th>
-
-                                <th style="width: 60px;">SR#</th>
-                                <th>Class</th>
-                                <th>Section Name</th>
-
+                                <th>Section</th>
                                 <th class="text-center" style="width: 100px;">Status</th>
                                 <th class="text-center" style="width: 150px;">Actions</th>
                             </tr>
@@ -347,28 +338,23 @@
 @section Scripts {
     <script>
 
-        
-
-        ////const API_BASE = 'http://localhost:5266/api';
-        let editingSectionId = 0;
+         let editingSectionId = 0;
         let allSections = [];
-
 
         $(document).ready(function () {
             loadClasses();
             loadSections();
         });
 
-        // Load classes for dropdown
+        // ================================
+        // Load Classes
+        // ================================
         async function loadClasses() {
             try {
-
-                //const response = await fetch(`${API_BASE}/class/dropdown`);
-
                 const response = await fetch(`${API_BASE}/class`);
-
                 if (response.ok) {
                     const classes = await response.json();
+
                     const formSelect = $('#classId');
                     const filterSelect = $('#filterClass');
 
@@ -376,13 +362,8 @@
                     filterSelect.find('option:not(:first)').remove();
 
                     classes.forEach(cls => {
-
-                        formSelect.append(`<option value="${cls.viD}">${cls.vName}</option>`);
-                        filterSelect.append(`<option value="${cls.viD}">${cls.vName}</option>`);
-
                         formSelect.append(`<option value="${cls.vid}">${cls.vName}</option>`);
                         filterSelect.append(`<option value="${cls.vid}">${cls.vName}</option>`);
-
                     });
                 }
             } catch (error) {
@@ -390,31 +371,16 @@
             }
         }
 
-
-        // Load sections
+        // ================================
+        // Load Sections (API)
+        // ================================
         async function loadSections() {
             showLoading();
             try {
-                const filterClass = $('#filterClass').val();
-                let url = `${API_BASE}/section`;
-                if (filterClass) {
-                    url += `?classId=${filterClass}`;
-                }
-
-                const response = await fetch(url);
-                if (response.ok) {
-                    const sections = await response.json();
-                    renderSectionsList(sections);
-
-        // Load all sections from API (once)
-        async function loadSections() {
-            showLoading();
-            try {
-                const response = await fetch(`${API_BASE}/Section`);
+                const response = await fetch(`${API_BASE}/section`);
                 if (response.ok) {
                     allSections = await response.json();
                     filterSections();
-
                 } else {
                     showAlert('Failed to load sections', 'danger');
                 }
@@ -426,100 +392,115 @@
             }
         }
 
-
-
-        // Client-side filter by class
+        // ================================
+        // Client Side Filter
+        // ================================
         function filterSections() {
             const filterClass = $('#filterClass').val();
             let filtered = allSections;
+
             if (filterClass) {
-                filtered = allSections.filter(s => String(s.classID) === String(filterClass));
+                filtered = allSections.filter(s =>
+                    String(s.classID) === String(filterClass)
+                );
             }
+
             renderSectionsList(filtered);
         }
 
-
-        // Render sections list table
+        // ================================
+        // Render Table
+        // ================================
         function renderSectionsList(sections) {
             const tbody = $('#sectionsBody');
             tbody.empty();
 
-            if (sections.length === 0) {
-                tbody.html('<tr><td colspan="5" class="text-center text-muted py-4">No sections found. Add a new section using the form above.</td></tr>');
+            if (!sections || sections.length === 0) {
+                tbody.html(`
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            No sections found.
+                        </td>
+                    </tr>
+                `);
                 return;
             }
 
             sections.forEach((section, index) => {
+
                 const row = `
+                    <tr data-id="${section.vid}" 
+                        class="${editingSectionId === section.vid ? 'selected' : ''}">
 
-                    <tr data-id="${section.viD}" class="${editingSectionId === section.viD ? 'selected' : ''}">
                         <td>${index + 1}</td>
-                        <td><strong>${section.vName}</strong></td>
                         <td><span class="badge bg-info">${section.className}</span></td>
-
-                   
+                        <td><strong>${section.vName}</strong></td>
 
                         <td class="text-center">
                             <span class="badge ${section.isActive ? 'bg-success' : 'bg-secondary'}">
                                 ${section.isActive ? 'Active' : 'Inactive'}
                             </span>
                         </td>
+
                         <td class="text-center">
-
-                            <button type="button" class="btn btn-sm btn-info me-1" onclick="editSection(${section.viD})" title="Edit">
+                            <button type="button"
+                                    class="btn btn-sm btn-info me-1"
+                                    onclick="editSection(${section.vid})">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <button type="button" class="btn btn-sm btn-danger" onclick="deleteSection(${section.viD}, '${section.vName}')" title="Delete">
 
-                            <button type="button" class="btn btn-sm btn-info me-1" onclick="editSection(${section.vid})" title="Edit">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button type="button" class="btn btn-sm btn-danger" onclick="deleteSection(${section.vid}, '${section.vName}')" title="Delete">
-
+                            <button type="button"
+                                    class="btn btn-sm btn-danger"
+                                    onclick="deleteSection(${section.vid}, '${section.vName}')">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </td>
                     </tr>
                 `;
+
                 tbody.append(row);
             });
         }
 
-        // Edit existing section
+        // ================================
+        // Edit Section
+        // ================================
         async function editSection(sectionId) {
             showLoading();
             try {
                 const response = await fetch(`${API_BASE}/section/${sectionId}`);
                 if (response.ok) {
                     const data = await response.json();
-                    populateForm(data);
+
+                    $('#sectionId').val(data.vid);
+                    $('#classId').val(data.classID).trigger('change');
+                    $('#sectionName').val(data.vName);
+                    $('#isActive').prop('checked', data.isActive);
+
                     editingSectionId = sectionId;
                     $('#formTitle').text('Edit Section');
 
-                    // Highlight the selected row
                     $('#sectionsBody tr').removeClass('selected');
-                    $(`#sectionsBody tr[data-id="${sectionId}"]`).addClass('selected');
+                    $(`#sectionsBody tr[data-id="${sectionId}"]`)
+                        .addClass('selected');
 
-                    // Scroll to form
-                    $('html, body').animate({
-                        scrollTop: $('.form-section').offset().top - 100
-                    }, 300);
                 } else {
                     showAlert('Failed to load section', 'danger');
                 }
             } catch (error) {
-                console.error('Error loading section:', error);
-                showAlert('Error loading section: ' + error.message, 'danger');
+                console.error(error);
+                showAlert('Error loading section', 'danger');
             } finally {
                 hideLoading();
             }
         }
 
-        // Delete section
+        // ================================
+        // Delete Section
+        // ================================
         async function deleteSection(sectionId, sectionName) {
-            if (!confirm(`Are you sure you want to delete the section "${sectionName}"?`)) {
-                return;
-            }
+
+            if (!confirm(`Delete section "${sectionName}"?`)) return;
 
             showLoading();
             try {
@@ -529,65 +510,39 @@
 
                 if (response.ok) {
                     showAlert('Section deleted successfully!', 'success');
-                    if (editingSectionId === sectionId) {
-                        resetForm();
-                    }
                     await loadSections();
+                    resetForm();
                 } else {
-                    const error = await response.json();
-                    showAlert(error.message || 'Failed to delete section', 'danger');
+                    showAlert('Failed to delete section', 'danger');
                 }
+
             } catch (error) {
-                console.error('Error deleting section:', error);
-                showAlert('Error deleting section: ' + error.message, 'danger');
+                console.error(error);
+                showAlert('Error deleting section', 'danger');
             } finally {
                 hideLoading();
             }
         }
 
-        // Populate form with section data
-        function populateForm(data) {
-
-            $('#sectionId').val(data.viD);
-
-            $('#sectionId').val(data.vid);
-
-            $('#classId').val(data.classID);
-            $('#sectionName').val(data.vName);
-            $('#isActive').prop('checked', data.isActive);
-        }
-
-        // Reset form
-        function resetForm() {
-            $('#sectionId').val('0');
-            $('#classId').val('');
-            $('#sectionName').val('');
-            $('#isActive').prop('checked', true);
-            $('#formTitle').text('Add New Section');
-            editingSectionId = 0;
-
-            // Remove selected highlight from table
-            $('#sectionsBody tr').removeClass('selected');
-        }
-
-        // Save section
+        // ================================
+        // Save Section
+        // ================================
         async function saveSection() {
+
+            const sectionId = parseInt($('#sectionId').val()) || 0;
             const classId = parseInt($('#classId').val()) || 0;
             const sectionName = $('#sectionName').val().trim();
 
             if (!classId) {
                 showAlert('Please select a class', 'danger');
-                $('#classId').focus();
                 return;
             }
 
             if (!sectionName) {
-                showAlert('Please enter a section name', 'danger');
-                $('#sectionName').focus();
+                showAlert('Please enter section name', 'danger');
                 return;
             }
 
-            const sectionId = parseInt($('#sectionId').val()) || 0;
             const data = {
                 VID: sectionId,
                 ClassID: classId,
@@ -596,48 +551,53 @@
             };
 
             showLoading();
+
             try {
                 let response;
 
-                if (sectionId === 0) {
-                    // Create new section
-
-
-                    response = await fetch(`${API_BASE}/section`, {
+                response = await fetch(`${API_BASE}/section`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(data)
                     });
-
-                } else {
-                    // Update existing section
-                    response = await fetch(`${API_BASE}/section/${sectionId}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(data)
-                    });
-                }
-
-                
-
-
                 if (response.ok) {
-                    showAlert(sectionId === 0 ? 'Section created successfully!' : 'Section updated successfully!', 'success');
+                    showAlert(
+                        sectionId === 0
+                            ? 'Section created successfully!'
+                            : 'Section updated successfully!',
+                        'success'
+                    );
+
                     resetForm();
                     await loadSections();
                 } else {
-                    const error = await response.json();
-                    showAlert(error.message || 'Failed to save section', 'danger');
+                    showAlert('Failed to save section', 'danger');
                 }
+
             } catch (error) {
-                console.error('Error saving section:', error);
-                showAlert('Error saving section: ' + error.message, 'danger');
+                console.error(error);
+                showAlert('Error saving section', 'danger');
             } finally {
                 hideLoading();
             }
         }
 
-        // Helper functions
+        // ================================
+        // Reset Form
+        // ================================
+        function resetForm() {
+            $('#sectionId').val(0);
+            $('#classId').val('').trigger('change');;
+            $('#sectionName').val('');
+            $('#isActive').prop('checked', true);
+            editingSectionId = 0;
+            $('#formTitle').text('Add New Section');
+            $('#sectionsBody tr').removeClass('selected');
+        }
+
+        // ================================
+        // Helpers
+        // ================================
         function showLoading() {
             $('#loadingOverlay').show();
         }
@@ -646,7 +606,7 @@
             $('#loadingOverlay').hide();
         }
 
-        function showAlert(message, type) {
+         function showAlert(message, type) {
             if (type === 'success') {
                 toastSuccess(message);
             } else if (type === 'danger' || type === 'error') {
@@ -657,5 +617,6 @@
                 toastInfo(message);
             }
         }
+
     </script>
 }

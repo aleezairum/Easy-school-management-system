@@ -21,10 +21,10 @@ namespace School.API.Data.DBModels.Academic
 
         public int? InsertedBy { get; set; }
         public DateTime? InsertedDate { get; set; }
-        public string InsertedIp { get; set; }
+        public string? InsertedIp { get; set; }
         public int? UpdatedBy { get; set; }
         public DateTime? UpdatedDate { get; set; }
-        public string UpdatedIp { get; set; }
+        public string? UpdatedIp { get; set; }
 
     }
 

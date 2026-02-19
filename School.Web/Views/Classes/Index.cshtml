@@ -326,7 +326,7 @@
                     const classes = await response.json();
                     renderClassesList(classes);
                 } else {
-                    showAlert('Failed to load classes', 'danger');
+                    showAlert('Failed to load classes', 'danger');  
                 }
             } catch (error) {
                 console.error('Error loading classes:', error);
@@ -351,7 +351,6 @@
 
                     <tr data-id="${cls.viD}" class="${editingClassId === cls.viD ? 'selected' : ''}">
 
-                    <tr data-id="${cls.vid}" class="${editingClassId === cls.vid ? 'selected' : ''}">
 
                         <td>${index + 1}</td>
                         <td><strong>${cls.vName}</strong></td>
@@ -361,11 +360,6 @@
                             </span>
                         </td>
                         <td class="text-center">
-
-                            <button type="button" class="btn btn-sm btn-info me-1" onclick="editClass(${cls.viD})" title="Edit">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button type="button" class="btn btn-sm btn-danger" onclick="deleteClass(${cls.viD}, '${cls.vName}')" title="Delete">
 
                             <button type="button" class="btn btn-sm btn-info me-1" onclick="editClass(${cls.vid})" title="Edit">
                                 <i class="bi bi-pencil"></i>
@@ -444,8 +438,7 @@
         // Populate form with class data
         function populateForm(data) {
 
-            $('#classId').val(data.viD);
-
+         
             $('#classId').val(data.vid);
 
             $('#className').val(data.vName);
@@ -485,26 +478,11 @@
             try {
                 let response;
 
-                if (classId === 0) {
-                    // Create new class
-
-
-                    response = await fetch(`${API_BASE}/class`, {
+                response = await fetch(`${API_BASE}/class`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(data)
                     });
-
-                } else {
-                    // Update existing class
-                    response = await fetch(`${API_BASE}/class/${classId}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(data)
-                    });
-                }
-
-                
 
 
                 if (response.ok) {

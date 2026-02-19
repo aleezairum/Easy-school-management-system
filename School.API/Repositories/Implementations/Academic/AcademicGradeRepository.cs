@@ -65,6 +65,7 @@ namespace School.API.Repositories.Implementations.Academic
                     dto.MinPercentage,
                     dto.MaxPercentage,
                     dto.GradePoint,
+                    dto.Remarks,
                     dto.IsActive,
                     userId,
                     userIp)
