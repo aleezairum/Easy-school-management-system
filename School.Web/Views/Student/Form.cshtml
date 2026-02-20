@@ -714,13 +714,9 @@
                             <tr>
                                 <td class="lbl">Status</td>
                                 <td class="val" colspan="3">
-                                    @Html.DropDownListFor(m => m.Status, new List<SelectListItem>
-                                    {
-                                        new SelectListItem { Text = "Active", Value = "Active" },
-                                        new SelectListItem { Text = "Inactive", Value = "Inactive" },
-                                        new SelectListItem { Text = "Left", Value = "Left" },
-                                        new SelectListItem { Text = "Passed Out", Value = "Passed Out" }
-                                    }, new { id = "Status" })
+                                    <select class="form-select" id="Status" name="Status">
+                                        <option value="">Select Status</option>
+                                    </select>
                                 </td>
                             </tr>
                         </table>
@@ -1110,6 +1106,7 @@
 
             // Load dropdowns
             loadClassDropdown();
+            loadStatusDropdown();
             loadParentLookups();
 
             // Cascade section dropdown on class change
@@ -1141,6 +1138,26 @@
                 }
             } catch (error) {
                 console.error('Error loading classes:', error);
+            }
+        }
+
+        // Load student status dropdown
+        async function loadStatusDropdown() {
+            try {
+                const response = await fetch(`${API_BASE}/studentstatus`);
+                if (response.ok) {
+                    const statuses = await response.json();
+                    const select = $('#Status');
+                    const currentVal = '@Model.Status';
+                    statuses.forEach(s => {
+                        if (s.isActive) {
+                            const selected = s.vName === currentVal ? 'selected' : '';
+                            select.append(`<option value="${s.vName}" ${selected}>${s.vName}</option>`);
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading statuses:', error);
             }
         }
 
