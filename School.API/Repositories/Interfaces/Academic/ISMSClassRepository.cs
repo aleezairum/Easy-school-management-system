@@ -11,8 +11,8 @@ namespace School.API.Repositories.Interfaces.Academic
             int userId,
             string userIp);
 
-        Task<List<SMSClass>> GetAllAsync();
-        Task<SMSClass?> GetByIdAsync(int id);
+        Task<List<SMSFeeType>> GetAllAsync();
+        Task<SMSFeeType?> GetByIdAsync(int id);
         Task<ResponseDto?> DeleteByIdAsync(int id);
     }
 }

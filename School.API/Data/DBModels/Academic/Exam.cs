@@ -37,7 +37,7 @@ namespace School.API.Data.DBModels.Academic
         public int ClassId { get; set; }
 
         [ForeignKey("ClassId")]
-        public virtual SMSClass? Class { get; set; }
+        public virtual SMSFeeType? Class { get; set; }
 
         public int SubjectId { get; set; }
 

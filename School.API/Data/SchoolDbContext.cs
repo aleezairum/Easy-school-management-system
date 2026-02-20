@@ -25,7 +25,7 @@ namespace School.API.Data
         public DbSet<UserRole> UserRoles { get; set; }
 
         // Academic entities
-        public DbSet<SMSClass> SMSClasses { get; set; }
+        public DbSet<SMSFeeType> SMSClasses { get; set; }
         public DbSet<SMSSection> SMSSections { get; set; }
         public DbSet<SMSSubject> SMSSubjects { get; set; }
         public DbSet<AcademicSessionYear> AcademicSessionYears { get; set; }

@@ -66,29 +66,29 @@
   <ItemGroup>
     <Compile Remove="Controllers\11ClassController.cs" />
     <!-- Exclude old Accounts files but keep FeeType -->
-    <Compile Remove="Data\DBModels\Accounts\PaymentMethod.cs" />
-    <Compile Remove="Data\DBModels\Accounts\ChallanVoucher.cs" />
-    <Compile Remove="Data\DBModels\Accounts\FeeVoucher.cs" />
-    <Compile Remove="Controllers\Accounts\PaymentMethodController.cs" />
-    <Compile Remove="Controllers\Accounts\ChallanVoucherController.cs" />
-    <Compile Remove="Controllers\Accounts\FeeVoucherController.cs" />
-    <Compile Remove="DTOs\Accounts\PaymentMethod*" />
-    <Compile Remove="DTOs\Accounts\ChallanVoucher*" />
-    <Compile Remove="DTOs\Accounts\FeeVoucher*" />
+    <Compile Remove="Data\DBModels\FeeManagement\PaymentMethod.cs" />
+    <Compile Remove="Data\DBModels\FeeManagement\ChallanVoucher.cs" />
+    <Compile Remove="Data\DBModels\FeeManagement\FeeVoucher.cs" />
+    <Compile Remove="Controllers\FeeManagement\PaymentMethodController.cs" />
+    <Compile Remove="Controllers\FeeManagement\ChallanVoucherController.cs" />
+    <Compile Remove="Controllers\FeeManagement\FeeVoucherController.cs" />
+    <Compile Remove="DTOs\FeeManagement\PaymentMethod*" />
+    <Compile Remove="DTOs\FeeManagement\ChallanVoucher*" />
+    <Compile Remove="DTOs\FeeManagement\FeeVoucher*" />
     <Compile Remove="Data\DBModels\HR\Employee.cs" />
     <Compile Remove="DTOs\EmployeeDto.cs" />
-    <Compile Remove="Repositories\Interfaces\Accounts\IPaymentMethodRepository.cs" />
-    <Compile Remove="Repositories\Interfaces\Accounts\IChallanVoucherRepository.cs" />
-    <Compile Remove="Repositories\Interfaces\Accounts\IFeeVoucherRepository.cs" />
-    <Compile Remove="Repositories\Implementations\Accounts\PaymentMethodRepository.cs" />
-    <Compile Remove="Repositories\Implementations\Accounts\ChallanVoucherRepository.cs" />
-    <Compile Remove="Repositories\Implementations\Accounts\FeeVoucherRepository.cs" />
-    <Compile Remove="Services\Interfaces\Accounts\IPaymentMethodService.cs" />
-    <Compile Remove="Services\Interfaces\Accounts\IChallanVoucherService.cs" />
-    <Compile Remove="Services\Interfaces\Accounts\IFeeVoucherService.cs" />
-    <Compile Remove="Services\Implementations\Accounts\PaymentMethodService.cs" />
-    <Compile Remove="Services\Implementations\Accounts\ChallanVoucherService.cs" />
-    <Compile Remove="Services\Implementations\Accounts\FeeVoucherService.cs" />
+    <Compile Remove="Repositories\Interfaces\FeeManagement\IPaymentMethodRepository.cs" />
+    <Compile Remove="Repositories\Interfaces\FeeManagement\IChallanVoucherRepository.cs" />
+    <Compile Remove="Repositories\Interfaces\FeeManagement\IFeeVoucherRepository.cs" />
+    <Compile Remove="Repositories\Implementations\FeeManagement\PaymentMethodRepository.cs" />
+    <Compile Remove="Repositories\Implementations\FeeManagement\ChallanVoucherRepository.cs" />
+    <Compile Remove="Repositories\Implementations\FeeManagement\FeeVoucherRepository.cs" />
+    <Compile Remove="Services\Interfaces\FeeManagement\IPaymentMethodService.cs" />
+    <Compile Remove="Services\Interfaces\FeeManagement\IChallanVoucherService.cs" />
+    <Compile Remove="Services\Interfaces\FeeManagement\IFeeVoucherService.cs" />
+    <Compile Remove="Services\Implementations\FeeManagement\PaymentMethodService.cs" />
+    <Compile Remove="Services\Implementations\FeeManagement\ChallanVoucherService.cs" />
+    <Compile Remove="Services\Implementations\FeeManagement\FeeVoucherService.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -104,19 +104,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\Accounts\" />
-    <Folder Include="Data\DBModels\Accounts\" />
     <Folder Include="Data\DBModels\HR\" />
-    <Folder Include="DTOs\Accounts\" />
-    <Folder Include="Repositories\Implementations\Accounts\" />
     <Folder Include="Repositories\Implementations\HR\" />
     <Folder Include="Repositories\Implementations\UserManagement\" />
-    <Folder Include="Repositories\Interfaces\Accounts\" />
     <Folder Include="Repositories\Interfaces\HR\" />
-    <Folder Include="Services\Implementations\Accounts\" />
     <Folder Include="Services\Implementations\HR\" />
     <Folder Include="Services\Implementations\UserManagement\" />
-    <Folder Include="Services\Interfaces\Accounts\" />
     <Folder Include="Services\Interfaces\HR\" />
     <Folder Include="Services\Interfaces\UserManagement\" />
 

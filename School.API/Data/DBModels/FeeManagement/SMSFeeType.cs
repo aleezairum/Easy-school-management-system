@@ -2,10 +2,11 @@ using System.ComponentModel.DataAnnotations;
 
 namespace School.API.Data.DBModels.Accounts
 {
-    public class FeeType
+    public class SMSFeeType
     {
         [Key]
         public int VID { get; set; }
+        public int FeeType { get; set; }
 
         [Required]
         [StringLength(100)]
@@ -19,5 +20,9 @@ namespace School.API.Data.DBModels.Accounts
         public int? UpdatedBy { get; set; }
         public DateTime? UpdatedDate { get; set; }
         public string? UpdatedIp { get; set; }
+
+        // Navigation properties
+        public virtual ICollection<SMSSection> Sections { get; set; } = new List<SMSSection>();
+        public virtual ICollection<SMSSubject> Subjects { get; set; } = new List<SMSSubject>();
     }
 }

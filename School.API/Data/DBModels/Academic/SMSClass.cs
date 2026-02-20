@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace School.API.Data.DBModels.Academic
 {
-    public class SMSClass
+    public class SMSFeeType
     {
         [Key]
         public int VID { get; set; }
