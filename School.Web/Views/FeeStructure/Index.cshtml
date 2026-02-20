@@ -156,6 +156,45 @@
         border-bottom: 2px solid #e2e8f0;
     }
 
+    .filter-section {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .filter-section-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #e2e8f0;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        user-select: none;
+    }
+
+    .filter-section-title:hover {
+        color: #008649;
+    }
+
+    .filter-section-title .chevron-icon {
+        transition: transform 0.3s ease;
+    }
+
+    .filter-section-title.expanded .chevron-icon {
+        transform: rotate(180deg);
+    }
+
+    .filter-collapse-body {
+        padding-top: 16px;
+    }
+
     .grid-section {
         margin-top: 24px;
     }
@@ -243,6 +282,12 @@
 
                     <div class="row g-3 align-items-end">
                         <div class="col-md-3">
+                            <label for="campusId" class="form-label">Campus <span class="text-danger">*</span></label>
+                            <select class="form-select" id="campusId">
+                                <option value="">-- Select Campus --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
                             <label for="academicSessionId" class="form-label">Academic Session <span class="text-danger">*</span></label>
                             <select class="form-select" id="academicSessionId">
                                 <option value="">-- Select Session --</option>
@@ -260,15 +305,15 @@
                                 <option value="">-- Select Grade --</option>
                             </select>
                         </div>
+                    </div>
+
+                    <div class="row g-3 align-items-end mt-1">
                         <div class="col-md-3">
                             <label for="feeTypeId" class="form-label">Fee Type <span class="text-danger">*</span></label>
                             <select class="form-select" id="feeTypeId">
                                 <option value="">-- Select Fee Type --</option>
                             </select>
                         </div>
-                    </div>
-
-                    <div class="row g-3 align-items-end mt-1">
                         <div class="col-md-3">
                             <label for="amount" class="form-label">Amount <span class="text-danger">*</span></label>
                             <input type="number" class="form-control" id="amount" placeholder="e.g., 5000" min="0" step="0.01" required />
@@ -293,6 +338,70 @@
                 </form>
             </div>
 
+            <!-- Filter Section -->
+            <div class="filter-section">
+                <div class="filter-section-title" data-bs-toggle="collapse" data-bs-target="#filterCollapseBody">
+                    <span><i class="bi bi-funnel me-2"></i>Search Filters</span>
+                    <i class="bi bi-chevron-down chevron-icon"></i>
+                </div>
+                <div class="collapse" id="filterCollapseBody">
+                    <div class="filter-collapse-body">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                                <label for="filterCampus" class="form-label">Campus</label>
+                                <select class="form-select" id="filterCampus">
+                                    <option value="">All Campuses</option>
+                                </select>
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                                <label for="filterSession" class="form-label">Academic Session</label>
+                                <select class="form-select" id="filterSession">
+                                    <option value="">All Sessions</option>
+                                </select>
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                                <label for="filterClass" class="form-label">Class</label>
+                                <select class="form-select" id="filterClass">
+                                    <option value="">All Classes</option>
+                                </select>
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                                <label for="filterGrade" class="form-label">Grade</label>
+                                <select class="form-select" id="filterGrade">
+                                    <option value="">All Grades</option>
+                                </select>
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                                <label for="filterFeeType" class="form-label">Fee Type</label>
+                                <select class="form-select" id="filterFeeType">
+                                    <option value="">All Fee Types</option>
+                                </select>
+                            </div>
+                            <div class="col-lg-3 col-md-4 col-sm-6 col-12">
+                                <label for="filterStatus" class="form-label">Status</label>
+                                <select class="form-select" id="filterStatus">
+                                    <option value="">All Status</option>
+                                    <option value="true">Active</option>
+                                    <option value="false">Inactive</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn-save" onclick="loadFeeStructures()">
+                                        <i class="bi bi-search"></i> Search
+                                    </button>
+                                    <button type="button" class="btn-clear" onclick="clearFilters()">
+                                        <i class="bi bi-x-lg"></i> Clear
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Grid Section -->
             <div class="grid-section">
                 <div class="grid-section-title">
@@ -303,6 +412,7 @@
                         <thead>
                             <tr>
                                 <th style="width: 60px;">SR#</th>
+                                <th>Campus</th>
                                 <th>Academic Session</th>
                                 <th>Class</th>
                                 <th>Grade</th>
@@ -328,35 +438,57 @@
         $(document).ready(function () {
             loadDropdowns();
             loadFeeStructures();
+
+            $('#filterCollapseBody').on('show.bs.collapse', function () {
+                $('.filter-section-title').addClass('expanded');
+            }).on('hide.bs.collapse', function () {
+                $('.filter-section-title').removeClass('expanded');
+            });
         });
 
         async function loadDropdowns() {
             try {
-                const [sessions, classes, grades, feeTypes] = await Promise.all([
+                const [campuses, sessions, classes, grades, feeTypes] = await Promise.all([
+                    fetch(`${API_BASE}/campus`).then(r => r.json()).catch(() => []),
                     fetch(`${API_BASE}/AcademicSessionYear`).then(r => r.json()).catch(() => []),
                     fetch(`${API_BASE}/class`).then(r => r.json()).catch(() => []),
                     fetch(`${API_BASE}/AcademicGrade`).then(r => r.json()).catch(() => []),
                     fetch(`${API_BASE}/feetype`).then(r => r.json()).catch(() => [])
                 ]);
 
+                const campusSelect = $('#campusId');
+                const filterCampus = $('#filterCampus');
+                campuses.forEach(item => {
+                    campusSelect.append(`<option value="${item.vid}">${item.vName}</option>`);
+                    filterCampus.append(`<option value="${item.vid}">${item.vName}</option>`);
+                });
+
                 const sessionSelect = $('#academicSessionId');
+                const filterSession = $('#filterSession');
                 sessions.forEach(item => {
                     sessionSelect.append(`<option value="${item.vid}">${item.vName}</option>`);
+                    filterSession.append(`<option value="${item.vid}">${item.vName}</option>`);
                 });
 
                 const classSelect = $('#classId');
+                const filterClass = $('#filterClass');
                 classes.forEach(item => {
                     classSelect.append(`<option value="${item.vid}">${item.vName}</option>`);
+                    filterClass.append(`<option value="${item.vid}">${item.vName}</option>`);
                 });
 
                 const gradeSelect = $('#gradeId');
+                const filterGrade = $('#filterGrade');
                 grades.forEach(item => {
                     gradeSelect.append(`<option value="${item.id}">${item.name}</option>`);
+                    filterGrade.append(`<option value="${item.id}">${item.name}</option>`);
                 });
 
                 const feeTypeSelect = $('#feeTypeId');
+                const filterFeeType = $('#filterFeeType');
                 feeTypes.forEach(item => {
                     feeTypeSelect.append(`<option value="${item.vid}">${item.vName}</option>`);
+                    filterFeeType.append(`<option value="${item.vid}">${item.vName}</option>`);
                 });
             } catch (error) {
                 console.error('Error loading dropdowns:', error);
@@ -369,7 +501,34 @@
             try {
                 const response = await fetch(`${API_BASE}/feestructure`);
                 if (response.ok) {
-                    const data = await response.json();
+                    let data = await response.json();
+
+                    const filterCampusVal = $('#filterCampus').val();
+                    const filterSessionVal = $('#filterSession').val();
+                    const filterClassVal = $('#filterClass').val();
+                    const filterGradeVal = $('#filterGrade').val();
+                    const filterFeeTypeVal = $('#filterFeeType').val();
+                    const filterStatusVal = $('#filterStatus').val();
+
+                    if (filterCampusVal) {
+                        data = data.filter(item => item.campusID && item.campusID.toString() === filterCampusVal);
+                    }
+                    if (filterSessionVal) {
+                        data = data.filter(item => item.academicSessionID && item.academicSessionID.toString() === filterSessionVal);
+                    }
+                    if (filterClassVal) {
+                        data = data.filter(item => item.classID && item.classID.toString() === filterClassVal);
+                    }
+                    if (filterGradeVal) {
+                        data = data.filter(item => item.gradeID && item.gradeID.toString() === filterGradeVal);
+                    }
+                    if (filterFeeTypeVal) {
+                        data = data.filter(item => item.feeTypeID && item.feeTypeID.toString() === filterFeeTypeVal);
+                    }
+                    if (filterStatusVal) {
+                        data = data.filter(item => item.isActive.toString() === filterStatusVal);
+                    }
+
                     renderList(data);
                 } else {
                     showAlert('Failed to load fee structures', 'danger');
@@ -387,7 +546,7 @@
             tbody.empty();
 
             if (items.length === 0) {
-                tbody.html('<tr><td colspan="8" class="text-center text-muted py-4">No fee structures found. Add a new fee structure using the form above.</td></tr>');
+                tbody.html('<tr><td colspan="9" class="text-center text-muted py-4">No fee structures found. Add a new fee structure using the form above.</td></tr>');
                 return;
             }
 
@@ -395,6 +554,7 @@
                 const row = `
                     <tr data-id="${item.vid}" class="${editingId === item.vid ? 'selected' : ''}">
                         <td>${index + 1}</td>
+                        <td>${item.campusName || ''}</td>
                         <td>${item.academicSessionName || ''}</td>
                         <td>${item.className || ''}</td>
                         <td>${item.gradeName || ''}</td>
@@ -477,6 +637,7 @@
 
         function populateForm(data) {
             $('#feeStructureId').val(data.vid);
+            $('#campusId').val(data.campusID).trigger('change');
             $('#academicSessionId').val(data.academicSessionID).trigger('change');
             $('#classId').val(data.classID).trigger('change');
             $('#gradeId').val(data.gradeID).trigger('change');
@@ -487,6 +648,7 @@
 
         function resetForm() {
             $('#feeStructureId').val('0');
+            $('#campusId').val('').trigger('change');
             $('#academicSessionId').val('').trigger('change');
             $('#classId').val('').trigger('change');
             $('#gradeId').val('').trigger('change');
@@ -498,13 +660,29 @@
             $('#feeStructuresBody tr').removeClass('selected');
         }
 
+        function clearFilters() {
+            $('#filterCampus').val('').trigger('change');
+            $('#filterSession').val('').trigger('change');
+            $('#filterClass').val('').trigger('change');
+            $('#filterGrade').val('').trigger('change');
+            $('#filterFeeType').val('').trigger('change');
+            $('#filterStatus').val('').trigger('change');
+            loadFeeStructures();
+        }
+
         async function saveFeeStructure() {
+            const campusID = $('#campusId').val();
             const academicSessionID = $('#academicSessionId').val();
             const classID = $('#classId').val();
             const gradeID = $('#gradeId').val();
             const feeTypeID = $('#feeTypeId').val();
             const amount = $('#amount').val();
 
+            if (!campusID) {
+                showAlert('Please select a Campus', 'danger');
+                $('#campusId').focus();
+                return;
+            }
             if (!academicSessionID) {
                 showAlert('Please select an Academic Session', 'danger');
                 $('#academicSessionId').focus();
@@ -534,6 +712,7 @@
             const id = parseInt($('#feeStructureId').val()) || 0;
             const data = {
                 VID: id,
+                CampusID: parseInt(campusID),
                 AcademicSessionID: parseInt(academicSessionID),
                 ClassID: parseInt(classID),
                 GradeID: parseInt(gradeID),

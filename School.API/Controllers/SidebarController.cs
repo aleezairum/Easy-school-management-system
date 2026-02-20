@@ -104,6 +104,7 @@ namespace School.API.Controllers
                                 {
                                     new MenuItemDto { Id = 5, Title = "Academic Session Year", Icon = "bi-calendar-range", Url = "/Sessions", Order = 1, Section = "Academic" },
                                     new MenuItemDto { Id = 6, Title = "Academic Grade", Icon = "bi-award-fill", Url = "/AcademicGrade", Order = 2, Section = "Academic" },
+                                    new MenuItemDto { Id = 27, Title = "Campus", Icon = "bi-buildings", Url = "/Campus", Order = 3, Section = "Academic" },
                                     new MenuItemDto { Id = 7, Title = "Class", Icon = "bi-building", Url = "/Classes", Order = 4, Section = "Academic" },
                                     new MenuItemDto { Id = 8, Title = "Section", Icon = "bi-diagram-3-fill", Url = "/Sections", Order = 3, Section = "Academic" },
                                     new MenuItemDto { Id = 9, Title = "Subject", Icon = "bi-journal-bookmark-fill", Url = "/Subjects", Order = 5, Section = "Academic" },

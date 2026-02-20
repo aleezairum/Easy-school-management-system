@@ -1,19 +1,15 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace School.API.Data.DBModels.Accounts
+namespace School.API.Data.DBModels.Academic
 {
-    public class SMSFeeType
+    public class Campus
     {
         [Key]
         public int VID { get; set; }
-        public int FeeType { get; set; }
 
         [Required]
         [StringLength(100)]
         public string VName { get; set; } = string.Empty;
-
-        [StringLength(20)]
-        public string Frequency { get; set; } = "Monthly";
 
         public bool IsActive { get; set; } = true;
 
@@ -23,9 +19,5 @@ namespace School.API.Data.DBModels.Accounts
         public int? UpdatedBy { get; set; }
         public DateTime? UpdatedDate { get; set; }
         public string? UpdatedIp { get; set; }
-
-        // Navigation properties
-        public virtual ICollection<SMSSection> Sections { get; set; } = new List<SMSSection>();
-        public virtual ICollection<SMSSubject> Subjects { get; set; } = new List<SMSSubject>();
     }
 }

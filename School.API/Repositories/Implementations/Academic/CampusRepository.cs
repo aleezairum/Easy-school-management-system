@@ -1,36 +1,37 @@
 using Microsoft.EntityFrameworkCore;
 using School.API.Data;
-using School.API.DTOs.Accounts;
+using School.API.Data.DBModels.Academic;
+using School.API.DTOs.Academic;
 using School.API.DTOs.Common;
-using School.API.Repositories.Interfaces.Accounts;
+using School.API.Repositories.Interfaces.Academic;
 
-namespace School.API.Repositories.Implementations.Accounts
+namespace School.API.Repositories.Implementations.Academic
 {
-    public class FeeStructureRepository : IFeeStructureRepository
+    public class CampusRepository : ICampusRepository
     {
         private readonly SchoolDbContext _context;
 
-        public FeeStructureRepository(SchoolDbContext context)
+        public CampusRepository(SchoolDbContext context)
         {
             _context = context;
         }
 
-        public async Task<List<FeeStructureSaveDto>> GetAllAsync()
+        public async Task<List<Campus>> GetAllAsync()
         {
             var resultList = await _context
-                .Set<FeeStructureSaveDto>()
-                .FromSqlRaw("EXEC SpGet_FeeStructure @VID={0}", 0)
+                .Set<Campus>()
+                .FromSqlRaw("EXEC SpGet_Campus @VID={0}", 0)
                 .AsNoTracking()
                 .ToListAsync();
 
             return resultList;
         }
 
-        public async Task<FeeStructureSaveDto?> GetByIdAsync(int vid)
+        public async Task<Campus?> GetByIdAsync(int vid)
         {
             var resultList = await _context
-                .Set<FeeStructureSaveDto>()
-                .FromSqlRaw("EXEC SpGet_FeeStructure @VID={0}", vid)
+                .Set<Campus>()
+                .FromSqlRaw("EXEC SpGet_Campus @VID={0}", vid)
                 .AsNoTracking()
                 .ToListAsync();
 
@@ -41,26 +42,21 @@ namespace School.API.Repositories.Implementations.Accounts
         {
             var resultList = await _context
                 .Set<ResponseDto>()
-                .FromSqlRaw("EXEC SpDelete_FeeStructure @VID={0}", vid)
+                .FromSqlRaw("EXEC SpDelete_Campus @VID={0}", vid)
                 .AsNoTracking()
                 .ToListAsync();
 
             return resultList.FirstOrDefault();
         }
 
-        public async Task<ResponseDto> SaveAsync(FeeStructureSaveDto dto, int userId, string userIp)
+        public async Task<ResponseDto> SaveAsync(CampusSaveDto dto, int userId, string userIp)
         {
             var resultList = await _context
                 .Set<ResponseDto>()
                 .FromSqlRaw(
-                    "EXEC SpSave_FeeStructure @VID={0}, @CampusID={1}, @AcademicSessionID={2}, @ClassID={3}, @GradeID={4}, @FeeTypeID={5}, @Amount={6}, @IsActive={7}, @UserID={8}, @UserIP={9}",
+                    "EXEC SpSave_Campus @VID={0}, @VName={1}, @IsActive={2}, @UserID={3}, @UserIP={4}",
                     dto.VID,
-                    dto.CampusID,
-                    dto.AcademicSessionID,
-                    dto.ClassID,
-                    dto.GradeID,
-                    dto.FeeTypeID,
-                    dto.Amount,
+                    dto.VName,
                     dto.IsActive,
                     userId,
                     userIp)

@@ -60,10 +60,10 @@ namespace School.API.Repositories.Implementations.Accounts
             var resultList = await _context
                 .Set<ResponseDto>()
                 .FromSqlRaw(
-                    "EXEC SpSave_SMSFeeType @VID={0}, @VName={1}, @VName={2}, @IsActive={3}, @UserID={4}, @UserIP={5}",
+                    "EXEC SpSave_FeeType @VID={0}, @VName={1}, @Frequency={2}, @IsActive={3}, @UserID={4}, @UserIP={5}",
                     dto.VID,
-                    dto.FeeType,
                     dto.VName,
+                    dto.Frequency,
                     dto.IsActive,
                     userId,
                     userIp)

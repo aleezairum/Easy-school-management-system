@@ -7,6 +7,7 @@ IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'FeeStructures')
 BEGIN
     CREATE TABLE FeeStructures (
         VID INT IDENTITY(1,1) PRIMARY KEY,
+        CampusID INT NOT NULL,
         AcademicSessionID INT NOT NULL,
         ClassID INT NOT NULL,
         GradeID INT NOT NULL,
@@ -19,12 +20,28 @@ BEGIN
         UpdatedBy INT NULL,
         UpdatedDate DATETIME NULL,
         UpdatedIp NVARCHAR(50) NULL,
+        CONSTRAINT FK_FeeStructures_Campus FOREIGN KEY (CampusID) REFERENCES Campus(VID),
         CONSTRAINT FK_FeeStructures_AcademicSession FOREIGN KEY (AcademicSessionID) REFERENCES AcademicSessionYears(VID),
         CONSTRAINT FK_FeeStructures_Class FOREIGN KEY (ClassID) REFERENCES SMSClasses(VID),
         CONSTRAINT FK_FeeStructures_Grade FOREIGN KEY (GradeID) REFERENCES AcademicGrades(Id),
         CONSTRAINT FK_FeeStructures_FeeType FOREIGN KEY (FeeTypeID) REFERENCES FeeTypes(VID),
-        CONSTRAINT UQ_FeeStructures_Combination UNIQUE (AcademicSessionID, ClassID, GradeID, FeeTypeID)
+        CONSTRAINT UQ_FeeStructures_Combination UNIQUE (CampusID, AcademicSessionID, ClassID, GradeID, FeeTypeID)
     );
+END
+GO
+
+-- If table already exists, add CampusID column
+IF EXISTS (SELECT * FROM sys.tables WHERE name = 'FeeStructures')
+   AND NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('FeeStructures') AND name = 'CampusID')
+BEGIN
+    ALTER TABLE FeeStructures ADD CampusID INT NULL;
+
+    -- Drop old unique constraint and add new one with CampusID
+    IF EXISTS (SELECT * FROM sys.key_constraints WHERE name = 'UQ_FeeStructures_Combination')
+        ALTER TABLE FeeStructures DROP CONSTRAINT UQ_FeeStructures_Combination;
+
+    -- Add FK
+    ALTER TABLE FeeStructures ADD CONSTRAINT FK_FeeStructures_Campus FOREIGN KEY (CampusID) REFERENCES Campus(VID);
 END
 GO
 
@@ -43,12 +60,14 @@ BEGIN
     BEGIN
         SELECT
             fs.VID,
+            fs.CampusID,
             fs.AcademicSessionID,
             fs.ClassID,
             fs.GradeID,
             fs.FeeTypeID,
             fs.Amount,
             fs.IsActive,
+            cam.VName AS CampusName,
             asy.VName AS AcademicSessionName,
             c.VName AS ClassName,
             ag.Name AS GradeName,
@@ -60,6 +79,7 @@ BEGIN
             fs.UpdatedDate,
             fs.UpdatedIp
         FROM FeeStructures fs
+        LEFT JOIN Campus cam ON fs.CampusID = cam.VID
         INNER JOIN AcademicSessionYears asy ON fs.AcademicSessionID = asy.VID
         INNER JOIN SMSClasses c ON fs.ClassID = c.VID
         INNER JOIN AcademicGrades ag ON fs.GradeID = ag.Id
@@ -70,12 +90,14 @@ BEGIN
     BEGIN
         SELECT
             fs.VID,
+            fs.CampusID,
             fs.AcademicSessionID,
             fs.ClassID,
             fs.GradeID,
             fs.FeeTypeID,
             fs.Amount,
             fs.IsActive,
+            cam.VName AS CampusName,
             asy.VName AS AcademicSessionName,
             c.VName AS ClassName,
             ag.Name AS GradeName,
@@ -87,6 +109,7 @@ BEGIN
             fs.UpdatedDate,
             fs.UpdatedIp
         FROM FeeStructures fs
+        LEFT JOIN Campus cam ON fs.CampusID = cam.VID
         INNER JOIN AcademicSessionYears asy ON fs.AcademicSessionID = asy.VID
         INNER JOIN SMSClasses c ON fs.ClassID = c.VID
         INNER JOIN AcademicGrades ag ON fs.GradeID = ag.Id
@@ -103,6 +126,7 @@ GO
 
 CREATE PROCEDURE SpSave_FeeStructure
     @VID INT,
+    @CampusID INT,
     @AcademicSessionID INT,
     @ClassID INT,
     @GradeID INT,
@@ -118,7 +142,8 @@ BEGIN
     -- Check for duplicate combination (excluding current record on update)
     IF EXISTS (
         SELECT 1 FROM FeeStructures
-        WHERE AcademicSessionID = @AcademicSessionID
+        WHERE CampusID = @CampusID
+          AND AcademicSessionID = @AcademicSessionID
           AND ClassID = @ClassID
           AND GradeID = @GradeID
           AND FeeTypeID = @FeeTypeID
@@ -132,8 +157,8 @@ BEGIN
     IF @VID = 0
     BEGIN
         -- INSERT
-        INSERT INTO FeeStructures (AcademicSessionID, ClassID, GradeID, FeeTypeID, Amount, IsActive, InsertedBy, InsertedDate, InsertedIp)
-        VALUES (@AcademicSessionID, @ClassID, @GradeID, @FeeTypeID, @Amount, @IsActive, @UserID, GETUTCDATE(), @UserIP);
+        INSERT INTO FeeStructures (CampusID, AcademicSessionID, ClassID, GradeID, FeeTypeID, Amount, IsActive, InsertedBy, InsertedDate, InsertedIp)
+        VALUES (@CampusID, @AcademicSessionID, @ClassID, @GradeID, @FeeTypeID, @Amount, @IsActive, @UserID, GETUTCDATE(), @UserIP);
 
         SELECT CAST(SCOPE_IDENTITY() AS DECIMAL) AS VID, 0 AS ReturnCode, 'Fee structure saved successfully.' AS ReturnMessage;
     END
@@ -147,7 +172,8 @@ BEGIN
         END
 
         UPDATE FeeStructures
-        SET AcademicSessionID = @AcademicSessionID,
+        SET CampusID = @CampusID,
+            AcademicSessionID = @AcademicSessionID,
             ClassID = @ClassID,
             GradeID = @GradeID,
             FeeTypeID = @FeeTypeID,

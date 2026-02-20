@@ -7,6 +7,7 @@ namespace School.API.Data.DBModels.Accounts
         [Key]
         public int VID { get; set; }
 
+        public int CampusID { get; set; }
         public int AcademicSessionID { get; set; }
         public int ClassID { get; set; }
         public int GradeID { get; set; }
