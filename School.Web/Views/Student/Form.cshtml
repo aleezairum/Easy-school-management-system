@@ -839,7 +839,14 @@
                             </tr>
                             <tr>
                                 <td class="lbl">Father's CNIC</td>
-                                <td class="val">@Html.TextBoxFor(m => m.FatherCNIC, new { @placeholder = "XXXXX-XXXXXXX-X" })</td>
+                                <td class="val">
+                                    <div class="d-flex gap-2">
+                                        @Html.TextBoxFor(m => m.FatherCNIC, new { @placeholder = "XXXXX-XXXXXXX-X", @style = "flex:1" })
+                                        <button type="button" class="btn btn-sm btn-outline-success d-flex align-items-center gap-1" onclick="searchByCNIC()" title="Search by CNIC">
+                                            <i class="bi bi-search"></i> Search
+                                        </button>
+                                    </div>
+                                </td>
                                 <td class="lbl">Occupation</td>
                                 <td class="val">@Html.TextBoxFor(m => m.FatherOccupation, new { @placeholder = "Profession/Job" })</td>
                             </tr>
@@ -1129,6 +1136,55 @@
                 }
             } catch (error) {
                 console.error('Error loading sections:', error);
+            }
+        }
+
+        // Search parent data by Father CNIC
+        async function searchByCNIC() {
+            const cnic = $('#FatherCNIC').val().trim();
+            if (!cnic) {
+                showAlert('Please enter Father CNIC to search', 'warning');
+                $('#FatherCNIC').focus();
+                return;
+            }
+
+            $('#loadingOverlay').show();
+            try {
+                const response = await fetch(`${API_BASE}/student/by-father-cnic/${encodeURIComponent(cnic)}`);
+                if (response.ok) {
+                    const data = await response.json();
+
+                    // Fill Father fields
+                    $('#FatherName').val(data.fatherName || '');
+                    $('#FatherNameUrdu').val(data.fatherNameUrdu || '');
+                    $('#FatherCNIC').val(data.fatherCNIC || '');
+                    $('#FatherOccupation').val(data.fatherOccupation || '');
+                    $('#FatherMobile').val(data.fatherMobile || '');
+
+                    // Fill Mother fields
+                    $('#MotherName').val(data.motherName || '');
+                    $('#MotherCNIC').val(data.motherCNIC || '');
+                    $('#MotherMobile').val(data.motherMobile || '');
+
+                    // Fill Guardian fields
+                    $('#GuardianName').val(data.guardianName || '');
+                    $('#GuardianCNIC').val(data.guardianCNIC || '');
+                    $('#GuardianRelation').val(data.guardianRelation || '');
+                    $('#GuardianMobile').val(data.guardianMobile || '');
+
+                    // Reset guardian radio to Other and enable fields
+                    $('#guardianOther').prop('checked', true);
+                    $('#GuardianName, #GuardianCNIC, #GuardianRelation, #GuardianMobile').prop('disabled', false);
+
+                    showAlert('Parent data found and auto-filled successfully!', 'success');
+                } else {
+                    showAlert('No record found against this CNIC', 'warning');
+                }
+            } catch (error) {
+                console.error('Error searching by CNIC:', error);
+                showAlert('Error searching by CNIC: ' + error.message, 'danger');
+            } finally {
+                $('#loadingOverlay').hide();
             }
         }
 

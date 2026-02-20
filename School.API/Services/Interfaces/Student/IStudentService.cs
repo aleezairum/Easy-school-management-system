@@ -12,5 +12,6 @@ namespace School.API.Services.Interfaces.Student
         Task<StudentDto?> UpdateAsync(UpdateStudentDto dto);
         Task<bool> DeleteAsync(int id);
         Task<bool> ExistsByAdmissionIdAsync(int admissionId);
+        Task<StudentDto?> GetByFatherCNICAsync(string cnic);
     }
 }

@@ -63,5 +63,10 @@ namespace School.API.Services.Implementations.Student
         {
             return await _repository.ExistsByAdmissionIdAsync(admissionId);
         }
+
+        public async Task<StudentDto?> GetByFatherCNICAsync(string cnic)
+        {
+            return await _repository.GetByFatherCNICAsync(cnic);
+        }
     }
 }

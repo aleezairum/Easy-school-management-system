@@ -359,5 +359,29 @@ namespace School.API.Repositories.Implementations.Student
         {
             return await _context.Students.AnyAsync(s => s.AdmissionId == admissionId);
         }
+
+        public async Task<StudentDto?> GetByFatherCNICAsync(string cnic)
+        {
+            return await _context.Students
+                .Where(s => s.IsActive && s.FatherCNIC == cnic)
+                .OrderByDescending(s => s.CreatedAt)
+                .Select(s => new StudentDto
+                {
+                    Id = s.Id,
+                    FatherName = s.FatherName,
+                    FatherNameUrdu = s.FatherNameUrdu,
+                    FatherCNIC = s.FatherCNIC,
+                    FatherOccupation = s.FatherOccupation,
+                    FatherMobile = s.FatherMobile,
+                    MotherName = s.MotherName,
+                    MotherCNIC = s.MotherCNIC,
+                    MotherMobile = s.MotherMobile,
+                    GuardianName = s.GuardianName,
+                    GuardianCNIC = s.GuardianCNIC,
+                    GuardianRelation = s.GuardianRelation,
+                    GuardianMobile = s.GuardianMobile
+                })
+                .FirstOrDefaultAsync();
+        }
     }
 }

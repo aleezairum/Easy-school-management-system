@@ -99,6 +99,16 @@ namespace School.API.Controllers.Student
             return Ok(new { message = "Student deleted successfully" });
         }
 
+        [HttpGet("by-father-cnic/{cnic}")]
+        public async Task<IActionResult> GetByFatherCNIC(string cnic)
+        {
+            var student = await _service.GetByFatherCNICAsync(cnic);
+            if (student == null)
+                return NotFound(new { message = "No record found" });
+
+            return Ok(student);
+        }
+
         [HttpGet("exists-by-admission/{admissionId}")]
         public async Task<IActionResult> ExistsByAdmissionId(int admissionId)
         {
