@@ -1,14 +1,16 @@
-using Microsoft.AspNetCore.Mvc;
-using School.API.DTOs.Accounts;
-using School.API.Services.Interfaces.Accounts;
+﻿using Microsoft.AspNetCore.Mvc;
+using School.API.DTOs.FeeManagement;
+using School.API.Services.Interfaces.FeeManagement;
+
 
 [ApiController]
 [Route("api/[controller]")]
+//[Authorize]
 public class FeeTypeController : ControllerBase
 {
-    private readonly IFeeTypeService _service;
+    private readonly ISMSClassService _service;
 
-    public FeeTypeController(IFeeTypeService service)
+    public FeeTypeController(ISMSClassService service)
     {
         _service = service;
     }
@@ -27,14 +29,13 @@ public class FeeTypeController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteById(int id)
+    public async Task<IActionResult>DeleteById(int id)
     {
         var record = await _service.DeleteByIdAsync(id);
         return record == null ? NotFound() : Ok(record);
     }
-
     [HttpPost]
-    public async Task<IActionResult> Save(FeeTypeSaveDto dto)
+    public async Task<IActionResult> Save(SMSClassSaveDto dto)
     {
         int userId = 1; // later from JWT
         string userIp = HttpContext.Connection.RemoteIpAddress?.ToString();

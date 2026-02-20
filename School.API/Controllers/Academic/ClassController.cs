@@ -7,11 +7,11 @@ using School.API.Services.Interfaces.Academic;
 [ApiController]
 [Route("api/[controller]")]
 //[Authorize]
-public class ClassController : ControllerBase
+public class FeeTypeController : ControllerBase
 {
-    private readonly ISMSClassService _service;
+    private readonly ISMSFeeTypeService _service;
 
-    public ClassController(ISMSClassService service)
+    public FeeTypeController(ISMSFeeTypeService service)
     {
         _service = service;
     }

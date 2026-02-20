@@ -9,19 +9,19 @@ using School.API.Repositories.Interfaces.Academic;
 
 namespace School.API.Repositories.Implementations.Academic
 {
-    public class SMSClassRepository : ISMSClassRepository
+    public class FeeTypeRepository : ISMSClassRepository
     {
         private readonly SchoolDbContext _context;
 
-        public SMSClassRepository(SchoolDbContext context)
+        public FeeTypeRepository(SchoolDbContext context)
         {
             _context = context;
         }
 
-        public async Task<List<SMSClass>> GetAllAsync()
+        public async Task<List<SMSFeeType>> GetAllAsync()
         {
             var resultList = await _context
-                .Set<SMSClass>()
+                .Set<SMSFeeType>()
                 .FromSqlRaw("EXEC SpGet_SMSClass @VID={0}", 0) // 0 to get all
                 .AsNoTracking()
                 .ToListAsync();
@@ -30,10 +30,10 @@ namespace School.API.Repositories.Implementations.Academic
         }
 
 
-        public async Task<SMSClass?> GetByIdAsync(int vid)
+        public async Task<SMSFeeType?> GetByIdAsync(int vid)
         {
             var resultList = await _context
-                .Set<SMSClass>()
+                .Set<SMSFeeType>()
                 .FromSqlRaw("EXEC SpGet_SMSClass @VID={0}", vid)
                 .AsNoTracking()
                 .ToListAsync();

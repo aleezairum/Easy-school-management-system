@@ -2,9 +2,9 @@
 using School.API.DTOs.Academic;
 using School.API.DTOs.Common;
 
-namespace School.API.Services.Interfaces.Academic
+namespace School.API.Repositories.Interfaces.Accounts
 {
-    public interface ISMSFeeTypeService
+    public interface IFeeTypeRepository
     {
         Task<ResponseDto> SaveAsync(
             SMSClassSaveDto dto,

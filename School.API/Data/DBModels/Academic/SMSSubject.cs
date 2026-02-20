@@ -26,6 +26,6 @@ namespace School.API.Data.DBModels.Academic
 
         // Navigation property
         [ForeignKey("ClassID")]
-        public virtual SMSClass? Class { get; set; }
+        public virtual SMSFeeType? Class { get; set; }
     }
 }

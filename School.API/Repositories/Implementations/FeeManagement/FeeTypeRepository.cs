@@ -1,8 +1,11 @@
+﻿using Humanizer;
 using Microsoft.EntityFrameworkCore;
 using School.API.Data;
 using School.API.Data.DBModels.Accounts;
-using School.API.DTOs.Accounts;
+using School.API.DTOs.Academic;
 using School.API.DTOs.Common;
+using School.API.DTOs.FeeManagement;
+using School.API.Models;
 using School.API.Repositories.Interfaces.Accounts;
 
 namespace School.API.Repositories.Implementations.Accounts
@@ -16,22 +19,23 @@ namespace School.API.Repositories.Implementations.Accounts
             _context = context;
         }
 
-        public async Task<List<FeeType>> GetAllAsync()
+        public async Task<List<SMSFeeType>> GetAllAsync()
         {
             var resultList = await _context
-                .Set<FeeType>()
-                .FromSqlRaw("EXEC SpGet_FeeType @VID={0}", 0)
+                .Set<SMSFeeType>()
+                .FromSqlRaw("EXEC SpGet_SMSFeeType @VID={0}", 0) // 0 to get all
                 .AsNoTracking()
                 .ToListAsync();
 
             return resultList;
         }
 
-        public async Task<FeeType?> GetByIdAsync(int vid)
+
+        public async Task<SMSFeeType?> GetByIdAsync(int vid)
         {
             var resultList = await _context
-                .Set<FeeType>()
-                .FromSqlRaw("EXEC SpGet_FeeType @VID={0}", vid)
+                .Set<SMSFeeType>()
+                .FromSqlRaw("EXEC SpGet_SMSFeeType @VID={0}", vid)
                 .AsNoTracking()
                 .ToListAsync();
 
@@ -42,15 +46,17 @@ namespace School.API.Repositories.Implementations.Accounts
         {
             var resultList = await _context
                 .Set<ResponseDto>()
-                .FromSqlRaw("EXEC SpDelete_FeeType @VID={0}", vid)
+                .FromSqlRaw("EXEC SpDelete_SMSFeeType @VID={0}", vid)
                 .AsNoTracking()
                 .ToListAsync();
 
             return resultList.FirstOrDefault();
         }
 
+
         public async Task<ResponseDto> SaveAsync(FeeTypeSaveDto dto, int userId, string userIp)
         {
+            // Execute the stored procedure
             var resultList = await _context
                 .Set<ResponseDto>()
                 .FromSqlRaw(
@@ -62,10 +68,27 @@ namespace School.API.Repositories.Implementations.Accounts
                     userId,
                     userIp)
                 .AsNoTracking()
-                .ToListAsync();
+                .ToListAsync(); // materialize results in memory
 
+            // Safely get the first (or single) record
             var result = resultList.FirstOrDefault();
+
             return result;
+        }
+
+        public Task<ResponseDto> SaveAsync(SMSClassSaveDto dto, int userId, string userIp)
+        {
+            throw new NotImplementedException();
+        }
+
+        Task<List<Data.DBModels.Academic.SMSFeeType>> IFeeTypeRepository.GetAllAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        Task<Data.DBModels.Academic.SMSFeeType?> IFeeTypeRepository.GetByIdAsync(int id)
+        {
+            throw new NotImplementedException();
         }
     }
 }

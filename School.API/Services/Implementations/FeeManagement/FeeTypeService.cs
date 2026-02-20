@@ -7,11 +7,11 @@ using School.API.Services.Interfaces.Academic;
 
 namespace School.API.Services.Implementations.Academic
 {
-    public class SMSClassService : ISMSFeeTypeService
+    public class FeeTypeService : ISMSFeeTypeService
     {
         private readonly ISMSClassRepository _repo;
 
-        public SMSClassService(ISMSClassRepository repo)
+        public FeeTypeService(ISMSClassRepository repo)
         {
             _repo = repo;
         }
