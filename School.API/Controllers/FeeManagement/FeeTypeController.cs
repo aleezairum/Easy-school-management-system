@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using School.API.DTOs.FeeManagement;
-using School.API.Services.Interfaces.FeeManagement;
+using School.API.Services.Interfaces.Accounts;
 
 
 [ApiController]
@@ -8,9 +8,9 @@ using School.API.Services.Interfaces.FeeManagement;
 //[Authorize]
 public class FeeTypeController : ControllerBase
 {
-    private readonly ISMSClassService _service;
+    private readonly ISMSFeeTypeService _service;
 
-    public FeeTypeController(ISMSClassService service)
+    public FeeTypeController(ISMSFeeTypeService service)
     {
         _service = service;
     }
@@ -35,7 +35,7 @@ public class FeeTypeController : ControllerBase
         return record == null ? NotFound() : Ok(record);
     }
     [HttpPost]
-    public async Task<IActionResult> Save(SMSClassSaveDto dto)
+    public async Task<IActionResult> Save(FeeTypeSaveDto dto)
     {
         int userId = 1; // later from JWT
         string userIp = HttpContext.Connection.RemoteIpAddress?.ToString();

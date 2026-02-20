@@ -7,7 +7,7 @@ using School.API.Services.Interfaces.Academic;
 
 namespace School.API.Services.Implementations.Academic
 {
-    public class SMSClassService : ISMSFeeTypeService
+    public class SMSClassService : ISMSClassService
     {
         private readonly ISMSClassRepository _repo;
 
@@ -22,10 +22,10 @@ namespace School.API.Services.Implementations.Academic
             string userIp)
             => _repo.SaveAsync(dto, userId, userIp);
 
-        public Task<List<SMSFeeType>> GetAllAsync()
+        public Task<List<SMSClass>> GetAllAsync()
             => _repo.GetAllAsync();
 
-        public Task<SMSFeeType?> GetByIdAsync(int id)
+        public Task<SMSClass?> GetByIdAsync(int id)
             => _repo.GetByIdAsync(id);
 
         public Task<ResponseDto?> DeleteByIdAsync(int id)

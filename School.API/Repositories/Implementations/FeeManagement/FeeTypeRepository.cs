@@ -76,19 +76,6 @@ namespace School.API.Repositories.Implementations.Accounts
             return result;
         }
 
-        public Task<ResponseDto> SaveAsync(SMSClassSaveDto dto, int userId, string userIp)
-        {
-            throw new NotImplementedException();
-        }
-
-        Task<List<Data.DBModels.Academic.SMSFeeType>> IFeeTypeRepository.GetAllAsync()
-        {
-            throw new NotImplementedException();
-        }
-
-        Task<Data.DBModels.Academic.SMSFeeType?> IFeeTypeRepository.GetByIdAsync(int id)
-        {
-            throw new NotImplementedException();
-        }
+       
     }
 }

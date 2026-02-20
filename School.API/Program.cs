@@ -83,7 +83,7 @@ builder.Services.AddScoped<IExamService, ExamService>();
 
 // Accounts Services
 builder.Services.AddScoped<IFeeTypeRepository, FeeTypeRepository>();
-builder.Services.AddScoped<IFeeTypeService, FeeTypeService>();
+builder.Services.AddScoped<ISMSFeeTypeService, FeeTypeService>();
 builder.Services.AddScoped<IFeeStructureRepository, FeeStructureRepository>();
 builder.Services.AddScoped<IFeeStructureService, FeeStructureService>();
 //builder.Services.AddScoped<IPaymentMethodRepository, PaymentMethodRepository>();

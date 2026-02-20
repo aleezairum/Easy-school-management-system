@@ -7,6 +7,7 @@ using School.API.DTOs;
 using School.API.DTOs.Academic;
 using School.API.DTOs.Accounts;
 using School.API.DTOs.Common;
+using School.API.DTOs.FeeManagement;
 using School.API.Models;
 
 namespace School.API.Data
@@ -25,7 +26,7 @@ namespace School.API.Data
         public DbSet<UserRole> UserRoles { get; set; }
 
         // Academic entities
-        public DbSet<SMSFeeType> SMSClasses { get; set; }
+        public DbSet<SMSClass> SMSClasses { get; set; }
         public DbSet<SMSSection> SMSSections { get; set; }
         public DbSet<SMSSubject> SMSSubjects { get; set; }
         public DbSet<AcademicSessionYear> AcademicSessionYears { get; set; }
@@ -46,7 +47,7 @@ namespace School.API.Data
         public DbSet<Campus> Campuses { get; set; }
 
         // Accounts entities
-        public DbSet<FeeType> FeeTypes { get; set; }
+        public DbSet<SMSFeeType> FeeTypes { get; set; }
         public DbSet<FeeStructure> FeeStructures { get; set; }
 
         // Keyless entities

@@ -1,23 +1,27 @@
 ﻿using School.API.Data.DBModels.Academic;
+using School.API.Data.DBModels.Accounts;
 using School.API.DTOs.Academic;
 using School.API.DTOs.Common;
+using School.API.DTOs.FeeManagement;
 using School.API.Repositories.Implementations.Academic;
 using School.API.Repositories.Interfaces.Academic;
+using School.API.Repositories.Interfaces.Accounts;
 using School.API.Services.Interfaces.Academic;
+using School.API.Services.Interfaces.Accounts;
 
 namespace School.API.Services.Implementations.Academic
 {
     public class FeeTypeService : ISMSFeeTypeService
     {
-        private readonly ISMSClassRepository _repo;
+        private readonly IFeeTypeRepository _repo;
 
-        public FeeTypeService(ISMSClassRepository repo)
+        public FeeTypeService(IFeeTypeRepository repo)
         {
             _repo = repo;
         }
 
         public Task<ResponseDto> SaveAsync(
-            SMSClassSaveDto dto,
+            FeeTypeSaveDto dto,
             int userId,
             string userIp)
             => _repo.SaveAsync(dto, userId, userIp);

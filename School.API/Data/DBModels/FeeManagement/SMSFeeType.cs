@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using School.API.Data.DBModels.Academic;
 
 namespace School.API.Data.DBModels.Accounts
 {
