@@ -13,6 +13,9 @@ namespace School.API.Repositories.Interfaces.Student
         Task<Models.Student?> UpdateAsync(UpdateStudentDto dto);
         Task<bool> DeleteAsync(int id);
         Task<bool> ExistsByAdmissionIdAsync(int admissionId);
+        Task<List<ParentLookupDto>> GetParentLookupsAsync();
         Task<StudentDto?> GetByFatherCNICAsync(string cnic);
+        Task<StudentDto?> GetByMotherCNICAsync(string cnic);
+        Task<StudentDto?> GetByGuardianCNICAsync(string cnic);
     }
 }

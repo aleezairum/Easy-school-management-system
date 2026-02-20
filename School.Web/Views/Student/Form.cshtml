@@ -830,6 +830,18 @@
                                 <p>Enter father's details and contact information</p>
                             </div>
                         </div>
+                        <div class="admission-import-section mb-3">
+                            <div class="alert alert-info d-flex align-items-center gap-3" style="background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); border: 2px solid #0ea5e9; border-radius: 12px;">
+                                <i class="bi bi-search fs-4 text-primary"></i>
+                                <div class="flex-grow-1">
+                                    <strong>Search by Father's CNIC</strong>
+                                    <p class="mb-2 small">Select an existing CNIC to auto-fill Father, Mother & Guardian details</p>
+                                    <select id="fatherCnicLookup" class="form-select" style="max-width: 500px;" onchange="loadParentByCNIC(this.value, 'father')">
+                                        <option value="">-- Select CNIC (Optional) --</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
                         <table class="admission-table">
                             <tr>
                                 <td class="lbl" style="width:18%">Father's Name</td>
@@ -839,14 +851,7 @@
                             </tr>
                             <tr>
                                 <td class="lbl">Father's CNIC</td>
-                                <td class="val">
-                                    <div class="d-flex gap-2">
-                                        @Html.TextBoxFor(m => m.FatherCNIC, new { @placeholder = "XXXXX-XXXXXXX-X", @style = "flex:1" })
-                                        <button type="button" class="btn btn-sm btn-outline-success d-flex align-items-center gap-1" onclick="searchByCNIC()" title="Search by CNIC">
-                                            <i class="bi bi-search"></i> Search
-                                        </button>
-                                    </div>
-                                </td>
+                                <td class="val">@Html.TextBoxFor(m => m.FatherCNIC, new { @placeholder = "XXXXX-XXXXXXX-X" })</td>
                                 <td class="lbl">Occupation</td>
                                 <td class="val">@Html.TextBoxFor(m => m.FatherOccupation, new { @placeholder = "Profession/Job" })</td>
                             </tr>
@@ -874,6 +879,18 @@
                             <div class="tab-header-text">
                                 <h6>Mother's Information</h6>
                                 <p>Enter mother's details and contact information</p>
+                            </div>
+                        </div>
+                        <div class="admission-import-section mb-3">
+                            <div class="alert alert-info d-flex align-items-center gap-3" style="background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); border: 2px solid #0ea5e9; border-radius: 12px;">
+                                <i class="bi bi-search fs-4 text-primary"></i>
+                                <div class="flex-grow-1">
+                                    <strong>Search by Mother's CNIC</strong>
+                                    <p class="mb-2 small">Select an existing CNIC to auto-fill Father, Mother & Guardian details</p>
+                                    <select id="motherCnicLookup" class="form-select" style="max-width: 500px;" onchange="loadParentByCNIC(this.value, 'mother')">
+                                        <option value="">-- Select CNIC (Optional) --</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                         <table class="admission-table">
@@ -907,6 +924,18 @@
                             <div class="tab-header-text">
                                 <h6>Guardian's Information</h6>
                                 <p>Enter guardian details (if different from parents)</p>
+                            </div>
+                        </div>
+                        <div class="admission-import-section mb-3">
+                            <div class="alert alert-info d-flex align-items-center gap-3" style="background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); border: 2px solid #0ea5e9; border-radius: 12px;">
+                                <i class="bi bi-search fs-4 text-primary"></i>
+                                <div class="flex-grow-1">
+                                    <strong>Search by Guardian's CNIC</strong>
+                                    <p class="mb-2 small">Select an existing CNIC to auto-fill Father, Mother & Guardian details</p>
+                                    <select id="guardianCnicLookup" class="form-select" style="max-width: 500px;" onchange="loadParentByCNIC(this.value, 'guardian')">
+                                        <option value="">-- Select CNIC (Optional) --</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                         <div class="d-flex gap-4 mb-3 ms-2">
@@ -1079,8 +1108,9 @@
                 goToStep(stepIndex);
             });
 
-            // Load class dropdown
+            // Load dropdowns
             loadClassDropdown();
+            loadParentLookups();
 
             // Cascade section dropdown on class change
             $('#CurrentClass').on('change', function () {
@@ -1139,40 +1169,67 @@
             }
         }
 
-        // Search parent data by Father CNIC
-        async function searchByCNIC() {
-            const cnic = $('#FatherCNIC').val().trim();
-            if (!cnic) {
-                showAlert('Please enter Father CNIC to search', 'warning');
-                $('#FatherCNIC').focus();
-                return;
+        // Load parent CNIC lookup dropdowns
+        async function loadParentLookups() {
+            try {
+                const response = await fetch(`${API_BASE}/student/parent-lookups`);
+                if (!response.ok) return;
+                const data = await response.json();
+
+                const fatherSelect = $('#fatherCnicLookup');
+                const motherSelect = $('#motherCnicLookup');
+                const guardianSelect = $('#guardianCnicLookup');
+
+                const fatherSeen = new Set();
+                const motherSeen = new Set();
+                const guardianSeen = new Set();
+
+                data.forEach(s => {
+                    if (s.fatherCNIC && !fatherSeen.has(s.fatherCNIC)) {
+                        fatherSeen.add(s.fatherCNIC);
+                        fatherSelect.append(`<option value="${s.fatherCNIC}">${s.fatherCNIC} - ${s.fatherName || ''} (${s.nameOfStudent || ''})</option>`);
+                    }
+                    if (s.motherCNIC && !motherSeen.has(s.motherCNIC)) {
+                        motherSeen.add(s.motherCNIC);
+                        motherSelect.append(`<option value="${s.motherCNIC}">${s.motherCNIC} - ${s.motherName || ''} (${s.nameOfStudent || ''})</option>`);
+                    }
+                    if (s.guardianCNIC && !guardianSeen.has(s.guardianCNIC)) {
+                        guardianSeen.add(s.guardianCNIC);
+                        guardianSelect.append(`<option value="${s.guardianCNIC}">${s.guardianCNIC} - ${s.guardianName || ''} (${s.nameOfStudent || ''})</option>`);
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading parent lookups:', error);
             }
+        }
+
+        // Load parent data by CNIC from lookup dropdown
+        async function loadParentByCNIC(cnic, type) {
+            if (!cnic) return;
+
+            const endpoint = type === 'mother' ? 'by-mother-cnic' : type === 'guardian' ? 'by-guardian-cnic' : 'by-father-cnic';
 
             $('#loadingOverlay').show();
             try {
-                const response = await fetch(`${API_BASE}/student/by-father-cnic/${encodeURIComponent(cnic)}`);
+                const response = await fetch(`${API_BASE}/student/${endpoint}/${encodeURIComponent(cnic)}`);
                 if (response.ok) {
                     const data = await response.json();
 
-                    // Fill Father fields
                     $('#FatherName').val(data.fatherName || '');
                     $('#FatherNameUrdu').val(data.fatherNameUrdu || '');
                     $('#FatherCNIC').val(data.fatherCNIC || '');
                     $('#FatherOccupation').val(data.fatherOccupation || '');
                     $('#FatherMobile').val(data.fatherMobile || '');
 
-                    // Fill Mother fields
                     $('#MotherName').val(data.motherName || '');
                     $('#MotherCNIC').val(data.motherCNIC || '');
                     $('#MotherMobile').val(data.motherMobile || '');
 
-                    // Fill Guardian fields
                     $('#GuardianName').val(data.guardianName || '');
                     $('#GuardianCNIC').val(data.guardianCNIC || '');
                     $('#GuardianRelation').val(data.guardianRelation || '');
                     $('#GuardianMobile').val(data.guardianMobile || '');
 
-                    // Reset guardian radio to Other and enable fields
                     $('#guardianOther').prop('checked', true);
                     $('#GuardianName, #GuardianCNIC, #GuardianRelation, #GuardianMobile').prop('disabled', false);
 
@@ -1181,8 +1238,8 @@
                     showAlert('No record found against this CNIC', 'warning');
                 }
             } catch (error) {
-                console.error('Error searching by CNIC:', error);
-                showAlert('Error searching by CNIC: ' + error.message, 'danger');
+                console.error('Error loading parent data:', error);
+                showAlert('Error loading parent data: ' + error.message, 'danger');
             } finally {
                 $('#loadingOverlay').hide();
             }

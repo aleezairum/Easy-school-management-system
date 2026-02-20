@@ -95,6 +95,18 @@ namespace School.API.DTOs
         public bool IsActive { get; set; }
     }
 
+    public class ParentLookupDto
+    {
+        public int Id { get; set; }
+        public string? FatherCNIC { get; set; }
+        public string? FatherName { get; set; }
+        public string? MotherCNIC { get; set; }
+        public string? MotherName { get; set; }
+        public string? GuardianCNIC { get; set; }
+        public string? GuardianName { get; set; }
+        public string? NameOfStudent { get; set; }
+    }
+
     public class CreateStudentDto
     {
         // Link to Admission (optional - for syncing)
