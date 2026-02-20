@@ -35,6 +35,14 @@ public class SectionController : ControllerBase
         var record = await _service.DeleteByIdAsync(id);
         return record == null ? NotFound() : Ok(record);
     }
+    [HttpGet("byClass/{classId}")]
+    public async Task<IActionResult> GetByClass(int classId)
+    {
+        var allSections = await _service.GetAllAsync();
+        var filtered = allSections.Where(s => s.ClassID == classId).ToList();
+        return Ok(filtered);
+    }
+
     [HttpPost]
     public async Task<IActionResult> Save(SMSSectionSaveDto dto)
     {
