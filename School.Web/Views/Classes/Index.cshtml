@@ -292,7 +292,7 @@
                                 <th style="width: 60px;">Sr#</th>
                                 <th>Class Name</th>
                                 <th class="text-center" style="width: 100px;">Status</th>
-                                <th class="text-center" style="width: 150px;">Actions</th>
+                                <th class="text-center" style="width: 120px; white-space: nowrap;">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="classesBody">
@@ -348,10 +348,7 @@
 
             classes.forEach((cls, index) => {
                 const row = `
-
                     <tr data-id="${cls.viD}" class="${editingClassId === cls.viD ? 'selected' : ''}">
-
-
                         <td>${index + 1}</td>
                         <td><strong>${cls.vName}</strong></td>
                         <td class="text-center">
@@ -360,14 +357,14 @@
                             </span>
                         </td>
                         <td class="text-center">
-
-                            <button type="button" class="btn btn-sm btn-info me-1" onclick="editClass(${cls.vid})" title="Edit">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button type="button" class="btn btn-sm btn-danger" onclick="deleteClass(${cls.vid}, '${cls.vName}')" title="Delete">
-
-                                <i class="bi bi-trash"></i>
-                            </button>
+                            <div class="d-flex justify-content-center gap-1 flex-nowrap">
+                                <button type="button" class="btn btn-sm btn-info" onclick="editClass(${cls.vid})" title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-danger" onclick="deleteClass(${cls.vid}, '${cls.vName}')" title="Delete">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 `;

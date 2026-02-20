@@ -53,8 +53,9 @@ namespace School.API.Repositories.Implementations.Accounts
             var resultList = await _context
                 .Set<ResponseDto>()
                 .FromSqlRaw(
-                    "EXEC SpSave_FeeStructure @VID={0}, @AcademicSessionID={1}, @ClassID={2}, @GradeID={3}, @FeeTypeID={4}, @Amount={5}, @IsActive={6}, @UserID={7}, @UserIP={8}",
+                    "EXEC SpSave_FeeStructure @VID={0}, @CampusID={1}, @AcademicSessionID={2}, @ClassID={3}, @GradeID={4}, @FeeTypeID={5}, @Amount={6}, @IsActive={7}, @UserID={8}, @UserIP={9}",
                     dto.VID,
+                    dto.CampusID,
                     dto.AcademicSessionID,
                     dto.ClassID,
                     dto.GradeID,

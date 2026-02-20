@@ -1,10 +1,9 @@
-namespace School.API.DTOs.Accounts
+namespace School.API.DTOs.Academic
 {
-    public class FeeTypeSaveDto
+    public class CampusSaveDto
     {
         public int VID { get; set; }
         public string? VName { get; set; }
-        public string? Frequency { get; set; }
         public bool? IsActive { get; set; }
         public int? InsertedBy { get; set; }
         public DateTime? InsertedDate { get; set; }

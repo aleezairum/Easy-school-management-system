@@ -1,5 +1,5 @@
 @{
-    ViewData["Title"] = "Fee Type";
+    ViewData["Title"] = "Campus Management";
     Layout = "~/Views/Shared/_DashboardLayout.cshtml";
 }
 
@@ -9,6 +9,19 @@
         border-radius: 16px;
         box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
         margin-bottom: 24px;
+    }
+
+    .card-header {
+        background: white;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 20px 24px;
+        border-radius: 16px 16px 0 0 !important;
+    }
+
+    .card-header h5 {
+        margin: 0;
+        font-weight: 600;
+        color: #1e293b;
     }
 
     .card-body {
@@ -22,7 +35,7 @@
         font-size: 14px;
     }
 
-    .form-control {
+    .form-control, .form-select {
         border: 2px solid #e2e8f0;
         border-radius: 10px;
         padding: 10px 14px;
@@ -30,7 +43,7 @@
         transition: all 0.2s;
     }
 
-    .form-control:focus {
+    .form-control:focus, .form-select:focus {
         border-color: #008649;
         box-shadow: 0 0 0 4px rgba(0, 134, 73, 0.1);
     }
@@ -50,6 +63,39 @@
 
     .form-check-input:focus {
         box-shadow: 0 0 0 4px rgba(0, 134, 73, 0.1);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #008649 0%, #006d3b 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 134, 73, 0.4);
+        background: linear-gradient(135deg, #006d3b 0%, #005a30 100%);
+    }
+
+    .btn-secondary {
+        background: #f1f5f9;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-weight: 600;
+        font-size: 14px;
+        color: #64748b;
+        transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+        background: #e2e8f0;
+        border-color: #cbd5e1;
+        color: #475569;
     }
 
     .btn-info {
@@ -118,6 +164,22 @@
         border-left: 3px solid #008649;
     }
 
+    .alert {
+        border-radius: 12px;
+        border: none;
+        padding: 16px 20px;
+    }
+
+    .alert-success {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .alert-danger {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
     .loading-overlay {
         position: absolute;
         top: 0;
@@ -170,61 +232,13 @@
         padding-bottom: 8px;
         border-bottom: 2px solid #e2e8f0;
     }
-
-    /* Save Button */
-    .btn-save {
-        background-color: #00A651;
-        color: white;
-        font-weight: 600;
-        font-size: 14px;
-        padding: 12px 24px;
-        border: none;
-        border-radius: 8px;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-
-    .btn-save:hover {
-        background-color: #008F45;
-    }
-
-    .btn-save:active {
-        background-color: #007A3A;
-        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
-    }
-
-    /* Clear Button */
-    .btn-clear {
-        background-color: transparent;
-        color: #6B7280;
-        font-weight: 600;
-        font-size: 14px;
-        padding: 12px 24px;
-        border: 2px solid #D1D5DB;
-        border-radius: 8px;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-
-    .btn-clear:hover {
-        background-color: #F3F4F6;
-        border-color: #9CA3AF;
-    }
-
-    .btn-clear:active {
-        background-color: #E5E7EB;
-    }
 </style>
 
 <div class="container-fluid">
+    <!-- Alert Messages -->
     <div id="alertContainer"></div>
 
+    <!-- Campus Card -->
     <div class="card">
         <div class="card-body position-relative">
             <div id="loadingOverlay" class="loading-overlay" style="display: none;">
@@ -236,34 +250,17 @@
             <!-- Form Section -->
             <div class="form-section">
                 <div class="form-section-title">
-                    <i class="bi bi-pencil-square me-2"></i><span id="formTitle">Add New Fee Type</span>
+                    <i class="bi bi-pencil-square me-2"></i><span id="formTitle">Add New Campus</span>
                 </div>
-                <form id="feeTypeForm">
-                    <input type="hidden" id="feeTypeId" value="0" />
+                <form id="campusForm">
+                    <input type="hidden" id="campusId" value="0" />
 
                     <div class="row g-3 align-items-end">
-                        <div class="col-md-3">
-                            <label for="feeTypeName" class="form-label">Fee Type <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="feeTypeName" placeholder="e.g., Tuition Fee, Exam Fee" required />
+                        <div class="col-md-4">
+                            <label for="campusName" class="form-label">Campus Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="campusName" placeholder="e.g., Main Campus, City Campus" required />
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Frequency <span class="text-danger">*</span></label>
-                            <div class="d-flex gap-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="frequency" id="freqMonthly" value="Monthly" checked />
-                                    <label class="form-check-label" for="freqMonthly">Monthly</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="frequency" id="freqYearly" value="Yearly" />
-                                    <label class="form-check-label" for="freqYearly">Yearly</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="frequency" id="freqOnce" value="Once" />
-                                    <label class="form-check-label" for="freqOnce">Once</label>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-1">
+                        <div class="col-md-2">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="isActive" checked />
                                 <label class="form-check-label" for="isActive">Active</label>
@@ -271,11 +268,11 @@
                         </div>
                         <div class="col-md-4">
                             <div class="d-flex gap-2">
-                                <button type="button" class="btn-save" onclick="saveFeeType()">
-                                    <i class="bi bi-check-lg"></i> Save
+                                <button type="button" class="btn btn-primary" onclick="saveCampus()">
+                                    <i class="bi bi-check-lg me-1"></i> Save
                                 </button>
-                                <button type="button" class="btn-clear" onclick="resetForm()">
-                                    <i class="bi bi-x-lg"></i> Clear
+                                <button type="button" class="btn btn-secondary" onclick="resetForm()">
+                                    <i class="bi bi-x-lg me-1"></i> Clear
                                 </button>
                             </div>
                         </div>
@@ -286,20 +283,19 @@
             <!-- Grid Section -->
             <div class="grid-section">
                 <div class="grid-section-title">
-                    <i class="bi bi-table me-2"></i>Fee Types List
+                    <i class="bi bi-table me-2"></i>Campus List
                 </div>
                 <div class="table-responsive">
-                    <table class="table table-hover" id="feeTypesTable">
+                    <table class="table table-hover" id="campusTable">
                         <thead>
                             <tr>
-                                <th style="width: 60px;">SR#</th>
-                                <th>Fee Type</th>
-                                <th class="text-center">Frequency</th>
+                                <th style="width: 60px;">Sr#</th>
+                                <th>Campus Name</th>
                                 <th class="text-center" style="width: 100px;">Status</th>
                                 <th class="text-center" style="width: 150px;">Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="feeTypesBody">
+                        <tbody id="campusBody">
                         </tbody>
                     </table>
                 </div>
@@ -310,55 +306,54 @@
 
 @section Scripts {
     <script>
-        let editingFeeTypeId = 0;
+        let editingCampusId = 0;
 
         $(document).ready(function () {
-            loadFeeTypes();
+            loadCampuses();
         });
 
-        async function loadFeeTypes() {
+        async function loadCampuses() {
             showLoading();
             try {
-                const response = await fetch(`${API_BASE}/feetype`);
+                const response = await fetch(`${API_BASE}/campus`);
                 if (response.ok) {
-                    const data = await response.json();
-                    renderFeeTypesList(data);
+                    const campuses = await response.json();
+                    renderCampusList(campuses);
                 } else {
-                    showAlert('Failed to load fee types', 'danger');
+                    showAlert('Failed to load campuses', 'danger');
                 }
             } catch (error) {
-                console.error('Error loading fee types:', error);
-                showAlert('Error loading fee types: ' + error.message, 'danger');
+                console.error('Error loading campuses:', error);
+                showAlert('Error loading campuses: ' + error.message, 'danger');
             } finally {
                 hideLoading();
             }
         }
 
-        function renderFeeTypesList(items) {
-            const tbody = $('#feeTypesBody');
+        function renderCampusList(campuses) {
+            const tbody = $('#campusBody');
             tbody.empty();
 
-            if (items.length === 0) {
-                tbody.html('<tr><td colspan="5" class="text-center text-muted py-4">No fee types found. Add a new fee type using the form above.</td></tr>');
+            if (campuses.length === 0) {
+                tbody.html('<tr><td colspan="4" class="text-center text-muted py-4">No campuses found. Add a new campus using the form above.</td></tr>');
                 return;
             }
 
-            items.forEach((item, index) => {
+            campuses.forEach((item, index) => {
                 const row = `
-                    <tr data-id="${item.vid}" class="${editingFeeTypeId === item.vid ? 'selected' : ''}">
+                    <tr data-id="${item.viD}" class="${editingCampusId === item.viD ? 'selected' : ''}">
                         <td>${index + 1}</td>
                         <td><strong>${item.vName}</strong></td>
-                        <td class="text-center">${item.frequency || ''}</td>
                         <td class="text-center">
                             <span class="badge ${item.isActive ? 'bg-success' : 'bg-secondary'}">
                                 ${item.isActive ? 'Active' : 'Inactive'}
                             </span>
                         </td>
                         <td class="text-center">
-                            <button type="button" class="btn btn-sm btn-info me-1" onclick="editFeeType(${item.vid})" title="Edit">
+                            <button type="button" class="btn btn-sm btn-info me-1" onclick="editCampus(${item.vid})" title="Edit">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <button type="button" class="btn btn-sm btn-danger" onclick="deleteFeeType(${item.vid}, '${item.vName}')" title="Delete">
+                            <button type="button" class="btn btn-sm btn-danger" onclick="deleteCampus(${item.vid}, '${item.vName}')" title="Delete">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </td>
@@ -368,116 +363,115 @@
             });
         }
 
-        async function editFeeType(id) {
+        async function editCampus(campusId) {
             showLoading();
             try {
-                const response = await fetch(`${API_BASE}/feetype/${id}`);
+                const response = await fetch(`${API_BASE}/campus/${campusId}`);
                 if (response.ok) {
                     const data = await response.json();
                     populateForm(data);
-                    editingFeeTypeId = id;
-                    $('#formTitle').text('Edit Fee Type');
+                    editingCampusId = campusId;
+                    $('#formTitle').text('Edit Campus');
 
-                    $('#feeTypesBody tr').removeClass('selected');
-                    $(`#feeTypesBody tr[data-id="${id}"]`).addClass('selected');
+                    $('#campusBody tr').removeClass('selected');
+                    $(`#campusBody tr[data-id="${campusId}"]`).addClass('selected');
 
                     $('html, body').animate({
                         scrollTop: $('.form-section').offset().top - 100
                     }, 300);
                 } else {
-                    showAlert('Failed to load fee type', 'danger');
+                    showAlert('Failed to load campus', 'danger');
                 }
             } catch (error) {
-                console.error('Error loading fee type:', error);
-                showAlert('Error loading fee type: ' + error.message, 'danger');
+                console.error('Error loading campus:', error);
+                showAlert('Error loading campus: ' + error.message, 'danger');
             } finally {
                 hideLoading();
             }
         }
 
-        async function deleteFeeType(id, name) {
-            if (!confirm(`Are you sure you want to delete the fee type "${name}"?`)) {
+        async function deleteCampus(campusId, campusName) {
+            if (!confirm(`Are you sure you want to delete the campus "${campusName}"?`)) {
                 return;
             }
 
             showLoading();
             try {
-                const response = await fetch(`${API_BASE}/feetype/${id}`, {
+                const response = await fetch(`${API_BASE}/campus/${campusId}`, {
                     method: 'DELETE'
                 });
 
                 if (response.ok) {
-                    showAlert('Fee type deleted successfully!', 'success');
-                    if (editingFeeTypeId === id) {
+                    showAlert('Campus deleted successfully!', 'success');
+                    if (editingCampusId === campusId) {
                         resetForm();
                     }
-                    await loadFeeTypes();
+                    await loadCampuses();
                 } else {
                     const error = await response.json();
-                    showAlert(error.message || 'Failed to delete fee type', 'danger');
+                    showAlert(error.message || 'Failed to delete campus', 'danger');
                 }
             } catch (error) {
-                console.error('Error deleting fee type:', error);
-                showAlert('Error deleting fee type: ' + error.message, 'danger');
+                console.error('Error deleting campus:', error);
+                showAlert('Error deleting campus: ' + error.message, 'danger');
             } finally {
                 hideLoading();
             }
         }
 
         function populateForm(data) {
-            $('#feeTypeId').val(data.vid);
-            $('#feeTypeName').val(data.vName);
-            $(`input[name="frequency"][value="${data.frequency || 'Monthly'}"]`).prop('checked', true);
+            $('#campusId').val(data.vid);
+            $('#campusName').val(data.vName);
             $('#isActive').prop('checked', data.isActive);
         }
 
         function resetForm() {
-            $('#feeTypeId').val('0');
-            $('#feeTypeName').val('');
-            $('#freqMonthly').prop('checked', true);
+            $('#campusId').val('0');
+            $('#campusName').val('');
             $('#isActive').prop('checked', true);
-            $('#formTitle').text('Add New Fee Type');
-            editingFeeTypeId = 0;
-            $('#feeTypesBody tr').removeClass('selected');
+            $('#formTitle').text('Add New Campus');
+            editingCampusId = 0;
+
+            $('#campusBody tr').removeClass('selected');
         }
 
-        async function saveFeeType() {
-            const name = $('#feeTypeName').val().trim();
+        async function saveCampus() {
+            const campusName = $('#campusName').val().trim();
 
-            if (!name) {
-                showAlert('Please enter a fee type name', 'danger');
-                $('#feeTypeName').focus();
+            if (!campusName) {
+                showAlert('Please enter a campus name', 'danger');
+                $('#campusName').focus();
                 return;
             }
 
-            const id = parseInt($('#feeTypeId').val()) || 0;
-            const frequency = $('input[name="frequency"]:checked').val();
+            const campusId = parseInt($('#campusId').val()) || 0;
             const data = {
-                VID: id,
-                VName: name,
-                Frequency: frequency,
+                VID: campusId,
+                VName: campusName,
                 IsActive: $('#isActive').is(':checked')
             };
 
             showLoading();
             try {
-                const response = await fetch(`${API_BASE}/feetype`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
+                let response;
+
+                response = await fetch(`${API_BASE}/campus`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
 
                 if (response.ok) {
-                    showAlert(id === 0 ? 'Fee type created successfully!' : 'Fee type updated successfully!', 'success');
+                    showAlert(campusId === 0 ? 'Campus created successfully!' : 'Campus updated successfully!', 'success');
                     resetForm();
-                    await loadFeeTypes();
+                    await loadCampuses();
                 } else {
                     const error = await response.json();
-                    showAlert(error.message || 'Failed to save fee type', 'danger');
+                    showAlert(error.message || 'Failed to save campus', 'danger');
                 }
             } catch (error) {
-                console.error('Error saving fee type:', error);
-                showAlert('Error saving fee type: ' + error.message, 'danger');
+                console.error('Error saving campus:', error);
+                showAlert('Error saving campus: ' + error.message, 'danger');
             } finally {
                 hideLoading();
             }

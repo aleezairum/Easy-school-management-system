@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace School.API.Data.DBModels.Accounts
+namespace School.API.Data.DBModels.Academic
 {
-    public class FeeType
+    public class Campus
     {
         [Key]
         public int VID { get; set; }
@@ -10,9 +10,6 @@ namespace School.API.Data.DBModels.Accounts
         [Required]
         [StringLength(100)]
         public string VName { get; set; } = string.Empty;
-
-        [StringLength(20)]
-        public string Frequency { get; set; } = "Monthly";
 
         public bool IsActive { get; set; } = true;
 
