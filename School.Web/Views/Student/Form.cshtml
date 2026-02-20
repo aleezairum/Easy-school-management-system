@@ -699,9 +699,17 @@
                             </tr>
                             <tr>
                                 <td class="lbl">Current Class</td>
-                                <td class="val">@Html.TextBoxFor(m => m.CurrentClass, new { @placeholder = "e.g., Class 5, Grade 10" })</td>
+                                <td class="val">
+                                    <select class="form-select" id="CurrentClass" name="CurrentClass">
+                                        <option value="">Select Class</option>
+                                    </select>
+                                </td>
                                 <td class="lbl">Section</td>
-                                <td class="val">@Html.TextBoxFor(m => m.Section, new { @placeholder = "e.g., A, B, C" })</td>
+                                <td class="val">
+                                    <select class="form-select" id="Section" name="Section">
+                                        <option value="">Select Section</option>
+                                    </select>
+                                </td>
                             </tr>
                             <tr>
                                 <td class="lbl">Status</td>
@@ -894,6 +902,20 @@
                                 <p>Enter guardian details (if different from parents)</p>
                             </div>
                         </div>
+                        <div class="d-flex gap-4 mb-3 ms-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="guardianType" id="guardianFather" value="Father" onchange="onGuardianTypeChange('Father')">
+                                <label class="form-check-label" for="guardianFather">Father Guardian</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="guardianType" id="guardianMother" value="Mother" onchange="onGuardianTypeChange('Mother')">
+                                <label class="form-check-label" for="guardianMother">Mother Guardian</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="guardianType" id="guardianOther" value="Other" checked onchange="onGuardianTypeChange('Other')">
+                                <label class="form-check-label" for="guardianOther">Other Guardian</label>
+                            </div>
+                        </div>
                         <table class="admission-table">
                             <tr>
                                 <td class="lbl" style="width:18%">Guardian's Name</td>
@@ -1050,9 +1072,90 @@
                 goToStep(stepIndex);
             });
 
+            // Load class dropdown
+            loadClassDropdown();
+
+            // Cascade section dropdown on class change
+            $('#CurrentClass').on('change', function () {
+                loadSectionDropdown();
+            });
+
+            // Re-enable disabled guardian fields before form submit
+            $('#studentForm').on('submit', function () {
+                $('#GuardianName, #GuardianCNIC, #GuardianRelation, #GuardianMobile').prop('disabled', false);
+            });
+
             // Initialize
             updateWizard();
         });
+
+        // Load class dropdown
+        async function loadClassDropdown() {
+            try {
+                const response = await fetch(`${API_BASE}/class`);
+                if (response.ok) {
+                    const classes = await response.json();
+                    const select = $('#CurrentClass');
+                    classes.forEach(c => {
+                        if (c.isActive) {
+                            select.append(`<option value="${c.vName}" data-id="${c.viD}">${c.vName}</option>`);
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading classes:', error);
+            }
+        }
+
+        // Load section dropdown based on selected class
+        async function loadSectionDropdown() {
+            const select = $('#Section');
+            select.find('option:not(:first)').remove();
+
+            const selectedOption = $('#CurrentClass option:selected');
+            const classId = selectedOption.data('id');
+
+            if (!classId) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/section/byClass/${classId}`);
+                if (response.ok) {
+                    const sections = await response.json();
+                    sections.forEach(s => {
+                        if (s.isActive) {
+                            select.append(`<option value="${s.vName}">${s.vName}</option>`);
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading sections:', error);
+            }
+        }
+
+        // Guardian type change handler
+        function onGuardianTypeChange(type) {
+            const guardianFields = ['#GuardianName', '#GuardianCNIC', '#GuardianRelation', '#GuardianMobile'];
+
+            if (type === 'Father') {
+                $('#GuardianName').val($('#FatherName').val());
+                $('#GuardianCNIC').val($('#FatherCNIC').val());
+                $('#GuardianRelation').val('Father');
+                $('#GuardianMobile').val($('#FatherMobile').val());
+                guardianFields.forEach(f => $(f).prop('disabled', true));
+            } else if (type === 'Mother') {
+                $('#GuardianName').val($('#MotherName').val());
+                $('#GuardianCNIC').val($('#MotherCNIC').val());
+                $('#GuardianRelation').val('Mother');
+                $('#GuardianMobile').val($('#MotherMobile').val());
+                guardianFields.forEach(f => $(f).prop('disabled', true));
+            } else {
+                $('#GuardianName').val('');
+                $('#GuardianCNIC').val('');
+                $('#GuardianRelation').val('');
+                $('#GuardianMobile').val('');
+                guardianFields.forEach(f => $(f).prop('disabled', false));
+            }
+        }
 
         // Load admission data and populate form
         function loadAdmissionData(admissionId) {
@@ -1076,7 +1179,7 @@
                     // Populate Registration Info
                     $('#AdmissionNo').val(data.admissionNo || '');
                     $('#DateOfAdmission').val(data.dateOfAdmission ? data.dateOfAdmission.split('T')[0] : '');
-                    $('#CurrentClass').val(data.classSought || '');
+                    $('#CurrentClass').val(data.classSought || '').trigger('change');
 
                     // Populate Student Info
                     $('#NameOfStudent').val(data.nameOfStudent || '');
