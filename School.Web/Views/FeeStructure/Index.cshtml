@@ -300,7 +300,7 @@
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <label for="gradeId" class="form-label">Grade <span class="text-danger">*</span></label>
+                            <label for="gradeId" class="form-label">Grade</label>
                             <select class="form-select" id="gradeId">
                                 <option value="">-- Select Grade --</option>
                             </select>
@@ -693,11 +693,6 @@
                 $('#classId').focus();
                 return;
             }
-            if (!gradeID) {
-                showAlert('Please select a Grade', 'danger');
-                $('#gradeId').focus();
-                return;
-            }
             if (!feeTypeID) {
                 showAlert('Please select a Fee Type', 'danger');
                 $('#feeTypeId').focus();
@@ -715,7 +710,7 @@
                 CampusID: parseInt(campusID),
                 AcademicSessionID: parseInt(academicSessionID),
                 ClassID: parseInt(classID),
-                GradeID: parseInt(gradeID),
+                GradeID: gradeID ? parseInt(gradeID) : 0,
                 FeeTypeID: parseInt(feeTypeID),
                 Amount: parseFloat(amount),
                 IsActive: $('#isActive').is(':checked')

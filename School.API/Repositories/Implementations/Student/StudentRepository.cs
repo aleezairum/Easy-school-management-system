@@ -58,13 +58,20 @@ namespace School.API.Repositories.Implementations.Student
                     FatherCNIC = s.FatherCNIC,
                     FatherOccupation = s.FatherOccupation,
                     FatherMobile = s.FatherMobile,
+                    FatherIsSMS = s.FatherIsSMS,
                     MotherName = s.MotherName,
+                    MotherNameUrdu = s.MotherNameUrdu,
                     MotherCNIC = s.MotherCNIC,
                     MotherMobile = s.MotherMobile,
+                    MotherIsSMS = s.MotherIsSMS,
                     GuardianName = s.GuardianName,
+                    GuardianNameUrdu = s.GuardianNameUrdu,
                     GuardianCNIC = s.GuardianCNIC,
                     GuardianRelation = s.GuardianRelation,
                     GuardianMobile = s.GuardianMobile,
+                    GuardianIsSMS = s.GuardianIsSMS,
+                    MobileNo = s.MobileNo,
+                    IsSMS = s.IsSMS,
                     DateOfBirth = s.DateOfBirth,
                     DateOfBirthInWords = s.DateOfBirthInWords,
                     PlaceOfBirth = s.PlaceOfBirth,
@@ -118,13 +125,20 @@ namespace School.API.Repositories.Implementations.Student
                     FatherCNIC = s.FatherCNIC,
                     FatherOccupation = s.FatherOccupation,
                     FatherMobile = s.FatherMobile,
+                    FatherIsSMS = s.FatherIsSMS,
                     MotherName = s.MotherName,
+                    MotherNameUrdu = s.MotherNameUrdu,
                     MotherCNIC = s.MotherCNIC,
                     MotherMobile = s.MotherMobile,
+                    MotherIsSMS = s.MotherIsSMS,
                     GuardianName = s.GuardianName,
+                    GuardianNameUrdu = s.GuardianNameUrdu,
                     GuardianCNIC = s.GuardianCNIC,
                     GuardianRelation = s.GuardianRelation,
                     GuardianMobile = s.GuardianMobile,
+                    GuardianIsSMS = s.GuardianIsSMS,
+                    MobileNo = s.MobileNo,
+                    IsSMS = s.IsSMS,
                     DateOfBirth = s.DateOfBirth,
                     DateOfBirthInWords = s.DateOfBirthInWords,
                     PlaceOfBirth = s.PlaceOfBirth,
@@ -175,13 +189,20 @@ namespace School.API.Repositories.Implementations.Student
                 FatherCNIC = dto.FatherCNIC,
                 FatherOccupation = dto.FatherOccupation,
                 FatherMobile = dto.FatherMobile,
+                FatherIsSMS = dto.FatherIsSMS,
                 MotherName = dto.MotherName,
+                MotherNameUrdu = dto.MotherNameUrdu,
                 MotherCNIC = dto.MotherCNIC,
                 MotherMobile = dto.MotherMobile,
+                MotherIsSMS = dto.MotherIsSMS,
                 GuardianName = dto.GuardianName,
+                GuardianNameUrdu = dto.GuardianNameUrdu,
                 GuardianCNIC = dto.GuardianCNIC,
                 GuardianRelation = dto.GuardianRelation,
                 GuardianMobile = dto.GuardianMobile,
+                GuardianIsSMS = dto.GuardianIsSMS,
+                MobileNo = dto.MobileNo,
+                IsSMS = dto.IsSMS,
                 DateOfBirth = dto.DateOfBirth,
                 DateOfBirthInWords = dto.DateOfBirthInWords,
                 PlaceOfBirth = dto.PlaceOfBirth,
@@ -301,13 +322,20 @@ namespace School.API.Repositories.Implementations.Student
             student.FatherCNIC = dto.FatherCNIC;
             student.FatherOccupation = dto.FatherOccupation;
             student.FatherMobile = dto.FatherMobile;
+            student.FatherIsSMS = dto.FatherIsSMS;
             student.MotherName = dto.MotherName;
+            student.MotherNameUrdu = dto.MotherNameUrdu;
             student.MotherCNIC = dto.MotherCNIC;
             student.MotherMobile = dto.MotherMobile;
+            student.MotherIsSMS = dto.MotherIsSMS;
             student.GuardianName = dto.GuardianName;
+            student.GuardianNameUrdu = dto.GuardianNameUrdu;
             student.GuardianCNIC = dto.GuardianCNIC;
             student.GuardianRelation = dto.GuardianRelation;
             student.GuardianMobile = dto.GuardianMobile;
+            student.GuardianIsSMS = dto.GuardianIsSMS;
+            student.MobileNo = dto.MobileNo;
+            student.IsSMS = dto.IsSMS;
             student.DateOfBirth = dto.DateOfBirth;
             student.DateOfBirthInWords = dto.DateOfBirthInWords;
             student.PlaceOfBirth = dto.PlaceOfBirth;
@@ -392,13 +420,18 @@ namespace School.API.Repositories.Implementations.Student
                     FatherCNIC = s.FatherCNIC,
                     FatherOccupation = s.FatherOccupation,
                     FatherMobile = s.FatherMobile,
+                    FatherIsSMS = s.FatherIsSMS,
                     MotherName = s.MotherName,
+                    MotherNameUrdu = s.MotherNameUrdu,
                     MotherCNIC = s.MotherCNIC,
                     MotherMobile = s.MotherMobile,
+                    MotherIsSMS = s.MotherIsSMS,
                     GuardianName = s.GuardianName,
+                    GuardianNameUrdu = s.GuardianNameUrdu,
                     GuardianCNIC = s.GuardianCNIC,
                     GuardianRelation = s.GuardianRelation,
-                    GuardianMobile = s.GuardianMobile
+                    GuardianMobile = s.GuardianMobile,
+                    GuardianIsSMS = s.GuardianIsSMS
                 })
                 .FirstOrDefaultAsync();
         }
@@ -416,13 +449,18 @@ namespace School.API.Repositories.Implementations.Student
                     FatherCNIC = s.FatherCNIC,
                     FatherOccupation = s.FatherOccupation,
                     FatherMobile = s.FatherMobile,
+                    FatherIsSMS = s.FatherIsSMS,
                     MotherName = s.MotherName,
+                    MotherNameUrdu = s.MotherNameUrdu,
                     MotherCNIC = s.MotherCNIC,
                     MotherMobile = s.MotherMobile,
+                    MotherIsSMS = s.MotherIsSMS,
                     GuardianName = s.GuardianName,
+                    GuardianNameUrdu = s.GuardianNameUrdu,
                     GuardianCNIC = s.GuardianCNIC,
                     GuardianRelation = s.GuardianRelation,
-                    GuardianMobile = s.GuardianMobile
+                    GuardianMobile = s.GuardianMobile,
+                    GuardianIsSMS = s.GuardianIsSMS
                 })
                 .FirstOrDefaultAsync();
         }
@@ -440,13 +478,18 @@ namespace School.API.Repositories.Implementations.Student
                     FatherCNIC = s.FatherCNIC,
                     FatherOccupation = s.FatherOccupation,
                     FatherMobile = s.FatherMobile,
+                    FatherIsSMS = s.FatherIsSMS,
                     MotherName = s.MotherName,
+                    MotherNameUrdu = s.MotherNameUrdu,
                     MotherCNIC = s.MotherCNIC,
                     MotherMobile = s.MotherMobile,
+                    MotherIsSMS = s.MotherIsSMS,
                     GuardianName = s.GuardianName,
+                    GuardianNameUrdu = s.GuardianNameUrdu,
                     GuardianCNIC = s.GuardianCNIC,
                     GuardianRelation = s.GuardianRelation,
-                    GuardianMobile = s.GuardianMobile
+                    GuardianMobile = s.GuardianMobile,
+                    GuardianIsSMS = s.GuardianIsSMS
                 })
                 .FirstOrDefaultAsync();
         }

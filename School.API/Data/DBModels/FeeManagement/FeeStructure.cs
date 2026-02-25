@@ -10,7 +10,7 @@ namespace School.API.Data.DBModels.Accounts
         public int CampusID { get; set; }
         public int AcademicSessionID { get; set; }
         public int ClassID { get; set; }
-        public int GradeID { get; set; }
+        public int GradeID { get; set; } = 0;
         public int FeeTypeID { get; set; }
 
         public decimal Amount { get; set; }

@@ -537,6 +537,66 @@
             flex-direction: column;
         }
     }
+
+    /* SMS Toggle Switch */
+    .sms-toggle {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        padding: 6px 0;
+        user-select: none;
+    }
+
+    .sms-toggle-input {
+        display: none !important;
+    }
+
+    .sms-toggle-input + input[type="hidden"] {
+        display: none !important;
+    }
+
+    .sms-toggle-slider {
+        position: relative;
+        width: 44px;
+        height: 24px;
+        background: #cbd5e1;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+    }
+
+    .sms-toggle-slider::after {
+        content: '';
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 18px;
+        height: 18px;
+        background: white;
+        border-radius: 50%;
+        transition: all 0.3s ease;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .sms-toggle-input:checked ~ .sms-toggle-slider {
+        background: #008649;
+    }
+
+    .sms-toggle-input:checked ~ .sms-toggle-slider::after {
+        left: 23px;
+    }
+
+    .sms-toggle-label {
+        font-size: 13px;
+        font-weight: 500;
+        color: #94a3b8;
+        transition: color 0.3s ease;
+    }
+
+    .sms-toggle-input:checked ~ .sms-toggle-label {
+        color: #008649;
+    }
 </style>
 
 <div class="container-fluid">
@@ -747,6 +807,18 @@
                                 <td class="val-rtl" style="width:32%">@Html.TextBoxFor(m => m.NameOfStudentUrdu, new { @placeholder = "اردو میں نام" })</td>
                             </tr>
                             <tr>
+                                <td class="lbl">Mobile No</td>
+                                <td class="val">@Html.TextBoxFor(m => m.MobileNo, new { @placeholder = "e.g., 03001234567", @maxlength = "20" })</td>
+                                <td class="lbl">SMS</td>
+                                <td class="val">
+                                    <label class="sms-toggle">
+                                        @Html.CheckBoxFor(m => m.IsSMS, new { @class = "sms-toggle-input" })
+                                        <span class="sms-toggle-slider"></span>
+                                        <span class="sms-toggle-label" id="smsLabel">@(Model.IsSMS ? "Enabled" : "Disabled")</span>
+                                    </label>
+                                </td>
+                            </tr>
+                            <tr>
                                 <td class="lbl">Date of Birth</td>
                                 <td class="val">@Html.TextBoxFor(m => m.DateOfBirth, new { @type = "date" })</td>
                                 <td class="lbl">DOB (In Words)</td>
@@ -853,7 +925,15 @@
                             </tr>
                             <tr>
                                 <td class="lbl">Mobile No.</td>
-                                <td class="val" colspan="3">@Html.TextBoxFor(m => m.FatherMobile, new { @placeholder = "03XX-XXXXXXX" })</td>
+                                <td class="val">@Html.TextBoxFor(m => m.FatherMobile, new { @placeholder = "03XX-XXXXXXX" })</td>
+                                <td class="lbl">SMS</td>
+                                <td class="val">
+                                    <label class="sms-toggle">
+                                        @Html.CheckBoxFor(m => m.FatherIsSMS, new { @class = "sms-toggle-input" })
+                                        <span class="sms-toggle-slider"></span>
+                                        <span class="sms-toggle-label" id="fatherSmsLabel">@(Model.FatherIsSMS ? "Enabled" : "Disabled")</span>
+                                    </label>
+                                </td>
                             </tr>
                         </table>
                         <div class="tab-navigation">
@@ -892,13 +972,25 @@
                         <table class="admission-table">
                             <tr>
                                 <td class="lbl" style="width:18%">Mother's Name</td>
-                                <td class="val" style="width:32%">@Html.TextBoxFor(m => m.MotherName, new { @placeholder = "Full name" })</td>
-                                <td class="lbl" style="width:18%">Mother's CNIC</td>
-                                <td class="val" style="width:32%">@Html.TextBoxFor(m => m.MotherCNIC, new { @placeholder = "XXXXX-XXXXXXX-X" })</td>
+                                <td class="val" style="width:32%">@Html.TextBoxFor(m => m.MotherName, new { @placeholder = "Full name in English" })</td>
+                                <td class="lbl" style="width:18%">Name (In Urdu)</td>
+                                <td class="val-rtl" style="width:32%">@Html.TextBoxFor(m => m.MotherNameUrdu, new { @placeholder = "اردو میں نام" })</td>
+                            </tr>
+                            <tr>
+                                <td class="lbl">Mother's CNIC</td>
+                                <td class="val" colspan="3">@Html.TextBoxFor(m => m.MotherCNIC, new { @placeholder = "XXXXX-XXXXXXX-X" })</td>
                             </tr>
                             <tr>
                                 <td class="lbl">Mobile No.</td>
-                                <td class="val" colspan="3">@Html.TextBoxFor(m => m.MotherMobile, new { @placeholder = "03XX-XXXXXXX" })</td>
+                                <td class="val">@Html.TextBoxFor(m => m.MotherMobile, new { @placeholder = "03XX-XXXXXXX" })</td>
+                                <td class="lbl">SMS</td>
+                                <td class="val">
+                                    <label class="sms-toggle">
+                                        @Html.CheckBoxFor(m => m.MotherIsSMS, new { @class = "sms-toggle-input" })
+                                        <span class="sms-toggle-slider"></span>
+                                        <span class="sms-toggle-label" id="motherSmsLabel">@(Model.MotherIsSMS ? "Enabled" : "Disabled")</span>
+                                    </label>
+                                </td>
                             </tr>
                         </table>
                         <div class="tab-navigation">
@@ -951,15 +1043,27 @@
                         <table class="admission-table">
                             <tr>
                                 <td class="lbl" style="width:18%">Guardian's Name</td>
-                                <td class="val" style="width:32%">@Html.TextBoxFor(m => m.GuardianName, new { @placeholder = "Full name" })</td>
-                                <td class="lbl" style="width:18%">Guardian's CNIC</td>
-                                <td class="val" style="width:32%">@Html.TextBoxFor(m => m.GuardianCNIC, new { @placeholder = "XXXXX-XXXXXXX-X" })</td>
+                                <td class="val" style="width:32%">@Html.TextBoxFor(m => m.GuardianName, new { @placeholder = "Full name in English" })</td>
+                                <td class="lbl" style="width:18%">Name (In Urdu)</td>
+                                <td class="val-rtl" style="width:32%">@Html.TextBoxFor(m => m.GuardianNameUrdu, new { @placeholder = "اردو میں نام" })</td>
                             </tr>
                             <tr>
+                                <td class="lbl">Guardian's CNIC</td>
+                                <td class="val">@Html.TextBoxFor(m => m.GuardianCNIC, new { @placeholder = "XXXXX-XXXXXXX-X" })</td>
                                 <td class="lbl">Relation</td>
                                 <td class="val">@Html.TextBoxFor(m => m.GuardianRelation, new { @placeholder = "e.g., Uncle, Grandfather" })</td>
+                            </tr>
+                            <tr>
                                 <td class="lbl">Mobile No.</td>
                                 <td class="val">@Html.TextBoxFor(m => m.GuardianMobile, new { @placeholder = "03XX-XXXXXXX" })</td>
+                                <td class="lbl">SMS</td>
+                                <td class="val">
+                                    <label class="sms-toggle">
+                                        @Html.CheckBoxFor(m => m.GuardianIsSMS, new { @class = "sms-toggle-input" })
+                                        <span class="sms-toggle-slider"></span>
+                                        <span class="sms-toggle-label" id="guardianSmsLabel">@(Model.GuardianIsSMS ? "Enabled" : "Disabled")</span>
+                                    </label>
+                                </td>
                             </tr>
                         </table>
                         <div class="tab-navigation">
@@ -1104,6 +1208,20 @@
                 goToStep(stepIndex);
             });
 
+            // SMS toggle label updates
+            $('#IsSMS').on('change', function () {
+                $('#smsLabel').text(this.checked ? 'Enabled' : 'Disabled');
+            });
+            $('#FatherIsSMS').on('change', function () {
+                $('#fatherSmsLabel').text(this.checked ? 'Enabled' : 'Disabled');
+            });
+            $('#MotherIsSMS').on('change', function () {
+                $('#motherSmsLabel').text(this.checked ? 'Enabled' : 'Disabled');
+            });
+            $('#GuardianIsSMS').on('change', function () {
+                $('#guardianSmsLabel').text(this.checked ? 'Enabled' : 'Disabled');
+            });
+
             // Load dropdowns
             loadClassDropdown();
             loadStatusDropdown();
@@ -1116,7 +1234,7 @@
 
             // Re-enable disabled guardian fields before form submit
             $('#studentForm').on('submit', function () {
-                $('#GuardianName, #GuardianCNIC, #GuardianRelation, #GuardianMobile').prop('disabled', false);
+                $('#GuardianName, #GuardianNameUrdu, #GuardianCNIC, #GuardianRelation, #GuardianMobile, #GuardianIsSMS').prop('disabled', false);
             });
 
             // Initialize
@@ -1237,18 +1355,26 @@
                     $('#FatherCNIC').val(data.fatherCNIC || '');
                     $('#FatherOccupation').val(data.fatherOccupation || '');
                     $('#FatherMobile').val(data.fatherMobile || '');
+                    $('#FatherIsSMS').prop('checked', data.fatherIsSMS || false);
+                    $('#fatherSmsLabel').text(data.fatherIsSMS ? 'Enabled' : 'Disabled');
 
                     $('#MotherName').val(data.motherName || '');
+                    $('#MotherNameUrdu').val(data.motherNameUrdu || '');
                     $('#MotherCNIC').val(data.motherCNIC || '');
                     $('#MotherMobile').val(data.motherMobile || '');
+                    $('#MotherIsSMS').prop('checked', data.motherIsSMS || false);
+                    $('#motherSmsLabel').text(data.motherIsSMS ? 'Enabled' : 'Disabled');
 
                     $('#GuardianName').val(data.guardianName || '');
+                    $('#GuardianNameUrdu').val(data.guardianNameUrdu || '');
                     $('#GuardianCNIC').val(data.guardianCNIC || '');
                     $('#GuardianRelation').val(data.guardianRelation || '');
                     $('#GuardianMobile').val(data.guardianMobile || '');
+                    $('#GuardianIsSMS').prop('checked', data.guardianIsSMS || false);
+                    $('#guardianSmsLabel').text(data.guardianIsSMS ? 'Enabled' : 'Disabled');
 
                     $('#guardianOther').prop('checked', true);
-                    $('#GuardianName, #GuardianCNIC, #GuardianRelation, #GuardianMobile').prop('disabled', false);
+                    $('#GuardianName, #GuardianNameUrdu, #GuardianCNIC, #GuardianRelation, #GuardianMobile, #GuardianIsSMS').prop('disabled', false);
 
                     showAlert('Parent data found and auto-filled successfully!', 'success');
                 } else {
@@ -1264,25 +1390,34 @@
 
         // Guardian type change handler
         function onGuardianTypeChange(type) {
-            const guardianFields = ['#GuardianName', '#GuardianCNIC', '#GuardianRelation', '#GuardianMobile'];
+            const guardianFields = ['#GuardianName', '#GuardianNameUrdu', '#GuardianCNIC', '#GuardianRelation', '#GuardianMobile', '#GuardianIsSMS'];
 
             if (type === 'Father') {
                 $('#GuardianName').val($('#FatherName').val());
+                $('#GuardianNameUrdu').val($('#FatherNameUrdu').val());
                 $('#GuardianCNIC').val($('#FatherCNIC').val());
                 $('#GuardianRelation').val('Father');
                 $('#GuardianMobile').val($('#FatherMobile').val());
+                $('#GuardianIsSMS').prop('checked', $('#FatherIsSMS').is(':checked'));
+                $('#guardianSmsLabel').text($('#FatherIsSMS').is(':checked') ? 'Enabled' : 'Disabled');
                 guardianFields.forEach(f => $(f).prop('disabled', true));
             } else if (type === 'Mother') {
                 $('#GuardianName').val($('#MotherName').val());
+                $('#GuardianNameUrdu').val($('#MotherNameUrdu').val());
                 $('#GuardianCNIC').val($('#MotherCNIC').val());
                 $('#GuardianRelation').val('Mother');
                 $('#GuardianMobile').val($('#MotherMobile').val());
+                $('#GuardianIsSMS').prop('checked', $('#MotherIsSMS').is(':checked'));
+                $('#guardianSmsLabel').text($('#MotherIsSMS').is(':checked') ? 'Enabled' : 'Disabled');
                 guardianFields.forEach(f => $(f).prop('disabled', true));
             } else {
                 $('#GuardianName').val('');
+                $('#GuardianNameUrdu').val('');
                 $('#GuardianCNIC').val('');
                 $('#GuardianRelation').val('');
                 $('#GuardianMobile').val('');
+                $('#GuardianIsSMS').prop('checked', false);
+                $('#guardianSmsLabel').text('Disabled');
                 guardianFields.forEach(f => $(f).prop('disabled', false));
             }
         }
@@ -1314,6 +1449,9 @@
                     // Populate Student Info
                     $('#NameOfStudent').val(data.nameOfStudent || '');
                     $('#NameOfStudentUrdu').val(data.nameOfStudentUrdu || '');
+                    $('#MobileNo').val(data.mobileNo || '');
+                    $('#IsSMS').prop('checked', data.isSMS || false);
+                    $('#smsLabel').text(data.isSMS ? 'Enabled' : 'Disabled');
                     $('#DateOfBirth').val(data.dateOfBirth ? data.dateOfBirth.split('T')[0] : '');
                     $('#DateOfBirthInWords').val(data.dateOfBirthInWords || '');
                     $('#PlaceOfBirth').val(data.placeOfBirth || '');
@@ -1327,17 +1465,25 @@
                     $('#FatherCNIC').val(data.fatherCNIC || '');
                     $('#FatherOccupation').val(data.fatherOccupation || '');
                     $('#FatherMobile').val(data.fatherMobile || '');
+                    $('#FatherIsSMS').prop('checked', data.fatherIsSMS || false);
+                    $('#fatherSmsLabel').text(data.fatherIsSMS ? 'Enabled' : 'Disabled');
 
                     // Populate Mother Info
                     $('#MotherName').val(data.motherName || '');
+                    $('#MotherNameUrdu').val(data.motherNameUrdu || '');
                     $('#MotherCNIC').val(data.motherCNIC || '');
                     $('#MotherMobile').val(data.motherMobile || '');
+                    $('#MotherIsSMS').prop('checked', data.motherIsSMS || false);
+                    $('#motherSmsLabel').text(data.motherIsSMS ? 'Enabled' : 'Disabled');
 
                     // Populate Guardian Info
                     $('#GuardianName').val(data.guardianName || '');
+                    $('#GuardianNameUrdu').val(data.guardianNameUrdu || '');
                     $('#GuardianCNIC').val(data.guardianCNIC || '');
                     $('#GuardianRelation').val(data.guardianRelation || '');
                     $('#GuardianMobile').val(data.guardianMobile || '');
+                    $('#GuardianIsSMS').prop('checked', data.guardianIsSMS || false);
+                    $('#guardianSmsLabel').text(data.guardianIsSMS ? 'Enabled' : 'Disabled');
 
                     // Populate Address Info
                     $('#PresentAddress').val(data.presentAddress || '');

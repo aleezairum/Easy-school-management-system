@@ -10,7 +10,7 @@ BEGIN
         CampusID INT NOT NULL,
         AcademicSessionID INT NOT NULL,
         ClassID INT NOT NULL,
-        GradeID INT NOT NULL,
+        GradeID INT NOT NULL DEFAULT 0,
         FeeTypeID INT NOT NULL,
         Amount DECIMAL(18,2) NOT NULL DEFAULT 0,
         IsActive BIT NOT NULL DEFAULT 1,
@@ -82,7 +82,7 @@ BEGIN
         LEFT JOIN Campus cam ON fs.CampusID = cam.VID
         INNER JOIN AcademicSessionYears asy ON fs.AcademicSessionID = asy.VID
         INNER JOIN SMSClasses c ON fs.ClassID = c.VID
-        INNER JOIN AcademicGrades ag ON fs.GradeID = ag.Id
+        LEFT JOIN AcademicGrades ag ON fs.GradeID = ag.Id AND fs.GradeID != 0
         INNER JOIN FeeTypes ft ON fs.FeeTypeID = ft.VID
         ORDER BY fs.VID DESC;
     END
@@ -112,7 +112,7 @@ BEGIN
         LEFT JOIN Campus cam ON fs.CampusID = cam.VID
         INNER JOIN AcademicSessionYears asy ON fs.AcademicSessionID = asy.VID
         INNER JOIN SMSClasses c ON fs.ClassID = c.VID
-        INNER JOIN AcademicGrades ag ON fs.GradeID = ag.Id
+        LEFT JOIN AcademicGrades ag ON fs.GradeID = ag.Id AND fs.GradeID != 0
         INNER JOIN FeeTypes ft ON fs.FeeTypeID = ft.VID
         WHERE fs.VID = @VID;
     END

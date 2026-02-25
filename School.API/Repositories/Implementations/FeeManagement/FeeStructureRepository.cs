@@ -58,7 +58,7 @@ namespace School.API.Repositories.Implementations.Accounts
                     dto.CampusID,
                     dto.AcademicSessionID,
                     dto.ClassID,
-                    dto.GradeID,
+                    dto.GradeID ?? 0,
                     dto.FeeTypeID,
                     dto.Amount,
                     dto.IsActive,
