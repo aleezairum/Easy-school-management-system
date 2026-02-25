@@ -55,9 +55,14 @@ namespace School.API.Models
         [MaxLength(20)]
         public string? FatherMobile { get; set; }
 
+        public bool FatherIsSMS { get; set; }
+
         // Mother Info
         [MaxLength(200)]
         public string? MotherName { get; set; }
+
+        [MaxLength(200)]
+        public string? MotherNameUrdu { get; set; }
 
         [MaxLength(20)]
         public string? MotherCNIC { get; set; }
@@ -65,9 +70,14 @@ namespace School.API.Models
         [MaxLength(20)]
         public string? MotherMobile { get; set; }
 
+        public bool MotherIsSMS { get; set; }
+
         // Guardian Info
         [MaxLength(200)]
         public string? GuardianName { get; set; }
+
+        [MaxLength(200)]
+        public string? GuardianNameUrdu { get; set; }
 
         [MaxLength(20)]
         public string? GuardianCNIC { get; set; }
@@ -77,6 +87,14 @@ namespace School.API.Models
 
         [MaxLength(20)]
         public string? GuardianMobile { get; set; }
+
+        public bool GuardianIsSMS { get; set; }
+
+        // Student Contact
+        [MaxLength(20)]
+        public string? MobileNo { get; set; }
+
+        public bool IsSMS { get; set; }
 
         // Student Details
         public DateTime? DateOfBirth { get; set; }

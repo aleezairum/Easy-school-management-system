@@ -27,17 +27,26 @@ namespace School.API.DTOs
         public string? FatherCNIC { get; set; }
         public string? FatherOccupation { get; set; }
         public string? FatherMobile { get; set; }
+        public bool FatherIsSMS { get; set; }
 
         // Mother Info
         public string? MotherName { get; set; }
+        public string? MotherNameUrdu { get; set; }
         public string? MotherCNIC { get; set; }
         public string? MotherMobile { get; set; }
+        public bool MotherIsSMS { get; set; }
 
         // Guardian Info
         public string? GuardianName { get; set; }
+        public string? GuardianNameUrdu { get; set; }
         public string? GuardianCNIC { get; set; }
         public string? GuardianRelation { get; set; }
         public string? GuardianMobile { get; set; }
+        public bool GuardianIsSMS { get; set; }
+
+        // Student Contact
+        public string? MobileNo { get; set; }
+        public bool IsSMS { get; set; }
 
         // Student Details
         public DateTime? DateOfBirth { get; set; }
@@ -132,17 +141,26 @@ namespace School.API.DTOs
         public string? FatherCNIC { get; set; }
         public string? FatherOccupation { get; set; }
         public string? FatherMobile { get; set; }
+        public bool FatherIsSMS { get; set; }
 
         // Mother Info
         public string? MotherName { get; set; }
+        public string? MotherNameUrdu { get; set; }
         public string? MotherCNIC { get; set; }
         public string? MotherMobile { get; set; }
+        public bool MotherIsSMS { get; set; }
 
         // Guardian Info
         public string? GuardianName { get; set; }
+        public string? GuardianNameUrdu { get; set; }
         public string? GuardianCNIC { get; set; }
         public string? GuardianRelation { get; set; }
         public string? GuardianMobile { get; set; }
+        public bool GuardianIsSMS { get; set; }
+
+        // Student Contact
+        public string? MobileNo { get; set; }
+        public bool IsSMS { get; set; }
 
         // Student Details
         public DateTime? DateOfBirth { get; set; }
@@ -208,17 +226,26 @@ namespace School.API.DTOs
         public string? FatherCNIC { get; set; }
         public string? FatherOccupation { get; set; }
         public string? FatherMobile { get; set; }
+        public bool FatherIsSMS { get; set; }
 
         // Mother Info
         public string? MotherName { get; set; }
+        public string? MotherNameUrdu { get; set; }
         public string? MotherCNIC { get; set; }
         public string? MotherMobile { get; set; }
+        public bool MotherIsSMS { get; set; }
 
         // Guardian Info
         public string? GuardianName { get; set; }
+        public string? GuardianNameUrdu { get; set; }
         public string? GuardianCNIC { get; set; }
         public string? GuardianRelation { get; set; }
         public string? GuardianMobile { get; set; }
+        public bool GuardianIsSMS { get; set; }
+
+        // Student Contact
+        public string? MobileNo { get; set; }
+        public bool IsSMS { get; set; }
 
         // Student Details
         public DateTime? DateOfBirth { get; set; }
