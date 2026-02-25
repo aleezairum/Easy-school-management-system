@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace School.API.Data.DBModels.Academic
 {
-    public class Campus
+    public class SMSCampus
     {
         [Key]
         public int VID { get; set; }
@@ -19,5 +19,6 @@ namespace School.API.Data.DBModels.Academic
         public int? UpdatedBy { get; set; }
         public DateTime? UpdatedDate { get; set; }
         public string? UpdatedIp { get; set; }
+
     }
 }

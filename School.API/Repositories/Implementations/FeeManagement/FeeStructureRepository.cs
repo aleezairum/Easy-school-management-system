@@ -19,7 +19,7 @@ namespace School.API.Repositories.Implementations.Accounts
         {
             var resultList = await _context
                 .Set<FeeStructureSaveDto>()
-                .FromSqlRaw("EXEC SpGet_FeeStructure @VID={0}", 0)
+                .FromSqlRaw("EXEC SpGet_SMSFeeStructure @VID={0}", 0)
                 .AsNoTracking()
                 .ToListAsync();
 
@@ -30,7 +30,7 @@ namespace School.API.Repositories.Implementations.Accounts
         {
             var resultList = await _context
                 .Set<FeeStructureSaveDto>()
-                .FromSqlRaw("EXEC SpGet_FeeStructure @VID={0}", vid)
+                .FromSqlRaw("EXEC SpGet_SMSFeeStructure @VID={0}", vid)
                 .AsNoTracking()
                 .ToListAsync();
 
@@ -41,7 +41,7 @@ namespace School.API.Repositories.Implementations.Accounts
         {
             var resultList = await _context
                 .Set<ResponseDto>()
-                .FromSqlRaw("EXEC SpDelete_FeeStructure @VID={0}", vid)
+                .FromSqlRaw("EXEC SpDelete_SMSFeeStructure @VID={0}", vid)
                 .AsNoTracking()
                 .ToListAsync();
 
@@ -53,7 +53,7 @@ namespace School.API.Repositories.Implementations.Accounts
             var resultList = await _context
                 .Set<ResponseDto>()
                 .FromSqlRaw(
-                    "EXEC SpSave_FeeStructure @VID={0}, @CampusID={1}, @AcademicSessionID={2}, @ClassID={3}, @GradeID={4}, @FeeTypeID={5}, @Amount={6}, @IsActive={7}, @UserID={8}, @UserIP={9}",
+                    "EXEC SpSave_SMSFeeStructure @VID={0}, @CampusID={1}, @SessionID={2}, @ClassID={3}, @GradeID={4}, @FeeTypeID={5}, @Amount={6}, @IsActive={7}, @UserID={8}, @UserIP={9}",
                     dto.VID,
                     dto.CampusID,
                     dto.AcademicSessionID,

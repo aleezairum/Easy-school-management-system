@@ -1,6 +1,6 @@
-namespace School.API.DTOs.Academic
+﻿namespace School.API.DTOs.Academic
 {
-    public class CampusSaveDto
+    public class SMSCampusSaveDto
     {
         public int VID { get; set; }
         public string? VName { get; set; }

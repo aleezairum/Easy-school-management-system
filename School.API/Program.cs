@@ -58,6 +58,8 @@ builder.Services.AddScoped<ISMSSectionRepository, SMSSectionRepository>();
 builder.Services.AddScoped<ISMSSectionService, SMSSectionService>();
 builder.Services.AddScoped<ISMSClassRepository, SMSClassRepository>();
 builder.Services.AddScoped<ISMSClassService, SMSClassService>();
+builder.Services.AddScoped<ISMSCampusRepository, SMSCampusRepository>();
+builder.Services.AddScoped<ISMSCampusService, SMSCampusService>();
 builder.Services.AddScoped<IStudentStatusRepository, StudentStatusRepository>();
 builder.Services.AddScoped<IStudentStatusService, StudentStatusService>();
 builder.Services.AddScoped<IStudentRepository, StudentRepository>();

@@ -44,7 +44,7 @@ namespace School.API.Data
         public DbSet<Employee> Employees { get; set; }
         public DbSet<Salary> Salaries { get; set; }
 
-        public DbSet<Campus> Campuses { get; set; }
+        public DbSet<SMSCampus> Campuses { get; set; }
         public DbSet<StudentStatus> StudentStatuses { get; set; }
 
         // Accounts entities
@@ -66,7 +66,7 @@ namespace School.API.Data
             modelBuilder.Entity<AcademicGradeSaveDto>().HasNoKey();
             modelBuilder.Entity<FeeTypeSaveDto>().HasNoKey();
             modelBuilder.Entity<FeeStructureSaveDto>().HasNoKey();
-            modelBuilder.Entity<CampusSaveDto>().HasNoKey();
+            modelBuilder.Entity<SMSCampusSaveDto>().HasNoKey();
             modelBuilder.Entity<StudentStatusSaveDto>().HasNoKey();
 
             // Menu configuration

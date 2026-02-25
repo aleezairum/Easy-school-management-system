@@ -1,18 +1,18 @@
-using School.API.Data.DBModels.Academic;
+﻿using School.API.Data.DBModels.Academic;
 using School.API.DTOs.Academic;
 using School.API.DTOs.Common;
 
 namespace School.API.Repositories.Interfaces.Academic
 {
-    public interface ICampusRepository
+    public interface ISMSCampusRepository
     {
         Task<ResponseDto> SaveAsync(
-            CampusSaveDto dto,
+            SMSCampusSaveDto dto,
             int userId,
             string userIp);
 
-        Task<List<Campus>> GetAllAsync();
-        Task<Campus?> GetByIdAsync(int id);
+        Task<List<SMSCampus>> GetAllAsync();
+        Task<SMSCampus?> GetByIdAsync(int id);
         Task<ResponseDto?> DeleteByIdAsync(int id);
     }
 }

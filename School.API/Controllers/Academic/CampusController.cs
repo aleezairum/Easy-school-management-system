@@ -1,14 +1,17 @@
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using School.API.DTOs.Academic;
 using School.API.Services.Interfaces.Academic;
 
+
 [ApiController]
 [Route("api/[controller]")]
+//[Authorize]
 public class CampusController : ControllerBase
 {
-    private readonly ICampusService _service;
+    private readonly ISMSCampusService _service;
 
-    public CampusController(ICampusService service)
+    public CampusController(ISMSCampusService service)
     {
         _service = service;
     }
@@ -27,14 +30,13 @@ public class CampusController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteById(int id)
+    public async Task<IActionResult>DeleteById(int id)
     {
         var record = await _service.DeleteByIdAsync(id);
         return record == null ? NotFound() : Ok(record);
     }
-
     [HttpPost]
-    public async Task<IActionResult> Save(CampusSaveDto dto)
+    public async Task<IActionResult> Save(SMSCampusSaveDto dto)
     {
         int userId = 1; // later from JWT
         string userIp = HttpContext.Connection.RemoteIpAddress?.ToString();

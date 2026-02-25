@@ -480,8 +480,8 @@
                 const gradeSelect = $('#gradeId');
                 const filterGrade = $('#filterGrade');
                 grades.forEach(item => {
-                    gradeSelect.append(`<option value="${item.id}">${item.name}</option>`);
-                    filterGrade.append(`<option value="${item.id}">${item.name}</option>`);
+                    gradeSelect.append(`<option value="${item.vid}">${item.vName}</option>`);
+                    filterGrade.append(`<option value="${item.vid}">${item.vName}</option>`);
                 });
 
                 const feeTypeSelect = $('#feeTypeId');

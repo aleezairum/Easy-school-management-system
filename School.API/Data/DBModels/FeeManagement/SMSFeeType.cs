@@ -7,8 +7,7 @@ namespace School.API.Data.DBModels.Accounts
     {
         [Key]
         public int VID { get; set; }
-        public int FeeType { get; set; }
-
+        
         [Required]
         [StringLength(100)]
         public string VName { get; set; } = string.Empty;
