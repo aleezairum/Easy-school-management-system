@@ -42,4 +42,16 @@ public class StudentController : ControllerBase
         var result = await _service.SaveAsync(dto, userId, userIp);
         return Ok(result);
     }
+
+    [HttpPatch("{id}/toggle-status")]
+    public async Task<IActionResult> ToggleStatus(int id)
+    {
+        int userId = 1; // later from JWT
+        string userIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+
+        var result = await _service.ToggleStatusAsync(id, userId, userIp);
+        if (result.ReturnCode < 0)
+            return NotFound(result);
+        return Ok(result);
+    }
 }

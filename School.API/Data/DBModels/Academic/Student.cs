@@ -46,6 +46,7 @@ namespace School.API.Data.DBModels.Accounts
 
         public string MotherMobile { get; set; }
 
+        public int GuardianType { get; set; } = 2; // 0=Father, 1=Mother, 2=Other
         public string GuardianName { get; set; }
 
         public string GuardianCNIC { get; set; }

@@ -167,7 +167,7 @@
         }
 
         .menu-section:not(.collapsed) .menu-section-items {
-            max-height: 500px;
+            max-height: 2000px;
             opacity: 1;
             padding-top: 4px;
         }
@@ -225,7 +225,7 @@
         }
 
             .submenu.open {
-                max-height: 500px;
+                max-height: 2000px;
             }
 
             .submenu .menu-item {
@@ -258,6 +258,22 @@
             font-size: 14px;
             font-weight: 500;
         }
+
+        /* Align flat menu items with submenu children */
+        .menu-section-items > .menu-item {
+            padding: 10px 16px 10px 24px;
+            border-left: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0 10px 10px 0;
+            margin-left: 32px;
+        }
+
+            .menu-section-items > .menu-item:hover {
+                border-left-color: rgba(255, 255, 255, 0.6);
+            }
+
+            .menu-section-items > .menu-item.active {
+                border-left-color: #ffffff;
+            }
 
             .menu-item:hover {
                 background: rgba(255, 255, 255, 0.15);
@@ -1707,8 +1723,30 @@
 
                     data.menuSections.forEach((section, index) => {
                         const sectionId = `menu-section-${index}`;
-                        const isExpanded = localStorage.getItem(`sidebar-${sectionId}`) === 'expanded';
+
+                        // Check if any item in this section is active
+                        let sectionHasActive = false;
+                        section.items.forEach(item => {
+                            if (item.children && item.children.length > 0) {
+                                item.children.forEach(child => {
+                                    if (currentPath.toLowerCase().startsWith(child.url.toLowerCase())) {
+                                        sectionHasActive = true;
+                                    }
+                                });
+                            } else {
+                                if (currentPath.toLowerCase().startsWith(item.url.toLowerCase()) ||
+                                    (item.url === '/Dashboard' && currentPath === '/')) {
+                                    sectionHasActive = true;
+                                }
+                            }
+                        });
+
+                        const isExpanded = sectionHasActive || localStorage.getItem(`sidebar-${sectionId}`) === 'expanded';
                         const collapsedClass = isExpanded ? '' : 'collapsed';
+
+                        if (sectionHasActive) {
+                            localStorage.setItem(`sidebar-${sectionId}`, 'expanded');
+                        }
 
                         menuHtml += `<div class="menu-section ${collapsedClass}" id="${sectionId}">`;
                         menuHtml += `
@@ -1723,15 +1761,29 @@
                             if (item.children && item.children.length > 0) {
                                 const submenuId = `submenu-${item.id}`;
 
+                                // Check if any child in this submenu is active
+                                let submenuHasActive = false;
+                                item.children.forEach(child => {
+                                    if (currentPath.toLowerCase().startsWith(child.url.toLowerCase())) {
+                                        submenuHasActive = true;
+                                    }
+                                });
+
+                                const submenuOpen = submenuHasActive || localStorage.getItem(`sidebar-${submenuId}`) === 'open';
+
+                                if (submenuHasActive) {
+                                    localStorage.setItem(`sidebar-${submenuId}`, 'open');
+                                }
+
                                 menuHtml += `
-                                    <div class="menu-item-parent" onclick="toggleSubmenu('${submenuId}')">
+                                    <div class="menu-item-parent ${submenuOpen ? 'expanded' : ''}" onclick="toggleSubmenu('${submenuId}')">
                                         <div class="parent-left">
                                             <i class="bi ${item.icon}"></i>
                                             <span>${item.title}</span>
                                         </div>
                                         <i class="bi bi-chevron-down submenu-toggle"></i>
                                     </div>
-                                    <div class="submenu" id="${submenuId}">
+                                    <div class="submenu ${submenuOpen ? 'open' : ''}" id="${submenuId}">
                                 `;
 
                                 item.children.forEach(child => {

@@ -32,6 +32,17 @@
         padding: 24px;
     }
 
+    /* Green radio buttons */
+    .form-check-input[type="radio"]:checked {
+        background-color: #008649;
+        border-color: #008649;
+    }
+
+    .form-check-input[type="radio"]:focus {
+        border-color: #008649;
+        box-shadow: 0 0 0 0.25rem rgba(0, 134, 73, 0.25);
+    }
+
     /* Wizard Steps Navigation */
     .wizard-steps {
         display: flex;
@@ -748,7 +759,7 @@
                             <tr>
                                 <td class="lbl" style="width:18%">Registration No.</td>
                                 <td class="val" style="width:32%">@Html.TextBoxFor(m => m.RegistrationNo, new { @placeholder = "Enter registration number" })</td>
-                                <td class="lbl" style="width:18%">Roll No.</td>
+                                <td class="lbl" style="width:18%">Roll No. <span style="color:red;">*</span></td>
                                 <td class="val" style="width:32%">@Html.TextBoxFor(m => m.RollNo, new { @placeholder = "Enter roll number" })</td>
                             </tr>
                             <tr>
@@ -758,13 +769,13 @@
                                 <td class="val">@Html.TextBoxFor(m => m.DateOfAdmission, new { @type = "date" })</td>
                             </tr>
                             <tr>
-                                <td class="lbl">Current Class</td>
+                                <td class="lbl">Current Class <span style="color:red;">*</span></td>
                                 <td class="val">
                                     <select class="form-select" id="CurrentClass" name="CurrentClass">
                                         <option value="">Select Class</option>
                                     </select>
                                 </td>
-                                <td class="lbl">Section</td>
+                                <td class="lbl">Section <span style="color:red;">*</span></td>
                                 <td class="val">
                                     <select class="form-select" id="Section" name="Section">
                                         <option value="">Select Section</option>
@@ -772,7 +783,7 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td class="lbl">Status</td>
+                                <td class="lbl">Status <span style="color:red;">*</span></td>
                                 <td class="val" colspan="3">
                                     <select class="form-select" id="Status" name="Status">
                                         <option value="">Select Status</option>
@@ -801,7 +812,7 @@
                         </div>
                         <table class="admission-table">
                             <tr>
-                                <td class="lbl" style="width:18%">Name of Student</td>
+                                <td class="lbl" style="width:18%">Name of Student <span style="color:red;">*</span></td>
                                 <td class="val" style="width:32%">@Html.TextBoxFor(m => m.NameOfStudent, new { @placeholder = "Full name in English" })</td>
                                 <td class="lbl" style="width:18%">Name (In Urdu)</td>
                                 <td class="val-rtl" style="width:32%">@Html.TextBoxFor(m => m.NameOfStudentUrdu, new { @placeholder = "اردو میں نام" })</td>
@@ -912,13 +923,13 @@
                         </div>
                         <table class="admission-table">
                             <tr>
-                                <td class="lbl" style="width:18%">Father's Name</td>
+                                <td class="lbl" style="width:18%">Father's Name <span style="color:red;">*</span></td>
                                 <td class="val" style="width:32%">@Html.TextBoxFor(m => m.FatherName, new { @placeholder = "Full name in English" })</td>
                                 <td class="lbl" style="width:18%">Name (In Urdu)</td>
                                 <td class="val-rtl" style="width:32%">@Html.TextBoxFor(m => m.FatherNameUrdu, new { @placeholder = "اردو میں نام" })</td>
                             </tr>
                             <tr>
-                                <td class="lbl">Father's CNIC</td>
+                                <td class="lbl">Father's CNIC <span style="color:red;">*</span></td>
                                 <td class="val">@Html.TextBoxFor(m => m.FatherCNIC, new { @placeholder = "XXXXX-XXXXXXX-X" })</td>
                                 <td class="lbl">Occupation</td>
                                 <td class="val">@Html.TextBoxFor(m => m.FatherOccupation, new { @placeholder = "Profession/Job" })</td>
@@ -1014,29 +1025,18 @@
                                 <p>Enter guardian details (if different from parents)</p>
                             </div>
                         </div>
-                        <div class="admission-import-section mb-3">
-                            <div class="alert alert-info d-flex align-items-center gap-3" style="background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); border: 2px solid #0ea5e9; border-radius: 12px;">
-                                <i class="bi bi-search fs-4 text-primary"></i>
-                                <div class="flex-grow-1">
-                                    <strong>Search by Guardian's CNIC</strong>
-                                    <p class="mb-2 small">Select an existing CNIC to auto-fill Father, Mother & Guardian details</p>
-                                    <select id="guardianCnicLookup" class="form-select" style="max-width: 500px;" onchange="loadParentByCNIC(this.value, 'guardian')">
-                                        <option value="">-- Select CNIC (Optional) --</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
+                        @Html.HiddenFor(m => m.GuardianType)
                         <div class="d-flex gap-4 mb-3 ms-2">
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="guardianType" id="guardianFather" value="Father" onchange="onGuardianTypeChange('Father')">
+                                <input class="form-check-input" type="radio" name="guardianTypeRadio" id="guardianFather" value="0" @(Model.GuardianType == 0 ? "checked" : "") onchange="onGuardianTypeChange(0)">
                                 <label class="form-check-label" for="guardianFather">Father Guardian</label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="guardianType" id="guardianMother" value="Mother" onchange="onGuardianTypeChange('Mother')">
+                                <input class="form-check-input" type="radio" name="guardianTypeRadio" id="guardianMother" value="1" @(Model.GuardianType == 1 ? "checked" : "") onchange="onGuardianTypeChange(1)">
                                 <label class="form-check-label" for="guardianMother">Mother Guardian</label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="guardianType" id="guardianOther" value="Other" checked onchange="onGuardianTypeChange('Other')">
+                                <input class="form-check-input" type="radio" name="guardianTypeRadio" id="guardianOther" value="2" @(Model.GuardianType == 2 ? "checked" : "") onchange="onGuardianTypeChange(2)">
                                 <label class="form-check-label" for="guardianOther">Other Guardian</label>
                             </div>
                         </div>
@@ -1150,27 +1150,14 @@
                             <tr>
                                 <td class="lbl">Year of Passing</td>
                                 <td class="val">@Html.TextBoxFor(m => m.YearOfPassing, new { @placeholder = "YYYY" })</td>
-                                <td class="lbl">Marks Obtained</td>
-                                <td class="val">@Html.TextBoxFor(m => m.MarksObtained, new { @placeholder = "Marks" })</td>
-                            </tr>
-                            <tr>
                                 <td class="lbl">Total Marks</td>
-                                <td class="val">@Html.TextBoxFor(m => m.TotalMarks, new { @placeholder = "Out of" })</td>
+                                <td class="val">@Html.TextBoxFor(m => m.TotalMarks, new { @placeholder = "Out of", onchange = "calculatePercentage()", onkeyup = "calculatePercentage()" })</td>
+                            </tr>
+                            <tr>
+                                <td class="lbl">Marks Obtained</td>
+                                <td class="val">@Html.TextBoxFor(m => m.MarksObtained, new { @placeholder = "Marks", onchange = "calculatePercentage()", onkeyup = "calculatePercentage()" })</td>
                                 <td class="lbl">Percentage</td>
-                                <td class="val">@Html.TextBoxFor(m => m.Percentage, new { @placeholder = "%" })</td>
-                            </tr>
-                            <tr>
-                                <td colspan="4" style="padding: 16px 0 8px 0;"><strong style="color: #475569;">Fee Information</strong></td>
-                            </tr>
-                            <tr>
-                                <td class="lbl">Admission Fee</td>
-                                <td class="val">@Html.TextBoxFor(m => m.AdmissionFee, new { @placeholder = "Rs." })</td>
-                                <td class="lbl">Monthly Fee</td>
-                                <td class="val">@Html.TextBoxFor(m => m.MonthlyFee, new { @placeholder = "Rs." })</td>
-                            </tr>
-                            <tr>
-                                <td class="lbl">Fee Category</td>
-                                <td class="val" colspan="3">@Html.TextBoxFor(m => m.FeeCategory, new { @placeholder = "e.g., Regular, Scholarship, Sibling Discount" })</td>
+                                <td class="val">@Html.TextBoxFor(m => m.Percentage, new { @placeholder = "%", @readonly = "readonly", style = "background-color: #f1f5f9; cursor: not-allowed;" })</td>
                             </tr>
                         </table>
 
@@ -1232,13 +1219,38 @@
                 loadSectionDropdown();
             });
 
-            // Re-enable disabled guardian fields before form submit
-            $('#studentForm').on('submit', function () {
+            // Validation and submit handler
+            $('#studentForm').on('submit', function (e) {
+                var errors = [];
+                var firstErrorTab = -1;
+
+                if (!$('#RollNo').val().trim()) { errors.push('Roll No is required'); if (firstErrorTab < 0) firstErrorTab = 0; }
+                if (!$('#CurrentClass').val()) { errors.push('Class is required'); if (firstErrorTab < 0) firstErrorTab = 0; }
+                if (!$('#Section').val()) { errors.push('Section is required'); if (firstErrorTab < 0) firstErrorTab = 0; }
+                if (!$('#Status').val()) { errors.push('Status is required'); if (firstErrorTab < 0) firstErrorTab = 0; }
+                if (!$('#NameOfStudent').val().trim()) { errors.push('Student Name (English) is required'); if (firstErrorTab < 0) firstErrorTab = 1; }
+                if (!$('#FatherName').val().trim()) { errors.push("Father's Name is required"); if (firstErrorTab < 0) firstErrorTab = 2; }
+                if (!$('#FatherCNIC').val().trim()) { errors.push("Father's CNIC is required"); if (firstErrorTab < 0) firstErrorTab = 2; }
+
+                if (errors.length > 0) {
+                    e.preventDefault();
+                    toastError(errors.join(', '));
+                    if (firstErrorTab >= 0) goToStep(firstErrorTab);
+                    return false;
+                }
+
+                // Re-enable disabled guardian fields so values are submitted
                 $('#GuardianName, #GuardianNameUrdu, #GuardianCNIC, #GuardianRelation, #GuardianMobile, #GuardianIsSMS').prop('disabled', false);
             });
 
             // Initialize
             updateWizard();
+
+            // Apply guardian type state on page load (for edit mode)
+            var initialGuardianType = parseInt($('#GuardianType').val()) || 2;
+            if (initialGuardianType === 0 || initialGuardianType === 1) {
+                $('#GuardianName, #GuardianNameUrdu, #GuardianCNIC, #GuardianRelation, #GuardianMobile, #GuardianIsSMS').prop('disabled', true);
+            }
         });
 
         // Load class dropdown
@@ -1313,11 +1325,9 @@
 
                 const fatherSelect = $('#fatherCnicLookup');
                 const motherSelect = $('#motherCnicLookup');
-                const guardianSelect = $('#guardianCnicLookup');
 
                 const fatherSeen = new Set();
                 const motherSeen = new Set();
-                const guardianSeen = new Set();
 
                 data.forEach(s => {
                     if (s.fatherCNIC && !fatherSeen.has(s.fatherCNIC)) {
@@ -1327,10 +1337,6 @@
                     if (s.motherCNIC && !motherSeen.has(s.motherCNIC)) {
                         motherSeen.add(s.motherCNIC);
                         motherSelect.append(`<option value="${s.motherCNIC}">${s.motherCNIC} - ${s.motherName || ''} (${s.nameOfStudent || ''})</option>`);
-                    }
-                    if (s.guardianCNIC && !guardianSeen.has(s.guardianCNIC)) {
-                        guardianSeen.add(s.guardianCNIC);
-                        guardianSelect.append(`<option value="${s.guardianCNIC}">${s.guardianCNIC} - ${s.guardianName || ''} (${s.nameOfStudent || ''})</option>`);
                     }
                 });
             } catch (error) {
@@ -1374,6 +1380,7 @@
                     $('#guardianSmsLabel').text(data.guardianIsSMS ? 'Enabled' : 'Disabled');
 
                     $('#guardianOther').prop('checked', true);
+                    $('#GuardianType').val(2);
                     $('#GuardianName, #GuardianNameUrdu, #GuardianCNIC, #GuardianRelation, #GuardianMobile, #GuardianIsSMS').prop('disabled', false);
 
                     showAlert('Parent data found and auto-filled successfully!', 'success');
@@ -1388,11 +1395,23 @@
             }
         }
 
-        // Guardian type change handler
+        // Auto-calculate percentage from marks
+        function calculatePercentage() {
+            var total = parseFloat($('#TotalMarks').val());
+            var obtained = parseFloat($('#MarksObtained').val());
+            if (total > 0 && obtained >= 0) {
+                $('#Percentage').val(((obtained / total) * 100).toFixed(2));
+            } else {
+                $('#Percentage').val('');
+            }
+        }
+
+        // Guardian type change handler (0=Father, 1=Mother, 2=Other)
         function onGuardianTypeChange(type) {
+            $('#GuardianType').val(type);
             const guardianFields = ['#GuardianName', '#GuardianNameUrdu', '#GuardianCNIC', '#GuardianRelation', '#GuardianMobile', '#GuardianIsSMS'];
 
-            if (type === 'Father') {
+            if (type === 0) {
                 $('#GuardianName').val($('#FatherName').val());
                 $('#GuardianNameUrdu').val($('#FatherNameUrdu').val());
                 $('#GuardianCNIC').val($('#FatherCNIC').val());
@@ -1401,7 +1420,7 @@
                 $('#GuardianIsSMS').prop('checked', $('#FatherIsSMS').is(':checked'));
                 $('#guardianSmsLabel').text($('#FatherIsSMS').is(':checked') ? 'Enabled' : 'Disabled');
                 guardianFields.forEach(f => $(f).prop('disabled', true));
-            } else if (type === 'Mother') {
+            } else if (type === 1) {
                 $('#GuardianName').val($('#MotherName').val());
                 $('#GuardianNameUrdu').val($('#MotherNameUrdu').val());
                 $('#GuardianCNIC').val($('#MotherCNIC').val());
@@ -1477,6 +1496,9 @@
                     $('#motherSmsLabel').text(data.motherIsSMS ? 'Enabled' : 'Disabled');
 
                     // Populate Guardian Info
+                    var gType = data.guardianType != null ? data.guardianType : 2;
+                    $('#GuardianType').val(gType);
+                    $('input[name="guardianTypeRadio"][value="' + gType + '"]').prop('checked', true);
                     $('#GuardianName').val(data.guardianName || '');
                     $('#GuardianNameUrdu').val(data.guardianNameUrdu || '');
                     $('#GuardianCNIC').val(data.guardianCNIC || '');
@@ -1484,6 +1506,11 @@
                     $('#GuardianMobile').val(data.guardianMobile || '');
                     $('#GuardianIsSMS').prop('checked', data.guardianIsSMS || false);
                     $('#guardianSmsLabel').text(data.guardianIsSMS ? 'Enabled' : 'Disabled');
+                    if (gType === 0 || gType === 1) {
+                        $('#GuardianName, #GuardianNameUrdu, #GuardianCNIC, #GuardianRelation, #GuardianMobile, #GuardianIsSMS').prop('disabled', true);
+                    } else {
+                        $('#GuardianName, #GuardianNameUrdu, #GuardianCNIC, #GuardianRelation, #GuardianMobile, #GuardianIsSMS').prop('disabled', false);
+                    }
 
                     // Populate Address Info
                     $('#PresentAddress').val(data.presentAddress || '');

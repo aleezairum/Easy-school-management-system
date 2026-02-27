@@ -43,6 +43,7 @@ namespace School.API.DTOs.Academic
 
         public string MotherMobile { get; set; }
 
+        public int GuardianType { get; set; } = 2;
         public string GuardianName { get; set; }
 
         public string GuardianCNIC { get; set; }

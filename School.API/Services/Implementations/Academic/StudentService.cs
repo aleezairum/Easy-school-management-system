@@ -25,5 +25,8 @@ namespace School.API.Services.Implementations.Academic
 
         public Task<ResponseDto?> DeleteByIdAsync(int id)
             => _repo.DeleteByIdAsync(id);
+
+        public Task<ResponseDto> ToggleStatusAsync(int vid, int userId, string userIp)
+            => _repo.ToggleStatusAsync(vid, userId, userIp);
     }
 }

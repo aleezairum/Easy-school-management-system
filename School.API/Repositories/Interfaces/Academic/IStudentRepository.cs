@@ -9,5 +9,6 @@ namespace School.API.Repositories.Interfaces.Academic
         Task<List<StudentSaveDto>> GetAllAsync();
         Task<StudentSaveDto?> GetByIdAsync(int id);
         Task<ResponseDto?> DeleteByIdAsync(int id);
+        Task<ResponseDto> ToggleStatusAsync(int vid, int userId, string userIp);
     }
 }

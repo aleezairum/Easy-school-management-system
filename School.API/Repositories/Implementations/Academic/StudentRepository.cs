@@ -48,6 +48,23 @@ namespace School.API.Repositories.Implementations.Academic
             return resultList.FirstOrDefault();
         }
 
+        public async Task<ResponseDto> ToggleStatusAsync(int vid, int userId, string userIp)
+        {
+            var student = await _context.Students.FindAsync(vid);
+            if (student == null)
+                return new ResponseDto { VID = vid, ReturnCode = -1, ReturnMessage = "Student not found" };
+
+            student.StudentActive = !(student.StudentActive ?? true);
+            student.UpdatedBy = userId;
+            student.UpdatedDate = DateTime.UtcNow;
+            student.UpdatedIp = userIp;
+
+            await _context.SaveChangesAsync();
+
+            var newStatus = student.StudentActive == true ? "Active" : "Inactive";
+            return new ResponseDto { VID = vid, ReturnCode = 0, ReturnMessage = newStatus };
+        }
+
         public async Task<ResponseDto> SaveAsync(StudentSaveDto dto, int userId, string userIp)
         {
             var resultList = await _context
