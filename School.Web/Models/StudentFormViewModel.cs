@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using System;
 
 namespace School.Web.Models
 {
@@ -91,6 +92,29 @@ namespace School.Web.Models
         // Status
         public string? Status { get; set; }
         public bool IsActive { get; set; } = true;
+
+        // API deserialization aliases (API returns different field names)
+        public int VID { get => Id; set => Id = value; }
+        public string? Name { get => NameOfStudent; set => NameOfStudent = value; }
+        public string? Name_Urdu { get => NameOfStudentUrdu; set => NameOfStudentUrdu = value; }
+        public string? Occupation { get => FatherOccupation; set => FatherOccupation = value; }
+        public string? BirthPlace { get => PlaceOfBirth; set => PlaceOfBirth = value; }
+        public string? ClassName { get => CurrentClass; set => CurrentClass = value; }
+        public string? SectionName { get => Section; set => Section = value; }
+        public string? Address { get => PresentAddress; set => PresentAddress = value; }
+        public bool? IsFatherSMS { get => FatherIsSMS; set => FatherIsSMS = value ?? false; }
+        public bool? IsMotherSMS { get => MotherIsSMS; set => MotherIsSMS = value ?? false; }
+        public bool? IsGuardianSMS { get => GuardianIsSMS; set => GuardianIsSMS = value ?? false; }
+        public DateTime? DOB
+        {
+            get => string.IsNullOrEmpty(DateOfBirth) ? null : DateTime.Parse(DateOfBirth);
+            set => DateOfBirth = value?.ToString("yyyy-MM-dd");
+        }
+        public DateTime? AdmissionDate
+        {
+            get => string.IsNullOrEmpty(DateOfAdmission) ? null : DateTime.Parse(DateOfAdmission);
+            set => DateOfAdmission = value?.ToString("yyyy-MM-dd");
+        }
     }
 
     public class StudentListViewModel
