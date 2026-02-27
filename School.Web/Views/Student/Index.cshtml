@@ -243,7 +243,7 @@
                         </select>
                     </div>
                     <div class="col-lg-2 col-md-4 col-sm-6 col-12">
-                        <button type="button" class="btn btn-primary" onclick="loadStudents()">
+                        <button type="button" class="btn btn-primary" onclick="filterStudents()">
                             <i class="bi bi-search me-1"></i> Search
                         </button>
                     </div>
@@ -278,6 +278,8 @@
 @section Scripts {
 <script>
     ////const API_BASE = 'http://localhost:5266/api';
+
+    let allStudents = []; // Store all students loaded from API
 
     $(document).ready(function () {
         loadDropdowns();
@@ -319,55 +321,14 @@
         }
     }
 
+    // Fetch students from API once
     async function loadStudents() {
         showLoading();
         try {
             const response = await fetch(`${API_BASE}/Student`);
             if (response.ok) {
-                let data = await response.json();
-
-                // Apply filters
-                const search = $('#searchName').val().toLowerCase();
-                const classFilter = $('#filterClass option:selected').text();
-                const classVal = $('#filterClass').val();
-                const sectionFilter = $('#filterSection option:selected').text();
-                const sectionVal = $('#filterSection').val();
-                const status = $('#filterStatus').val();
-
-                if (search) {
-                    data = data.filter(s =>
-                        (s.nameOfStudent && s.nameOfStudent.toLowerCase().includes(search)) ||
-                        (s.studentName && s.studentName.toLowerCase().includes(search)) ||
-                        (s.registrationNo && s.registrationNo.toLowerCase().includes(search)) ||
-                        (s.rollNo && s.rollNo.toLowerCase().includes(search)) ||
-                        (s.fatherName && s.fatherName.toLowerCase().includes(search)) ||
-                        (s.fatherMobile && s.fatherMobile.includes(search))
-                    );
-                }
-
-                if (classVal) {
-                    data = data.filter(s =>
-                        (s.currentClass && s.currentClass === classFilter) ||
-                        (s.classId && s.classId.toString() === classVal)
-                    );
-                }
-
-                if (sectionVal) {
-                    data = data.filter(s =>
-                        (s.section && s.section === sectionFilter) ||
-                        (s.sectionId && s.sectionId.toString() === sectionVal)
-                    );
-                }
-
-                if (status) {
-                    if (status === 'Active') {
-                        data = data.filter(s => s.studentActive === true);
-                    } else if (status === 'Inactive') {
-                        data = data.filter(s => s.studentActive === false);
-                    }
-                }
-
-                renderList(data);
+                allStudents = await response.json();
+                filterStudents();
             } else {
                 showAlert('Failed to load students', 'danger');
             }
@@ -377,6 +338,58 @@
         } finally {
             hideLoading();
         }
+    }
+
+    // Filter from already-loaded data (no API call)
+    function filterStudents() {
+        let data = [...allStudents];
+
+        const search = $('#searchName').val().toLowerCase();
+        const classFilter = $('#filterClass option:selected').text();
+        const classVal = $('#filterClass').val();
+        const sectionFilter = $('#filterSection option:selected').text();
+        const sectionVal = $('#filterSection').val();
+        const status = $('#filterStatus').val();
+
+        if (search) {
+            data = data.filter(s =>
+                (s.nameOfStudent && s.nameOfStudent.toLowerCase().includes(search)) ||
+                (s.studentName && s.studentName.toLowerCase().includes(search)) ||
+                (s.name && s.name.toLowerCase().includes(search)) ||
+                (s.registrationNo && s.registrationNo.toLowerCase().includes(search)) ||
+                (s.rollNo && s.rollNo.toLowerCase().includes(search)) ||
+                (s.fatherName && s.fatherName.toLowerCase().includes(search)) ||
+                (s.fatherMobile && s.fatherMobile.includes(search))
+            );
+        }
+
+        if (classVal) {
+            data = data.filter(s =>
+                (s.currentClass && s.currentClass === classFilter) ||
+                (s.className && s.className === classFilter) ||
+                (s.classId && s.classId.toString() === classVal) ||
+                (s.classID && s.classID.toString() === classVal)
+            );
+        }
+
+        if (sectionVal) {
+            data = data.filter(s =>
+                (s.section && s.section === sectionFilter) ||
+                (s.sectionName && s.sectionName === sectionFilter) ||
+                (s.sectionId && s.sectionId.toString() === sectionVal) ||
+                (s.sectionID && s.sectionID.toString() === sectionVal)
+            );
+        }
+
+        if (status) {
+            if (status === 'Active') {
+                data = data.filter(s => s.isActive === true);
+            } else if (status === 'Inactive') {
+                data = data.filter(s => s.isActive === false);
+            }
+        }
+
+        renderList(data);
     }
 
     function renderList(items) {
