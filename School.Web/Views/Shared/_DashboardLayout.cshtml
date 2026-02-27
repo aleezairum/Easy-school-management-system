@@ -1492,7 +1492,7 @@
 
                 const icons = {
                     success: 'bi-check-lg',
-                    error: 'bi-x-lg',
+                    error: 'bi-exclamation-triangle-fill',
                     warning: 'bi-exclamation-lg',
                     info: 'bi-info-lg'
                 };
@@ -1510,9 +1510,10 @@
                         <div class="toast-title">${title}</div>
                         <div class="toast-message">${message}</div>
                     </div>
-                    <button class="toast-close" onclick="Toast.close('${id}')">&times;</button>
                     <div class="toast-progress" style="animation-duration: ${duration}ms;"></div>
                 `;
+                toast.style.cursor = 'pointer';
+                toast.onclick = () => this.close(id);
 
                 this.container.appendChild(toast);
                 setTimeout(() => this.close(id), duration);
@@ -1520,17 +1521,18 @@
             },
 
             close(id) {
-                const toast = document.getElementById(id);
-                if (toast) {
+                if (!this.container) this.init();
+                const toasts = this.container.querySelectorAll('.toast-item');
+                toasts.forEach(toast => {
                     toast.classList.add('hiding');
                     setTimeout(() => toast.remove(), 300);
-                }
+                });
             },
 
-            success(message, title = 'Success') { return this.show('success', title, message); },
-            error(message, title = 'Error')     { return this.show('error',   title, message, 7000); },
-            warning(message, title = 'Warning') { return this.show('warning', title, message); },
-            info(message, title = 'Info')       { return this.show('info',    title, message); }
+            success(message, title = 'Success') { return this.show('success', title, message, 2000); },
+            error(message, title = 'Error')     { return this.show('error',   title, message, 3000); },
+            warning(message, title = 'Warning') { return this.show('warning', title, message, 2500); },
+            info(message, title = 'Info')       { return this.show('info',    title, message, 2000); }
         };
 
         document.addEventListener('DOMContentLoaded', () => Toast.init());
