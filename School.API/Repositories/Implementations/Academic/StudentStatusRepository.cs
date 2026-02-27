@@ -20,7 +20,7 @@ namespace School.API.Repositories.Implementations.Academic
         {
             var resultList = await _context
                 .Set<StudentStatus>()
-                .FromSqlRaw("EXEC SpGet_StudentStatus @VID={0}", 0)
+                .FromSqlRaw("EXEC SpGet_SMSStudentStatus @VID={0}", 0)
                 .AsNoTracking()
                 .ToListAsync();
             return resultList;
@@ -30,7 +30,7 @@ namespace School.API.Repositories.Implementations.Academic
         {
             var resultList = await _context
                 .Set<StudentStatus>()
-                .FromSqlRaw("EXEC SpGet_StudentStatus @VID={0}", vid)
+                .FromSqlRaw("EXEC SpGet_SMSStudentStatus @VID={0}", vid)
                 .AsNoTracking()
                 .ToListAsync();
             return resultList.FirstOrDefault();
@@ -40,7 +40,7 @@ namespace School.API.Repositories.Implementations.Academic
         {
             var resultList = await _context
                 .Set<ResponseDto>()
-                .FromSqlRaw("EXEC SpDelete_StudentStatus @VID={0}", vid)
+                .FromSqlRaw("EXEC SpDelete_SMSStudentStatus @VID={0}", vid)
                 .AsNoTracking()
                 .ToListAsync();
             return resultList.FirstOrDefault();
@@ -51,7 +51,7 @@ namespace School.API.Repositories.Implementations.Academic
             var resultList = await _context
                 .Set<ResponseDto>()
                 .FromSqlRaw(
-                    "EXEC SpSave_StudentStatus @VID={0}, @VName={1}, @IsActive={2}, @UserID={3}, @UserIP={4}",
+                    "EXEC SpSave_SMSStudentStatus @VID={0}, @VName={1}, @IsActive={2}, @UserID={3}, @UserIP={4}",
                     dto.VID,
                     dto.VName,
                     dto.IsActive,
