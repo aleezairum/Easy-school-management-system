@@ -158,21 +158,20 @@
     .btn-edit {
         background: linear-gradient(135deg, #008649 0%, #006d3b 100%);
         border: none;
-        border-radius: 8px;
-        padding: 6px 14px;
-        font-weight: 600;
+        border-radius: 6px;
+        padding: 5px 10px;
         font-size: 13px;
         color: white;
         transition: all 0.2s;
         display: inline-flex;
         align-items: center;
-        gap: 5px;
         text-decoration: none;
+        line-height: 1;
     }
 
     .btn-edit:hover {
         transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(0, 134, 73, 0.4);
+        box-shadow: 0 3px 8px rgba(0, 134, 73, 0.4);
         color: white;
         background: linear-gradient(135deg, #006d3b 0%, #005a30 100%);
     }
@@ -411,10 +410,10 @@
                     <td class="text-center">${statusBadge}</td>
                     <td class="text-center">
                         <div class="d-flex align-items-center justify-content-center gap-2 flex-nowrap">
-                            <a href="/student/form/${studentId}" class="btn-edit" title="Edit">
-                                <i class="bi bi-pencil-square"></i> Edit
-                            </a>
                             <div class="action-toggle ${isActive ? 'active' : ''}" onclick="toggleStudentStatus(${studentId}, this)" title="${isActive ? 'Active' : 'Inactive'} - Click to toggle"></div>
+                            <a href="/student/form/${studentId}" class="btn-edit" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
                         </div>
                     </td>
                 </tr>
