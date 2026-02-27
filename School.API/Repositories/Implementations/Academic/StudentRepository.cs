@@ -54,14 +54,14 @@ namespace School.API.Repositories.Implementations.Academic
             if (student == null)
                 return new ResponseDto { VID = vid, ReturnCode = -1, ReturnMessage = "Student not found" };
 
-            student.StudentActive = !(student.StudentActive ?? true);
+            student.IsActive = !student.IsActive;
             student.UpdatedBy = userId;
             student.UpdatedDate = DateTime.UtcNow;
             student.UpdatedIp = userIp;
 
             await _context.SaveChangesAsync();
 
-            var newStatus = student.StudentActive == true ? "Active" : "Inactive";
+            var newStatus = student.IsActive ? "Active" : "Inactive";
             return new ResponseDto { VID = vid, ReturnCode = 0, ReturnMessage = newStatus };
         }
 

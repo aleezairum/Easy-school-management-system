@@ -64,40 +64,6 @@
         background: linear-gradient(135deg, #006d3b 0%, #005a30 100%);
     }
 
-    .btn-info {
-        background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-        border: none;
-        border-radius: 8px;
-        padding: 6px 12px;
-        font-weight: 600;
-        font-size: 13px;
-        color: white;
-        transition: all 0.2s;
-    }
-
-    .btn-info:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
-        color: white;
-    }
-
-    .btn-danger {
-        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        border: none;
-        border-radius: 8px;
-        padding: 6px 12px;
-        font-weight: 600;
-        font-size: 13px;
-        color: white;
-        transition: all 0.2s;
-    }
-
-    .btn-danger:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
-        color: white;
-    }
-
     .table {
         margin-bottom: 0;
     }
@@ -152,29 +118,22 @@
         margin-bottom: 20px;
     }
 
-    .status-toggle {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        cursor: pointer;
-    }
-
-    .status-toggle-slider {
+    .action-toggle {
         position: relative;
-        width: 40px;
-        height: 22px;
+        width: 36px;
+        height: 20px;
         background: #ef4444;
-        border-radius: 11px;
+        border-radius: 10px;
+        cursor: pointer;
         transition: background 0.3s ease;
         flex-shrink: 0;
     }
 
-    .status-toggle-slider::after {
+    .action-toggle::after {
         content: '';
         position: absolute;
-        top: 3px;
-        left: 3px;
+        top: 2px;
+        left: 2px;
         width: 16px;
         height: 16px;
         background: white;
@@ -183,30 +142,59 @@
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
     }
 
-    .status-toggle.active .status-toggle-slider {
+    .action-toggle.active {
         background: #008649;
     }
 
-    .status-toggle.active .status-toggle-slider::after {
-        transform: translateX(18px);
+    .action-toggle.active::after {
+        transform: translateX(16px);
     }
 
-    .status-toggle-label {
+    .action-toggle.toggling {
+        opacity: 0.5;
+        pointer-events: none;
+    }
+
+    .btn-edit {
+        background: linear-gradient(135deg, #008649 0%, #006d3b 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 6px 14px;
+        font-weight: 600;
+        font-size: 13px;
+        color: white;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        text-decoration: none;
+    }
+
+    .btn-edit:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 134, 73, 0.4);
+        color: white;
+        background: linear-gradient(135deg, #006d3b 0%, #005a30 100%);
+    }
+
+    .status-badge-active {
+        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
         font-size: 12px;
         font-weight: 600;
-        min-width: 52px;
+        letter-spacing: 0.3px;
     }
 
-    .status-toggle.active .status-toggle-label {
-        color: #008649;
-    }
-
-    .status-toggle:not(.active) .status-toggle-label {
-        color: #ef4444;
-    }
-
-    .status-toggle.toggling .status-toggle-slider {
-        opacity: 0.6;
+    .status-badge-inactive {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.3px;
     }
 </style>
 
@@ -269,16 +257,15 @@
                     <thead>
                         <tr>
                             <th style="width: 60px;">Sr#</th>
-                            <th style="width: 60px;">Photo</th>
-                            <th>Reg No</th>
                             <th>Roll No</th>
                             <th>Student Name</th>
                             <th>Father's Name</th>
-                            <th>Class</th>
-                            <th>Section</th>
+                            <th>Class / Section</th>
                             <th>Mobile</th>
-                            <th class="text-center" style="width: 130px;">Status</th>
-                            <th class="text-center" style="width: 150px;">Actions</th>
+                            <th>Grade</th>
+                            <th>Fee</th>
+                            <th class="text-center" style="width: 100px;">Status</th>
+                            <th class="text-center" style="width: 140px;">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="studentsBody">
@@ -398,77 +385,42 @@
         tbody.empty();
 
         if (items.length === 0) {
-            tbody.html('<tr><td colspan="11" class="text-center text-muted py-4">No students found.</td></tr>');
+            tbody.html('<tr><td colspan="10" class="text-center text-muted py-4">No students found.</td></tr>');
             return;
         }
 
         items.forEach((item, index) => {
-            const photo = item.studentPhoto
-                ? `<img src="${item.studentPhoto}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid #e2e8f0;" />`
-                : `<div style="width:40px;height:40px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:18px;"><i class="bi bi-person"></i></div>`;
-
             const isActive = item.studentActive === true;
-            const statusToggle = `
-                <div class="status-toggle ${isActive ? 'active' : ''}" onclick="toggleStudentStatus(${item.viD || item.id}, this)" title="${isActive ? 'Active' : 'Inactive'} - Click to toggle">
-                    <div class="status-toggle-slider"></div>
-                    <span class="status-toggle-label">${isActive ? 'Active' : 'Inactive'}</span>
-                </div>`;
+            const statusBadge = isActive
+                ? '<span class="status-badge-active">Active</span>'
+                : '<span class="status-badge-inactive">Inactive</span>';
 
+            const studentId = item.viD || item.id;
             const name = item.nameOfStudent || item.studentName || item.name || '-';
 
             const row = `
                 <tr>
                     <td>${index + 1}</td>
-                    <td>${photo}</td>
-                    <td><strong>${item.registrationNo || '-'}</strong></td>
                     <td>${item.rollNo || '-'}</td>
                     <td>${name}</td>
                     <td>${item.fatherName || '-'}</td>
-                    <td>${item.currentClass || item.className || '-'}</td>
-                    <td>${item.section || item.sectionName || '-'}</td>
+                    <td>${item.currentClass || item.className || '-'}<br><small class="text-muted">${item.section || item.sectionName || '-'}</small></td>
                     <td>${item.fatherMobile || item.mobile || '-'}</td>
-                    <td class="text-center">${statusToggle}</td>
+                    <td>${item.gradeName || item.grade || '-'}</td>
+                    <td>${item.monthlyFee || item.fee || '-'}</td>
+                    <td class="text-center">${statusBadge}</td>
                     <td class="text-center">
-                        <div class="d-flex justify-content-center gap-1 flex-nowrap">
-                            <a href="/student/form/${item.id}" class="btn btn-sm btn-info" title="Edit">
-                                <i class="bi bi-pencil"></i>
+                        <div class="d-flex align-items-center justify-content-center gap-2 flex-nowrap">
+                            <a href="/student/form/${studentId}" class="btn-edit" title="Edit">
+                                <i class="bi bi-pencil-square"></i> Edit
                             </a>
-                            <button type="button" class="btn btn-sm btn-danger" onclick="deleteStudent(${item.id}, '${(name || '').replace(/'/g, "\\'")}')" title="Delete">
-                                <i class="bi bi-trash"></i>
-                            </button>
+                            <div class="action-toggle ${isActive ? 'active' : ''}" onclick="toggleStudentStatus(${studentId}, this)" title="${isActive ? 'Active' : 'Inactive'} - Click to toggle"></div>
                         </div>
                     </td>
                 </tr>
             `;
             tbody.append(row);
         });
-    }
-
-    async function deleteStudent(id, name) {
-        if (!confirm(`Are you sure you want to delete student "${name}"?`)) {
-            return;
-        }
-
-        showLoading();
-        try {
-            const response = await fetch(`${API_BASE}/Student/${id}`, {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' }
-            });
-
-            if (response.ok) {
-                toastSuccess('Student deleted successfully!');
-                await loadStudents();
-            } else {
-                const error = await response.text();
-                toastError(error || 'Failed to delete student');
-            }
-        } catch (error) {
-            console.error('Error deleting student:', error);
-            toastError('Error deleting student');
-        } finally {
-            hideLoading();
-        }
     }
 
     async function toggleStudentStatus(id, toggleEl) {
@@ -486,8 +438,14 @@
                 const result = await response.json();
                 const isNowActive = result.returnMessage === 'Active';
                 $toggle.toggleClass('active', isNowActive);
-                $toggle.find('.status-toggle-label').text(isNowActive ? 'Active' : 'Inactive');
                 $toggle.attr('title', (isNowActive ? 'Active' : 'Inactive') + ' - Click to toggle');
+
+                // Update the status badge in the same row
+                const $statusCell = $toggle.closest('tr').find('td:nth-child(9)');
+                $statusCell.html(isNowActive
+                    ? '<span class="status-badge-active">Active</span>'
+                    : '<span class="status-badge-inactive">Inactive</span>');
+
                 toastSuccess(`Student status changed to ${result.returnMessage}`);
             } else {
                 const error = await response.text();
