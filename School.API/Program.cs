@@ -11,10 +11,10 @@ using School.API.Repositories.Implementations.Academic;
 using School.API.Repositories.Interfaces.Academic;
 
 
-using School.API.Services.Interfaces.Student;
-using School.API.Services.Implementations.Student;
-using School.API.Repositories.Interfaces.Student;
-using School.API.Repositories.Implementations.Student;
+using School.API.Services.Interfaces.Academic;
+using School.API.Services.Implementations.Academic;
+using School.API.Repositories.Interfaces.Academic;
+using School.API.Repositories.Implementations.Academic;
 using School.API.Services.Interfaces.HR;
 using School.API.Services.Implementations.HR;
 using School.API.Repositories.Interfaces.HR;
@@ -62,8 +62,8 @@ builder.Services.AddScoped<ISMSCampusRepository, SMSCampusRepository>();
 builder.Services.AddScoped<ISMSCampusService, SMSCampusService>();
 builder.Services.AddScoped<IStudentStatusRepository, StudentStatusRepository>();
 builder.Services.AddScoped<IStudentStatusService, StudentStatusService>();
-builder.Services.AddScoped<IStudentRepository, StudentRepository>();
-builder.Services.AddScoped<IStudentService, StudentService>();
+builder.Services.AddScoped<School.API.Repositories.Interfaces.Academic.IStudentRepository, School.API.Repositories.Implementations.Academic.StudentRepository>();
+builder.Services.AddScoped<School.API.Services.Interfaces.Academic.IStudentService, School.API.Services.Implementations.Academic.StudentService>();
 
 // HR Services
 builder.Services.AddScoped<IDesignationRepository, DesignationRepository>();
@@ -88,8 +88,8 @@ builder.Services.AddScoped<IExamService, ExamService>();
 // Accounts Services
 builder.Services.AddScoped<IFeeTypeRepository, FeeTypeRepository>();
 builder.Services.AddScoped<ISMSFeeTypeService, FeeTypeService>();
-builder.Services.AddScoped<IFeeStructureRepository, FeeStructureRepository>();
-builder.Services.AddScoped<IFeeStructureService, FeeStructureService>();
+builder.Services.AddScoped<School.API.Repositories.Interfaces.Accounts.IFeeStructureRepository, School.API.Repositories.Implementations.Accounts.FeeStructureRepository>();
+builder.Services.AddScoped<School.API.Services.Interfaces.Accounts.IFeeStructureService, School.API.Services.Implementations.Accounts.FeeStructureService>();
 //builder.Services.AddScoped<IPaymentMethodRepository, PaymentMethodRepository>();
 //builder.Services.AddScoped<IPaymentMethodService, PaymentMethodService>();
 //builder.Services.AddScoped<IChallanVoucherRepository, ChallanVoucherRepository>();

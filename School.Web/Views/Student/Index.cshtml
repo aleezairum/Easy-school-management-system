@@ -244,7 +244,7 @@
 
     async function loadDropdowns() {
         try {
-            const response = await fetch(`${API_BASE}/SMSClass`);
+                const response = await fetch(`${API_BASE}/class`);
             if (response.ok) {
                 const classes = await response.json();
                 const select = $('#filterClass');
@@ -265,7 +265,7 @@
         if (!classId) return;
 
         try {
-            const response = await fetch(`${API_BASE}/SMSSection/byClass/${classId}`);
+                const response = await fetch(`${API_BASE}/section`);
             if (response.ok) {
                 const sections = await response.json();
                 sections.forEach(s => {

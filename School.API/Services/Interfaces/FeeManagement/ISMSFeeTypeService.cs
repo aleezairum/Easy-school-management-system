@@ -1,6 +1,6 @@
 ﻿using School.API.Data.DBModels.Academic;
 using School.API.Data.DBModels.Accounts;
-using School.API.DTOs.Accounts;
+using School.API.DTOs.Academic;
 using School.API.DTOs.Common;
 using School.API.DTOs.FeeManagement;
 

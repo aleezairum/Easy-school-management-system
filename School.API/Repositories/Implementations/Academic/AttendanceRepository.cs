@@ -26,7 +26,7 @@ namespace School.API.Repositories.Implementations.Academic
                 .Select(a => new AttendanceListDto
                 {
                     Id = a.Id,
-                    StudentName = a.Student != null ? a.Student.NameOfStudent : null,
+                    StudentName = a.Student != null ? a.Student.Name : null,
                     RollNumber = a.Student != null ? a.Student.RollNo : null,
                     ClassName = a.Class != null ? a.Class.VName : null,
                     SectionName = a.Section != null ? a.Section.VName : null,
@@ -52,7 +52,7 @@ namespace School.API.Repositories.Implementations.Academic
                 {
                     Id = a.Id,
                     StudentId = a.StudentId,
-                    StudentName = a.Student != null ? a.Student.NameOfStudent : null,
+                    StudentName = a.Student != null ? a.Student.Name : null,
                     RollNumber = a.Student != null ? a.Student.RollNo : null,
                     ClassId = a.ClassId,
                     ClassName = a.Class != null ? a.Class.VName : null,
@@ -84,7 +84,7 @@ namespace School.API.Repositories.Implementations.Academic
                 .Select(a => new AttendanceListDto
                 {
                     Id = a.Id,
-                    StudentName = a.Student != null ? a.Student.NameOfStudent : null,
+                    StudentName = a.Student != null ? a.Student.Name : null,
                     RollNumber = a.Student != null ? a.Student.RollNo : null,
                     ClassName = a.Class != null ? a.Class.VName : null,
                     SectionName = a.Section != null ? a.Section.VName : null,
@@ -107,7 +107,7 @@ namespace School.API.Repositories.Implementations.Academic
                 .Select(a => new AttendanceListDto
                 {
                     Id = a.Id,
-                    StudentName = a.Student != null ? a.Student.NameOfStudent : null,
+                    StudentName = a.Student != null ? a.Student.Name : null,
                     RollNumber = a.Student != null ? a.Student.RollNo : null,
                     ClassName = a.Class != null ? a.Class.VName : null,
                     SectionName = a.Section != null ? a.Section.VName : null,
@@ -138,7 +138,7 @@ namespace School.API.Repositories.Implementations.Academic
                 .Select(a => new AttendanceListDto
                 {
                     Id = a.Id,
-                    StudentName = a.Student != null ? a.Student.NameOfStudent : null,
+                    StudentName = a.Student != null ? a.Student.Name : null,
                     RollNumber = a.Student != null ? a.Student.RollNo : null,
                     ClassName = a.Class != null ? a.Class.VName : null,
                     SectionName = a.Section != null ? a.Section.VName : null,
@@ -267,11 +267,11 @@ namespace School.API.Repositories.Implementations.Academic
                 .ToListAsync();
 
             var summary = attendances
-                .GroupBy(a => new { a.StudentId, a.Student?.NameOfStudent, a.Student?.RollNo })
+                .GroupBy(a => new { a.StudentId, a.Student?.Name, a.Student?.RollNo })
                 .Select(g => new AttendanceSummaryDto
                 {
                     StudentId = g.Key.StudentId,
-                    StudentName = g.Key.NameOfStudent ?? "",
+                    StudentName = g.Key.Name ?? "",
                     RollNumber = g.Key.RollNo,
                     TotalDays = g.Count(),
                     PresentDays = g.Count(a => a.Status == AttendanceStatus.Present),

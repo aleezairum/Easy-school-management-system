@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using School.API.Data.DBModels.Accounts;
 using School.API.Models;
 
 namespace School.API.Data.DBModels.Academic

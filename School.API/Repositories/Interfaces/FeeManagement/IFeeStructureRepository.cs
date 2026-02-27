@@ -1,4 +1,4 @@
-using School.API.DTOs.Accounts;
+using School.API.DTOs.FeeManagement;
 using School.API.DTOs.Common;
 
 namespace School.API.Repositories.Interfaces.Accounts

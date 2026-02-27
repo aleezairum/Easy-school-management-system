@@ -1,6 +1,9 @@
-using School.API.DTOs.Accounts;
+using School.API.DTOs.Academic;
 using School.API.DTOs.Common;
+using School.API.DTOs.FeeManagement;
+using School.API.Repositories.Interfaces.Academic;
 using School.API.Repositories.Interfaces.Accounts;
+using School.API.Services.Interfaces.Academic;
 using School.API.Services.Interfaces.Accounts;
 
 namespace School.API.Services.Implementations.Accounts

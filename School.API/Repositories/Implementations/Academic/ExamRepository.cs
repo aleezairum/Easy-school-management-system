@@ -196,7 +196,7 @@ namespace School.API.Repositories.Implementations.Academic
                 .Select(r => new ExamResultListDto
                 {
                     Id = r.Id,
-                    StudentName = r.Student != null ? r.Student.NameOfStudent : null,
+                    StudentName = r.Student != null ? r.Student.Name : null,
                     RollNumber = r.Student != null ? r.Student.RollNo : null,
                     MarksObtained = r.MarksObtained,
                     TotalMarks = totalMarks,
@@ -219,7 +219,7 @@ namespace School.API.Repositories.Implementations.Academic
                     ExamId = r.ExamId,
                     ExamName = r.Exam != null ? r.Exam.ExamName : null,
                     StudentId = r.StudentId,
-                    StudentName = r.Student != null ? r.Student.NameOfStudent : null,
+                    StudentName = r.Student != null ? r.Student.Name : null,
                     RollNumber = r.Student != null ? r.Student.RollNo : null,
                     MarksObtained = r.MarksObtained,
                     Grade = r.Grade,

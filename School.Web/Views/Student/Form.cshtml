@@ -1290,7 +1290,7 @@
             if (!classId) return;
 
             try {
-                const response = await fetch(`${API_BASE}/section/byClass/${classId}`);
+                const response = await fetch(`${API_BASE}/section`);
                 if (response.ok) {
                     const sections = await response.json();
                     sections.forEach(s => {

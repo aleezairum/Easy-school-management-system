@@ -1,11 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using School.API.Data.DBModels;
 using School.API.Data.DBModels.Academic;
 using School.API.Data.DBModels.Accounts;
 using School.API.Data.DBModels.HR;
 using School.API.DTOs;
 using School.API.DTOs.Academic;
-using School.API.DTOs.Accounts;
 using School.API.DTOs.Common;
 using School.API.DTOs.FeeManagement;
 using School.API.Models;
@@ -65,6 +63,7 @@ namespace School.API.Data
             modelBuilder.Entity<SMSSectionSaveDto>().HasNoKey();
             modelBuilder.Entity<AcademicGradeSaveDto>().HasNoKey();
             modelBuilder.Entity<FeeTypeSaveDto>().HasNoKey();
+            modelBuilder.Entity<StudentSaveDto>().HasNoKey();
             modelBuilder.Entity<FeeStructureSaveDto>().HasNoKey();
             modelBuilder.Entity<SMSCampusSaveDto>().HasNoKey();
             modelBuilder.Entity<StudentStatusSaveDto>().HasNoKey();
@@ -115,14 +114,14 @@ namespace School.API.Data
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // Student configuration
-            modelBuilder.Entity<Student>(entity =>
-            {
-                entity.HasOne(s => s.Admission)
-                    .WithMany()
-                    .HasForeignKey(s => s.AdmissionId)
-                    .OnDelete(DeleteBehavior.SetNull);
-            });
+            //// Student configuration
+            //modelBuilder.Entity<Student>(entity =>
+            //{
+            //    entity.HasOne(s => s.Admission)
+            //        .WithMany()
+            //        .HasForeignKey(s => s.AdmissionId)
+            //        .OnDelete(DeleteBehavior.SetNull);
+            //});
         }
     }
 }

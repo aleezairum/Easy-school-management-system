@@ -1,16 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
 using School.API.DTOs.Academic;
-using School.API.DTOs.FeeManagement;
 using School.API.Services.Interfaces.Academic;
-using School.API.Services.Interfaces.Accounts;
 
 [ApiController]
 [Route("api/[controller]")]
-public class FeeStructureController : ControllerBase
+public class StudentController : ControllerBase
 {
-    private readonly IFeeStructureService _service;
+    private readonly IStudentService _service;
 
-    public FeeStructureController(IFeeStructureService service)
+    public StudentController(IStudentService service)
     {
         _service = service;
     }
@@ -36,7 +34,7 @@ public class FeeStructureController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Save(FeeStructureSaveDto dto)
+    public async Task<IActionResult> Save(StudentSaveDto dto)
     {
         int userId = 1; // later from JWT
         string userIp = HttpContext.Connection.RemoteIpAddress?.ToString();

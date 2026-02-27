@@ -1,4 +1,4 @@
-namespace School.API.DTOs.Accounts
+namespace School.API.DTOs.FeeManagement
 {
     public class FeeStructureSaveDto
     {
