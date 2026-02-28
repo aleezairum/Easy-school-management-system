@@ -200,6 +200,14 @@
 <div class="container-fluid">
     <!-- Alert Messages -->
     <div id="alertContainer"></div>
+    @if (TempData["Success"] != null)
+    {
+        <script>document.addEventListener('DOMContentLoaded', function() { toastSuccess('@TempData["Success"]'); });</script>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <script>document.addEventListener('DOMContentLoaded', function() { toastError('@TempData["Error"]'); });</script>
+    }
 
     <!-- Students Card -->
     <div class="card">

@@ -36,11 +36,36 @@ public class StudentController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Save(StudentSaveDto dto)
     {
-        int userId = 1; // later from JWT
-        string userIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+        try
+        {
+            int userId = 1; // later from JWT
+            string userIp = HttpContext.Connection.RemoteIpAddress?.ToString();
 
-        var result = await _service.SaveAsync(dto, userId, userIp);
-        return Ok(result);
+            var result = await _service.SaveAsync(dto, userId, userIp);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.InnerException?.Message ?? ex.Message });
+        }
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(int id, StudentSaveDto dto)
+    {
+        try
+        {
+            dto.VID = id;
+            int userId = 1; // later from JWT
+            string userIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+
+            var result = await _service.SaveAsync(dto, userId, userIp);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.InnerException?.Message ?? ex.Message });
+        }
     }
 
     [HttpPatch("{id}/toggle-status")]

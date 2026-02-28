@@ -1291,7 +1291,7 @@
                     statuses.forEach(s => {
                         if (s.isActive) {
                             const selected = s.vName === currentVal ? 'selected' : '';
-                            select.append(`<option value="${s.vName}" ${selected}>${s.vName}</option>`);
+                            select.append(`<option value="${s.vName}" data-id="${s.vid}" ${selected}>${s.vName}</option>`);
                         }
                     });
                 }
@@ -1719,14 +1719,14 @@
                 // Registration Info (Tab 1)
                 RegistrationNo:   val('RegistrationNo')|| '',
                 AdmissionNo:      val('AdmissionNo')|| '',
-                AdmissionDate:    dateVal('DateOfAdmission')|| '',
+                AdmissionDate:    dateVal('DateOfAdmission'),
                 RollNo:           val('RollNo')|| '',
                 ClassRollNo:      val('RollNo')|| '',           // same roll used as class roll
-                ClassID:          intVal('CurrentClass') || 0,  // CurrentClass dropdown value = ClassID
-                ClassName:        document.getElementById('CurrentClass')?.options[document.getElementById('CurrentClass').selectedIndex]?.text || '',
-                SectionID:        intVal('Section')|| 0,       // Section dropdown value = SectionID
-                SectionName:      document.getElementById('Section')?.options[document.getElementById('Section').selectedIndex]?.text || '',
-                StatusID:         intVal('Status')|| 0,
+                ClassID:          parseInt($('#CurrentClass').find(':selected').attr('data-id')) || 0,
+                ClassName:        $('#CurrentClass').find(':selected').text() || '',
+                SectionID:        parseInt($('#Section').find(':selected').attr('data-id')) || 0,
+                SectionName:      $('#Section').find(':selected').text() || '',
+                StatusID:         parseInt($('#Status').find(':selected').attr('data-id')) || 0,
                 SessionID:        1,   // set if you have a session dropdown, otherwise default
                 SessionName:        '',
 
@@ -1738,7 +1738,7 @@
                 DOB:              dateVal('DateOfBirth'),
                 BirthPlace:       val('PlaceOfBirth')|| '',
                 FormBNo:          val('FormBNo')|| '',
-                Gender:           val('Gender')|| 0,
+                Gender:           val('Gender') || '',
                 Religion:         val('Religion')|| '',
                 Caste:            '',                    // no field in form; extend if needed
 
@@ -1790,10 +1790,10 @@
 
             // --- Determine POST vs PUT ---
             const isEdit = dto.VID > 0;
-            const method = isEdit ? 'POST' : 'POST';
+            const method = isEdit ? 'PUT' : 'POST';
             const url    = isEdit
-                ? `http://localhost:5266/api/Student`
-                : 'http://localhost:5266/api/Student';
+                ? `${API_BASE}/Student/${dto.VID}`
+                : `${API_BASE}/Student`;
 
             // --- Loading state ---
             const submitBtn = document.querySelector('[onclick="submitStudentForm()"]');
@@ -1825,15 +1825,14 @@
                 }
 
                 const result = await response.json();
-                alert(isEdit ? 'Student updated successfully!' : 'Student saved successfully!');
+                toastSuccess(isEdit ? 'Student updated successfully!' : 'Student saved successfully!');
 
-                // Redirect to list or clear form
-                // window.location.href = '/Student/Index';
-                if (!isEdit) resetForm();
+                // Redirect to student list after short delay
+                setTimeout(() => { window.location.href = '/Student'; }, 1500);
 
             } catch (error) {
                 console.error('API Error:', error);
-                alert(`Failed to save student:\n${error.message}`);
+                toastError(`Failed to save student: ${error.message}`);
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalHTML;
