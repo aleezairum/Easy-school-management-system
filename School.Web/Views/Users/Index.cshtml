@@ -371,27 +371,6 @@
     </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius: 16px; border: none;">
-            <div class="modal-header" style="border-bottom: 1px solid #e2e8f0;">
-                <h5 class="modal-title" id="deleteModalLabel"><i class="bi bi-exclamation-triangle text-danger me-2"></i>Confirm Delete</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete user "<strong id="deleteUserName"></strong>"?</p>
-                <p class="text-muted mb-0">This action cannot be undone.</p>
-            </div>
-            <div class="modal-footer" style="border-top: 1px solid #e2e8f0;">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
-                    <i class="bi bi-trash me-1"></i> Delete
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
 
 @section Scripts {
     <!-- Include Select2 JS -->
@@ -508,9 +487,6 @@
                         <td class="text-center action-buttons">
                             <button type="button" class="btn btn-warning btn-sm" onclick="editUser(${user.id})" title="Edit">
                                 <i class="bi bi-pencil"></i> Edit
-                            </button>
-                            <button type="button" class="btn btn-danger btn-sm" onclick="confirmDelete(${user.id}, '${user.userFullName}')" title="Delete">
-                                <i class="bi bi-trash"></i> Delete
                             </button>
                         </td>
                     </tr>

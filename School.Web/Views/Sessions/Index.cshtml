@@ -455,11 +455,6 @@
                             <button type="button" class="btn btn-sm btn-info me-1" onclick="editSession(${session.vid})" title="Edit">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            ${!session.isActive ? `
-                                <button type="button" class="btn btn-sm btn-danger" onclick="deleteSession(${session.vid}, '${session.vName}')" title="Delete">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            ` : ''}
                         </td>
                     </tr>
                 `;
