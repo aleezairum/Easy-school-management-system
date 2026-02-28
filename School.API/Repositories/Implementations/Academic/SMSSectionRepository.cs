@@ -41,6 +41,18 @@ namespace School.API.Repositories.Implementations.Academic
             return resultList.FirstOrDefault();
         }
 
+        public async Task<List<SMSSectionSaveDto>> FillComboAsync(int vid)
+        {
+            
+            var resultList = await _context
+                .Set<SMSSectionSaveDto>()
+                .FromSqlRaw("EXEC SpFillCombo_SMSSection @ClassID={0}", vid) 
+                .AsNoTracking()
+                .ToListAsync();
+
+            return resultList;
+        }
+
         public async Task<ResponseDto?> DeleteByIdAsync(int vid)
         {
             var resultList = await _context

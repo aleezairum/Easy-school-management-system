@@ -13,6 +13,7 @@ namespace School.API.Services.Interfaces.Academic
 
         Task<List<SMSSectionSaveDto>> GetAllAsync();
         Task<SMSSectionSaveDto?> GetByIdAsync(int id);
+        Task<List<SMSSectionSaveDto>> FillComboAsync(int id);
         Task<ResponseDto?> DeleteByIdAsync(int id);
     }
 }

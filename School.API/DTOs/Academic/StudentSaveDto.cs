@@ -57,6 +57,7 @@ namespace School.API.DTOs.Academic
 
         public bool? IsMotherSMS { get; set; }
 
+        public int GuardianType { get; set; }
         public string GuardianName { get; set; }
 
         public string GuardianNameUrdu { get; set; }
@@ -74,6 +75,8 @@ namespace School.API.DTOs.Academic
         public int SectionID { get; set; }
 
         public string ClassRollNo { get; set; }
+        public decimal Fee { get; set; }
+        public string GradeName { get; set; }
 
         public int? GradeID { get; set; }
 

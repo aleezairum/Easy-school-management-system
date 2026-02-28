@@ -1169,14 +1169,18 @@
                                 <button type="button" class="btn btn-secondary" onclick="resetForm()">
                                     <i class="bi bi-x-lg me-1"></i> Clear All
                                 </button>
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="bi bi-check-lg me-1"></i> @(isEdit ? "Update Student" : "Save Student")
+                                <button type="button" class="btn btn-primary" onclick="submitStudentForm()">
+                                 <i class="bi bi-check-lg me-1"></i> @(isEdit ? "Update Student" : "Save Student")
                                 </button>
                             </div>
                         </div>
                     </div>
                 </div>
             }
+            <script>
+                const selectedClass = '@(Model?.CurrentClass ?? "")';
+                const selectedSection = '@(Model?.Section ?? "")';
+            </script>
         </div>
     </div>
 </div>
@@ -1212,7 +1216,7 @@
             // Load dropdowns
             loadClassDropdown();
             loadStatusDropdown();
-            loadParentLookups();
+            //loadParentLookups();
 
             // Cascade section dropdown on class change
             $('#CurrentClass').on('change', function () {
@@ -1262,9 +1266,14 @@
                     const select = $('#CurrentClass');
                     classes.forEach(c => {
                         if (c.isActive) {
-                            select.append(`<option value="${c.vName}" data-id="${c.viD}">${c.vName}</option>`);
+                            select.append(`<option value="${c.vName}" data-id="${c.vid}">${c.vName}</option>`);
                         }
                     });
+                    // Set selected class from model
+                    if (selectedClass) {
+                        select.val(selectedClass);
+                    }
+                     await loadSectionDropdown();
                 }
             } catch (error) {
                 console.error('Error loading classes:', error);
@@ -1296,20 +1305,25 @@
             const select = $('#Section');
             select.find('option:not(:first)').remove();
 
-            const selectedOption = $('#CurrentClass option:selected');
-            const classId = selectedOption.data('id');
+            const classId = $('#CurrentClass').find(':selected').attr('data-id');
+            if (!classId || classId === 'undefined') return;
 
-            if (!classId) return;
-
-            try {
-                const response = await fetch(`${API_BASE}/section`);
+            try { const response = await fetch(`${API_BASE}/section/byClass/${classId}`);
                 if (response.ok) {
-                    const sections = await response.json();
+                    const data = await response.json();
+                    const sections = Array.isArray(data) ? data : data.data ?? data.items ?? data.sections ?? [];
+
                     sections.forEach(s => {
                         if (s.isActive) {
-                            select.append(`<option value="${s.vName}">${s.vName}</option>`);
+                            select.append(`<option value="${s.vName}" data-id="${s.vid}">${s.vName}</option>`);
                         }
                     });
+                    // Set selected section from model
+            if (selectedSection) {
+                select.val(selectedSection);
+            }
+                } else {
+                    console.error('Failed to load sections, status:', response.status);
                 }
             } catch (error) {
                 console.error('Error loading sections:', error);
@@ -1667,6 +1681,164 @@
             $('#removePhoto').hide();
             $('#StudentPhoto').val('');
         });
+
+
+        async function submitStudentForm() {
+            // --- Required field validation ---
+            const requiredFields = [
+                { id: 'RollNo',         label: 'Roll No.' },
+                { id: 'CurrentClass',   label: 'Current Class' },
+                { id: 'Section',        label: 'Section' },
+                { id: 'Status',         label: 'Status' },
+                { id: 'NameOfStudent',  label: 'Name of Student' },
+                { id: 'FatherName',     label: "Father's Name" },
+                { id: 'FatherCNIC',     label: "Father's CNIC" }
+            ];
+
+            for (const field of requiredFields) {
+                const el = document.getElementById(field.id);
+                if (!el || !el.value.trim()) {
+                    alert(`Please fill in the required field: ${field.label}`);
+                    el?.focus();
+                    return;
+                }
+            }
+
+            // --- Helper: get element value safely ---
+            const val  = (id) => document.getElementById(id)?.value?.trim() || null;
+            const intVal  = (id) => { const v = val(id); return v ? parseInt(v) : null; };
+            const boolVal = (id) => document.getElementById(id)?.checked ?? false;
+            const dateVal = (id) => { const v = val(id); return v ? v : null; }; // "yyyy-MM-dd" — API handles parsing
+
+            // --- Build DTO matching StudentSaveDto ---
+            const dto = {
+                // Identity
+                VID:              intVal('Id') || 0,
+                ParentID:         intVal('AdmissionId') || 0,
+
+                // Registration Info (Tab 1)
+                RegistrationNo:   val('RegistrationNo')|| '',
+                AdmissionNo:      val('AdmissionNo')|| '',
+                AdmissionDate:    dateVal('DateOfAdmission')|| '',
+                RollNo:           val('RollNo')|| '',
+                ClassRollNo:      val('RollNo')|| '',           // same roll used as class roll
+                ClassID:          intVal('CurrentClass') || 0,  // CurrentClass dropdown value = ClassID
+                ClassName:        document.getElementById('CurrentClass')?.options[document.getElementById('CurrentClass').selectedIndex]?.text || '',
+                SectionID:        intVal('Section')|| 0,       // Section dropdown value = SectionID
+                SectionName:      document.getElementById('Section')?.options[document.getElementById('Section').selectedIndex]?.text || '',
+                StatusID:         intVal('Status')|| 0,
+                SessionID:        1,   // set if you have a session dropdown, otherwise default
+                SessionName:        '',
+
+                // Student Info (Tab 2)
+                Name:             val('NameOfStudent')|| '',
+                Name_Urdu:        val('NameOfStudentUrdu')|| '',
+                MobileNo:         val('MobileNo')|| '',
+                IsSMS:            boolVal('IsSMS')|| false,
+                DOB:              dateVal('DateOfBirth'),
+                BirthPlace:       val('PlaceOfBirth')|| '',
+                FormBNo:          val('FormBNo')|| '',
+                Gender:           val('Gender')|| 0,
+                Religion:         val('Religion')|| '',
+                Caste:            '',                    // no field in form; extend if needed
+
+                // Father Info (Tab 3)
+                FatherName:       val('FatherName')|| '',
+                FatherNameUrdu:   val('FatherNameUrdu')|| '',
+                FatherCNIC:       val('FatherCNIC')|| '',
+                FatherMobile:     val('FatherMobile')|| '',
+                IsFatherSMS:      boolVal('FatherIsSMS')|| false,
+                Occupation:       val('FatherOccupation')|| '',
+
+                // Mother Info (Tab 4)
+                MotherName:       val('MotherName')|| '',
+                MotherNameUrdu:   val('MotherNameUrdu')|| '',
+                MotherCNIC:       val('MotherCNIC')|| '',
+                MotherMobile:     val('MotherMobile')|| '',
+                IsMotherSMS:      boolVal('MotherIsSMS')|| false,
+
+                // Guardian Info (Tab 5)
+                GuardianType:     intVal('GuardianType') || 0,
+                GuardianName:     val('GuardianName')|| '',
+                GuardianNameUrdu: val('GuardianNameUrdu')|| '',
+                GuardianCNIC:     val('GuardianCNIC')|| '',
+                GuardianMobile:   val('GuardianMobile')|| '',
+                IsGuardianSMS:    boolVal('GuardianIsSMS')|| false,
+                GuardianRelation: val('GuardianRelation')|| '',
+
+                // Address (Tab 6)
+                Address:          val('PresentAddress')|| '',   // PresentAddress → Address
+
+                // Academic (Tab 7) — no direct DTO fields; extend DTO if needed
+                // Fee, GradeID, GradeName — set if you have those dropdowns
+                Fee:              0,
+                GradeID:          null,
+                GradeName:        '',
+                IsAvailAcademy:   false,
+
+                // Audit
+                IsActive:         true,
+                InsertedBy:       null,   // filled server-side from JWT
+                InsertedDate:     null,
+                InsertedIp:       null,
+                UpdatedBy:        null,
+                UpdatedDate:      null,
+                UpdatedIp:        null
+            };
+
+            console.log('Submitting DTO:', dto); // remove in production
+
+            // --- Determine POST vs PUT ---
+            const isEdit = dto.VID > 0;
+            const method = isEdit ? 'POST' : 'POST';
+            const url    = isEdit
+                ? `http://localhost:5266/api/Student`
+                : 'http://localhost:5266/api/Student';
+
+            // --- Loading state ---
+            const submitBtn = document.querySelector('[onclick="submitStudentForm()"]');
+            const originalHTML = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Saving...';
+
+            try {
+                const response = await fetch(url, {
+                    method:  method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify(dto)
+                });
+
+                if (!response.ok) {
+                    let errorMessage = `Server error: ${response.status} ${response.statusText}`;
+                    try {
+                        const errorData = await response.json();
+                        // ASP.NET validation errors come back as errorData.errors object
+                        if (errorData.errors) {
+                            errorMessage = Object.entries(errorData.errors)
+                                .map(([field, msgs]) => `${field}: ${msgs.join(', ')}`)
+                                .join('\n');
+                        } else {
+                            errorMessage = errorData.message || errorData.title || JSON.stringify(errorData);
+                        }
+                    } catch { /* non-JSON error body */ }
+                    throw new Error(errorMessage);
+                }
+
+                const result = await response.json();
+                alert(isEdit ? 'Student updated successfully!' : 'Student saved successfully!');
+
+                // Redirect to list or clear form
+                // window.location.href = '/Student/Index';
+                if (!isEdit) resetForm();
+
+            } catch (error) {
+                console.error('API Error:', error);
+                alert(`Failed to save student:\n${error.message}`);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalHTML;
+            }
+        }
 
         // Keyboard navigation
         $(document).keydown(function (e) {

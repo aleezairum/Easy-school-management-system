@@ -50,19 +50,18 @@ namespace School.API.Repositories.Implementations.Academic
 
         public async Task<ResponseDto> ToggleStatusAsync(int vid, int userId, string userIp)
         {
-            //var student = await _context.Students.FindAsync(vid);
-            //if (student == null)
-            //    return new ResponseDto { VID = vid, ReturnCode = -1, ReturnMessage = "Student not found" };
+            var resultList = await _context
+                .Set<ResponseDto>()
+                .FromSqlRaw(
+                    "EXEC SpToggleStatus_SMSStudent @StudentID={0}, @UserID={1}, @UserIP={2}",
+                    vid,
+                    userId,
+                    userIp)
+                .AsNoTracking()
+                .ToListAsync();
 
-            //student.StudentActive = !(student.StudentActive ?? true);
-            //student.UpdatedBy = userId;
-            //student.UpdatedDate = DateTime.UtcNow;
-            //student.UpdatedIp = userIp;
-
-            await _context.SaveChangesAsync();
-
-            var newStatus = "Active" ;
-            return new ResponseDto { VID = vid, ReturnCode = 0, ReturnMessage = newStatus };
+            var result = resultList.FirstOrDefault();
+            return result;
         }
 
         public async Task<ResponseDto> SaveAsync(StudentSaveDto dto, int userId, string userIp)
@@ -70,15 +69,24 @@ namespace School.API.Repositories.Implementations.Academic
             var resultList = await _context
                 .Set<ResponseDto>()
                 .FromSqlRaw(
-                    "EXEC SpSave_SMSStudent @VID={0}, @CampusID={1}, @SessionID={2}, @ClassID={3}, @GradeID={4}, @FeeTypeID={5}, @Amount={6}, @IsActive={7}, @UserID={8}, @UserIP={9}",
+                    @"EXEC SpSave_SMSStudent 
+                @StudentID={0},
+                @FatherName={1}, @FatherNameUrdu={2}, @FatherCNIC={3}, @FatherMobile={4}, @IsFatherSMS={5}, @Occupation={6},
+                @MotherName={7}, @MotherNameUrdu={8}, @MotherCNIC={9}, @MotherMobile={10}, @IsMotherSMS={11},
+                @GuardianName={12}, @GuardianNameUrdu={13}, @GuardianCNIC={14}, @GuardianMobile={15}, @IsGuardianSMS={16}, @GuardianRelation={17},
+                @RegistrationNo={18}, @AdmissionNo={19}, @AdmissionDate={20},
+                @Name={21}, @Name_Urdu={22}, @MobileNo={23}, @IsSMS={24},
+                @Gender={25}, @DOB={26}, @BirthPlace={27}, @FormBNo={28}, @Religion={29}, @Caste={30}, @Address={31},
+                @SessionID={32}, @SectionID={33}, @RollNo={34}, @GradeID={35}, @StatusID={36}, @IsAvailAcademy={37},
+                @UserID={38}, @UserIP={39}",
                     dto.VID,
-                    //dto.CampusID,
-                    //dto.AcademicSessionID,
-                    //dto.ClassID,
-                    //dto.GradeID ?? 0,
-                    //dto.FeeTypeID,
-                    //dto.Amount,
-                    //dto.IsActive,
+                    dto.FatherName, dto.FatherNameUrdu, dto.FatherCNIC, dto.FatherMobile, dto.IsFatherSMS ?? false, dto.Occupation,
+                    dto.MotherName, dto.MotherNameUrdu, dto.MotherCNIC, dto.MotherMobile, dto.IsMotherSMS ?? false,
+                    dto.GuardianName, dto.GuardianNameUrdu, dto.GuardianCNIC, dto.GuardianMobile, dto.IsGuardianSMS ?? false, dto.GuardianRelation,
+                    dto.RegistrationNo, dto.AdmissionNo, dto.AdmissionDate,
+                    dto.Name, dto.Name_Urdu, dto.MobileNo, dto.IsSMS ?? false,
+                    dto.Gender, dto.DOB, dto.BirthPlace, dto.FormBNo, dto.Religion, dto.Caste, dto.Address,
+                    dto.SessionID, dto.SectionID, dto.ClassRollNo, dto.GradeID ?? 0, dto.StatusID ?? 0, dto.IsAvailAcademy ?? false,
                     userId,
                     userIp)
                 .AsNoTracking()

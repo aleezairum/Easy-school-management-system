@@ -54,9 +54,7 @@
                     <div class="select-wrapper">
                         <i class="bi bi-calendar3 select-icon"></i>
                         <select class="form-select" id="session" name="session">
-                            <option value="1">2023-2024</option>
-                            <option value="2" selected>2024-2025</option>
-                            <option value="3">2025-2026</option>
+                           
                         </select>
                     </div>
                 </div>
@@ -91,12 +89,12 @@
         </div>
     </div>
 </div>
-
+<script src="~/js/common.js"></script>
 @section Scripts {
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+         document.addEventListener('DOMContentLoaded', function() {
             // Try to load sessions from API, but keep defaults if API fails
-            fetch('http://localhost:5266/api/session')
+            fetch(`${API_BASE}/AcademicSessionYear`)
                 .then(response => {
                     if (!response.ok) throw new Error('API not available');
                     return response.json();
@@ -107,8 +105,8 @@
                         select.innerHTML = ''; // Clear defaults
                         sessions.forEach(session => {
                             const option = document.createElement('option');
-                            option.value = session.id;
-                            option.textContent = session.name;
+                            option.value = session.vid;
+                            option.textContent = session.vName;
                             if (session.isCurrent) {
                                 option.selected = true;
                             }

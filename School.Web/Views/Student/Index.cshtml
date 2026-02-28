@@ -293,7 +293,7 @@
                 const classes = await response.json();
                 const select = $('#filterClass');
                 classes.forEach(c => {
-                    select.append(`<option value="${c.viD}">${c.vName}</option>`);
+                    select.append(`<option value="${c.vid}">${c.vName}</option>`);
                 });
             }
         } catch (error) {
@@ -309,11 +309,11 @@
         if (!classId) return;
 
         try {
-                const response = await fetch(`${API_BASE}/section`);
+                    const response = await fetch(`${API_BASE}/section/byClass/${classId}`);
             if (response.ok) {
                 const sections = await response.json();
                 sections.forEach(s => {
-                    sectionSelect.append(`<option value="${s.viD}">${s.vName}</option>`);
+                    sectionSelect.append(`<option value="${s.vid}">${s.vName}</option>`);
                 });
             }
         } catch (error) {

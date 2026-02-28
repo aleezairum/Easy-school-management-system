@@ -27,6 +27,8 @@ namespace School.API.Services.Implementations.Academic
 
         public Task<SMSSectionSaveDto?> GetByIdAsync(int id)
             => _repo.GetByIdAsync(id);
+ public Task<List<SMSSectionSaveDto>> FillComboAsync(int id)
+            => _repo.FillComboAsync(id);
 
         public Task<ResponseDto?> DeleteByIdAsync(int id)
            => _repo.DeleteByIdAsync(id);
