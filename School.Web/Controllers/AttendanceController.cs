@@ -25,5 +25,12 @@ namespace School.Web.Controllers
             ViewData["Title"] = "Attendance Report";
             return View();
         }
+
+        [Route("attendance/sheet")]
+        public IActionResult Sheet()
+        {
+            ViewData["Title"] = "Attendance Sheet";
+            return View();
+        }
     }
 }

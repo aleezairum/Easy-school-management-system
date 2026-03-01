@@ -90,6 +90,7 @@ namespace School.Web.Models
         public string? FeeCategory { get; set; }
 
         // Status
+        public int? StatusID { get; set; }
         public string? Status { get; set; }
         public bool IsActive { get; set; } = true;
 

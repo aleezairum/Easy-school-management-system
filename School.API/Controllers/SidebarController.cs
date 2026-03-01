@@ -128,8 +128,9 @@ namespace School.API.Controllers
                                     new MenuItemDto { Id = 12, Title = "Student", Icon = "bi-person-badge-fill", Url = "/Student", Order = 2, Section = "Academic" },
                                     new MenuItemDto { Id = 13, Title = "Attendance", Icon = "bi-calendar2-check-fill", Url = "/Attendance", Order = 2, Section = "Academic" },
                                     new MenuItemDto { Id = 21, Title = "Mark Attendance", Icon = "bi-check2-square", Url = "/attendance/form", Order = 3, Section = "Academic" },
-                                    new MenuItemDto { Id = 14, Title = "Exams", Icon = "bi-clipboard2-data-fill", Url = "/Exam", Order = 4, Section = "Academic" },
-                                    new MenuItemDto { Id = 22, Title = "Award List / Marks", Icon = "bi-trophy-fill", Url = "/exam/marks-entry", Order = 5, Section = "Academic" }
+                                    new MenuItemDto { Id = 30, Title = "Attendance Sheet", Icon = "bi-printer-fill", Url = "/attendance/sheet", Order = 4, Section = "Academic" },
+                                    new MenuItemDto { Id = 14, Title = "Exams", Icon = "bi-clipboard2-data-fill", Url = "/Exam", Order = 5, Section = "Academic" },
+                                    new MenuItemDto { Id = 22, Title = "Award List / Marks", Icon = "bi-trophy-fill", Url = "/exam/marks-entry", Order = 6, Section = "Academic" }
                                 }
                             }
                         }

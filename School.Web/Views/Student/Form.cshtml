@@ -1180,6 +1180,7 @@
             <script>
                 const selectedClass = '@(Model?.CurrentClass ?? "")';
                 const selectedSection = '@(Model?.Section ?? "")';
+                const selectedStatusId = '@(Model?.StatusID?.ToString() ?? "")';
                 const selectedStatus = '@(Model?.Status ?? "")';
             </script>
         </div>
@@ -1282,7 +1283,7 @@
         }
 
         // Load student status dropdown
-                async function loadStatusDropdown() {
+        async function loadStatusDropdown() {
             try {
                 const response = await fetch(`${API_BASE}/studentstatus`);
                 if (response.ok) {
@@ -1290,13 +1291,21 @@
                     const select = $('#Status');
 
                     select.empty(); // clear old options
-                    
+
                     statuses.forEach(s => {
                         if (s.isActive) {
                             select.append(`<option value="${s.vName}" data-id="${s.vid}">${s.vName}</option>`);
                         }
                     });
-                    if (selectedStatus) {
+                    // Match by StatusID first (reliable), then fall back to name
+                    if (selectedStatusId) {
+                        select.find('option').each(function() {
+                            if ($(this).attr('data-id') === selectedStatusId) {
+                                select.val($(this).val());
+                                return false;
+                            }
+                        });
+                    } else if (selectedStatus) {
                         select.val(selectedStatus);
                     }
                 }
