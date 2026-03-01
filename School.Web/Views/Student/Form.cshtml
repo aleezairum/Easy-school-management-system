@@ -1180,6 +1180,7 @@
             <script>
                 const selectedClass = '@(Model?.CurrentClass ?? "")';
                 const selectedSection = '@(Model?.Section ?? "")';
+                const selectedStatus = '@(Model?.Status ?? "")';
             </script>
         </div>
     </div>
@@ -1281,25 +1282,28 @@
         }
 
         // Load student status dropdown
-        async function loadStatusDropdown() {
+                async function loadStatusDropdown() {
             try {
                 const response = await fetch(`${API_BASE}/studentstatus`);
                 if (response.ok) {
                     const statuses = await response.json();
                     const select = $('#Status');
-                    const currentVal = '@Model.Status';
+
+                    select.empty(); // clear old options
+                    
                     statuses.forEach(s => {
                         if (s.isActive) {
-                            const selected = s.vName === currentVal ? 'selected' : '';
-                            select.append(`<option value="${s.vName}" data-id="${s.vid}" ${selected}>${s.vName}</option>`);
+                            select.append(`<option value="${s.vName}" data-id="${s.vid}">${s.vName}</option>`);
                         }
                     });
+                    if (selectedStatus) {
+                        select.val(selectedStatus);
+                    }
                 }
             } catch (error) {
                 console.error('Error loading statuses:', error);
             }
         }
-
         // Load section dropdown based on selected class
         async function loadSectionDropdown() {
             const select = $('#Section');
