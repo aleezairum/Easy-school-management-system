@@ -41,6 +41,23 @@
         padding: 10px 14px;
         font-size: 14px;
         transition: all 0.2s;
+        color: #1e293b;
+    }
+
+    .form-select option {
+        color: #1e293b;
+        background: #fff;
+        padding: 6px 10px;
+    }
+
+    .form-select option:checked {
+        color: #fff;
+        background: #008649 linear-gradient(0deg, #008649 0%, #008649 100%);
+    }
+
+    .form-select option:hover {
+        color: #1e293b;
+        background: #f1f5f9 linear-gradient(0deg, #f1f5f9 0%, #f1f5f9 100%);
     }
 
     .form-control:focus, .form-select:focus {
@@ -246,8 +263,6 @@
                         <label for="filterStatus" class="form-label">Status</label>
                         <select class="form-select" id="filterStatus">
                             <option value="">All Status</option>
-                            <option value="Active">Active</option>
-                            <option value="Inactive">Inactive</option>
                         </select>
                     </div>
                     <div class="col-lg-2 col-md-4 col-sm-6 col-12">
@@ -288,6 +303,7 @@
     ////const API_BASE = 'http://localhost:5266/api';
 
     let allStudents = []; // Store all students loaded from API
+    let statusMap = {};  // Map StatusID -> Status Name
 
     $(document).ready(function () {
         loadDropdowns();
@@ -296,7 +312,7 @@
 
     async function loadDropdowns() {
         try {
-                const response = await fetch(`${API_BASE}/class`);
+            const response = await fetch(`${API_BASE}/class`);
             if (response.ok) {
                 const classes = await response.json();
                 const select = $('#filterClass');
@@ -305,7 +321,24 @@
                 });
             }
         } catch (error) {
-            console.error('Error loading dropdowns:', error);
+            console.error('Error loading class dropdown:', error);
+        }
+
+        // Load student statuses
+        try {
+            const response = await fetch(`${API_BASE}/studentstatus`);
+            if (response.ok) {
+                const statuses = await response.json();
+                const select = $('#filterStatus');
+                statuses.forEach(s => {
+                    if (s.isActive) {
+                        statusMap[s.vid] = s.vName;
+                        select.append(`<option value="${s.vid}">${s.vName}</option>`);
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error loading status dropdown:', error);
         }
     }
 
@@ -390,11 +423,9 @@
         }
 
         if (status) {
-            if (status === 'Active') {
-                data = data.filter(s => s.isActive === true);
-            } else if (status === 'Inactive') {
-                data = data.filter(s => s.isActive === false);
-            }
+            data = data.filter(s =>
+                s.statusID && s.statusID.toString() === status
+            );
         }
 
         renderList(data);
@@ -410,10 +441,11 @@
         }
 
         items.forEach((item, index) => {
-                const isActive = item.isActive === true;
+            const isActive = item.isActive === true;
+            const statusName = (item.statusID && statusMap[item.statusID]) ? statusMap[item.statusID] : (isActive ? 'Active' : 'Inactive');
             const statusBadge = isActive
-                ? '<span class="status-badge-active">Active</span>'
-                : '<span class="status-badge-inactive">Inactive</span>';
+                ? `<span class="status-badge-active">${statusName}</span>`
+                : `<span class="status-badge-inactive">${statusName}</span>`;
 
             const studentId = item.vid || item.id;
             const name = item.nameOfStudent || item.studentName || item.name || '-';
