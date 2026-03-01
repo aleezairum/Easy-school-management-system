@@ -153,7 +153,10 @@
         .att-cell .print-value { display: none !important; }
 
         /* Page settings — no browser headers/footers */
-        @@page { size: landscape; margin: 8mm 10mm; }
+            @@page {
+                size: portrait;
+                margin: 8mm 10mm;
+            }
     }
 </style>
 }
@@ -161,10 +164,8 @@
 <div class="container-fluid">
     <!-- Print Header (visible only when printing) -->
     <div class="print-header">
-        <div class="school-name">SIR SYED MODEL HIGH SCHOOL (Boys&amp;Girls)</div>
-        <div class="school-address">Chhonawala Road, Hasilpur 0333-6335634, 0301-7330101</div>
-        <div class="sheet-title" id="printSheetTitle">Attendence Sheet</div>
-        <div class="date-line">Date: ________</div>
+        <div class="school-name">SIR SYED MODEL HIGH SCHOOL (Boys&amp;Girls) Hasilpur</div>
+        <div class="sheet-title" id="printSheetTitle">Attendance Sheet</div>
     </div>
 
     <div class="card">
@@ -182,6 +183,7 @@
                 <div class="filter-section-title">
                     <i class="bi bi-funnel me-2"></i>Filter
                 </div>
+                <input type="hidden" id="sessionName" value="0" />
                 <div class="row g-3 align-items-end">
                     <div class="col-lg-2 col-md-3 col-sm-6 col-12">
                         <label for="filterClass" class="form-label">Class</label>
@@ -218,19 +220,23 @@
                     <table class="table table-hover table-bordered" id="attendanceTable">
                         <thead>
                             <tr>
-                                <th style="width: 45px;">Sr.#</th>
-                                <th style="width: 70px;">RollNo</th>
+                                <th style="width: 40px;">Sr.#</th>
+                                <th style="width: 60px;">Roll No.</th>
                                 <th>Student Name</th>
-                                <th style="width: 80px;">Section</th>
+                                <th>Father's Name</th>
                                 <th style="width: 120px;">Contact</th>
-                                <th class="text-center" style="width: 120px;">Attendence</th>
-                                <th style="width: 130px;">Informed To</th>
-                                <th style="width: 130px;">Remarks</th>
+                                <th class="text-center" style="width: 70px;"></th>
+                                <th style="width: 70px;"></th>
+                                <th style="width: 70px;"></th>
+                                <th style="width: 70px;"></th>
+                                <th style="width: 70px;"></th>
+                                <th style="width: 70px;"></th>
+                                <th style="width: 150px;"></th>
                             </tr>
                         </thead>
                         <tbody id="attendanceBody">
                             <tr>
-                                <td colspan="8" class="text-center text-muted py-4">
+                                <td colspan="12" class="text-center text-muted py-4">
                                     Select a Class and Section, then click Search to load students.
                                 </td>
                             </tr>
@@ -330,24 +336,27 @@
         tbody.empty();
 
         if (items.length === 0) {
-            tbody.html('<tr><td colspan="8" class="text-center text-muted py-4">No students found.</td></tr>');
+            tbody.html('<tr><td colspan="12" class="text-center text-muted py-4">No students found.</td></tr>');
             return;
         }
 
         items.forEach((item, index) => {
+            const sessionName = item.sessionName || '-';
             const name = item.name || item.nameOfStudent || item.studentName || '-';
+            const fathername = item.fatherName || '-';
             const rollNo = item.rollNo || item.rollNumber || '-';
-            const section = item.sectionName || item.section || '-';
-            const contact = item.contactNo || item.contact || item.phoneNumber || '-';
+            const contact = item.mobileNo || item.fatherMobile || '-';
             const sr = index + 1;
             const uid = item.id || index;
+            
+            $('#sessionName').val(sessionName);
 
             const row = `
                 <tr>
                     <td>${sr}</td>
                     <td><strong>${rollNo}</strong></td>
                     <td>${name}</td>
-                    <td>${section}</td>
+                    <td>${fathername}</td>
                     <td>${contact}</td>
                     <td class="text-center att-cell">
                         <div class="attendance-radio-group">
@@ -374,6 +383,23 @@
                         <input type="text" class="form-control form-control-sm screen-input" id="remarks_${uid}" placeholder="—">
                         <span class="print-value" id="pv_remarks_${uid}"></span>
                     </td>
+                    <td>
+                        <input type="text" class="form-control form-control-sm screen-input" id="remarks_${uid}" placeholder="—">
+                        <span class="print-value" id="pv_remarks_${uid}"></span>
+                    </td>
+                    <td>
+                        <input type="text" class="form-control form-control-sm screen-input" id="remarks_${uid}" placeholder="—">
+                        <span class="print-value" id="pv_remarks_${uid}"></span>
+                    </td>
+                    <td>
+                        <input type="text" class="form-control form-control-sm screen-input" id="remarks_${uid}" placeholder="—">
+                        <span class="print-value" id="pv_remarks_${uid}"></span>
+                    </td>
+                    <td>
+                        <input type="text" class="form-control form-control-sm screen-input" id="remarks_${uid}" placeholder="—">
+                        <span class="print-value" id="pv_remarks_${uid}"></span>
+                    </td>
+                    
                 </tr>
             `;
             tbody.append(row);
@@ -396,8 +422,13 @@
         // Set class name in title
         const className = $('#filterClass option:selected').text();
         const classDisplay = className !== '-- Select Class --' ? className : '';
-        $('#printSheetTitle').text(`Attendence Sheet (${classDisplay})`);
-
+        const sectionName = $('#filterSection option:selected').text();
+        const sectionDisplay = sectionName !== '-- Select Class --' ? sectionName : '';
+        const sessionName = $('#sessionName').val();
+                $('#printSheetTitle').html(
+            `Attendance Sheet (${classDisplay} - ${sectionDisplay})
+            <span style="float:right;">${sessionName}</span>`
+        );
         // Copy input values to print spans
         allStudents.forEach((item, index) => {
             const uid = item.id || index;
