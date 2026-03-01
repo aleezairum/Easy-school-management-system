@@ -302,11 +302,12 @@
             const response = await fetch(`${API_BASE}/Student`);
             if (response.ok) {
                 const students = await response.json();
-                // Client-side filter by class and section
+                // Client-side filter by class, section, and active status only
                 allStudents = students.filter(s => {
                     const matchClass = String(s.classID || s.classId || '') === String(classId);
                     const matchSection = !sectionId || String(s.sectionID || s.sectionId || '') === String(sectionId);
-                    return matchClass && matchSection;
+                    const isActive = s.isActive === true;
+                    return matchClass && matchSection && isActive;
                 });
                 renderGrid(allStudents);
                 if (allStudents.length === 0) {
