@@ -150,26 +150,20 @@
     async function loadDropdowns() {
         try {
             const [classes, feeTypes] = await Promise.all([
-                fetch(`${API_BASE}/SMSClass`).then(r => r.ok ? r.json() : []),
-                fetch(`${API_BASE}/FeeType`).then(r => r.ok ? r.json() : [
-                    { id: 1, name: 'Tuition Fee' },
-                    { id: 2, name: 'Transport Fee' },
-                    { id: 3, name: 'Exam Fee' },
-                    { id: 4, name: 'Sports Fee' },
-                    { id: 5, name: 'Lab Fee' }
-                ])
+                    fetch(`${API_BASE}/class`).then(r => r.ok ? r.json() : []),
+                    fetch(`${API_BASE}/feetype`).then(r => r.ok ? r.json() : [])
             ]);
 
             const classSelect = $('#classId');
             classSelect.find('option:not(:first)').remove();
             classes.forEach(c => {
-                classSelect.append(`<option value="${c.viD}">${c.vName}</option>`);
+                classSelect.append(`<option value="${c.vid}">${c.vName}</option>`);
             });
 
             const feeTypeSelect = $('#feeTypeId');
             feeTypeSelect.find('option:not(:first)').remove();
             feeTypes.forEach(f => {
-                feeTypeSelect.append(`<option value="${f.id}" data-amount="${f.amount || 0}">${f.name}</option>`);
+                feeTypeSelect.append(`<option value="${f.vid}" >${f.vName}</option>`);
             });
         } catch (error) {
             console.error('Error loading dropdowns:', error);
@@ -206,11 +200,11 @@
         if (!classId) return;
 
         try {
-            const response = await fetch(`${API_BASE}/SMSSection/byClass/${classId}`);
+            const response = await fetch(`${API_BASE}/section/byClass/${classId}`);
             if (response.ok) {
                 const sections = await response.json();
                 sections.forEach(s => {
-                    sectionSelect.append(`<option value="${s.viD}">${s.vName}</option>`);
+                    sectionSelect.append(`<option value="${s.vid}">${s.vName}</option>`);
                 });
                 sectionSelect.prop('disabled', false);
             }
