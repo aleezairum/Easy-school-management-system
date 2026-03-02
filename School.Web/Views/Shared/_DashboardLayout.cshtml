@@ -1999,12 +1999,14 @@
                 });
             }
 
-            // Single delegated click handler — no init, no observers, no timers
+            // Single delegated click handler
             document.addEventListener('click', function (e) {
                 const th = e.target.closest('.table thead th');
                 if (!th || !isSortable(th)) return;
 
                 const thead = th.closest('thead');
+                // Lazily mark sortable headers on first interaction
+                ensureSortableMarked(thead);
                 const table = thead.closest('table');
                 const tbody = table.querySelector('tbody');
                 if (!tbody) return;
@@ -2060,7 +2062,7 @@
             });
 
             // Mark sortable columns for CSS indicators (cursor + arrows)
-            // Runs once quickly after DOM ready, and again after AJAX data loads
+            // Runs once on DOMContentLoaded; new tables get marked lazily on first click
             function markAll() {
                 document.querySelectorAll('.table thead').forEach(ensureSortableMarked);
             }
@@ -2069,12 +2071,6 @@
             } else {
                 markAll();
             }
-            // Re-mark if new tables appear (e.g. modals with tables), debounced
-            let markTimer = null;
-            new MutationObserver(function () {
-                if (markTimer) return;
-                markTimer = setTimeout(function () { markTimer = null; markAll(); }, 300);
-            }).observe(document.body, { childList: true, subtree: true });
         })();
     </script>
 
