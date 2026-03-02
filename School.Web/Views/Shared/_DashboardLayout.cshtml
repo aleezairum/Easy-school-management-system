@@ -1324,6 +1324,45 @@
             z-index: 1060;
         }
 
+        /* ====== SORTABLE TABLE HEADERS ====== */
+        .table thead th.sortable {
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            padding-right: 22px !important;
+            transition: background 0.15s ease;
+        }
+
+        .table thead th.sortable:hover {
+            background: #eef2f7;
+        }
+
+        .table thead th.sortable::after {
+            content: '\F127';
+            font-family: 'bootstrap-icons';
+            position: absolute;
+            right: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 11px;
+            color: #94a3b8;
+            transition: color 0.15s ease;
+        }
+
+        .table thead th.sortable:hover::after {
+            color: #64748b;
+        }
+
+        .table thead th.sortable.sort-asc::after {
+            content: '\F148';
+            color: var(--primary-color, #008649);
+        }
+
+        .table thead th.sortable.sort-desc::after {
+            content: '\F128';
+            color: var(--primary-color, #008649);
+        }
+
     </style>
     @await RenderSectionAsync("Styles", required: false)
 </head>
@@ -1917,6 +1956,126 @@
 
             observer.observe(document.body, { childList: true, subtree: true });
         });
+    </script>
+
+    <script>
+        // ====== GLOBAL TABLE SORTING (Event Delegation) ======
+        (function () {
+            const SKIP = ['sr#', 'sr.#', 'sr', 'actions', 'action', 'photo', '#'];
+
+            function isSortable(th) {
+                const text = th.textContent.trim().toLowerCase();
+                if (!text || SKIP.includes(text)) return false;
+                if (th.querySelector('input[type="checkbox"]')) return false;
+                return true;
+            }
+
+            function getCellValue(cell) {
+                if (cell.hasAttribute('data-sort-value')) return cell.getAttribute('data-sort-value');
+                const badge = cell.querySelector('.badge, span');
+                if (badge) return badge.textContent.trim();
+                const input = cell.querySelector('input, select');
+                if (input) return input.value || '';
+                return cell.textContent.trim();
+            }
+
+            function parseNumber(val) {
+                const cleaned = val.replace(/[^0-9.\-]/g, '');
+                return cleaned === '' ? NaN : parseFloat(cleaned);
+            }
+
+            function parseDate(val) {
+                if (!val || val.length < 6) return null;
+                const d = new Date(val);
+                return isNaN(d.getTime()) ? null : d;
+            }
+
+            // Mark sortable headers via CSS class (runs once per thead, on first interaction or page load)
+            function ensureSortableMarked(thead) {
+                if (thead.hasAttribute('data-sort-marked')) return;
+                thead.setAttribute('data-sort-marked', 'true');
+                thead.querySelectorAll('th').forEach(th => {
+                    if (isSortable(th)) th.classList.add('sortable');
+                });
+            }
+
+            // Single delegated click handler — no init, no observers, no timers
+            document.addEventListener('click', function (e) {
+                const th = e.target.closest('.table thead th');
+                if (!th || !isSortable(th)) return;
+
+                const thead = th.closest('thead');
+                const table = thead.closest('table');
+                const tbody = table.querySelector('tbody');
+                if (!tbody) return;
+
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+                if (rows.length === 0) return;
+
+                const colIndex = Array.from(th.parentElement.children).indexOf(th);
+
+                // Toggle direction
+                const dir = th.classList.contains('sort-asc') ? 'desc' : 'asc';
+                thead.querySelectorAll('th').forEach(h => h.classList.remove('sort-asc', 'sort-desc'));
+                th.classList.add(dir === 'asc' ? 'sort-asc' : 'sort-desc');
+
+                // Sort
+                rows.sort((a, b) => {
+                    const cellA = a.children[colIndex];
+                    const cellB = b.children[colIndex];
+                    if (!cellA || !cellB) return 0;
+
+                    const valA = getCellValue(cellA);
+                    const valB = getCellValue(cellB);
+
+                    const numA = parseNumber(valA);
+                    const numB = parseNumber(valB);
+                    if (!isNaN(numA) && !isNaN(numB)) {
+                        return dir === 'asc' ? numA - numB : numB - numA;
+                    }
+
+                    const dateA = parseDate(valA);
+                    const dateB = parseDate(valB);
+                    if (dateA && dateB) {
+                        return dir === 'asc' ? dateA - dateB : dateB - dateA;
+                    }
+
+                    const a2 = valA.toLowerCase(), b2 = valB.toLowerCase();
+                    return dir === 'asc' ? a2.localeCompare(b2) : b2.localeCompare(a2);
+                });
+
+                // Batch DOM update
+                const fragment = document.createDocumentFragment();
+                // Find Sr# column to renumber
+                let srCol = -1;
+                thead.querySelectorAll('th').forEach((h, i) => {
+                    const t = h.textContent.trim().toLowerCase();
+                    if (t === 'sr#' || t === 'sr.#' || t === 'sr' || t === '#') srCol = i;
+                });
+                rows.forEach((row, i) => {
+                    if (srCol >= 0 && row.children[srCol]) row.children[srCol].textContent = i + 1;
+                    fragment.appendChild(row);
+                });
+                tbody.appendChild(fragment);
+            });
+
+            // Mark sortable columns for CSS indicators (cursor + arrows)
+            // Runs once quickly after DOM ready, and again after AJAX data loads
+            function markAll() {
+                document.querySelectorAll('.table thead').forEach(ensureSortableMarked);
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', markAll);
+            } else {
+                markAll();
+            }
+            // Re-mark if new tables appear (e.g. modals with tables), debounced
+            let markTimer = null;
+            new MutationObserver(function () {
+                if (markTimer) return;
+                markTimer = setTimeout(function () { markTimer = null; markAll(); }, 300);
+            }).observe(document.body, { childList: true, subtree: true });
+        })();
     </script>
 
     @await RenderSectionAsync("Scripts", required: false)
