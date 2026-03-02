@@ -467,6 +467,13 @@
 			);
 		}
 
+		// Sort by roll number
+		data.sort((a, b) => {
+			const rollA = parseInt(a.rollNo) || 0;
+			const rollB = parseInt(b.rollNo) || 0;
+			return rollA - rollB;
+		});
+
 		renderList(data);
 		updateSelectedCount();
 	}
