@@ -126,6 +126,7 @@ namespace School.API.Controllers
                                 {
                                     new MenuItemDto { Id = 29, Title = "Admission Form", Icon = "bi-file-earmark-plus", Url = "/admission/form", Order = 1, Section = "Academic" },
                                     new MenuItemDto { Id = 12, Title = "Student", Icon = "bi-person-badge-fill", Url = "/Student", Order = 2, Section = "Academic" },
+                                    new MenuItemDto { Id = 31, Title = "Status Change", Icon = "bi-person-check-fill", Url = "/status-change", Order = 3, Section = "Academic" },
                                     new MenuItemDto { Id = 13, Title = "Attendance", Icon = "bi-calendar2-check-fill", Url = "/Attendance", Order = 2, Section = "Academic" },
                                     new MenuItemDto { Id = 21, Title = "Mark Attendance", Icon = "bi-check2-square", Url = "/attendance/form", Order = 3, Section = "Academic" },
                                     new MenuItemDto { Id = 30, Title = "Attendance Sheet", Icon = "bi-printer-fill", Url = "/attendance/sheet", Order = 4, Section = "Academic" },

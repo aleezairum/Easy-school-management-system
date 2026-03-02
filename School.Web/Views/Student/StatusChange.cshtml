@@ -1,0 +1,542 @@
+@{
+    ViewData["Title"] = "Student Status Change";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<style>
+    .card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        margin-bottom: 24px;
+    }
+
+    .card-header {
+        background: white;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 20px 24px;
+        border-radius: 16px 16px 0 0 !important;
+    }
+
+    .card-header h5 {
+        margin: 0;
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .card-body {
+        padding: 24px;
+    }
+
+    .form-label {
+        font-weight: 500;
+        color: #475569;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+
+    .form-control, .form-select {
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 14px;
+        transition: all 0.2s;
+        color: #1e293b;
+    }
+
+    .form-select option {
+        color: #1e293b;
+        background: #fff;
+        padding: 6px 10px;
+    }
+
+    .form-select option:checked {
+        color: #fff;
+        background: #008649 linear-gradient(0deg, #008649 0%, #008649 100%);
+    }
+
+    .form-select option:hover {
+        color: #1e293b;
+        background: #f1f5f9 linear-gradient(0deg, #f1f5f9 0%, #f1f5f9 100%);
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #008649;
+        box-shadow: 0 0 0 4px rgba(0, 134, 73, 0.1);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #008649 0%, #006d3b 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 134, 73, 0.4);
+        background: linear-gradient(135deg, #006d3b 0%, #005a30 100%);
+    }
+
+    .table {
+        margin-bottom: 0;
+    }
+
+    .table thead th {
+        background: #f8fafc;
+        border-bottom: 2px solid #e2e8f0;
+        padding: 14px 16px;
+        font-weight: 600;
+        font-size: 13px;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+    }
+
+    .table tbody td {
+        padding: 12px 16px;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 14px;
+    }
+
+    .table tbody tr:hover {
+        background: #f8fafc;
+    }
+
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        border-radius: 16px;
+    }
+
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+        border-width: 0.3rem;
+    }
+
+    .filter-section {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .status-badge-active {
+        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+    }
+
+    .status-badge-inactive {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+    }
+
+    .action-bar {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-bottom: 20px;
+        border: 2px solid #e2e8f0;
+    }
+
+    .student-check {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: #008649;
+    }
+
+    #selectAll {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: #008649;
+    }
+
+    .btn-apply-status {
+        background: linear-gradient(135deg, #008649 0%, #006d3b 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-weight: 600;
+        font-size: 14px;
+        color: white;
+        transition: all 0.2s;
+    }
+
+    .btn-apply-status:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 134, 73, 0.4);
+        background: linear-gradient(135deg, #006d3b 0%, #005a30 100%);
+        color: white;
+    }
+
+    .selected-count {
+        font-size: 14px;
+        color: #475569;
+        font-weight: 500;
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Alert Messages -->
+    <div id="alertContainer"></div>
+
+    <!-- Students Status Change Card -->
+    <div class="card">
+        <div class="card-body position-relative">
+            <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+                <div class="spinner-border text-success" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+
+            <!-- Filter Section -->
+            <div class="filter-section">
+                <div class="row g-3 align-items-end">
+                    <div class="col-lg-3 col-md-4 col-sm-6 col-12">
+                        <label for="searchName" class="form-label">Search</label>
+                        <input type="text" class="form-control" id="searchName" placeholder="Search by name, reg no, roll no..." />
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                        <label for="filterClass" class="form-label">Class</label>
+                        <select class="form-select" id="filterClass" onchange="loadFilterSections()">
+                            <option value="">All Classes</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                        <label for="filterSection" class="form-label">Section</label>
+                        <select class="form-select" id="filterSection">
+                            <option value="">All Sections</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                        <label for="filterStatus" class="form-label">Status</label>
+                        <select class="form-select" id="filterStatus">
+                            <option value="">All Status</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                        <button type="button" class="btn btn-primary" onclick="filterStudents()">
+                            <i class="bi bi-search me-1"></i> Search
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Bar -->
+            <div class="action-bar">
+                <div class="row g-3 align-items-center">
+                    <div class="col-auto">
+                        <label for="applyStatus" class="form-label mb-0">Apply Status:</label>
+                    </div>
+                    <div class="col-lg-2 col-md-3 col-sm-4 col-6">
+                        <select class="form-select" id="applyStatus">
+                            <option value="">Select Status</option>
+                        </select>
+                    </div>
+                    <div class="col-auto">
+                        <button type="button" class="btn btn-apply-status" onclick="applyStatus()">
+                            <i class="bi bi-check2-all me-1"></i> Apply Status
+                        </button>
+                    </div>
+                    <div class="col-auto">
+                        <span class="selected-count" id="selectedCount">0 selected</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grid Section -->
+            <div class="table-responsive">
+                <table class="table table-hover" id="studentsTable">
+                    <thead>
+                        <tr>
+                            <th class="text-center" style="width: 50px;">
+                                <input type="checkbox" id="selectAll" onclick="toggleSelectAll()" />
+                            </th>
+                            <th style="width: 60px;">Sr#</th>
+                            <th>Roll No</th>
+                            <th>Student Name</th>
+                            <th>Father's Name</th>
+                            <th>Class / Section</th>
+                            <th>Mobile</th>
+                            <th>Grade</th>
+                            <th>Fee</th>
+                            <th class="text-center" style="width: 100px;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentsBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    let allStudents = [];
+    let statusMap = {};
+    let statusList = [];
+
+    $(document).ready(function () {
+        loadDropdowns();
+        loadStudents();
+    });
+
+    async function loadDropdowns() {
+        try {
+            const response = await fetch(`${API_BASE}/class`);
+            if (response.ok) {
+                const classes = await response.json();
+                const select = $('#filterClass');
+                classes.forEach(c => {
+                    select.append(`<option value="${c.vid}">${c.vName}</option>`);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading class dropdown:', error);
+        }
+
+        // Load student statuses
+        try {
+            const response = await fetch(`${API_BASE}/studentstatus`);
+            if (response.ok) {
+                const statuses = await response.json();
+                const filterSelect = $('#filterStatus');
+                const applySelect = $('#applyStatus');
+                statuses.forEach(s => {
+                    if (s.isActive) {
+                        statusMap[s.vid] = s.vName;
+                        statusList.push({ id: s.vid, name: s.vName });
+                        filterSelect.append(`<option value="${s.vid}">${s.vName}</option>`);
+                        applySelect.append(`<option value="${s.vid}">${s.vName}</option>`);
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error loading status dropdown:', error);
+        }
+    }
+
+    async function loadFilterSections() {
+        const classId = $('#filterClass').val();
+        const sectionSelect = $('#filterSection');
+        sectionSelect.find('option:not(:first)').remove();
+
+        if (!classId) return;
+
+        try {
+            const response = await fetch(`${API_BASE}/section/byClass/${classId}`);
+            if (response.ok) {
+                const sections = await response.json();
+                sections.forEach(s => {
+                    sectionSelect.append(`<option value="${s.vid}">${s.vName}</option>`);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading sections:', error);
+        }
+    }
+
+    async function loadStudents() {
+        showLoading();
+        try {
+            const response = await fetch(`${API_BASE}/Student`);
+            if (response.ok) {
+                allStudents = await response.json();
+                filterStudents();
+            } else {
+                showAlert('Failed to load students', 'danger');
+            }
+        } catch (error) {
+            console.error('Error loading students:', error);
+            showAlert('Error loading students: ' + error.message, 'danger');
+        } finally {
+            hideLoading();
+        }
+    }
+
+    function filterStudents() {
+        let data = [...allStudents];
+
+        const search = $('#searchName').val().toLowerCase();
+        const classFilter = $('#filterClass option:selected').text();
+        const classVal = $('#filterClass').val();
+        const sectionFilter = $('#filterSection option:selected').text();
+        const sectionVal = $('#filterSection').val();
+        const status = $('#filterStatus').val();
+
+        if (search) {
+            data = data.filter(s =>
+                (s.nameOfStudent && s.nameOfStudent.toLowerCase().includes(search)) ||
+                (s.studentName && s.studentName.toLowerCase().includes(search)) ||
+                (s.name && s.name.toLowerCase().includes(search)) ||
+                (s.registrationNo && s.registrationNo.toLowerCase().includes(search)) ||
+                (s.rollNo && s.rollNo.toLowerCase().includes(search)) ||
+                (s.fatherName && s.fatherName.toLowerCase().includes(search)) ||
+                (s.fatherMobile && s.fatherMobile.includes(search))
+            );
+        }
+
+        if (classVal) {
+            data = data.filter(s =>
+                (s.currentClass && s.currentClass === classFilter) ||
+                (s.className && s.className === classFilter) ||
+                (s.classId && s.classId.toString() === classVal) ||
+                (s.classID && s.classID.toString() === classVal)
+            );
+        }
+
+        if (sectionVal) {
+            data = data.filter(s =>
+                (s.section && s.section === sectionFilter) ||
+                (s.sectionName && s.sectionName === sectionFilter) ||
+                (s.sectionId && s.sectionId.toString() === sectionVal) ||
+                (s.sectionID && s.sectionID.toString() === sectionVal)
+            );
+        }
+
+        if (status) {
+            data = data.filter(s =>
+                s.statusID && s.statusID.toString() === status
+            );
+        }
+
+        renderList(data);
+        updateSelectedCount();
+    }
+
+    function renderList(items) {
+        const tbody = $('#studentsBody');
+        tbody.empty();
+
+        if (items.length === 0) {
+            tbody.html('<tr><td colspan="10" class="text-center text-muted py-4">No students found.</td></tr>');
+            return;
+        }
+
+        items.forEach((item, index) => {
+            const isActive = item.isActive === true;
+            const statusName = (item.statusID && statusMap[item.statusID]) ? statusMap[item.statusID] : (isActive ? 'Active' : 'Inactive');
+            const statusBadge = isActive
+                ? `<span class="status-badge-active">${statusName}</span>`
+                : `<span class="status-badge-inactive">${statusName}</span>`;
+
+            const studentId = item.vid || item.id;
+            const name = item.nameOfStudent || item.studentName || item.name || '-';
+
+            const row = `
+                <tr>
+                    <td class="text-center">
+                        <input type="checkbox" class="student-check" data-id="${studentId}" onchange="updateSelectedCount()" />
+                    </td>
+                    <td>${index + 1}</td>
+                    <td>${item.rollNo || '-'}</td>
+                    <td>${name}</td>
+                    <td>${item.fatherName || '-'}</td>
+                    <td>${item.currentClass || item.className || '-'}<br><small class="text-muted">${item.section || item.sectionName || '-'}</small></td>
+                    <td>${item.fatherMobile || item.mobile || '-'}</td>
+                    <td>${item.gradeName || item.grade || '-'}</td>
+                    <td>${item.monthlyFee || item.fee || '-'}</td>
+                    <td class="text-center">${statusBadge}</td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+
+        // Reset select-all checkbox
+        $('#selectAll').prop('checked', false);
+    }
+
+    function toggleSelectAll() {
+        const isChecked = $('#selectAll').is(':checked');
+        $('.student-check').prop('checked', isChecked);
+        updateSelectedCount();
+    }
+
+    function updateSelectedCount() {
+        const count = $('.student-check:checked').length;
+        $('#selectedCount').text(count + ' selected');
+
+        // Update select-all state
+        const total = $('.student-check').length;
+        $('#selectAll').prop('checked', total > 0 && count === total);
+    }
+
+    function applyStatus() {
+        const statusId = $('#applyStatus').val();
+        if (!statusId) {
+            toastWarning('Please select a status to apply.');
+            return;
+        }
+
+        const checkedBoxes = $('.student-check:checked');
+        if (checkedBoxes.length === 0) {
+            toastWarning('Please select at least one student.');
+            return;
+        }
+
+        const statusName = statusMap[parseInt(statusId)] || 'Unknown';
+        // Determine badge style based on status name
+        const isActiveStatus = statusName.toLowerCase() === 'active';
+
+        checkedBoxes.each(function () {
+            const $row = $(this).closest('tr');
+            const $statusCell = $row.find('td:last-child');
+
+            if (isActiveStatus) {
+                $statusCell.html(`<span class="status-badge-active">${statusName}</span>`);
+            } else {
+                $statusCell.html(`<span class="status-badge-inactive">${statusName}</span>`);
+            }
+        });
+
+        toastSuccess(`Status "${statusName}" applied to ${checkedBoxes.length} student(s).`);
+    }
+
+    function showLoading() {
+        $('#loadingOverlay').css('display', 'flex');
+    }
+
+    function hideLoading() {
+        $('#loadingOverlay').css('display', 'none');
+    }
+
+    function showAlert(message, type) {
+        if (type === 'success') {
+            toastSuccess(message);
+        } else if (type === 'danger' || type === 'error') {
+            toastError(message);
+        } else if (type === 'warning') {
+            toastWarning(message);
+        } else {
+            toastInfo(message);
+        }
+    }
+</script>
+}

@@ -24,6 +24,13 @@ namespace School.Web.Controllers
             return View();
         }
 
+        [Route("status-change")]
+        public IActionResult StatusChange()
+        {
+            ViewData["Title"] = "Student Status Change";
+            return View();
+        }
+
         [Route("student/list")]
         public async Task<IActionResult> List()
         {
