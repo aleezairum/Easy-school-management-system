@@ -16,6 +16,10 @@ namespace School.API.Services.Implementations.Academic
 
         public Task<ResponseDto> SaveAsync(StudentSaveDto dto, int userId, string userIp)
             => _repo.SaveAsync(dto, userId, userIp);
+        public Task<ResponseDto> StatusChangeAsync(string StudentIDs, int StatusID, int userId, string userIp)
+            => _repo.StatusChangeAsync(StudentIDs, StatusID, userId, userIp);
+        public Task<ResponseDto> SectionChangeAsync(string StudentIDs, int StatusID, int userId, string userIp)
+            => _repo.SectionChangeAsync(StudentIDs, StatusID, userId, userIp);
 
         public Task<List<StudentSaveDto>> GetAllAsync()
             => _repo.GetAllAsync();

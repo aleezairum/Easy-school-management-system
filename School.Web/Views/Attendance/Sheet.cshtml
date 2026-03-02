@@ -312,8 +312,10 @@
                 allStudents = students.filter(s => {
                     const matchClass = String(s.classID || s.classId || '') === String(classId);
                     const matchSection = !sectionId || String(s.sectionID || s.sectionId || '') === String(sectionId);
+                    const statusID = s.statusID === 1;
                     const isActive = s.isActive === true;
-                    return matchClass && matchSection && isActive;
+
+                    return matchClass && matchSection && statusID && isActive;
                 });
                 renderGrid(allStudents);
                 if (allStudents.length === 0) {

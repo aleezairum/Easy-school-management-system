@@ -6,6 +6,8 @@ namespace School.API.Repositories.Interfaces.Academic
     public interface IStudentRepository
     {
         Task<ResponseDto> SaveAsync(StudentSaveDto dto, int userId, string userIp);
+        Task<ResponseDto> StatusChangeAsync(string StudentIDs, int StatusID, int userId, string userIp);
+        Task<ResponseDto> SectionChangeAsync(string StudentIDs, int StatusID, int userId, string userIp);
         Task<List<StudentSaveDto>> GetAllAsync();
         Task<StudentSaveDto?> GetByIdAsync(int id);
         Task<ResponseDto?> DeleteByIdAsync(int id);
