@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using School.API.Data.DBModels.Academic;
 using School.API.Data.DBModels.Accounts;
 using School.API.Data.DBModels.HR;
+using School.API.Data.DBModels.SMS;
 using School.API.DTOs;
 using School.API.DTOs.Academic;
 using School.API.DTOs.Common;
@@ -48,6 +49,9 @@ namespace School.API.Data
         // Accounts entities
         public DbSet<SMSFeeType> FeeTypes { get; set; }
         public DbSet<FeeStructure> FeeStructures { get; set; }
+
+        // SMS entities
+        public DbSet<SmsMessage> SmsMessages { get; set; }
 
         // Keyless entities
         public DbSet<ResponseDto> AcademicSessionYearResponses { get; set; }

@@ -1174,101 +1174,206 @@
         $(`#${countId}`).text(count);
     }
 
-    // Send SMS functions
-    async function sendStaffSMS() {
-        const message = $('#staffMessage').val();
+    // Generic SMS send helper
+    async function sendSmsViaApi(recipients, message, messageType, logId, countId) {
+        if (!recipients || recipients.length === 0) {
+            toastWarning('No recipients found');
+            return;
+        }
         if (!message) {
             toastWarning('Please enter a message');
             return;
         }
-        logSMS('staffSendingLog', 'staffSentCount', 'Staff SMS sent successfully');
-        toastSuccess('SMS sent successfully!');
+
+        try {
+            const response = await fetch(`${API_BASE}/Sms/send`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    recipients: recipients,
+                    message: message,
+                    messageType: messageType
+                })
+            });
+
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({ message: 'Send failed' }));
+                toastError(err.message || 'Failed to send SMS');
+                return;
+            }
+
+            const result = await response.json();
+            logSMS(logId, countId, `Sent: ${result.totalSent}, Failed: ${result.totalFailed}`);
+            if (result.totalFailed > 0) {
+                toastWarning(`${result.totalSent} sent, ${result.totalFailed} failed`);
+            } else {
+                toastSuccess(`${result.totalSent} SMS sent successfully!`);
+            }
+        } catch (ex) {
+            console.error('SMS send error:', ex);
+            toastError('Network error sending SMS');
+        }
+    }
+
+    // Send SMS functions
+    async function sendStaffSMS() {
+        const message = $('#staffMessage').val();
+        if (!message) { toastWarning('Please enter a message'); return; }
+
+        const phone = $('#staffContactNo').val();
+        const name = $('#staffTo option:selected').text();
+        if (!phone) { toastWarning('Please select a staff member or enter a contact number'); return; }
+
+        await sendSmsViaApi([{ phone, name }], message, 1, 'staffSendingLog', 'staffSentCount');
     }
 
     async function sendGeneralSMS() {
         const message = $('#generalMessage').val();
-        if (!message) {
-            toastWarning('Please enter a message');
-            return;
-        }
-        logSMS('generalSendingLog', 'generalSentCount', 'General SMS sent successfully');
-        toastSuccess('SMS sent successfully!');
+        if (!message) { toastWarning('Please enter a message'); return; }
+
+        // For now, send to manually specified recipients from the form
+        // In a full implementation, this would fetch students based on class/section selection
+        const studentSelect = $('#generalStudentId');
+        const phone = studentSelect.find(':selected').data('phone');
+        const name = studentSelect.find(':selected').text();
+        if (!phone) { toastWarning('Please select a student with a phone number'); return; }
+
+        await sendSmsViaApi([{ phone, name }], message, 2, 'generalSendingLog', 'generalSentCount');
     }
 
     async function sendAbsentSMS() {
         const date = $('#absentDate').val();
-        if (!date) {
-            toastWarning('Please select a date');
-            return;
+        if (!date) { toastWarning('Please select a date'); return; }
+        const message = $('#absentMessage') && $('#absentMessage').val() ? $('#absentMessage').val()
+            : 'Dear Parent, your child was marked absent on ' + date + '. Please contact the school.';
+
+        try {
+            const resp = await fetch(`${API_BASE}/Sms/absent-students?date=${date}`);
+            const students = await resp.json();
+            if (!students || students.length === 0) {
+                toastWarning('No absent students found for this date');
+                return;
+            }
+            await sendSmsViaApi(students, message, 3, 'absentSendingLog', 'absentSentCount');
+        } catch (ex) {
+            console.error(ex);
+            toastError('Failed to fetch absent students');
         }
-        logSMS('absentSendingLog', 'absentSentCount', 'Absent notification sent successfully');
-        toastSuccess('SMS sent successfully!');
     }
 
     async function sendLateSMS() {
         const date = $('#lateDate').val();
-        if (!date) {
-            toastWarning('Please select a date');
-            return;
+        if (!date) { toastWarning('Please select a date'); return; }
+        const message = $('#lateMessage') && $('#lateMessage').val() ? $('#lateMessage').val()
+            : 'Dear Parent, your child was marked late on ' + date + '. Please ensure punctuality.';
+
+        try {
+            const resp = await fetch(`${API_BASE}/Sms/late-students?date=${date}`);
+            const students = await resp.json();
+            if (!students || students.length === 0) {
+                toastWarning('No late students found for this date');
+                return;
+            }
+            await sendSmsViaApi(students, message, 4, 'lateSendingLog', 'lateSentCount');
+        } catch (ex) {
+            console.error(ex);
+            toastError('Failed to fetch late students');
         }
-        logSMS('lateSendingLog', 'lateSentCount', 'Late notification sent successfully');
-        toastSuccess('SMS sent successfully!');
     }
 
     async function sendAgainSMS() {
         const date = $('#againDate').val();
-        if (!date) {
-            toastWarning('Please select a date');
-            return;
+        if (!date) { toastWarning('Please select a date'); return; }
+        const message = $('#againMessage') && $('#againMessage').val() ? $('#againMessage').val()
+            : 'Dear Parent, your child was marked absent on ' + date + '. This is a reminder.';
+
+        try {
+            const resp = await fetch(`${API_BASE}/Sms/absent-students?date=${date}`);
+            const students = await resp.json();
+            if (!students || students.length === 0) {
+                toastWarning('No absent students found for this date');
+                return;
+            }
+            await sendSmsViaApi(students, message, 3, 'againSendingLog', 'againSentCount');
+        } catch (ex) {
+            console.error(ex);
+            toastError('Failed to fetch absent students');
         }
-        logSMS('againSendingLog', 'againSentCount', 'Again notification sent successfully');
-        toastSuccess('SMS sent successfully!');
     }
 
     async function sendFeeSMS() {
-        logSMS('feeSendingLog', 'feeSentCount', 'Fee reminder sent successfully');
-        toastSuccess('SMS sent successfully!');
+        const message = $('#feeMessage') && $('#feeMessage').val() ? $('#feeMessage').val()
+            : 'Dear Parent, your child\'s school fee is pending. Please submit at your earliest convenience.';
+
+        try {
+            const resp = await fetch(`${API_BASE}/Sms/fee-defaulters`);
+            const students = await resp.json();
+            if (!students || students.length === 0) {
+                toastWarning('No fee defaulters found');
+                return;
+            }
+            await sendSmsViaApi(students, message, 5, 'feeSendingLog', 'feeSentCount');
+        } catch (ex) {
+            console.error(ex);
+            toastError('Failed to fetch fee defaulters');
+        }
     }
 
     async function sendResultSMS() {
         const examId = $('#resultExamId').val();
-        if (!examId) {
-            toastWarning('Please select an exam');
-            return;
+        if (!examId) { toastWarning('Please select an exam'); return; }
+        const message = $('#resultMessage') && $('#resultMessage').val() ? $('#resultMessage').val()
+            : 'Dear Parent, your child\'s exam results are available. Please check with the school.';
+
+        // Result SMS currently sends to all students — can be refined later with exam result data
+        const studentSelect = $('#resultStudentId');
+        const phone = studentSelect.find(':selected').data('phone');
+        const name = studentSelect.find(':selected').text();
+        if (phone) {
+            await sendSmsViaApi([{ phone, name }], message, 6, 'resultSendingLog', 'resultSentCount');
+        } else {
+            toastWarning('Please select a student with a phone number');
         }
-        logSMS('resultSendingLog', 'resultSentCount', 'Result notification sent successfully');
-        toastSuccess('SMS sent successfully!');
     }
 
     async function sendFromToSMS() {
         const fromDate = $('#fromtoFromDate').val();
         const toDate = $('#fromtoToDate').val();
-        if (!fromDate || !toDate) {
-            toastWarning('Please select date range');
-            return;
+        if (!fromDate || !toDate) { toastWarning('Please select date range'); return; }
+        const message = $('#fromtoMessage') && $('#fromtoMessage').val() ? $('#fromtoMessage').val()
+            : 'Dear Parent, attendance notification for period ' + fromDate + ' to ' + toDate + '.';
+
+        const studentSelect = $('#fromtoStudentId');
+        const phone = studentSelect.find(':selected').data('phone');
+        const name = studentSelect.find(':selected').text();
+        if (phone) {
+            await sendSmsViaApi([{ phone, name }], message, 7, 'fromtoSendingLog', 'fromtoSentCount');
+        } else {
+            toastWarning('Please select a student with a phone number');
         }
-        logSMS('fromtoSendingLog', 'fromtoSentCount', 'Date range SMS sent successfully');
-        toastSuccess('SMS sent successfully!');
     }
 
     async function sendExcelSMS() {
         const file = $('#excelFile').val();
-        if (!file) {
-            toastWarning('Please upload an Excel file');
-            return;
-        }
-        logSMS('excelSendingLog', 'excelSentCount', 'Excel SMS sent successfully');
-        toastSuccess('SMS sent successfully!');
+        if (!file) { toastWarning('Please upload an Excel file'); return; }
+        // Excel SMS — placeholder, requires server-side Excel parsing in a future iteration
+        logSMS('excelSendingLog', 'excelSentCount', 'Excel SMS feature coming soon');
+        toastWarning('Excel SMS sending requires server-side file upload — coming soon');
     }
 
     async function sendRcardSMS() {
         const examId = $('#rcardExamId').val();
-        if (!examId) {
-            toastWarning('Please select an exam');
-            return;
+        if (!examId) { toastWarning('Please select an exam'); return; }
+        const message = 'Dear Parent, your child\'s report card is ready. Please collect from the school.';
+
+        const studentSelect = $('#rcardStudentId');
+        const phone = studentSelect.find(':selected').data('phone');
+        const name = studentSelect.find(':selected').text();
+        if (phone) {
+            await sendSmsViaApi([{ phone, name }], message, 9, 'rcardSendingLog', 'rcardSentCount');
+        } else {
+            toastWarning('Please select a student with a phone number');
         }
-        logSMS('rcardSendingLog', 'rcardSentCount', 'Report card notification sent successfully');
-        toastSuccess('SMS sent successfully!');
     }
 
     // Excel file preview

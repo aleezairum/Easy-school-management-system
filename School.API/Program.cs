@@ -23,6 +23,11 @@ using School.API.Services.Interfaces.Accounts;
 using School.API.Services.Implementations.Accounts;
 using School.API.Repositories.Interfaces.Accounts;
 using School.API.Repositories.Implementations.Accounts;
+using School.API.Services.Interfaces;
+using School.API.Services.Implementations;
+using School.API.Repositories.Interfaces;
+using School.API.Repositories.Implementations;
+using School.API.BackgroundJobs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -97,6 +102,16 @@ builder.Services.AddScoped<School.API.Services.Interfaces.Accounts.IFeeStructure
 //builder.Services.AddScoped<IFeeVoucherRepository, FeeVoucherRepository>();
 //builder.Services.AddScoped<IFeeVoucherService, FeeVoucherService>();
 
+// SMS Services
+builder.Services.AddScoped<ISmsMessageRepository, SmsMessageRepository>();
+// Swap sender: LogOnlySmsSender (logs only) or WahaSmsSender (WhatsApp via WAHA)
+// builder.Services.AddScoped<ISmsSender, LogOnlySmsSender>();
+builder.Services.AddScoped<ISmsSender, WahaSmsSender>();
+builder.Services.AddScoped<ISmsService, SmsService>();
+
+// Background Jobs
+builder.Services.AddHostedService<AbsentNotificationJob>();
+builder.Services.AddHostedService<FeeReminderJob>();
 
 // Controllers
 builder.Services.AddControllers()
