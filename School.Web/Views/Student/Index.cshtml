@@ -312,33 +312,25 @@
 
     async function loadDropdowns() {
         try {
-            const response = await fetch(`${API_BASE}/class`);
-            if (response.ok) {
-                const classes = await response.json();
-                const select = $('#filterClass');
-                classes.forEach(c => {
-                    select.append(`<option value="${c.vid}">${c.vName}</option>`);
-                });
-            }
-        } catch (error) {
-            console.error('Error loading class dropdown:', error);
-        }
+            const [classes, statuses] = await Promise.all([
+                fetch(`${API_BASE}/class`).then(r => r.ok ? r.json() : []).catch(() => []),
+                fetch(`${API_BASE}/studentstatus`).then(r => r.ok ? r.json() : []).catch(() => [])
+            ]);
 
-        // Load student statuses
-        try {
-            const response = await fetch(`${API_BASE}/studentstatus`);
-            if (response.ok) {
-                const statuses = await response.json();
-                const select = $('#filterStatus');
-                statuses.forEach(s => {
-                    if (s.isActive) {
-                        statusMap[s.vid] = s.vName;
-                        select.append(`<option value="${s.vid}">${s.vName}</option>`);
-                    }
-                });
-            }
+            const classSelect = $('#filterClass');
+            classes.forEach(c => {
+                classSelect.append(`<option value="${c.vid}">${c.vName}</option>`);
+            });
+
+            const statusSelect = $('#filterStatus');
+            statuses.forEach(s => {
+                if (s.isActive) {
+                    statusMap[s.vid] = s.vName;
+                    statusSelect.append(`<option value="${s.vid}">${s.vName}</option>`);
+                }
+            });
         } catch (error) {
-            console.error('Error loading status dropdown:', error);
+            console.error('Error loading dropdowns:', error);
         }
     }
 

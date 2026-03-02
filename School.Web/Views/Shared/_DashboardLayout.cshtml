@@ -1397,6 +1397,35 @@
                     </div>
                 </div>
             </div>
+            <script>
+                // Instant sidebar restore from cache (runs synchronously before page paints)
+                try {
+                    var _c = sessionStorage.getItem('sidebarData');
+                    if (_c) {
+                        var _p = JSON.parse(_c);
+                        if (Date.now() - _p.timestamp < 1800000) {
+                            var _html = sessionStorage.getItem('sidebarHtml');
+                            if (_html) {
+                                document.getElementById('sidebarMenu').innerHTML = _html;
+                                // Re-apply active state for current page
+                                var _path = window.location.pathname.toLowerCase();
+                                var _menu = document.getElementById('sidebarMenu');
+                                _menu.querySelectorAll('.menu-item').forEach(function(a) {
+                                    var href = (a.getAttribute('href') || '').toLowerCase();
+                                    if (href && _path.startsWith(href)) {
+                                        a.classList.add('active');
+                                    } else {
+                                        a.classList.remove('active');
+                                    }
+                                });
+                            }
+                            if (_p.data.instituteName) document.getElementById('sidebarInstituteName').textContent = _p.data.instituteName;
+                            if (_p.data.instituteTagline) document.getElementById('sidebarInstituteTagline').textContent = _p.data.instituteTagline;
+                            if (_p.data.logoUrl) document.getElementById('sidebarLogo').src = _p.data.logoUrl;
+                        }
+                    }
+                } catch(e) {}
+            </script>
 
             @* <div class="sidebar-footer">
                 <div class="user-profile">
@@ -1746,118 +1775,150 @@
             location.reload();
         }
 
-        // ====== SIDEBAR DATA LOADER ======
+        // ====== SIDEBAR DATA LOADER (with sessionStorage cache) ======
+        const SIDEBAR_CACHE_KEY = 'sidebarData';
+        const SIDEBAR_CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+
+        function renderSidebar(data) {
+            document.getElementById('sidebarInstituteName').textContent = data.instituteName;
+            document.getElementById('sidebarInstituteTagline').textContent = data.instituteTagline;
+
+            if (data.logoUrl) {
+                document.getElementById('sidebarLogo').src = data.logoUrl;
+            }
+
+            const menuContainer = document.getElementById('sidebarMenu');
+            const currentPath = window.location.pathname;
+            let menuHtml = '';
+
+            data.menuSections.forEach((section, index) => {
+                const sectionId = `menu-section-${index}`;
+
+                let sectionHasActive = false;
+                section.items.forEach(item => {
+                    if (item.children && item.children.length > 0) {
+                        item.children.forEach(child => {
+                            if (currentPath.toLowerCase().startsWith(child.url.toLowerCase())) {
+                                sectionHasActive = true;
+                            }
+                        });
+                    } else {
+                        if (currentPath.toLowerCase().startsWith(item.url.toLowerCase()) ||
+                            (item.url === '/Dashboard' && currentPath === '/')) {
+                            sectionHasActive = true;
+                        }
+                    }
+                });
+
+                const isExpanded = sectionHasActive || localStorage.getItem(`sidebar-${sectionId}`) === 'expanded';
+                const collapsedClass = isExpanded ? '' : 'collapsed';
+
+                if (sectionHasActive) {
+                    localStorage.setItem(`sidebar-${sectionId}`, 'expanded');
+                }
+
+                menuHtml += `<div class="menu-section ${collapsedClass}" id="${sectionId}">`;
+                menuHtml += `
+                    <div class="menu-section-title" onclick="toggleMenuSection('${sectionId}')">
+                        <span><i class="bi ${section.icon} me-2"></i>${section.title}</span>
+                        <i class="bi bi-chevron-down section-toggle"></i>
+                    </div>
+                `;
+                menuHtml += `<div class="menu-section-items">`;
+
+                section.items.forEach(item => {
+                    if (item.children && item.children.length > 0) {
+                        const submenuId = `submenu-${item.id}`;
+
+                        let submenuHasActive = false;
+                        item.children.forEach(child => {
+                            if (currentPath.toLowerCase().startsWith(child.url.toLowerCase())) {
+                                submenuHasActive = true;
+                            }
+                        });
+
+                        const submenuOpen = submenuHasActive || localStorage.getItem(`sidebar-${submenuId}`) === 'open';
+
+                        if (submenuHasActive) {
+                            localStorage.setItem(`sidebar-${submenuId}`, 'open');
+                        }
+
+                        menuHtml += `
+                            <div class="menu-item-parent ${submenuOpen ? 'expanded' : ''}" onclick="toggleSubmenu('${submenuId}')">
+                                <div class="parent-left">
+                                    <i class="bi ${item.icon}"></i>
+                                    <span>${item.title}</span>
+                                </div>
+                                <i class="bi bi-chevron-down submenu-toggle"></i>
+                            </div>
+                            <div class="submenu ${submenuOpen ? 'open' : ''}" id="${submenuId}">
+                        `;
+
+                        item.children.forEach(child => {
+                            const isChildActive = currentPath.toLowerCase().startsWith(child.url.toLowerCase());
+                            const childBadgeHtml = child.badge ? `<span class="badge">${child.badge}</span>` : '';
+                            menuHtml += `
+                                <a href="${child.url}" class="menu-item ${isChildActive ? 'active' : ''}">
+                                    <i class="bi ${child.icon}"></i>
+                                    <span>${child.title}</span>
+                                    ${childBadgeHtml}
+                                </a>
+                            `;
+                        });
+
+                        menuHtml += `</div>`;
+                    } else {
+                        const isActive = currentPath.toLowerCase().startsWith(item.url.toLowerCase()) ||
+                                         (item.url === '/Dashboard' && currentPath === '/');
+                        const badgeHtml = item.badge ? `<span class="badge">${item.badge}</span>` : '';
+                        menuHtml += `
+                            <a href="${item.url}" class="menu-item ${isActive ? 'active' : ''}">
+                                <i class="bi ${item.icon}"></i>
+                                <span>${item.title}</span>
+                                ${badgeHtml}
+                            </a>
+                        `;
+                    }
+                });
+
+                menuHtml += `</div></div>`;
+            });
+
+            menuContainer.innerHTML = menuHtml;
+            // Cache rendered HTML for instant restore on next page
+            try { sessionStorage.setItem('sidebarHtml', menuHtml); } catch(e) {}
+        }
+
         function loadSidebarData() {
+            // If inline script already restored from cache, just refresh in background
+            try {
+                const cached = sessionStorage.getItem(SIDEBAR_CACHE_KEY);
+                if (cached) {
+                    const { data, timestamp } = JSON.parse(cached);
+                    if (Date.now() - timestamp < SIDEBAR_CACHE_TTL) {
+                        // Inline script already rendered — skip renderSidebar, just refresh cache
+                        if (sessionStorage.getItem('sidebarHtml')) {
+                            fetch(`${API_BASE}/sidebar`).then(r => r.json()).then(freshData => {
+                                sessionStorage.setItem(SIDEBAR_CACHE_KEY, JSON.stringify({ data: freshData, timestamp: Date.now() }));
+                            }).catch(() => {});
+                            return;
+                        }
+                        // Cache exists but no HTML cache (first load after clear)
+                        renderSidebar(data);
+                        fetch(`${API_BASE}/sidebar`).then(r => r.json()).then(freshData => {
+                            sessionStorage.setItem(SIDEBAR_CACHE_KEY, JSON.stringify({ data: freshData, timestamp: Date.now() }));
+                        }).catch(() => {});
+                        return;
+                    }
+                }
+            } catch (e) {}
+
+            // No cache — fetch and render
             fetch(`${API_BASE}/sidebar`)
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById('sidebarInstituteName').textContent = data.instituteName;
-                    document.getElementById('sidebarInstituteTagline').textContent = data.instituteTagline;
-
-                    if (data.logoUrl) {
-                        document.getElementById('sidebarLogo').src = data.logoUrl;
-                    }
-
-                    const menuContainer = document.getElementById('sidebarMenu');
-                    const currentPath = window.location.pathname;
-                    let menuHtml = '';
-
-                    data.menuSections.forEach((section, index) => {
-                        const sectionId = `menu-section-${index}`;
-
-                        // Check if any item in this section is active
-                        let sectionHasActive = false;
-                        section.items.forEach(item => {
-                            if (item.children && item.children.length > 0) {
-                                item.children.forEach(child => {
-                                    if (currentPath.toLowerCase().startsWith(child.url.toLowerCase())) {
-                                        sectionHasActive = true;
-                                    }
-                                });
-                            } else {
-                                if (currentPath.toLowerCase().startsWith(item.url.toLowerCase()) ||
-                                    (item.url === '/Dashboard' && currentPath === '/')) {
-                                    sectionHasActive = true;
-                                }
-                            }
-                        });
-
-                        const isExpanded = sectionHasActive || localStorage.getItem(`sidebar-${sectionId}`) === 'expanded';
-                        const collapsedClass = isExpanded ? '' : 'collapsed';
-
-                        if (sectionHasActive) {
-                            localStorage.setItem(`sidebar-${sectionId}`, 'expanded');
-                        }
-
-                        menuHtml += `<div class="menu-section ${collapsedClass}" id="${sectionId}">`;
-                        menuHtml += `
-                            <div class="menu-section-title" onclick="toggleMenuSection('${sectionId}')">
-                                <span><i class="bi ${section.icon} me-2"></i>${section.title}</span>
-                                <i class="bi bi-chevron-down section-toggle"></i>
-                            </div>
-                        `;
-                        menuHtml += `<div class="menu-section-items">`;
-
-                        section.items.forEach(item => {
-                            if (item.children && item.children.length > 0) {
-                                const submenuId = `submenu-${item.id}`;
-
-                                // Check if any child in this submenu is active
-                                let submenuHasActive = false;
-                                item.children.forEach(child => {
-                                    if (currentPath.toLowerCase().startsWith(child.url.toLowerCase())) {
-                                        submenuHasActive = true;
-                                    }
-                                });
-
-                                const submenuOpen = submenuHasActive || localStorage.getItem(`sidebar-${submenuId}`) === 'open';
-
-                                if (submenuHasActive) {
-                                    localStorage.setItem(`sidebar-${submenuId}`, 'open');
-                                }
-
-                                menuHtml += `
-                                    <div class="menu-item-parent ${submenuOpen ? 'expanded' : ''}" onclick="toggleSubmenu('${submenuId}')">
-                                        <div class="parent-left">
-                                            <i class="bi ${item.icon}"></i>
-                                            <span>${item.title}</span>
-                                        </div>
-                                        <i class="bi bi-chevron-down submenu-toggle"></i>
-                                    </div>
-                                    <div class="submenu ${submenuOpen ? 'open' : ''}" id="${submenuId}">
-                                `;
-
-                                item.children.forEach(child => {
-                                    const isChildActive = currentPath.toLowerCase().startsWith(child.url.toLowerCase());
-                                    const childBadgeHtml = child.badge ? `<span class="badge">${child.badge}</span>` : '';
-                                    menuHtml += `
-                                        <a href="${child.url}" class="menu-item ${isChildActive ? 'active' : ''}">
-                                            <i class="bi ${child.icon}"></i>
-                                            <span>${child.title}</span>
-                                            ${childBadgeHtml}
-                                        </a>
-                                    `;
-                                });
-
-                                menuHtml += `</div>`;
-                            } else {
-                                const isActive = currentPath.toLowerCase().startsWith(item.url.toLowerCase()) ||
-                                                 (item.url === '/Dashboard' && currentPath === '/');
-                                const badgeHtml = item.badge ? `<span class="badge">${item.badge}</span>` : '';
-                                menuHtml += `
-                                    <a href="${item.url}" class="menu-item ${isActive ? 'active' : ''}">
-                                        <i class="bi ${item.icon}"></i>
-                                        <span>${item.title}</span>
-                                        ${badgeHtml}
-                                    </a>
-                                `;
-                            }
-                        });
-
-                        menuHtml += `</div></div>`;
-                    });
-
-                    menuContainer.innerHTML = menuHtml;
+                    sessionStorage.setItem(SIDEBAR_CACHE_KEY, JSON.stringify({ data, timestamp: Date.now() }));
+                    renderSidebar(data);
                 })
                 .catch(error => {
                     console.error('Error loading sidebar data:', error);

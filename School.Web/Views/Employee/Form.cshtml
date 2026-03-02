@@ -557,35 +557,26 @@
 
         async function loadDropdowns() {
             try {
-                // Load Designations
-                const designationsResponse = await fetch(`${API_BASE}/Designation/dropdown`);
-                if (designationsResponse.ok) {
-                    const designations = await designationsResponse.json();
-                    const designationSelect = $('#designationId');
-                    designations.forEach(d => {
-                        designationSelect.append(`<option value="${d.id}">${d.name}</option>`);
-                    });
-                }
+                const [designations, hrGrades, academicGrades] = await Promise.all([
+                    fetch(`${API_BASE}/Designation/dropdown`).then(r => r.ok ? r.json() : []).catch(() => []),
+                    fetch(`${API_BASE}/HRGrade/dropdown`).then(r => r.ok ? r.json() : []).catch(() => []),
+                    fetch(`${API_BASE}/AcademicGrade/dropdown`).then(r => r.ok ? r.json() : []).catch(() => [])
+                ]);
 
-                // Load HR Grades
-                const hrGradesResponse = await fetch(`${API_BASE}/HRGrade/dropdown`);
-                if (hrGradesResponse.ok) {
-                    const hrGrades = await hrGradesResponse.json();
-                    const hrGradeSelect = $('#hrGradeId');
-                    hrGrades.forEach(g => {
-                        hrGradeSelect.append(`<option value="${g.id}">${g.name}</option>`);
-                    });
-                }
+                const designationSelect = $('#designationId');
+                designations.forEach(d => {
+                    designationSelect.append(`<option value="${d.id}">${d.name}</option>`);
+                });
 
-                // Load Academic Grades
-                const academicGradesResponse = await fetch(`${API_BASE}/AcademicGrade/dropdown`);
-                if (academicGradesResponse.ok) {
-                    const academicGrades = await academicGradesResponse.json();
-                    const academicGradeSelect = $('#academicGradeId');
-                    academicGrades.forEach(g => {
-                        academicGradeSelect.append(`<option value="${g.id}">${g.name}</option>`);
-                    });
-                }
+                const hrGradeSelect = $('#hrGradeId');
+                hrGrades.forEach(g => {
+                    hrGradeSelect.append(`<option value="${g.id}">${g.name}</option>`);
+                });
+
+                const academicGradeSelect = $('#academicGradeId');
+                academicGrades.forEach(g => {
+                    academicGradeSelect.append(`<option value="${g.id}">${g.name}</option>`);
+                });
             } catch (error) {
                 console.error('Error loading dropdowns:', error);
             }
