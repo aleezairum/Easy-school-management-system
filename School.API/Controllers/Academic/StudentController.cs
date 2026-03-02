@@ -49,6 +49,39 @@ public class StudentController : ControllerBase
             return StatusCode(500, new { message = ex.InnerException?.Message ?? ex.Message });
         }
     }
+    [HttpPatch("status-change")]
+    public async Task<IActionResult> StatusChange(ChangeStudentStatusRequest dto)
+    {
+        try
+        {
+            int userId = 1; // later from JWT
+            string userIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+
+            var result = await _service.StatusChangeAsync(dto.StudentIds, dto.StatusID, userId, userIp);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.InnerException?.Message ?? ex.Message });
+        }
+    }
+    
+    [HttpPatch("section-change")]
+    public async Task<IActionResult> SectionChange(ChangeStudentStatusRequest dto)
+    {
+        try
+        {
+            int userId = 1; // later from JWT
+            string userIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+
+            var result = await _service.SectionChangeAsync(dto.StudentIds, dto.StatusID, userId, userIp);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.InnerException?.Message ?? ex.Message });
+        }
+    }
 
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, StudentSaveDto dto)

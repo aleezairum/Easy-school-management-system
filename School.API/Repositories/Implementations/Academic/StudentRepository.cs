@@ -135,5 +135,55 @@ namespace School.API.Repositories.Implementations.Academic
                 ReturnMessage = "No response from stored procedure"
             };
         }
+        public async Task<ResponseDto> StatusChangeAsync(string StudentIDs, int StatusID, int userId, string userIp)
+        {
+            var parameters = new[]
+            {
+                new SqlParameter("@VIDs",      StudentIDs),
+                new SqlParameter("@StatusID",     StatusID),
+                new SqlParameter("@UserID",         userId),
+                new SqlParameter("@UserIP",         (object?)userIp             ?? DBNull.Value)
+    };
+
+            var resultList = await _context
+                .Set<ResponseDto>()
+                .FromSqlRaw(
+                    @"EXEC SpStatusChange_SMSStudentAcademic @VIDs, @StatusID,@UserID, @UserIP",
+                    parameters)
+                .AsNoTracking()
+                .ToListAsync();
+
+            return resultList.FirstOrDefault() ?? new ResponseDto
+            {
+                VID = 0,
+                ReturnCode = -1,
+                ReturnMessage = "No response from stored procedure"
+            };
+        }
+        public async Task<ResponseDto> SectionChangeAsync(string StudentIDs, int SectionID, int userId, string userIp)
+        {
+            var parameters = new[]
+            {
+                new SqlParameter("@VIDs",      StudentIDs),
+                new SqlParameter("@SectionID",     SectionID),
+                new SqlParameter("@UserID",         userId),
+                new SqlParameter("@UserIP",         (object?)userIp             ?? DBNull.Value)
+            };
+
+            var resultList = await _context
+                .Set<ResponseDto>()
+                .FromSqlRaw(
+                    @"EXEC SpSectionChange_SMSStudentAcademic @VIDs, @SectionID,@UserID, @UserIP",
+                    parameters)
+                .AsNoTracking()
+                .ToListAsync();
+
+            return resultList.FirstOrDefault() ?? new ResponseDto
+            {
+                VID = 0,
+                ReturnCode = -1,
+                ReturnMessage = "No response from stored procedure"
+            };
+        }
     }
 }
