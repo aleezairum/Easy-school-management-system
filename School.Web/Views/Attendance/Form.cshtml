@@ -48,8 +48,8 @@
                         <label class="form-label text-info">Leave</label>
                         <input type="text" class="form-control" id="totalLeave" readonly value="0" style="background-color: #e0f2fe; color: #0284c7; font-weight: 600; text-align: center;" />
                     </div>
-                    <div class="col-lg-2 col-md-3 col-sm-6 col-12">
-                        <button type="button" class="btn btn-primary w-100" onclick="loadStudents()">
+                    <div class="col-lg-2 col-md-3 col-sm-6 col-12 d-flex align-items-end gap-2">
+                        <button type="button" class="btn btn-primary" onclick="loadStudents()">
                             <i class="bi bi-search me-1"></i> Load Students
                         </button>
                     </div>
@@ -64,7 +64,7 @@
                             <tr style="background: #f8fafc;">
                                 <th>Roll No</th>
                                 <th>Student Name</th>
-                                <th class="text-center">Attendance</th>
+                                <th class="text-center">Attendance <i class="bi bi-check-all" onclick="markAllPresent()" title="Mark All Present" style="cursor: pointer; color: #16a34a; font-size: 18px; margin-left: 4px;"></i></th>
                                 <th class="text-center">Late</th>
                                 <th class="text-center">Again</th>
                             </tr>
@@ -116,7 +116,7 @@
 
 @section Scripts {
 <script>
-    let students = [];
+    let allStudents = [];
 
     $(document).ready(function () {
         $('#attendanceDate').val(new Date().toISOString().split('T')[0]);
@@ -219,31 +219,32 @@
         $('#totalStudents').val(studentList.length);
 
         studentList.forEach((student, index) => {
+            const sid = student.vid || student.id;
             const row = `
-                <tr data-student-id="${student.id}">
+                <tr data-student-id="${sid}">
                     <td><strong>${student.rollNo || index + 1}</strong></td>
                     <td>${student.studentName || student.name || '-'}</td>
                     <td class="text-center">
                         <div class="btn-group" role="group">
                             <button type="button" class="btn btn-sm btn-outline-success attendance-btn ${student.attendance === 'P' ? 'active btn-success text-white' : ''}"
-                                    onclick="setAttendance(${student.id}, 'P', this)" data-value="P">
+                                    onclick="setAttendance(${sid}, 'P', this)" data-value="P">
                                 P
                             </button>
                             <button type="button" class="btn btn-sm btn-outline-danger attendance-btn ${student.attendance === 'A' ? 'active btn-danger text-white' : ''}"
-                                    onclick="setAttendance(${student.id}, 'A', this)" data-value="A">
+                                    onclick="setAttendance(${sid}, 'A', this)" data-value="A">
                                 A
                             </button>
                             <button type="button" class="btn btn-sm btn-outline-info attendance-btn ${student.attendance === 'L' ? 'active btn-info text-white' : ''}"
-                                    onclick="setAttendance(${student.id}, 'L', this)" data-value="L">
+                                    onclick="setAttendance(${sid}, 'L', this)" data-value="L">
                                 L
                             </button>
                         </div>
                     </td>
                     <td class="text-center">
-                        <input type="checkbox" class="form-check-input late-checkbox" data-student-id="${student.id}" ${student.late ? 'checked' : ''} onchange="updateLate(${student.id}, this.checked)" />
+                        <input type="checkbox" class="form-check-input late-checkbox" data-student-id="${sid}" ${student.late ? 'checked' : ''} onchange="updateLate(${sid}, this.checked)" />
                     </td>
                     <td class="text-center">
-                        <input type="checkbox" class="form-check-input again-checkbox" data-student-id="${student.id}" ${student.again ? 'checked' : ''} onchange="updateAgain(${student.id}, this.checked)" />
+                        <input type="checkbox" class="form-check-input again-checkbox" data-student-id="${sid}" ${student.again ? 'checked' : ''} onchange="updateAgain(${sid}, this.checked)" />
                     </td>
                 </tr>
             `;
@@ -251,14 +252,14 @@
         });
 
         // Set default attendance to Present for all
-        students.forEach(s => {
+        allStudents.forEach(s => {
             if (!s.attendance) s.attendance = 'P';
         });
         updateCounts();
     }
 
     function setAttendance(studentId, value, button) {
-        const student = students.find(s => s.id === studentId);
+        const student = allStudents.find(s => (s.vid || s.id) === studentId);
         if (student) {
             student.attendance = value;
         }
@@ -276,27 +277,48 @@
     }
 
     function updateLate(studentId, isLate) {
-        const student = students.find(s => s.id === studentId);
+        const student = allStudents.find(s => (s.vid || s.id) === studentId);
         if (student) {
             student.late = isLate;
         }
     }
 
     function updateAgain(studentId, isAgain) {
-        const student = students.find(s => s.id === studentId);
+        const student = allStudents.find(s => (s.vid || s.id) === studentId);
         if (student) {
             student.again = isAgain;
         }
     }
 
     function updateCounts() {
-        const present = students.filter(s => s.attendance === 'P').length;
-        const absent = students.filter(s => s.attendance === 'A').length;
-        const leave = students.filter(s => s.attendance === 'L').length;
+        const present = allStudents.filter(s => s.attendance === 'P').length;
+        const absent = allStudents.filter(s => s.attendance === 'A').length;
+        const leave = allStudents.filter(s => s.attendance === 'L').length;
 
         $('#totalPresent').val(present);
         $('#totalAbsent').val(absent);
         $('#totalLeave').val(leave);
+    }
+
+    function markAllPresent() {
+        if (allStudents.length === 0) {
+            toastWarning('No students loaded. Please load students first.');
+            return;
+        }
+
+        allStudents.forEach(s => {
+            s.attendance = 'P';
+        });
+
+        // Update all button styles in the grid
+        $('#attendanceBody tr').each(function () {
+            const btnGroup = $(this).find('.btn-group');
+            btnGroup.find('.attendance-btn').removeClass('active btn-success btn-danger btn-info text-white');
+            btnGroup.find('.attendance-btn[data-value="P"]').addClass('active btn-success text-white');
+        });
+
+        updateCounts();
+        toastSuccess('All students marked as Present');
     }
 
     async function saveAttendance() {
@@ -309,13 +331,13 @@
             return;
         }
 
-        if (students.length === 0) {
+        if (allStudents.length === 0) {
             toastWarning('No students to save attendance for');
             return;
         }
 
-        const attendanceData = students.map(s => ({
-            studentId: s.id,
+        const attendanceData = allStudents.map(s => ({
+            studentId: s.vid || s.id,
             attendanceDate: date,
             status: s.attendance === 'P' ? 1 : (s.attendance === 'A' ? 2 : 4), // 1=Present, 2=Absent, 4=Leave
             isLate: s.late || false,
