@@ -7,7 +7,13 @@
     <div id="alertContainer"></div>
 
     <div class="card" style="border-radius: 16px; border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
-        <div class="card-body p-4">
+        <div class="card-body p-4 position-relative">
+            <!-- Loading overlay -->
+            <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+                <div class="spinner-border text-success" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
             <div class="d-flex justify-content-end mb-3">
                 <a href="/attendance" class="btn btn-secondary">
                     <i class="bi bi-arrow-left me-1"></i> Back to List
@@ -99,6 +105,8 @@
 
 @section Styles {
 <style>
+    .loading-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; z-index: 100; border-radius: 16px; }
+    .spinner-border { width: 3rem; height: 3rem; border-width: 0.3rem; }
     @@media (max-width: 767px) {
         .btn-group .btn {
             min-width: 40px;
