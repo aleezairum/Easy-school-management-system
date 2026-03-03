@@ -233,6 +233,20 @@
 		box-shadow: 0 0 0 2px rgba(0, 134, 73, 0.15);
 	}
 
+	.fee-desc {
+		width: 100px;
+		padding: 4px 8px;
+		border: 1px solid #e2e8f0;
+		border-radius: 6px;
+		font-size: 12px;
+	}
+
+	.fee-desc:focus {
+		border-color: #008649;
+		outline: none;
+		box-shadow: 0 0 0 2px rgba(0, 134, 73, 0.15);
+	}
+
 	.btn-fee-apply {
 		background: linear-gradient(135deg, #008649 0%, #006d3b 100%);
 		border: none;
@@ -354,6 +368,9 @@
 						<select class="form-select" id="applyGrade">
 							<option value="">Select Grade</option>
 						</select>
+					</div>
+					<div class="col-lg-3 col-md-4 col-sm-6 col-6">
+						<input type="text" class="form-control" id="gradeDescription" placeholder="Reason for grade change *" />
 					</div>
 					<div class="col-auto">
 						<button type="button" class="btn btn-apply-status" onclick="applyGrade()">
@@ -589,6 +606,7 @@
 					<td>
 						<div class="fee-cell">
 							<input type="number" class="fee-input" data-id="${studentId}" data-original="${item.monthlyFee || item.fee || 0}" value="${item.monthlyFee || item.fee || 0}" oninput="onFeeChange(this)" />
+							<input type="text" class="fee-desc" data-id="${studentId}" placeholder="Reason *" style="display:none;" />
 							<button class="btn-fee-apply" data-id="${studentId}" style="display:none;" onclick="applyFee(this)">Apply</button>
 						</div>
 					</td>
@@ -787,6 +805,13 @@
 			return;
 		}
 
+		const description = $('#gradeDescription').val().trim();
+		if (!description) {
+			toastWarning('Please enter a reason for grade change.');
+			$('#gradeDescription').focus();
+			return;
+		}
+
 		const checkedBoxes = $('.student-check:checked');
 		if (checkedBoxes.length === 0) {
 			toastWarning('Please select at least one student.');
@@ -801,7 +826,7 @@
 		const commaSeparatedIds = studentIds.join(",");
 
 		try {
-			await saveGrade(commaSeparatedIds, parseInt(gradeId));
+			await saveGrade(commaSeparatedIds, parseInt(gradeId), description);
 
 			const gradeName = $('#applyGrade option:selected').text().trim();
 
@@ -811,6 +836,7 @@
 				$gradeCell.text(gradeName);
 			});
 
+			$('#gradeDescription').val('');
 			toastSuccess(`Grade "${gradeName}" applied to ${checkedBoxes.length} student(s).`);
 		} catch (error) {
 			console.error(error);
@@ -818,10 +844,11 @@
 		}
 	}
 
-	async function saveGrade(StudentIds, GradeID) {
+	async function saveGrade(StudentIds, GradeID, Description) {
 		const data = {
 			StudentIds: StudentIds,
-			GradeID: GradeID
+			GradeID: GradeID,
+			Description: Description
 		};
 
 		showLoading();
@@ -848,10 +875,13 @@
 		const original = $(input).data('original').toString();
 		const current = $(input).val();
 		const applyBtn = $(input).siblings('.btn-fee-apply');
+		const descInput = $(input).siblings('.fee-desc');
 
 		if (current !== original && current !== '') {
+			descInput.show();
 			applyBtn.show();
 		} else {
+			descInput.hide();
 			applyBtn.hide();
 		}
 	}
@@ -860,10 +890,18 @@
 		const $btn = $(btn);
 		const studentId = $btn.data('id');
 		const $input = $btn.siblings('.fee-input');
+		const $desc = $btn.siblings('.fee-desc');
 		const fee = parseFloat($input.val());
+		const description = $desc.val().trim();
 
 		if (isNaN(fee) || fee < 0) {
 			toastWarning('Please enter a valid fee amount.');
+			return;
+		}
+
+		if (!description) {
+			toastWarning('Please enter a reason for fee change.');
+			$desc.focus();
 			return;
 		}
 
@@ -873,11 +911,12 @@
 			const response = await fetch(`${API_BASE}/student/fee-change`, {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ StudentId: studentId, Fee: fee })
+				body: JSON.stringify({ StudentId: studentId, Fee: fee, Description: description })
 			});
 
 			if (response.ok) {
 				$input.data('original', fee);
+				$desc.val('').hide();
 				$btn.hide();
 				toastSuccess('Fee updated successfully.');
 			} else {
