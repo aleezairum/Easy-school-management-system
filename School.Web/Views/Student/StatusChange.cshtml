@@ -212,57 +212,7 @@
 		height: 1.25em;
 	}
 
-	.fee-cell {
-		display: flex;
-		align-items: center;
-		gap: 6px;
-	}
 
-	.fee-input {
-		width: 80px;
-		padding: 4px 8px;
-		border: 1px solid #e2e8f0;
-		border-radius: 6px;
-		font-size: 13px;
-		text-align: right;
-	}
-
-	.fee-input:focus {
-		border-color: #008649;
-		outline: none;
-		box-shadow: 0 0 0 2px rgba(0, 134, 73, 0.15);
-	}
-
-	.fee-desc {
-		width: 100px;
-		padding: 4px 8px;
-		border: 1px solid #e2e8f0;
-		border-radius: 6px;
-		font-size: 12px;
-	}
-
-	.fee-desc:focus {
-		border-color: #008649;
-		outline: none;
-		box-shadow: 0 0 0 2px rgba(0, 134, 73, 0.15);
-	}
-
-	.btn-fee-apply {
-		background: linear-gradient(135deg, #008649 0%, #006d3b 100%);
-		border: none;
-		border-radius: 6px;
-		padding: 3px 10px;
-		font-size: 12px;
-		font-weight: 600;
-		color: white;
-		cursor: pointer;
-		white-space: nowrap;
-		transition: all 0.2s;
-	}
-
-	.btn-fee-apply:hover {
-		box-shadow: 0 2px 8px rgba(0, 134, 73, 0.4);
-	}
 </style>
 
 <div class="container-fluid">
@@ -379,6 +329,29 @@
 					</div>
 					<div class="col-auto">
 						<span class="selected-count" id="GradeselectedCount">0 selected</span>
+					</div>
+				</div>
+			</div>
+
+			<!-- Apply Fee Action Bar -->
+			<div class="action-bar">
+				<div class="row g-3 align-items-center">
+					<div class="col-auto">
+						<label class="form-label mb-0">Apply Fee:</label>
+					</div>
+					<div class="col-lg-2 col-md-3 col-sm-4 col-6">
+						<input type="number" class="form-control" id="applyFeeAmount" placeholder="Fee Amount" />
+					</div>
+					<div class="col-lg-3 col-md-4 col-sm-6 col-6">
+						<input type="text" class="form-control" id="feeDescription" placeholder="Reason for fee change *" />
+					</div>
+					<div class="col-auto">
+						<button type="button" class="btn btn-apply-status" onclick="applyFee()">
+							<i class="bi bi-check2-all me-1"></i> Apply Fee
+						</button>
+					</div>
+					<div class="col-auto">
+						<span class="selected-count" id="FeeselectedCount">0 selected</span>
 					</div>
 				</div>
 			</div>
@@ -603,13 +576,7 @@
 					<td>${item.currentClass || item.className || '-'}<br><small class="text-muted">${item.section || item.sectionName || '-'}</small></td>
 					<td>${item.fatherMobile || item.mobile || '-'}</td>
 					<td>${item.gradeName || item.grade || '-'}</td>
-					<td>
-						<div class="fee-cell">
-							<input type="number" class="fee-input" data-id="${studentId}" data-original="${item.monthlyFee || item.fee || 0}" value="${item.monthlyFee || item.fee || 0}" oninput="onFeeChange(this)" />
-							<input type="text" class="fee-desc" data-id="${studentId}" placeholder="Reason *" style="display:none;" />
-							<button class="btn-fee-apply" data-id="${studentId}" style="display:none;" onclick="applyFee(this)">Apply</button>
-						</div>
-					</td>
+					<td>${item.monthlyFee || item.fee || '-'}</td>
 					<td class="text-center">${statusBadge}</td>
 					<td class="text-center">
 						<div class="form-check form-switch d-flex justify-content-center mb-0">
@@ -636,6 +603,7 @@
 		$('#selectedCount').text(count + ' selected');
 		$('#ClassselectedCount').text(count + ' selected');
 		$('#GradeselectedCount').text(count + ' selected');
+		$('#FeeselectedCount').text(count + ' selected');
 
 		// Update select-all state
 		const total = $('.student-check').length;
@@ -871,63 +839,76 @@
 		}
 	}
 
-	function onFeeChange(input) {
-		const original = $(input).data('original').toString();
-		const current = $(input).val();
-		const applyBtn = $(input).siblings('.btn-fee-apply');
-		const descInput = $(input).siblings('.fee-desc');
+	async function applyFee() {
+		const fee = parseFloat($('#applyFeeAmount').val());
+		if (isNaN(fee) || fee < 0) {
+			toastWarning('Please enter a valid fee amount.');
+			$('#applyFeeAmount').focus();
+			return;
+		}
 
-		if (current !== original && current !== '') {
-			descInput.show();
-			applyBtn.show();
-		} else {
-			descInput.hide();
-			applyBtn.hide();
+		const description = $('#feeDescription').val().trim();
+		if (!description) {
+			toastWarning('Please enter a reason for fee change.');
+			$('#feeDescription').focus();
+			return;
+		}
+
+		const checkedBoxes = $('.student-check:checked');
+		if (checkedBoxes.length === 0) {
+			toastWarning('Please select at least one student.');
+			return;
+		}
+
+		const studentIds = [];
+		checkedBoxes.each(function () {
+			studentIds.push($(this).data('id'));
+		});
+
+		const commaSeparatedIds = studentIds.join(",");
+
+		try {
+			await saveFee(commaSeparatedIds, fee, description);
+
+			checkedBoxes.each(function () {
+				const $row = $(this).closest('tr');
+				const $feeCell = $row.find('td:nth-child(9)');
+				$feeCell.text(fee);
+			});
+
+			$('#applyFeeAmount').val('');
+			$('#feeDescription').val('');
+			toastSuccess(`Fee "${fee}" applied to ${checkedBoxes.length} student(s).`);
+		} catch (error) {
+			console.error(error);
+			toastError("Something went wrong while saving fee.");
 		}
 	}
 
-	async function applyFee(btn) {
-		const $btn = $(btn);
-		const studentId = $btn.data('id');
-		const $input = $btn.siblings('.fee-input');
-		const $desc = $btn.siblings('.fee-desc');
-		const fee = parseFloat($input.val());
-		const description = $desc.val().trim();
+	async function saveFee(StudentIds, Fee, Description) {
+		const data = {
+			StudentIds: StudentIds,
+			Fee: Fee,
+			Description: Description
+		};
 
-		if (isNaN(fee) || fee < 0) {
-			toastWarning('Please enter a valid fee amount.');
-			return;
-		}
-
-		if (!description) {
-			toastWarning('Please enter a reason for fee change.');
-			$desc.focus();
-			return;
-		}
-
-		$btn.prop('disabled', true).text('Saving...');
-
+		showLoading();
 		try {
 			const response = await fetch(`${API_BASE}/student/fee-change`, {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ StudentId: studentId, Fee: fee, Description: description })
+				body: JSON.stringify(data)
 			});
 
-			if (response.ok) {
-				$input.data('original', fee);
-				$desc.val('').hide();
-				$btn.hide();
-				toastSuccess('Fee updated successfully.');
-			} else {
+			if (!response.ok) {
 				const error = await response.json();
-				toastError(error.message || 'Failed to update fee.');
+				showAlert(error.message || 'Failed to save fee', 'danger');
 			}
 		} catch (error) {
-			console.error('Error updating fee:', error);
-			toastError('Error updating fee: ' + error.message);
+			console.error('Error saving fee:', error);
+			showAlert('Error saving fee: ' + error.message, 'danger');
 		} finally {
-			$btn.prop('disabled', false).text('Apply');
+			hideLoading();
 		}
 	}
 
