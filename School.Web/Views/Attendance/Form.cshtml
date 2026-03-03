@@ -125,13 +125,13 @@
 
     async function loadClasses() {
         try {
-            const response = await fetch(`${API_BASE}/SMSClass`);
+            const response = await fetch(`${API_BASE}/class`);
             if (response.ok) {
                 const classes = await response.json();
                 const select = $('#classId');
                 select.find('option:not(:first)').remove();
                 classes.forEach(c => {
-                    select.append(`<option value="${c.viD}">${c.vName}</option>`);
+                    select.append(`<option value="${c.vid}">${c.vName}</option>`);
                 });
             }
         } catch (error) {
@@ -148,11 +148,11 @@
         if (!classId) return;
 
         try {
-            const response = await fetch(`${API_BASE}/SMSSection/byClass/${classId}`);
+            const response = await fetch(`${API_BASE}/section/byClass/${classId}`);
             if (response.ok) {
                 const sections = await response.json();
                 sections.forEach(s => {
-                    sectionSelect.append(`<option value="${s.viD}">${s.vName}</option>`);
+                    sectionSelect.append(`<option value="${s.vid}">${s.vName}</option>`);
                 });
                 sectionSelect.prop('disabled', false);
             }
@@ -161,44 +161,52 @@
         }
     }
 
-    async function loadStudents() {
-        const classId = $('#classId').val();
-        const sectionId = $('#sectionId').val();
-        const date = $('#attendanceDate').val();
+        async function loadStudents() {
+                const classId = $('#classId').val();
+                const sectionId = $('#sectionId').val();
 
-        if (!classId || !sectionId) {
-            toastWarning('Please select Class and Section');
-            return;
-        }
-
-        if (!date) {
-            toastWarning('Please select Date');
-            return;
-        }
-
-        try {
-            const response = await fetch(`${API_BASE}/Student/byClassSection?classId=${classId}&sectionId=${sectionId}`);
-            if (response.ok) {
-                students = await response.json();
-                renderStudentGrid(students);
-                updateCounts();
-            } else {
-                // Mock data for testing
-                students = [
-                    { id: 1, rollNo: '001', studentName: 'Ahmed Khan', attendance: 'P', late: false, again: false },
-                    { id: 2, rollNo: '002', studentName: 'Sara Ali', attendance: 'P', late: false, again: false },
-                    { id: 3, rollNo: '003', studentName: 'Muhammad Hassan', attendance: 'P', late: false, again: false }
-                ];
-                renderStudentGrid(students);
-                updateCounts();
+            if (!classId) {
+                toastWarning('Please select a Class');
+                return;
             }
-        } catch (error) {
-            console.error('Error loading students:', error);
-            toastError('Error loading students');
-        }
-    }
 
-    function renderStudentGrid(studentList) {
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/Student`);
+                if (response.ok) {
+                    const students = await response.json();
+                    // Client-side filter by class, section, and active status only
+                    allStudents = students.filter(s => {
+                        const matchClass = String(s.classID || s.classId || '') === String(classId);
+                        const matchSection = !sectionId || String(s.sectionID || s.sectionId || '') === String(sectionId);
+                        const statusID = s.statusID === 1;
+                        const isActive = s.isActive === true;
+
+                        return matchClass && matchSection && statusID && isActive;
+                    });
+                    // Sort by roll number
+                    allStudents.sort((a, b) => {
+                        const rollA = parseInt(a.rollNo || a.rollNumber) || 0;
+                        const rollB = parseInt(b.rollNo || b.rollNumber) || 0;
+                        return rollA - rollB;
+                    });
+                    renderGrid(allStudents);
+                    if (allStudents.length === 0) {
+                        toastInfo('No students found for selected filters');
+                    } else {
+                        toastSuccess(`${allStudents.length} student(s) loaded`);
+                    }
+                } else {
+                    toastError('Failed to fetch students');
+                }
+            } catch (error) {
+                toastError('Error: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function renderGrid(studentList) {
         const tbody = $('#attendanceBody');
         tbody.empty();
 
@@ -350,5 +358,9 @@
             toastWarning('Please select Class, Section and Date first');
         }
     }
+
+
+        function showLoading() { $('#loadingOverlay').css('display', 'flex'); }
+        function hideLoading() { $('#loadingOverlay').css('display', 'none'); }
 </script>
 }

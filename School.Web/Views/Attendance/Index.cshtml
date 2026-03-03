@@ -230,7 +230,7 @@
                     </div>
                     <div class="col-md-2">
                         <label for="filterClass" class="form-label">Class</label>
-                        <select class="form-select" id="filterClass">
+                        <select class="form-select" id="filterClass" onchange="loadSections()">
                             <option value="">All Classes</option>
                         </select>
                     </div>
@@ -306,29 +306,56 @@
             loadAttendance();
         });
 
-        async function loadDropdowns() {
+         async function loadDropdowns() {
             try {
-                const [sessions, classes, sections] = await Promise.all([
-                    fetch(`${API_BASE}/Session/dropdown`).then(r => r.json()).catch(() => []),
-                    fetch(`${API_BASE}/Class/dropdown`).then(r => r.json()).catch(() => []),
-                    fetch(`${API_BASE}/Section/dropdown`).then(r => r.json()).catch(() => [])
-                ]);
+                const [sessions, classes, grades, feeTypes] = await Promise.all([
+                    fetch(`${API_BASE}/AcademicSessionYear`).then(r => r.json()).catch(() => []),
+                    fetch(`${API_BASE}/class`).then(r => r.json()).catch(() => [])
+                    ]);
 
-                populateDropdown('filterSession', sessions, 'id', 'sessionName', true);
-                populateDropdown('filterClass', classes, 'id', 'name', true);
-                populateDropdown('filterSection', sections, 'id', 'name', true);
+                
+
+                const sessionSelect = $('#academicSessionId');
+                const filterSession = $('#filterSession');
+                sessions.forEach(item => {
+                    sessionSelect.append(`<option value="${item.vid}">${item.vName}</option>`);
+                    filterSession.append(`<option value="${item.vid}">${item.vName}</option>`);
+                });
+
+                const classSelect = $('#classId');
+                const filterClass = $('#filterClass');
+                classes.forEach(item => {
+                    classSelect.append(`<option value="${item.vid}">${item.vName}</option>`);
+                    filterClass.append(`<option value="${item.vid}">${item.vName}</option>`);
+                });
             } catch (error) {
                 console.error('Error loading dropdowns:', error);
+                showAlert('Error loading dropdowns: ' + error.message, 'danger');
             }
         }
 
-        function populateDropdown(elementId, data, valueField, textField, includeAll = false) {
-            const select = $(`#${elementId}`);
-            select.find('option:not(:first)').remove();
-            data.forEach(item => {
-                select.append(`<option value="${item[valueField]}">${item[textField]}</option>`);
-            });
+             async function loadSections() {
+            const classId = $('#filterClass').val();
+            const sectionSelect = $('#filterSection');
+            sectionSelect.find('option:not(:first)').remove();
+            sectionSelect.prop('disabled', true);
+
+            if (!classId) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/section/byClass/${classId}`);
+                if (response.ok) {
+                    const sections = await response.json();
+                    sections.forEach(s => {
+                        sectionSelect.append(`<option value="${s.vid}">${s.vName}</option>`);
+                    });
+                    sectionSelect.prop('disabled', false);
+                }
+            } catch (error) {
+                toastError('Failed to load sections');
+            }
         }
+
 
         async function loadAttendance() {
             showLoading();

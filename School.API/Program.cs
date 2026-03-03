@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
 using System.Text;
 using School.API.Data;
 using School.API.Services;
@@ -122,6 +121,7 @@ builder.Services.AddControllers()
 
 // Swagger & CORS (optional)
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(); 
 builder.Services.AddCors(options =>
 {
 
@@ -143,7 +143,8 @@ var app = builder.Build();
 
 
 //app.UsePathBase("/EasySchool"); 
-
+app.UseSwagger();           
+app.UseSwaggerUI();        
 app.UseRouting();
 app.UseCors("AllowAll");
 app.UseAuthentication();
