@@ -91,22 +91,6 @@
                 </div>
             </div>
 
-            <!-- Fee Details Section -->
-            <div class="filter-section" style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
-                <div class="row g-3 align-items-end">
-                    <div class="col-lg-3 col-md-4 col-sm-6 col-12">
-                        <label for="feeTypeId" class="form-label">Fee Type <span class="text-danger">*</span></label>
-                        <select class="form-select" id="feeTypeId" required>
-                            <option value="">-- Select Fee Type --</option>
-                        </select>
-                    </div>
-                    <div class="col-lg-2 col-md-4 col-sm-6 col-12">
-                        <label for="feeAmount" class="form-label">Amount</label>
-                        <input type="number" class="form-control" id="feeAmount" min="0" placeholder="0.00" />
-                    </div>
-                </div>
-            </div>
-
             <!-- Preview Grid -->
             <div class="grid-section">
                 <h6 class="mb-3" style="font-weight: 600; color: #475569;">Selected Students Preview</h6>
@@ -202,12 +186,9 @@
                 classSelect.append(`<option value="${c.vid}">${c.vName}</option>`);
             });
 
-            const feeTypeSelect = $('#feeTypeId');
             const filterFeeType = $('#filterFeeType');
-            feeTypeSelect.find('option:not(:first)').remove();
             filterFeeType.find('option:not(:first)').remove();
             feeTypes.forEach(f => {
-                feeTypeSelect.append(`<option value="${f.vid}">${f.vName}</option>`);
                 filterFeeType.append(`<option value="${f.vid}">${f.vName}</option>`);
             });
 
@@ -401,8 +382,6 @@
 
     async function applyFee() {
         const selectedDates = monthPicker.selectedDates;
-        const feeTypeId = $('#feeTypeId').val();
-        const feeAmount = $('#feeAmount').val();
         const description = $('#description').val();
 
         if (!selectedDates || selectedDates.length === 0) {
@@ -413,11 +392,6 @@
         const monthFrom = selectedDates[0].toISOString().slice(0, 7);
         const monthTo = selectedDates.length > 1 ? selectedDates[1].toISOString().slice(0, 7) : monthFrom;
 
-        if (!feeTypeId) {
-            toastWarning('Please select Fee Type');
-            return;
-        }
-
         if (previewStudents.length === 0) {
             toastWarning('Please preview and select students first');
             return;
@@ -426,8 +400,6 @@
         const feeData = {
             monthFrom: monthFrom,
             monthTo: monthTo,
-            feeTypeId: parseInt(feeTypeId),
-            amount: parseFloat(feeAmount) || 0,
             description: description,
             studentIds: previewStudents.map(s => s.id),
             studentFees: previewStudents.map(s => ({ studentId: s.id, amount: s.fee }))
@@ -454,13 +426,6 @@
         }
     }
 
-    // Update amount when fee type changes
-    $('#feeTypeId').on('change', function () {
-        const selectedOption = $(this).find('option:selected');
-        const amount = selectedOption.data('amount');
-        if (amount) {
-            $('#feeAmount').val(amount);
-        }
-    });
+
 </script>
 }
