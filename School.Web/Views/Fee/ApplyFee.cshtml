@@ -16,9 +16,9 @@
             <!-- Top Section - Application Details -->
             <div class="filter-section" style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
                 <div class="row g-3 align-items-end">
-                    <div class="col-lg-2 col-md-4 col-sm-6 col-12">
-                        <label for="applyDate" class="form-label">Apply Date <span class="text-danger">*</span></label>
-                        <input type="date" class="form-control" id="applyDate" required />
+                    <div class="col-lg-3 col-md-4 col-sm-6 col-12">
+                        <label for="monthRange" class="form-label">Month Range <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="monthRange" placeholder="Select month range" required readonly style="background: white; cursor: pointer;" />
                     </div>
                     <div class="col-lg-4 col-md-6 col-12">
                         <label class="form-label">Choose</label>
@@ -72,6 +72,18 @@
                         </select>
                     </div>
                     <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                        <label for="filterGrade" class="form-label">Grade</label>
+                        <select class="form-select" id="filterGrade">
+                            <option value="">-- All Grades --</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                        <label for="filterFeeType" class="form-label">Fee Type</label>
+                        <select class="form-select" id="filterFeeType">
+                            <option value="">-- All Fee Types --</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6 col-12">
                         <button type="button" class="btn btn-primary w-100" onclick="loadPreview()">
                             <i class="bi bi-search me-1"></i> Preview
                         </button>
@@ -107,11 +119,13 @@
                                 <th>Section</th>
                                 <th>Roll No</th>
                                 <th>Student Name</th>
+                                <th>Grade</th>
+                                <th style="width: 130px;">Fee</th>
                             </tr>
                         </thead>
                         <tbody id="previewBody">
                             <tr>
-                                <td colspan="5" class="text-center text-muted py-4">Select options and click Preview to see students</td>
+                                <td colspan="7" class="text-center text-muted py-4">Select options and click Preview to see students</td>
                             </tr>
                         </tbody>
                     </table>
@@ -137,21 +151,49 @@
     </div>
 </div>
 
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/style.css">
+    <style>
+        .flatpickr-monthSelect-month.selected, .flatpickr-monthSelect-month.startRange, .flatpickr-monthSelect-month.endRange {
+            background: #008649 !important;
+            border-color: #008649 !important;
+        }
+        .flatpickr-monthSelect-month.inRange {
+            background: rgba(0,134,73,0.15) !important;
+        }
+    </style>
+}
+
 @section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/index.js"></script>
 <script>
     let previewStudents = [];
+    let monthPicker = null;
 
     $(document).ready(function () {
-        $('#applyDate').val(new Date().toISOString().split('T')[0]);
+        monthPicker = flatpickr('#monthRange', {
+            plugins: [new monthSelectPlugin({ shorthand: true, dateFormat: 'M Y', altFormat: 'M Y' })],
+            mode: 'range',
+            dateFormat: 'Y-m',
+            altInput: true,
+            altFormat: 'M Y',
+            defaultDate: [new Date(), new Date()],
+            onChange: function(dates, dateStr) {
+                // dates array contains from/to
+            }
+        });
         loadDropdowns();
         toggleChoiceFields();
     });
 
     async function loadDropdowns() {
         try {
-            const [classes, feeTypes] = await Promise.all([
+            const [classes, feeTypes, grades] = await Promise.all([
                     fetch(`${API_BASE}/class`).then(r => r.ok ? r.json() : []),
-                    fetch(`${API_BASE}/feetype`).then(r => r.ok ? r.json() : [])
+                    fetch(`${API_BASE}/feetype`).then(r => r.ok ? r.json() : []),
+                    fetch(`${API_BASE}/AcademicGrade`).then(r => r.ok ? r.json() : [])
             ]);
 
             const classSelect = $('#classId');
@@ -161,9 +203,18 @@
             });
 
             const feeTypeSelect = $('#feeTypeId');
+            const filterFeeType = $('#filterFeeType');
             feeTypeSelect.find('option:not(:first)').remove();
+            filterFeeType.find('option:not(:first)').remove();
             feeTypes.forEach(f => {
-                feeTypeSelect.append(`<option value="${f.vid}" >${f.vName}</option>`);
+                feeTypeSelect.append(`<option value="${f.vid}">${f.vName}</option>`);
+                filterFeeType.append(`<option value="${f.vid}">${f.vName}</option>`);
+            });
+
+            const gradeSelect = $('#filterGrade');
+            gradeSelect.find('option:not(:first)').remove();
+            grades.forEach(g => {
+                gradeSelect.append(`<option value="${g.vid}">${g.vName}</option>`);
             });
         } catch (error) {
             console.error('Error loading dropdowns:', error);
@@ -251,67 +302,66 @@
         const classId = $('#classId').val();
         const sectionId = $('#sectionId').val();
         const studentId = $('#studentId').val();
+        const filterGrade = $('#filterGrade').val();
 
         previewStudents = [];
 
         try {
-            if (choice === 'student' && studentId) {
-                // Single student
-                const className = $('#classId option:selected').text();
-                const sectionName = $('#sectionId option:selected').text();
-                const studentName = $('#studentId option:selected').text();
-                const rollNo = $('#rollNo option:selected').text();
+            let rawStudents = [];
 
-                previewStudents = [{
-                    id: studentId,
-                    className: className,
-                    sectionName: sectionName,
-                    rollNo: rollNo,
-                    studentName: studentName
-                }];
-            } else if (choice === 'section' && classId && sectionId) {
-                // All students in section
-                const response = await fetch(`${API_BASE}/Student/byClassSection?classId=${classId}&sectionId=${sectionId}`);
-                if (response.ok) {
-                    const students = await response.json();
-                    const className = $('#classId option:selected').text();
-                    const sectionName = $('#sectionId option:selected').text();
-                    previewStudents = students.map(s => ({
-                        id: s.id,
-                        className: className,
-                        sectionName: sectionName,
-                        rollNo: s.rollNo || '-',
-                        studentName: s.studentName || s.name
-                    }));
-                }
-            } else if (choice === 'class' && classId) {
-                // All students in class (all sections)
-                const response = await fetch(`${API_BASE}/Student/byClass/${classId}`);
-                if (response.ok) {
-                    const students = await response.json();
-                    const className = $('#classId option:selected').text();
-                    previewStudents = students.map(s => ({
-                        id: s.id,
-                        className: className,
-                        sectionName: s.sectionName || '-',
-                        rollNo: s.rollNo || '-',
-                        studentName: s.studentName || s.name
-                    }));
-                }
-            } else if (choice === 'all') {
-                // All students
+            if (choice === 'student' && studentId) {
+                // Single student — fetch all and find by id
                 const response = await fetch(`${API_BASE}/Student`);
                 if (response.ok) {
-                    const students = await response.json();
-                    previewStudents = students.map(s => ({
-                        id: s.id,
-                        className: s.className || '-',
-                        sectionName: s.sectionName || '-',
-                        rollNo: s.rollNo || '-',
-                        studentName: s.studentName || s.name
-                    }));
+                    const allStudents = await response.json();
+                    const found = allStudents.find(s => String(s.vid || s.id) === String(studentId));
+                    if (found) rawStudents = [found];
+                }
+            } else if (choice === 'section' && classId && sectionId) {
+                const response = await fetch(`${API_BASE}/Student`);
+                if (response.ok) {
+                    const allStudents = await response.json();
+                    rawStudents = allStudents.filter(s =>
+                        String(s.classID) === String(classId) &&
+                        String(s.sectionID) === String(sectionId) &&
+                        s.statusID === 1 && s.isActive === true
+                    );
+                }
+            } else if (choice === 'class' && classId) {
+                const response = await fetch(`${API_BASE}/Student`);
+                if (response.ok) {
+                    const allStudents = await response.json();
+                    rawStudents = allStudents.filter(s =>
+                        String(s.classID) === String(classId) &&
+                        s.statusID === 1 && s.isActive === true
+                    );
+                }
+            } else if (choice === 'all') {
+                const response = await fetch(`${API_BASE}/Student`);
+                if (response.ok) {
+                    const allStudents = await response.json();
+                    rawStudents = allStudents.filter(s => s.statusID === 1 && s.isActive === true);
                 }
             }
+
+            // Apply grade filter
+            if (filterGrade) {
+                rawStudents = rawStudents.filter(s => String(s.gradeID) === String(filterGrade));
+            }
+
+            // Map to preview format
+            previewStudents = rawStudents.map(s => ({
+                id: s.vid || s.id,
+                className: s.className || '-',
+                sectionName: s.sectionName || '-',
+                rollNo: s.rollNo || '-',
+                studentName: s.studentName || s.name || '-',
+                gradeName: s.gradeName || '-',
+                fee: s.fee || 0
+            }));
+
+            // Sort by roll number
+            previewStudents.sort((a, b) => (parseInt(a.rollNo) || 0) - (parseInt(b.rollNo) || 0));
 
             renderPreviewGrid();
         } catch (error) {
@@ -325,7 +375,7 @@
         tbody.empty();
 
         if (previewStudents.length === 0) {
-            tbody.html('<tr><td colspan="5" class="text-center text-muted py-4">No students found for selected criteria</td></tr>');
+            tbody.html('<tr><td colspan="7" class="text-center text-muted py-4">No students found for selected criteria</td></tr>');
             return;
         }
 
@@ -337,22 +387,31 @@
                     <td>${student.sectionName}</td>
                     <td><strong>${student.rollNo}</strong></td>
                     <td>${student.studentName}</td>
+                    <td>${student.gradeName}</td>
+                    <td><input type="number" class="form-control form-control-sm fee-input" data-index="${index}" value="${student.fee}" min="0" onchange="updateStudentFee(${index}, this.value)" /></td>
                 </tr>
             `;
             tbody.append(row);
         });
     }
 
+    function updateStudentFee(index, value) {
+        previewStudents[index].fee = parseFloat(value) || 0;
+    }
+
     async function applyFee() {
-        const applyDate = $('#applyDate').val();
+        const selectedDates = monthPicker.selectedDates;
         const feeTypeId = $('#feeTypeId').val();
         const feeAmount = $('#feeAmount').val();
         const description = $('#description').val();
 
-        if (!applyDate) {
-            toastWarning('Please select Apply Date');
+        if (!selectedDates || selectedDates.length === 0) {
+            toastWarning('Please select Month Range');
             return;
         }
+
+        const monthFrom = selectedDates[0].toISOString().slice(0, 7);
+        const monthTo = selectedDates.length > 1 ? selectedDates[1].toISOString().slice(0, 7) : monthFrom;
 
         if (!feeTypeId) {
             toastWarning('Please select Fee Type');
@@ -365,11 +424,13 @@
         }
 
         const feeData = {
-            applyDate: applyDate,
+            monthFrom: monthFrom,
+            monthTo: monthTo,
             feeTypeId: parseInt(feeTypeId),
             amount: parseFloat(feeAmount) || 0,
             description: description,
-            studentIds: previewStudents.map(s => s.id)
+            studentIds: previewStudents.map(s => s.id),
+            studentFees: previewStudents.map(s => ({ studentId: s.id, amount: s.fee }))
         };
 
         try {
