@@ -107,6 +107,13 @@
 <style>
     .loading-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; z-index: 100; border-radius: 16px; }
     .spinner-border { width: 3rem; height: 3rem; border-width: 0.3rem; }
+    .btn-outline-leave { border: 1px solid #2563eb; color: #2563eb; background: transparent; }
+    .btn-outline-leave:hover { background: #2563eb; color: white; }
+    .form-check-input:checked { background-color: #008649; border-color: #008649; }
+    .form-check-input:focus { box-shadow: 0 0 0 0.25rem rgba(0,134,73,0.25); border-color: #008649; }
+    .attendance-btn.btn-success, .attendance-btn.btn-success:hover, .attendance-btn.btn-success:focus { background: linear-gradient(135deg, #008649 0%, #006d3b 100%); border-color: #008649; color: white; }
+    .attendance-btn.btn-danger, .attendance-btn.btn-danger:hover, .attendance-btn.btn-danger:focus { background: #dc2626; border-color: #dc2626; color: white; }
+    .attendance-btn.btn-leave, .attendance-btn.btn-leave:hover, .attendance-btn.btn-leave:focus { background: #2563eb; border-color: #2563eb; color: white; }
     @@media (max-width: 767px) {
         .btn-group .btn {
             min-width: 40px;
@@ -242,7 +249,7 @@
                                     onclick="setAttendance(${sid}, 'A', this)" data-value="A">
                                 A
                             </button>
-                            <button type="button" class="btn btn-sm btn-outline-info attendance-btn ${student.attendance === 'L' ? 'active btn-info text-white' : ''}"
+                            <button type="button" class="btn btn-sm btn-outline-leave attendance-btn ${student.attendance === 'L' ? 'active btn-leave text-white' : ''}"
                                     onclick="setAttendance(${sid}, 'L', this)" data-value="L">
                                 L
                             </button>
@@ -274,12 +281,21 @@
 
         // Update button styles
         const btnGroup = $(button).closest('.btn-group');
-        btnGroup.find('.attendance-btn').removeClass('active btn-success btn-danger btn-info text-white');
+        btnGroup.find('.attendance-btn').removeClass('active btn-success btn-danger btn-leave text-white');
 
         $(button).addClass('active text-white');
         if (value === 'P') $(button).addClass('btn-success');
         else if (value === 'A') $(button).addClass('btn-danger');
-        else if (value === 'L') $(button).addClass('btn-info');
+        else if (value === 'L') $(button).addClass('btn-leave');
+
+        // Enable Late/Again only for Present; disable and uncheck for A/L
+        const row = $(button).closest('tr');
+        if (value === 'P') {
+            row.find('.late-checkbox, .again-checkbox').prop('disabled', false);
+        } else {
+            row.find('.late-checkbox, .again-checkbox').prop('checked', false).prop('disabled', true);
+            if (student) { student.late = false; student.again = false; }
+        }
 
         updateCounts();
     }
@@ -321,7 +337,7 @@
         // Update all button styles in the grid
         $('#attendanceBody tr').each(function () {
             const btnGroup = $(this).find('.btn-group');
-            btnGroup.find('.attendance-btn').removeClass('active btn-success btn-danger btn-info text-white');
+            btnGroup.find('.attendance-btn').removeClass('active btn-success btn-danger btn-leave text-white');
             btnGroup.find('.attendance-btn[data-value="P"]').addClass('active btn-success text-white');
         });
 
