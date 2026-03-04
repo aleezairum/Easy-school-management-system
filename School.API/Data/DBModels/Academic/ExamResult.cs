@@ -18,9 +18,6 @@ namespace School.API.Data.DBModels.Academic
 
         public int StudentId { get; set; }
 
-        [ForeignKey("StudentId")]
-        public virtual Student? Student { get; set; }
-
         [Column(TypeName = "decimal(5,2)")]
         public decimal? MarksObtained { get; set; }
 

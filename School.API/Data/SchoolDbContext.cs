@@ -3,10 +3,12 @@ using School.API.Data.DBModels.Academic;
 using School.API.Data.DBModels.Accounts;
 using School.API.Data.DBModels.HR;
 using School.API.Data.DBModels.SMS;
+using School.API.Data.DBModels.Student;
 using School.API.DTOs;
 using School.API.DTOs.Academic;
 using School.API.DTOs.Common;
 using School.API.DTOs.FeeManagement;
+using School.API.DTOs.SMS;
 using School.API.Models;
 
 namespace School.API.Data
@@ -31,9 +33,9 @@ namespace School.API.Data
         public DbSet<AcademicSessionYear> AcademicSessionYears { get; set; }
         public DbSet<AcademicGrades> AcademicGrades { get; set; }
         public DbSet<Admission> Admissions { get; set; }
+        public DbSet<StdAttendence> StdAttendences { get; set; }
         public DbSet<Student> Students { get; set; }
         public DbSet<TimeTable> TimeTables { get; set; }
-        public DbSet<Attendance> Attendances { get; set; }
         public DbSet<Exam> Exams { get; set; }
         public DbSet<ExamResult> ExamResults { get; set; }
 
@@ -53,14 +55,14 @@ namespace School.API.Data
         // SMS entities
         public DbSet<SmsMessage> SmsMessages { get; set; }
 
-        // Keyless entities
+        // Keyless entities — for SP results
         public DbSet<ResponseDto> AcademicSessionYearResponses { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // Keyless entity
+            //  Keyless entities (SP result DTOs) 
             modelBuilder.Entity<ResponseDto>().HasNoKey();
             modelBuilder.Entity<AcademicSessionYearSaveDto>().HasNoKey();
             modelBuilder.Entity<SMSClassSaveDto>().HasNoKey();
@@ -71,6 +73,12 @@ namespace School.API.Data
             modelBuilder.Entity<FeeStructureSaveDto>().HasNoKey();
             modelBuilder.Entity<SMSCampusSaveDto>().HasNoKey();
             modelBuilder.Entity<StudentStatusSaveDto>().HasNoKey();
+
+            //  New keyless DTOs for SMS 
+            modelBuilder.Entity<SmsCountDto>().HasNoKey();
+
+            //  Table name mappings 
+            modelBuilder.Entity<StdAttendence>().ToTable("StdAttendence");
 
             // Menu configuration
             modelBuilder.Entity<Menu>(entity =>
@@ -117,15 +125,6 @@ namespace School.API.Data
                     .HasForeignKey(ur => ur.RoleId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
-
-            //// Student configuration
-            //modelBuilder.Entity<Student>(entity =>
-            //{
-            //    entity.HasOne(s => s.Admission)
-            //        .WithMany()
-            //        .HasForeignKey(s => s.AdmissionId)
-            //        .OnDelete(DeleteBehavior.SetNull);
-            //});
         }
     }
 }

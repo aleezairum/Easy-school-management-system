@@ -1,6 +1,6 @@
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using School.API.Data;
-using School.API.Data.DBModels.Academic;
 using School.API.Data.DBModels.SMS;
 using School.API.DTOs;
 using School.API.Repositories.Interfaces;
@@ -14,31 +14,42 @@ namespace School.API.Services.Implementations
         private readonly ISmsSender _smsSender;
         private readonly SchoolDbContext _context;
         private readonly ILogger<SmsService> _logger;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public SmsService(
             ISmsMessageRepository repository,
             ISmsSender smsSender,
             SchoolDbContext context,
-            ILogger<SmsService> logger)
+            ILogger<SmsService> logger,
+            IHttpContextAccessor httpContextAccessor)
         {
             _repository = repository;
             _smsSender = smsSender;
             _context = context;
             _logger = logger;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<SmsSendResponseDto> SendBulkAsync(SmsSendDto dto)
         {
+            int userId = 1; // later from JWT
+            string userIp = _httpContextAccessor.HttpContext?
+                                .Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
             var response = new SmsSendResponseDto();
             var messages = new List<SmsMessage>();
 
             foreach (var recipient in dto.Recipients)
             {
+                var messageText = !string.IsNullOrEmpty(recipient.Message)
+                    ? recipient.Message
+                    : dto.Message;
+
                 var smsMessage = new SmsMessage
                 {
                     RecipientPhone = recipient.Phone,
                     RecipientName = recipient.Name,
-                    MessageText = dto.Message,
+                    MessageText = messageText,
                     MessageType = dto.MessageType,
                     Status = SmsStatus.Pending,
                     InsertedDate = DateTime.UtcNow
@@ -46,7 +57,7 @@ namespace School.API.Services.Implementations
 
                 try
                 {
-                    var success = await _smsSender.SendAsync(recipient.Phone, dto.Message);
+                    var success = await _smsSender.SendAsync(recipient.Phone, messageText);
 
                     if (success)
                     {
@@ -86,7 +97,7 @@ namespace School.API.Services.Implementations
                 messages.Add(smsMessage);
             }
 
-            await _repository.AddRangeAsync(messages);
+            await _repository.AddRangeAsync(messages, userId, userIp);
             return response;
         }
 
@@ -120,64 +131,138 @@ namespace School.API.Services.Implementations
 
         public async Task<List<SmsRecipientDto>> GetAbsentStudentsAsync(DateTime date)
         {
-            return await GetStudentsByAttendanceStatusAsync(date, AttendanceStatus.Absent);
+            return await GetStudentsForSmsAsync("Absent", date);
         }
 
         public async Task<List<SmsRecipientDto>> GetLateStudentsAsync(DateTime date)
         {
-            return await GetStudentsByAttendanceStatusAsync(date, AttendanceStatus.Late);
+            return await GetStudentsForSmsAsync("Late", date);
         }
 
         public async Task<List<SmsRecipientDto>> GetFeeDefaultersAsync()
         {
-            // Get active students with fee > 0 who have FatherMobile or GuardianMobile
-            var students = await _context.Students
-                .Where(s => s.IsActive && s.Fee > 0)
-                .Where(s => (s.FatherMobile != null && s.FatherMobile != "")
-                          || (s.GuardianMobile != null && s.GuardianMobile != ""))
-                .AsNoTracking()
-                .ToListAsync();
-
-            return students.Select(s => new SmsRecipientDto
-            {
-                Phone = GetPreferredPhone(s),
-                Name = s.Name
-            }).Where(r => !string.IsNullOrEmpty(r.Phone)).ToList();
+            return await GetStudentsForSmsAsync("FeeDefaulter", null);
         }
 
-        private async Task<List<SmsRecipientDto>> GetStudentsByAttendanceStatusAsync(DateTime date, AttendanceStatus status)
+        //  Pure ADO.NET — SP call directly 
+        private async Task<List<SmsRecipientDto>> GetStudentsForSmsAsync(
+            string type,
+            DateTime? date)
         {
-            var records = await _context.Attendances
-                .Include(a => a.Student)
-                .Where(a => a.AttendanceDate == date.Date && a.Status == status)
-                .AsNoTracking()
-                .ToListAsync();
+            var recipients = new List<SmsRecipientDto>();
+            var connStr = _context.Database.GetConnectionString();
 
-            return records
-                .Where(a => a.Student != null)
-                .Select(a => new SmsRecipientDto
-                {
-                    Phone = GetPreferredPhone(a.Student!),
-                    Name = a.Student!.Name
-                })
-                .Where(r => !string.IsNullOrEmpty(r.Phone))
+            await using var conn = new SqlConnection(connStr);
+            await conn.OpenAsync();
+
+            await using var cmd = new SqlCommand("SpGet_StudentsForSms", conn);
+            cmd.CommandType = System.Data.CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@Type", type);
+            cmd.Parameters.AddWithValue("@Date",
+                date.HasValue ? (object)date.Value.Date : DBNull.Value);
+
+            await using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                string name = reader["Name"]?.ToString() ?? "";
+                string className = reader["ClassName"]?.ToString() ?? "";
+                string message = BuildMessage(type, name, className, date);
+
+                // Student
+                bool isSMS = reader["IsSMS"] != DBNull.Value && (bool)reader["IsSMS"];
+                string mobileNo = reader["MobileNo"]?.ToString() ?? "";
+                if (isSMS && !string.IsNullOrEmpty(mobileNo))
+                    recipients.Add(new SmsRecipientDto
+                    {
+                        Phone = mobileNo,
+                        Name = name,
+                        Message = message
+                    });
+
+                // Father
+                bool isFatherSMS = reader["IsFatherSMS"] != DBNull.Value && (bool)reader["IsFatherSMS"];
+                string fatherMobile = reader["FatherMobile"]?.ToString() ?? "";
+                if (isFatherSMS && !string.IsNullOrEmpty(fatherMobile))
+                    recipients.Add(new SmsRecipientDto
+                    {
+                        Phone = fatherMobile,
+                        Name = name,
+                        Message = message
+                    });
+
+                // Mother
+                bool isMotherSMS = reader["IsMotherSMS"] != DBNull.Value && (bool)reader["IsMotherSMS"];
+                string motherMobile = reader["MotherMobile"]?.ToString() ?? "";
+                if (isMotherSMS && !string.IsNullOrEmpty(motherMobile))
+                    recipients.Add(new SmsRecipientDto
+                    {
+                        Phone = motherMobile,
+                        Name = name,
+                        Message = message
+                    });
+
+                // Guardian
+                bool isGuardianSMS = reader["IsGuardianSMS"] != DBNull.Value && (bool)reader["IsGuardianSMS"];
+                string guardianMobile = reader["GuardianMobile"]?.ToString() ?? "";
+                if (isGuardianSMS && !string.IsNullOrEmpty(guardianMobile))
+                    recipients.Add(new SmsRecipientDto
+                    {
+                        Phone = guardianMobile,
+                        Name = name,
+                        Message = message
+                    });
+            }
+
+            // Remove duplicate phone numbers
+            return recipients
+                .GroupBy(r => r.Phone)
+                .Select(g => g.First())
                 .ToList();
         }
 
-        private static string GetPreferredPhone(Data.DBModels.Accounts.Student student)
+        //  Message templates — no header 
+        private static string BuildMessage(
+            string type,
+            string studentName,
+            string className,
+            DateTime? date = null)
         {
-            // Prefer father's mobile if SMS enabled, then guardian, then student
-            if (student.IsFatherSMS == true && !string.IsNullOrEmpty(student.FatherMobile))
-                return student.FatherMobile;
-            if (student.IsGuardianSMS == true && !string.IsNullOrEmpty(student.GuardianMobile))
-                return student.GuardianMobile;
-            if (student.IsMotherSMS == true && !string.IsNullOrEmpty(student.MotherMobile))
-                return student.MotherMobile;
-            if (student.IsSMS == true && !string.IsNullOrEmpty(student.MobileNo))
-                return student.MobileNo;
+            return type switch
+            {
+                "Absent" =>
+                    $"Dear Parents,\n" +
+                    $"Assalamu Alaikum,\n\n" +
+                    $"It is to inform you that your child, {studentName} (Class {className}), " +
+                    $"is absent from school today.\n" +
+                    $"Please ensure regular attendance.\n\n" +
+                    $"Sir Syed Model High School (Boys & Girls)\n" +
+                    $"Chhonawala Road, Hasilpur",
 
-            // Fallback: any available number
-            return student.FatherMobile ?? student.GuardianMobile ?? student.MotherMobile ?? student.MobileNo ?? "";
+                "Late" =>
+                    $"Dear Parents,\n" +
+                    $"Assalamu Alaikum,\n\n" +
+                    $"It is to inform you that your child, {studentName} (Class {className}), " +
+                    $"arrived late at school today.\n" +
+                    $"Please ensure punctuality.\n\n" +
+                    $"Sir Syed Model High School (Boys & Girls)\n" +
+                    $"Chhonawala Road, Hasilpur",
+
+                "FeeDefaulter" =>
+                    $"Dear Parents,\n" +
+                    $"Assalamu Alaikum,\n\n" +
+                    $"It is to inform you that your child, {studentName} (Class {className}), " +
+                    $"has pending fee dues.\n" +
+                    $"Please clear the dues at your earliest convenience.\n\n" +
+                    $"Sir Syed Model High School (Boys & Girls)\n" +
+                    $"Chhonawala Road, Hasilpur",
+
+                _ =>
+                    $"Dear Parents,\n" +
+                    $"Assalamu Alaikum,\n\n" +
+                    $"Information regarding your child, {studentName} (Class {className}).\n\n" +
+                    $"Sir Syed Model High School (Boys & Girls)\n" +
+                    $"Chhonawala Road, Hasilpur"
+            };
         }
     }
 }

@@ -295,46 +295,36 @@
         </div>
     </div>
 </div>
-
 @section Scripts {
     <script>
-        ////const API_BASE = 'http://localhost:5266/api';
-
         $(document).ready(function () {
             loadDropdowns();
             $('#filterDate').val(new Date().toISOString().split('T')[0]);
-            loadAttendance();
         });
 
-         async function loadDropdowns() {
+        async function loadDropdowns() {
             try {
-                const [sessions, classes, grades, feeTypes] = await Promise.all([
+                const [sessions, classes] = await Promise.all([
                     fetch(`${API_BASE}/AcademicSessionYear`).then(r => r.json()).catch(() => []),
                     fetch(`${API_BASE}/class`).then(r => r.json()).catch(() => [])
-                    ]);
+                ]);
 
-                
-
-                const sessionSelect = $('#academicSessionId');
                 const filterSession = $('#filterSession');
                 sessions.forEach(item => {
-                    sessionSelect.append(`<option value="${item.vid}">${item.vName}</option>`);
                     filterSession.append(`<option value="${item.vid}">${item.vName}</option>`);
                 });
 
-                const classSelect = $('#classId');
                 const filterClass = $('#filterClass');
                 classes.forEach(item => {
-                    classSelect.append(`<option value="${item.vid}">${item.vName}</option>`);
                     filterClass.append(`<option value="${item.vid}">${item.vName}</option>`);
                 });
+
             } catch (error) {
-                console.error('Error loading dropdowns:', error);
-                showAlert('Error loading dropdowns: ' + error.message, 'danger');
+                showAlert('Error loading dropdowns', 'danger');
             }
         }
 
-             async function loadSections() {
+        async function loadSections() {
             const classId = $('#filterClass').val();
             const sectionSelect = $('#filterSection');
             sectionSelect.find('option:not(:first)').remove();
@@ -356,30 +346,33 @@
             }
         }
 
-
         async function loadAttendance() {
             showLoading();
             try {
-                let url = `${API_BASE}/Attendance`;
-                const date = $('#filterDate').val();
-                const classId = $('#filterClass').val();
-                const sectionId = $('#filterSection').val();
-                const sessionId = $('#filterSession').val();
+                // Build query string from filters — matches StdAttendenceFilterDto
+                const params = new URLSearchParams();
 
-                if (date && classId && sectionId && sessionId) {
-                    url = `${API_BASE}/Attendance/class/${classId}/section/${sectionId}/session/${sessionId}/date/${date}`;
-                } else if (date) {
-                    url = `${API_BASE}/Attendance/date/${date}`;
+                const sessionId  = $('#filterSession').val();
+                const sectionId  = $('#filterSection').val();
+                const dateVal    = $('#filterDate').val();
+
+                if (sessionId)  params.append('SessionID', sessionId);
+                if (sectionId)  params.append('SectionID', sectionId);
+                if (dateVal) {
+                    params.append('DateFrom', dateVal);
+                    params.append('DateTo',   dateVal);
                 }
 
+                const url = `${API_BASE}/StdAttendence?${params.toString()}`;
                 const response = await fetch(url);
+
                 if (response.ok) {
                     let data = await response.json();
 
-                    // Client-side filtering for status
+                    // Client-side filter for Attendance status (0=Absent, 1=Present)
                     const status = $('#filterStatus').val();
                     if (status) {
-                        data = data.filter(a => a.status == status);
+                        data = data.filter(a => String(a.attendence) === String(status));
                     }
 
                     renderList(data);
@@ -387,8 +380,7 @@
                     showAlert('Failed to load attendance records', 'danger');
                 }
             } catch (error) {
-                console.error('Error loading attendance:', error);
-                showAlert('Error loading attendance: ' + error.message, 'danger');
+                showAlert('Error: ' + error.message, 'danger');
             } finally {
                 hideLoading();
             }
@@ -404,24 +396,36 @@
             }
 
             items.forEach((item, index) => {
-                const statusClass = `status-${item.statusName.toLowerCase()}`;
+                // Attendence: 1=Present, 0=Absent + IsLate
+                let statusLabel = 'Absent';
+                let statusClass = 'status-absent';
+
+                if (item.attendence === 1 && item.isLate) {
+                    statusLabel = 'Late';
+                    statusClass  = 'status-late';
+                } else if (item.attendence === 1) {
+                    statusLabel = 'Present';
+                    statusClass  = 'status-present';
+                }
+
                 const row = `
-                    <tr data-id="${item.id}">
+                    <tr data-id="${item.vID}">
                         <td>${index + 1}</td>
-                        <td><strong>${item.rollNumber || '-'}</strong></td>
+                        <td><strong>${item.studentID || '-'}</strong></td>
                         <td>${item.studentName || '-'}</td>
-                        <td>${item.className || '-'}</td>
+                        <td>${item.sessionName || '-'}</td>
                         <td>${item.sectionName || '-'}</td>
-                        <td>${formatDate(item.attendanceDate)}</td>
+                        <td>${formatDate(item.vDate)}</td>
                         <td class="text-center">
-                            <span class="${statusClass}">${item.statusName}</span>
+                            <span class="${statusClass}">${statusLabel}</span>
                         </td>
-                        <td>${item.timeIn || '-'}</td>
-                        <td>${item.timeOut || '-'}</td>
+                        <td class="text-center">${item.isLate ? '<i class="bi bi-check-circle-fill text-warning"></i>' : '-'}</td>
+                        <td class="text-center">${item.isAgain ? '<i class="bi bi-check-circle-fill text-info"></i>' : '-'}</td>
                         <td class="text-center">
-                            <button type="button" class="btn btn-sm btn-info me-1" onclick="editAttendance(${item.id})" title="Edit">
-                                <i class="bi bi-pencil"></i>
-                            </button>
+                            <button type="button" class="btn btn-sm btn-danger"
+                                onclick="deleteAttendance(${item.vID})" title="Delete">
+                                <i class="bi bi-trash"></i>
+                            </button>
                         </td>
                     </tr>
                 `;
@@ -430,36 +434,28 @@
         }
 
         function formatDate(dateString) {
+            if (!dateString) return '-';
             const date = new Date(dateString);
             return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
         }
 
-        async function editAttendance(id) {
-            showAlert('Edit functionality - Use bulk entry for editing multiple records', 'info');
-        }
-
         async function deleteAttendance(id) {
-            if (!confirm('Are you sure you want to delete this attendance record?')) {
-                return;
-            }
+            if (!confirm('Are you sure you want to delete this record?')) return;
 
             showLoading();
             try {
-                const response = await fetch(`${API_BASE}/Attendance/${id}`, {
-                    method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json' }
+                const response = await fetch(`${API_BASE}/StdAttendence/${id}`, {
+                    method: 'DELETE'
                 });
 
                 if (response.ok) {
-                    showAlert('Attendance record deleted successfully!', 'success');
+                    showAlert('Deleted successfully!', 'success');
                     await loadAttendance();
                 } else {
-                    const error = await response.json();
-                    showAlert(error.message || 'Failed to delete attendance record', 'danger');
+                    showAlert('Failed to delete', 'danger');
                 }
             } catch (error) {
-                console.error('Error deleting attendance:', error);
-                showAlert('Error deleting attendance: ' + error.message, 'danger');
+                showAlert('Error: ' + error.message, 'danger');
             } finally {
                 hideLoading();
             }
@@ -468,30 +464,20 @@
         function clearFilters() {
             $('#filterSession').val('');
             $('#filterClass').val('');
-            $('#filterSection').val('');
+            $('#filterSection').val('').prop('disabled', true);
             $('#filterDate').val(new Date().toISOString().split('T')[0]);
             $('#filterStatus').val('');
             loadAttendance();
         }
 
-        function showLoading() {
-            $('#loadingOverlay').show();
-        }
-
-        function hideLoading() {
-            $('#loadingOverlay').hide();
-        }
+        function showLoading() { $('#loadingOverlay').show(); }
+        function hideLoading() { $('#loadingOverlay').hide(); }
 
         function showAlert(message, type) {
-            if (type === 'success') {
-                toastSuccess(message);
-            } else if (type === 'danger' || type === 'error') {
-                toastError(message);
-            } else if (type === 'warning') {
-                toastWarning(message);
-            } else {
-                toastInfo(message);
-            }
+            if (type === 'success') toastSuccess(message);
+            else if (type === 'danger') toastError(message);
+            else if (type === 'warning') toastWarning(message);
+            else toastInfo(message);
         }
     </script>
 }

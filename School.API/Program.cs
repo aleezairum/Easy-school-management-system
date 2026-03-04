@@ -27,6 +27,10 @@ using School.API.Services.Implementations;
 using School.API.Repositories.Interfaces;
 using School.API.Repositories.Implementations;
 using School.API.BackgroundJobs;
+using School.API.Repositories.Implementations.Student;
+using School.API.Repositories.Interfaces.Student;
+using School.API.Services.Implementations.Student;
+using School.API.Services.Interfaces.Student;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,6 +55,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
+
+
+builder.Services.AddScoped<IStdAttendenceRepository, StdAttendenceRepository>();
+builder.Services.AddScoped<IStdAttendenceService, StdAttendenceService>();
+
 
 // Dependency Injection
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -84,8 +93,6 @@ builder.Services.AddScoped<ISalaryService, SalaryService>();
 // Academic Services (new)
 builder.Services.AddScoped<ITimeTableRepository, TimeTableRepository>();
 builder.Services.AddScoped<ITimeTableService, TimeTableService>();
-builder.Services.AddScoped<IAttendanceRepository, AttendanceRepository>();
-builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 builder.Services.AddScoped<IExamRepository, ExamRepository>();
 builder.Services.AddScoped<IExamService, ExamService>();
 
@@ -120,6 +127,7 @@ builder.Services.AddControllers()
     });
 
 // Swagger & CORS (optional)
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(); 
 builder.Services.AddCors(options =>

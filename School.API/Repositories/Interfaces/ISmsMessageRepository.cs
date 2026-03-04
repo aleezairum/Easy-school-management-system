@@ -1,11 +1,12 @@
 using School.API.Data.DBModels.SMS;
+using School.API.DTOs.Common;
 
 namespace School.API.Repositories.Interfaces
 {
     public interface ISmsMessageRepository
     {
-        Task<SmsMessage> AddAsync(SmsMessage message);
-        Task AddRangeAsync(IEnumerable<SmsMessage> messages);
+        Task<ResponseDto> AddAsync(SmsMessage message, int userId, string userIp);
+        Task AddRangeAsync(IEnumerable<SmsMessage> messages, int userId, string userIp);
         Task<IEnumerable<SmsMessage>> GetHistoryAsync(
             SmsMessageType? messageType = null,
             SmsStatus? status = null,

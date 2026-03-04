@@ -190,14 +190,12 @@ namespace School.API.Repositories.Implementations.Academic
             var totalMarks = exam?.TotalMarks ?? 0;
 
             return await _context.ExamResults
-                .Include(r => r.Student)
+                .Include(r => r.StudentId)
                 .Where(r => r.ExamId == examId)
-                .OrderBy(r => r.Student!.RollNo)
+                .OrderBy(r => r.StudentId)
                 .Select(r => new ExamResultListDto
                 {
                     Id = r.Id,
-                    StudentName = r.Student != null ? r.Student.Name : null,
-                    RollNumber = r.Student != null ? r.Student.RollNo : null,
                     MarksObtained = r.MarksObtained,
                     TotalMarks = totalMarks,
                     Grade = r.Grade,
@@ -211,7 +209,7 @@ namespace School.API.Repositories.Implementations.Academic
         {
             return await _context.ExamResults
                 .Include(r => r.Exam)
-                .Include(r => r.Student)
+                .Include(r => r.StudentId)
                 .Where(r => r.Id == id)
                 .Select(r => new ExamResultDto
                 {
@@ -219,8 +217,6 @@ namespace School.API.Repositories.Implementations.Academic
                     ExamId = r.ExamId,
                     ExamName = r.Exam != null ? r.Exam.ExamName : null,
                     StudentId = r.StudentId,
-                    StudentName = r.Student != null ? r.Student.Name : null,
-                    RollNumber = r.Student != null ? r.Student.RollNo : null,
                     MarksObtained = r.MarksObtained,
                     Grade = r.Grade,
                     IsAbsent = r.IsAbsent,

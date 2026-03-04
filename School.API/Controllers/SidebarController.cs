@@ -127,9 +127,9 @@ namespace School.API.Controllers
                                     new MenuItemDto { Id = 29, Title = "Admission Form", Icon = "bi-file-earmark-plus", Url = "/admission/form", Order = 1, Section = "Academic" },
                                     new MenuItemDto { Id = 12, Title = "Student", Icon = "bi-person-badge-fill", Url = "/Student", Order = 2, Section = "Academic" },
                                     new MenuItemDto { Id = 31, Title = "Status Change", Icon = "bi-person-check-fill", Url = "/status-change", Order = 3, Section = "Academic" },
-                                    new MenuItemDto { Id = 13, Title = "Attendance", Icon = "bi-calendar2-check-fill", Url = "/Attendance", Order = 2, Section = "Academic" },
-                                    new MenuItemDto { Id = 21, Title = "Mark Attendance", Icon = "bi-check2-square", Url = "/attendance/form", Order = 3, Section = "Academic" },
                                     new MenuItemDto { Id = 30, Title = "Attendance Sheet", Icon = "bi-printer-fill", Url = "/attendance/sheet", Order = 4, Section = "Academic" },
+                                    new MenuItemDto { Id = 21, Title = "Mark Attendance", Icon = "bi-check2-square", Url = "/attendance/form", Order = 3, Section = "Academic" },
+                                    new MenuItemDto { Id = 13, Title = "Attendance", Icon = "bi-calendar2-check-fill", Url = "/Attendance", Order = 2, Section = "Academic" },
                                     new MenuItemDto { Id = 14, Title = "Exams", Icon = "bi-clipboard2-data-fill", Url = "/Exam", Order = 5, Section = "Academic" },
                                     new MenuItemDto { Id = 22, Title = "Award List / Marks", Icon = "bi-trophy-fill", Url = "/exam/marks-entry", Order = 6, Section = "Academic" }
                                 }
@@ -156,10 +156,10 @@ namespace School.API.Controllers
                         {
                             new MenuItemDto { Id = 25, Title = "Fee Type", Icon = "bi-tags-fill", Url = "/FeeType", Order = 1, Section = "Fee Management" },
                             new MenuItemDto { Id = 26, Title = "Fee Structure", Icon = "bi-clipboard-data", Url = "/FeeStructure", Order = 2, Section = "Fee Management" },
-                            new MenuItemDto { Id = 17, Title = "Payment Method", Icon = "bi-credit-card-fill", Url = "/PaymentMethod", Order = 3, Section = "Fee Management" },
-                            new MenuItemDto { Id = 18, Title = "Challan Voucher", Icon = "bi-receipt-cutoff", Url = "/ChallanVoucher", Order = 4, Section = "Fee Management" },
-                            new MenuItemDto { Id = 19, Title = "Fee Voucher", Icon = "bi-receipt", Url = "/FeeVoucher", Order = 5, Section = "Fee Management" },
-                            new MenuItemDto { Id = 23, Title = "Apply Fee", Icon = "bi-currency-dollar", Url = "/apply-fee", Order = 6, Section = "Fee Management" }
+                            //new MenuItemDto { Id = 17, Title = "Payment Method", Icon = "bi-credit-card-fill", Url = "/PaymentMethod", Order = 3, Section = "Fee Management" },
+                            //new MenuItemDto { Id = 18, Title = "Challan Voucher", Icon = "bi-receipt-cutoff", Url = "/ChallanVoucher", Order = 4, Section = "Fee Management" },
+                            new MenuItemDto { Id = 23, Title = "Apply Fee", Icon = "bi-currency-dollar", Url = "/apply-fee", Order = 6, Section = "Fee Management" },
+                            new MenuItemDto { Id = 19, Title = "Fee Voucher", Icon = "bi-receipt", Url = "/FeeVoucher", Order = 5, Section = "Fee Management" }
                         }
                     },
                     // 5. SMS Module

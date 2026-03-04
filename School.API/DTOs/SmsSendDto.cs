@@ -6,13 +6,17 @@ namespace School.API.DTOs
     {
         public string Phone { get; set; } = string.Empty;
         public string? Name { get; set; }
+        public string? Message { get; set; } // -- per-recipient message --
     }
-
     public class SmsSendDto
     {
         public List<SmsRecipientDto> Recipients { get; set; } = new();
         public string Message { get; set; } = string.Empty;
         public SmsMessageType MessageType { get; set; } = SmsMessageType.General;
+
+        // ?? New: if true, service will auto-generate message per student ??
+        public bool UseTemplate { get; set; } = false;
+        public string TemplateType { get; set; } = string.Empty; // 'Absent', 'Late', 'FeeDefaulter'
     }
 
     public class SmsSendResultDto
