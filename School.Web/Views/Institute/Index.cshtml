@@ -1,0 +1,346 @@
+@{
+	ViewData["Title"] = "My Institute";
+	Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<style>
+	.card {
+		border: none;
+		border-radius: 16px;
+		box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+		margin-bottom: 24px;
+	}
+
+	.card-header {
+		background: white;
+		border-bottom: 1px solid #e2e8f0;
+		padding: 20px 24px;
+		border-radius: 16px 16px 0 0 !important;
+	}
+
+	.card-header h5 {
+		margin: 0;
+		font-weight: 600;
+		color: #1e293b;
+	}
+
+	.card-body {
+		padding: 24px;
+	}
+
+	.form-label {
+		font-weight: 500;
+		color: #475569;
+		margin-bottom: 8px;
+		font-size: 14px;
+	}
+
+	.form-control, .form-select {
+		border: 2px solid #e2e8f0;
+		border-radius: 10px;
+		padding: 10px 14px;
+		font-size: 14px;
+		transition: all 0.2s;
+	}
+
+	.form-control:focus, .form-select:focus {
+		border-color: #008649;
+		box-shadow: 0 0 0 4px rgba(0, 134, 73, 0.1);
+	}
+
+	.btn-primary {
+		background: linear-gradient(135deg, #008649 0%, #006d3b 100%);
+		border: none;
+		border-radius: 10px;
+		padding: 10px 20px;
+		font-weight: 600;
+		font-size: 14px;
+		transition: all 0.2s;
+	}
+
+	.btn-primary:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 4px 12px rgba(0, 134, 73, 0.4);
+		background: linear-gradient(135deg, #006d3b 0%, #005a30 100%);
+	}
+
+	.logo-preview {
+		width: 120px;
+		height: 120px;
+		border: 2px dashed #e2e8f0;
+		border-radius: 12px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		overflow: hidden;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.logo-preview:hover {
+		border-color: #008649;
+	}
+
+	.logo-preview img {
+		max-width: 100%;
+		max-height: 100%;
+		object-fit: contain;
+	}
+
+	.logo-preview .placeholder-icon {
+		font-size: 40px;
+		color: #cbd5e1;
+	}
+
+	.section-title {
+		font-weight: 600;
+		font-size: 16px;
+		color: #1e293b;
+		padding-bottom: 10px;
+		margin-bottom: 20px;
+		border-bottom: 2px solid #e2e8f0;
+	}
+
+	.loading-overlay {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: rgba(255, 255, 255, 0.8);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 100;
+		border-radius: 16px;
+	}
+</style>
+
+<div class="container-fluid">
+	<div id="alertContainer"></div>
+
+	<div class="card">
+		<div class="card-header">
+			<h5><i class="bi bi-building me-2"></i>My Institute</h5>
+		</div>
+		<div class="card-body position-relative">
+			<div id="loadingOverlay" class="loading-overlay" style="display: none;">
+				<div class="spinner-border text-success" role="status">
+					<span class="visually-hidden">Loading...</span>
+				</div>
+			</div>
+
+			<!-- Institute Info -->
+			<div class="section-title"><i class="bi bi-info-circle me-2"></i>Institute Information</div>
+			<div class="row g-3 mb-4">
+				<div class="col-lg-2 col-md-3 col-12 d-flex align-items-start">
+					<div class="logo-preview" onclick="$('#logoInput').click()">
+						<img id="logoPreview" src="" alt="" style="display:none;" />
+						<i class="bi bi-camera placeholder-icon" id="logoPlaceholder"></i>
+					</div>
+					<input type="file" id="logoInput" accept="image/*" style="display:none;" onchange="previewLogo(this)" />
+				</div>
+				<div class="col-lg-10 col-md-9 col-12">
+					<div class="row g-3">
+						<div class="col-lg-6 col-md-6 col-12">
+							<label class="form-label">Institute Name *</label>
+							<input type="text" class="form-control" id="instituteName" placeholder="Enter institute name" />
+						</div>
+						<div class="col-lg-6 col-md-6 col-12">
+							<label class="form-label">Tagline</label>
+							<input type="text" class="form-control" id="tagline" placeholder="e.g. Excellence in Education" />
+						</div>
+						<div class="col-lg-6 col-md-6 col-12">
+							<label class="form-label">Registration No</label>
+							<input type="text" class="form-control" id="registrationNo" placeholder="Institute registration number" />
+						</div>
+						<div class="col-lg-6 col-md-6 col-12">
+							<label class="form-label">Established Year</label>
+							<input type="number" class="form-control" id="establishedYear" placeholder="e.g. 2010" />
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Contact Details -->
+			<div class="section-title"><i class="bi bi-telephone me-2"></i>Contact Details</div>
+			<div class="row g-3 mb-4">
+				<div class="col-lg-4 col-md-6 col-12">
+					<label class="form-label">Phone *</label>
+					<input type="text" class="form-control" id="phone" placeholder="Phone number" />
+				</div>
+				<div class="col-lg-4 col-md-6 col-12">
+					<label class="form-label">Email</label>
+					<input type="email" class="form-control" id="email" placeholder="Email address" />
+				</div>
+				<div class="col-lg-4 col-md-6 col-12">
+					<label class="form-label">Website</label>
+					<input type="text" class="form-control" id="website" placeholder="www.example.com" />
+				</div>
+			</div>
+
+			<!-- Address -->
+			<div class="section-title"><i class="bi bi-geo-alt me-2"></i>Address</div>
+			<div class="row g-3 mb-4">
+				<div class="col-lg-8 col-md-12 col-12">
+					<label class="form-label">Address *</label>
+					<input type="text" class="form-control" id="address" placeholder="Full address" />
+				</div>
+				<div class="col-lg-4 col-md-6 col-12">
+					<label class="form-label">City</label>
+					<input type="text" class="form-control" id="city" placeholder="City" />
+				</div>
+				<div class="col-lg-4 col-md-6 col-12">
+					<label class="form-label">State / Province</label>
+					<input type="text" class="form-control" id="state" placeholder="State / Province" />
+				</div>
+				<div class="col-lg-4 col-md-6 col-12">
+					<label class="form-label">Country</label>
+					<input type="text" class="form-control" id="country" placeholder="Country" />
+				</div>
+				<div class="col-lg-4 col-md-6 col-12">
+					<label class="form-label">Postal Code</label>
+					<input type="text" class="form-control" id="postalCode" placeholder="Postal code" />
+				</div>
+			</div>
+
+			<!-- Principal / Head -->
+			<div class="section-title"><i class="bi bi-person-fill me-2"></i>Principal / Head</div>
+			<div class="row g-3 mb-4">
+				<div class="col-lg-4 col-md-6 col-12">
+					<label class="form-label">Principal Name</label>
+					<input type="text" class="form-control" id="principalName" placeholder="Principal / Head name" />
+				</div>
+				<div class="col-lg-4 col-md-6 col-12">
+					<label class="form-label">Principal Phone</label>
+					<input type="text" class="form-control" id="principalPhone" placeholder="Phone number" />
+				</div>
+				<div class="col-lg-4 col-md-6 col-12">
+					<label class="form-label">Principal Email</label>
+					<input type="email" class="form-control" id="principalEmail" placeholder="Email address" />
+				</div>
+			</div>
+
+			<!-- Save Button -->
+			<div class="d-flex justify-content-end mt-3">
+				<button type="button" class="btn btn-primary" onclick="saveInstitute()">
+					<i class="bi bi-check-lg me-1"></i> Save
+				</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+@section Scripts {
+<script>
+	$(document).ready(function () {
+		loadInstitute();
+	});
+
+	function previewLogo(input) {
+		if (input.files && input.files[0]) {
+			const reader = new FileReader();
+			reader.onload = function (e) {
+				$('#logoPreview').attr('src', e.target.result).show();
+				$('#logoPlaceholder').hide();
+			};
+			reader.readAsDataURL(input.files[0]);
+		}
+	}
+
+	async function loadInstitute() {
+		$('#loadingOverlay').css('display', 'flex');
+		try {
+			const response = await fetch(`${API_BASE}/institute`);
+			if (response.ok) {
+				const data = await response.json();
+				$('#instituteName').val(data.instituteName || '');
+				$('#tagline').val(data.tagline || '');
+				$('#registrationNo').val(data.registrationNo || '');
+				$('#establishedYear').val(data.establishedYear || '');
+				$('#phone').val(data.phone || '');
+				$('#email').val(data.email || '');
+				$('#website').val(data.website || '');
+				$('#address').val(data.address || '');
+				$('#city').val(data.city || '');
+				$('#state').val(data.state || '');
+				$('#country').val(data.country || '');
+				$('#postalCode').val(data.postalCode || '');
+				$('#principalName').val(data.principalName || '');
+				$('#principalPhone').val(data.principalPhone || '');
+				$('#principalEmail').val(data.principalEmail || '');
+				if (data.logoUrl) {
+					$('#logoPreview').attr('src', data.logoUrl).show();
+					$('#logoPlaceholder').hide();
+				}
+			}
+		} catch (error) {
+			console.log('Institute data not found, starting fresh.');
+		} finally {
+			$('#loadingOverlay').css('display', 'none');
+		}
+	}
+
+	async function saveInstitute() {
+		const name = $('#instituteName').val().trim();
+		if (!name) {
+			toastWarning('Institute name is required.');
+			$('#instituteName').focus();
+			return;
+		}
+
+		const phone = $('#phone').val().trim();
+		if (!phone) {
+			toastWarning('Phone number is required.');
+			$('#phone').focus();
+			return;
+		}
+
+		const address = $('#address').val().trim();
+		if (!address) {
+			toastWarning('Address is required.');
+			$('#address').focus();
+			return;
+		}
+
+		const data = {
+			InstituteName: name,
+			Tagline: $('#tagline').val().trim(),
+			RegistrationNo: $('#registrationNo').val().trim(),
+			EstablishedYear: parseInt($('#establishedYear').val()) || null,
+			Phone: phone,
+			Email: $('#email').val().trim(),
+			Website: $('#website').val().trim(),
+			Address: address,
+			City: $('#city').val().trim(),
+			State: $('#state').val().trim(),
+			Country: $('#country').val().trim(),
+			PostalCode: $('#postalCode').val().trim(),
+			PrincipalName: $('#principalName').val().trim(),
+			PrincipalPhone: $('#principalPhone').val().trim(),
+			PrincipalEmail: $('#principalEmail').val().trim()
+		};
+
+		$('#loadingOverlay').css('display', 'flex');
+		try {
+			const response = await fetch(`${API_BASE}/institute`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(data)
+			});
+
+			if (response.ok) {
+				toastSuccess('Institute details saved successfully.');
+			} else {
+				const error = await response.json();
+				toastError(error.message || 'Failed to save institute details.');
+			}
+		} catch (error) {
+			console.error('Error saving institute:', error);
+			toastError('Error saving institute details: ' + error.message);
+		} finally {
+			$('#loadingOverlay').css('display', 'none');
+		}
+	}
+</script>
+}

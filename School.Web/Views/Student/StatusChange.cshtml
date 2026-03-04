@@ -201,6 +201,28 @@
 		font-weight: 500;
 	}
 
+	.actions-toggle {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		background: #f8fafc;
+		border: 2px solid #e2e8f0;
+		border-radius: 12px;
+		padding: 12px 20px;
+		margin-bottom: 20px;
+		cursor: pointer;
+		font-weight: 600;
+		font-size: 14px;
+		color: #475569;
+		transition: all 0.2s;
+		user-select: none;
+	}
+
+	.actions-toggle:hover {
+		border-color: #008649;
+		color: #008649;
+	}
+
 	.avail-academy-toggle:checked {
 		background-color: #008649;
 		border-color: #008649;
@@ -261,97 +283,105 @@
 				</div>
 			</div>
 
-			<!-- Action Bar -->
-			<div class="action-bar">
-				<div class="row g-3 align-items-center">
-					<div class="col-auto">
-						<label for="applyStatus" class="form-label mb-0">Apply Status:</label>
-					</div>
-					<div class="col-lg-2 col-md-3 col-sm-4 col-6">
-						<select class="form-select" id="applyStatus">
-							<option value="">Select Status</option>
-						</select>
-					</div>
-					<div class="col-auto">
-						<button type="button" class="btn btn-apply-status" onclick="applyStatus()">
-							<i class="bi bi-check2-all me-1"></i> Apply Status
-						</button>
-					</div>
-					<div class="col-auto">
-						<span class="selected-count" id="selectedCount">0 selected</span>
-					</div>
-				</div>
-			</div>
-			<div class="action-bar">
-				<div class="row g-3 align-items-center">
-					<div class="col-auto">
-						<label class="form-label mb-0">Apply Class / Section:</label>
-					</div>
-					<div class="col-lg-2 col-md-3 col-sm-4 col-6">
-						<select class="form-select" id="applyClass" onchange="loadApplySections()">
-							<option value="">Select Class</option>
-						</select>
-					</div>
-					<div class="col-lg-2 col-md-3 col-sm-4 col-6">
-						<select class="form-select" id="applySection">
-							<option value="">Select Section</option>
-						</select>
-					</div>
-					<div class="col-auto">
-						<button type="button" class="btn btn-apply-status" onclick="applySection()">
-							<i class="bi bi-check2-all me-1"></i> Apply
-						</button>
-					</div>
-					<div class="col-auto">
-						<span class="selected-count" id="ClassselectedCount">0 selected</span>
-					</div>
-				</div>
+			<!-- Collapsible Actions Toggle -->
+			<div class="actions-toggle" onclick="$('#actionsPanel').slideToggle(200); $(this).find('.bi').toggleClass('bi-chevron-down bi-chevron-up');">
+				<span><i class="bi bi-gear me-2"></i>Actions</span>
+				<i class="bi bi-chevron-down"></i>
 			</div>
 
-			<!-- Apply Grade Action Bar -->
-			<div class="action-bar">
-				<div class="row g-3 align-items-center">
-					<div class="col-auto">
-						<label class="form-label mb-0">Apply Grade:</label>
-					</div>
-					<div class="col-lg-2 col-md-3 col-sm-4 col-6">
-						<select class="form-select" id="applyGrade">
-							<option value="">Select Grade</option>
-						</select>
-					</div>
-					<div class="col-lg-3 col-md-4 col-sm-6 col-6">
-						<input type="text" class="form-control" id="gradeDescription" placeholder="Reason for grade change *" />
-					</div>
-					<div class="col-auto">
-						<button type="button" class="btn btn-apply-status" onclick="applyGrade()">
-							<i class="bi bi-check2-all me-1"></i> Apply Grade
-						</button>
-					</div>
-					<div class="col-auto">
-						<span class="selected-count" id="GradeselectedCount">0 selected</span>
+			<div id="actionsPanel" style="display: none;">
+				<!-- Action Bar -->
+				<div class="action-bar">
+					<div class="row g-3 align-items-center">
+						<div class="col-auto">
+							<label for="applyStatus" class="form-label mb-0">Apply Status:</label>
+						</div>
+						<div class="col-lg-2 col-md-3 col-sm-4 col-6">
+							<select class="form-select" id="applyStatus">
+								<option value="">Select Status</option>
+							</select>
+						</div>
+						<div class="col-auto">
+							<button type="button" class="btn btn-apply-status" onclick="applyStatus()">
+								<i class="bi bi-check2-all me-1"></i> Apply Status
+							</button>
+						</div>
+						<div class="col-auto">
+							<span class="selected-count" id="selectedCount">0 selected</span>
+						</div>
 					</div>
 				</div>
-			</div>
+				<div class="action-bar">
+					<div class="row g-3 align-items-center">
+						<div class="col-auto">
+							<label class="form-label mb-0">Apply Class / Section:</label>
+						</div>
+						<div class="col-lg-2 col-md-3 col-sm-4 col-6">
+							<select class="form-select" id="applyClass" onchange="loadApplySections()">
+								<option value="">Select Class</option>
+							</select>
+						</div>
+						<div class="col-lg-2 col-md-3 col-sm-4 col-6">
+							<select class="form-select" id="applySection">
+								<option value="">Select Section</option>
+							</select>
+						</div>
+						<div class="col-auto">
+							<button type="button" class="btn btn-apply-status" onclick="applySection()">
+								<i class="bi bi-check2-all me-1"></i> Apply
+							</button>
+						</div>
+						<div class="col-auto">
+							<span class="selected-count" id="ClassselectedCount">0 selected</span>
+						</div>
+					</div>
+				</div>
 
-			<!-- Apply Fee Action Bar -->
-			<div class="action-bar">
-				<div class="row g-3 align-items-center">
-					<div class="col-auto">
-						<label class="form-label mb-0">Apply Fee:</label>
+				<!-- Apply Grade Action Bar -->
+				<div class="action-bar">
+					<div class="row g-3 align-items-center">
+						<div class="col-auto">
+							<label class="form-label mb-0">Apply Grade:</label>
+						</div>
+						<div class="col-lg-2 col-md-3 col-sm-4 col-6">
+							<select class="form-select" id="applyGrade">
+								<option value="">Select Grade</option>
+							</select>
+						</div>
+						<div class="col-lg-3 col-md-4 col-sm-6 col-6">
+							<input type="text" class="form-control" id="gradeDescription" placeholder="Reason for grade change *" />
+						</div>
+						<div class="col-auto">
+							<button type="button" class="btn btn-apply-status" onclick="applyGrade()">
+								<i class="bi bi-check2-all me-1"></i> Apply Grade
+							</button>
+						</div>
+						<div class="col-auto">
+							<span class="selected-count" id="GradeselectedCount">0 selected</span>
+						</div>
 					</div>
-					<div class="col-lg-2 col-md-3 col-sm-4 col-6">
-						<input type="number" class="form-control" id="applyFeeAmount" placeholder="Fee Amount" />
-					</div>
-					<div class="col-lg-3 col-md-4 col-sm-6 col-6">
-						<input type="text" class="form-control" id="feeDescription" placeholder="Reason for fee change *" />
-					</div>
-					<div class="col-auto">
-						<button type="button" class="btn btn-apply-status" onclick="applyFee()">
-							<i class="bi bi-check2-all me-1"></i> Apply Fee
-						</button>
-					</div>
-					<div class="col-auto">
-						<span class="selected-count" id="FeeselectedCount">0 selected</span>
+				</div>
+
+				<!-- Apply Fee Action Bar -->
+				<div class="action-bar">
+					<div class="row g-3 align-items-center">
+						<div class="col-auto">
+							<label class="form-label mb-0">Apply Fee:</label>
+						</div>
+						<div class="col-lg-2 col-md-3 col-sm-4 col-6">
+							<input type="number" class="form-control" id="applyFeeAmount" placeholder="Fee Amount" />
+						</div>
+						<div class="col-lg-3 col-md-4 col-sm-6 col-6">
+							<input type="text" class="form-control" id="feeDescription" placeholder="Reason for fee change *" />
+						</div>
+						<div class="col-auto">
+							<button type="button" class="btn btn-apply-status" onclick="applyFee()">
+								<i class="bi bi-check2-all me-1"></i> Apply Fee
+							</button>
+						</div>
+						<div class="col-auto">
+							<span class="selected-count" id="FeeselectedCount">0 selected</span>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -392,7 +422,7 @@
 
 	$(document).ready(function () {
 		loadDropdowns();
-		loadStudents();
+		$('#studentsBody').html('<tr><td colspan="11" class="text-center text-muted py-4">Use filters above and click Search to load students.</td></tr>');
 	});
 
 	async function loadDropdowns() {
@@ -488,7 +518,10 @@
 		}
 	}
 
-	function filterStudents() {
+	async function filterStudents() {
+		if (allStudents.length === 0) {
+			await loadStudents();
+		}
 		let data = [...allStudents];
 
 		const search = $('#searchName').val().toLowerCase();
@@ -547,14 +580,15 @@
 
 	function renderList(items) {
 		const tbody = $('#studentsBody');
-		tbody.empty();
 
 		if (items.length === 0) {
 			tbody.html('<tr><td colspan="11" class="text-center text-muted py-4">No students found.</td></tr>');
 			return;
 		}
 
-		items.forEach((item, index) => {
+		const rows = [];
+		for (let i = 0; i < items.length; i++) {
+			const item = items[i];
 			const isActive = item.isActive === true;
 			const statusName = (item.statusID && statusMap[item.statusID]) ? statusMap[item.statusID] : (isActive ? 'Active' : 'Inactive');
 			const statusBadge = isActive
@@ -564,29 +598,21 @@
 			const studentId = item.vid || item.id;
 			const name = item.nameOfStudent || item.studentName || item.name || '-';
 
-			const row = `
-				<tr>
-					<td class="text-center">
-						<input type="checkbox" class="student-check" data-id="${studentId}" onchange="updateSelectedCount()" />
-					</td>
-					<td>${index + 1}</td>
-					<td>${item.rollNo || '-'}</td>
-					<td>${name}</td>
-					<td>${item.fatherName || '-'}</td>
-					<td>${item.currentClass || item.className || '-'}<br><small class="text-muted">${item.section || item.sectionName || '-'}</small></td>
-					<td>${item.fatherMobile || item.mobile || '-'}</td>
-					<td>${item.gradeName || item.grade || '-'}</td>
-					<td>${item.monthlyFee || item.fee || '-'}</td>
-					<td class="text-center">${statusBadge}</td>
-					<td class="text-center">
-						<div class="form-check form-switch d-flex justify-content-center mb-0">
-							<input class="form-check-input avail-academy-toggle" type="checkbox" data-id="${studentId}" ${item.isAvailAcademy ? 'checked' : ''} onchange="toggleAvailAcademy(this)" />
-						</div>
-					</td>
-				</tr>
-			`;
-			tbody.append(row);
-		});
+			rows.push(`<tr>
+				<td class="text-center"><input type="checkbox" class="student-check" data-id="${studentId}" onchange="updateSelectedCount()" /></td>
+				<td>${i + 1}</td>
+				<td>${item.rollNo || '-'}</td>
+				<td>${name}</td>
+				<td>${item.fatherName || '-'}</td>
+				<td>${item.currentClass || item.className || '-'}<br><small class="text-muted">${item.section || item.sectionName || '-'}</small></td>
+				<td>${item.fatherMobile || item.mobile || '-'}</td>
+				<td>${item.gradeName || item.grade || '-'}</td>
+				<td>${item.monthlyFee || item.fee || '-'}</td>
+				<td class="text-center">${statusBadge}</td>
+				<td class="text-center"><div class="form-check form-switch d-flex justify-content-center mb-0"><input class="form-check-input avail-academy-toggle" type="checkbox" data-id="${studentId}" ${item.isAvailAcademy ? 'checked' : ''} onchange="toggleAvailAcademy(this)" /></div></td>
+			</tr>`);
+		}
+		tbody.html(rows.join(''));
 
 		// Reset select-all checkbox
 		$('#selectAll').prop('checked', false);
