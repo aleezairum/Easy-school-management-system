@@ -1407,13 +1407,23 @@
                             var _html = sessionStorage.getItem('sidebarHtml');
                             if (_html) {
                                 document.getElementById('sidebarMenu').innerHTML = _html;
-                                // Re-apply active state for current page
+                                // Re-apply active state and expand parent section/submenu
                                 var _path = window.location.pathname.toLowerCase();
                                 var _menu = document.getElementById('sidebarMenu');
                                 _menu.querySelectorAll('.menu-item').forEach(function(a) {
                                     var href = (a.getAttribute('href') || '').toLowerCase();
                                     if (href && _path.startsWith(href)) {
                                         a.classList.add('active');
+                                        // Expand parent submenu if inside one
+                                        var _sub = a.closest('.submenu');
+                                        if (_sub) {
+                                            _sub.classList.add('open');
+                                            var _parent = _sub.previousElementSibling;
+                                            if (_parent) _parent.classList.add('expanded');
+                                        }
+                                        // Expand parent section
+                                        var _sec = a.closest('.menu-section');
+                                        if (_sec) _sec.classList.remove('collapsed');
                                     } else {
                                         a.classList.remove('active');
                                     }
@@ -1427,15 +1437,12 @@
                 } catch(e) {}
             </script>
 
-            @* <div class="sidebar-footer">
-                <div class="user-profile">
-                    <div class="user-avatar">A</div>
-                    <div class="user-info">
-                        <h6>Admin User</h6>
-                        <span>Administrator</span>
-                    </div>
-                </div>
-            </div> *@
+            <div class="sidebar-footer">
+                <a href="/my-institute" class="menu-item" style="margin: 0;">
+                    <i class="bi bi-building"></i>
+                    <span>My Institute</span>
+                </a>
+            </div>
         </nav>
 
         <!-- Main Content -->
@@ -1780,6 +1787,14 @@
         const SIDEBAR_CACHE_TTL = 30 * 60 * 1000; // 30 minutes
 
         function renderSidebar(data) {
+            // On fresh session (login), clear sidebar expanded states so all menus start collapsed
+            if (!sessionStorage.getItem('sidebarInitialized')) {
+                Object.keys(localStorage).forEach(key => {
+                    if (key.startsWith('sidebar-')) localStorage.removeItem(key);
+                });
+                sessionStorage.setItem('sidebarInitialized', '1');
+            }
+
             document.getElementById('sidebarInstituteName').textContent = data.instituteName;
             document.getElementById('sidebarInstituteTagline').textContent = data.instituteTagline;
 
@@ -1810,12 +1825,9 @@
                     }
                 });
 
-                const isExpanded = sectionHasActive || localStorage.getItem(`sidebar-${sectionId}`) === 'expanded';
+                const userToggled = localStorage.getItem(`sidebar-${sectionId}`);
+                const isExpanded = userToggled === 'expanded' || (userToggled === null && sectionHasActive);
                 const collapsedClass = isExpanded ? '' : 'collapsed';
-
-                if (sectionHasActive) {
-                    localStorage.setItem(`sidebar-${sectionId}`, 'expanded');
-                }
 
                 menuHtml += `<div class="menu-section ${collapsedClass}" id="${sectionId}">`;
                 menuHtml += `
@@ -1837,11 +1849,8 @@
                             }
                         });
 
-                        const submenuOpen = submenuHasActive || localStorage.getItem(`sidebar-${submenuId}`) === 'open';
-
-                        if (submenuHasActive) {
-                            localStorage.setItem(`sidebar-${submenuId}`, 'open');
-                        }
+                        const submenuUserToggled = localStorage.getItem(`sidebar-${submenuId}`);
+                        const submenuOpen = submenuUserToggled === 'open' || (submenuUserToggled === null && submenuHasActive);
 
                         menuHtml += `
                             <div class="menu-item-parent ${submenuOpen ? 'expanded' : ''}" onclick="toggleSubmenu('${submenuId}')">
