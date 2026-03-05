@@ -20,6 +20,10 @@ namespace School.API.Services.Implementations.Academic
             => _repo.StatusChangeAsync(StudentIDs, StatusID, userId, userIp);
         public Task<ResponseDto> SectionChangeAsync(string StudentIDs, int StatusID, int userId, string userIp)
             => _repo.SectionChangeAsync(StudentIDs, StatusID, userId, userIp);
+        public Task<ResponseDto> GradeChangeAsync(string StudentIDs, int GradeID, string GradeChangeDescription, int userId, string userIp)
+            => _repo.GradeChangeAsync(StudentIDs, GradeID, GradeChangeDescription, userId, userIp);
+        public Task<ResponseDto> FeeChangeAsync(string StudentIDs, Decimal Fee, string FeeChangeDescription, int userId, string userIp)
+            => _repo.FeeChangeAsync(StudentIDs, Fee, FeeChangeDescription, userId, userIp);
 
         public Task<List<StudentSaveDto>> GetAllAsync()
             => _repo.GetAllAsync();
@@ -32,5 +36,7 @@ namespace School.API.Services.Implementations.Academic
 
         public Task<ResponseDto> ToggleStatusAsync(int vid, int userId, string userIp)
             => _repo.ToggleStatusAsync(vid, userId, userIp);
+        public Task<ResponseDto> AvailAcademyAsync(int vid, bool IsAvailAcademy, int userId, string userIp)
+            => _repo.AvailAcademyAsync(vid, IsAvailAcademy, userId, userIp);
     }
 }

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using School.API.Data.DBModels.Accounts;
 using School.API.DTOs.Academic;
 using School.API.Services.Interfaces.Academic;
 
@@ -83,6 +84,40 @@ public class StudentController : ControllerBase
         }
     }
 
+    [HttpPatch("grade-change")]
+    public async Task<IActionResult> GradeChange(ChangeStudentStatusRequest dto)
+    {
+        try
+        {
+            int userId = 1; // later from JWT
+            string userIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+
+            var result = await _service.GradeChangeAsync(dto.StudentIds, dto.StatusID, dto.Description, userId, userIp);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.InnerException?.Message ?? ex.Message });
+        }
+    }
+
+    [HttpPatch("fee-change")]
+    public async Task<IActionResult> FeeChange(ChangeStudentStatusRequest dto)
+    {
+        try
+        {
+            int userId = 1; // later from JWT
+            string userIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+
+            var result = await _service.FeeChangeAsync(dto.StudentIds, dto.Fee, dto.Description, userId, userIp);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.InnerException?.Message ?? ex.Message });
+        }
+    }
+
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, StudentSaveDto dto)
     {
@@ -108,6 +143,17 @@ public class StudentController : ControllerBase
         string userIp = HttpContext.Connection.RemoteIpAddress?.ToString();
 
         var result = await _service.ToggleStatusAsync(id, userId, userIp);
+        if (result.ReturnCode < 0)
+            return NotFound(result);
+        return Ok(result);
+    }
+    
+    [HttpPatch("{id}/avail-academy")]
+    public async Task<IActionResult> AvailAcademy(int id, AvailAcademyRequest dto)
+    {
+        int userId = 1; // later from JWT
+        string userIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+        var result = await _service.AvailAcademyAsync(id, dto.IsAvailAcademy, userId, userIp);
         if (result.ReturnCode < 0)
             return NotFound(result);
         return Ok(result);

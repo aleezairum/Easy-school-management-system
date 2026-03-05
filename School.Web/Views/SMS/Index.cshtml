@@ -978,7 +978,7 @@
     async function loadAllDropdowns() {
         try {
             const [classes, exams] = await Promise.all([
-                fetch(`${API_BASE}/SMSClass`).then(r => r.ok ? r.json() : []),
+                fetch(`${API_BASE}/class`).then(r => r.ok ? r.json() : []),
                 fetch(`${API_BASE}/Exam`).then(r => r.ok ? r.json() : [])
             ]);
 
@@ -991,7 +991,7 @@
                 const select = $(`#${id}`);
                 select.find('option:not(:first)').remove();
                 classes.forEach(c => {
-                    select.append(`<option value="${c.viD}">${c.vName}</option>`);
+                    select.append(`<option value="${c.vid}">${c.vName}</option>`);
                 });
             });
 
@@ -1081,11 +1081,11 @@
         if (!classId) return;
 
         try {
-            const response = await fetch(`${API_BASE}/SMSSection/byClass/${classId}`);
+            const response = await fetch(`${API_BASE}/section/byClass/${classId}`);
             if (response.ok) {
                 const sections = await response.json();
                 sections.forEach(s => {
-                    sectionSelect.append(`<option value="${s.viD}">${s.vName}</option>`);
+                    sectionSelect.append(`<option value="${s.vid}">${s.vName}</option>`);
                 });
             }
         } catch (error) {

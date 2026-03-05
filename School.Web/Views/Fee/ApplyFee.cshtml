@@ -257,12 +257,12 @@
         if (!classId || !sectionId) return;
 
         try {
-            const response = await fetch(`${API_BASE}/Student/byClassSection?classId=${classId}&sectionId=${sectionId}`);
+            const response = await fetch(`${API_BASE}/Student`);
             if (response.ok) {
                 const students = await response.json();
                 students.forEach(s => {
-                    rollSelect.append(`<option value="${s.id}" data-name="${s.studentName || s.name}">${s.rollNo || '-'}</option>`);
-                    studentSelect.append(`<option value="${s.id}" data-roll="${s.rollNo}">${s.studentName || s.name}</option>`);
+                    rollSelect.append(`<option value="${s.vid}" data-name="${s.studentName || s.name}">${s.rollNo || '-'}</option>`);
+                    studentSelect.append(`<option value="${s.vid}" data-roll="${s.rollNo}">${s.studentName || s.name}</option>`);
                 });
             }
         } catch (error) {
