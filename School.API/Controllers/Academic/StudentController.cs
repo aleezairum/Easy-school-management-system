@@ -20,6 +20,34 @@ public class StudentController : ControllerBase
         return Ok(await _service.GetAllAsync());
     }
 
+    [HttpGet("search")]
+    public async Task<IActionResult> Search(
+        [FromQuery] int? classId,
+        [FromQuery] int? sectionId,
+        [FromQuery] string? name,
+        [FromQuery] string? rollNo,
+        [FromQuery] string? fatherName,
+        [FromQuery] string? fatherCNIC)
+    {
+        var students = await _service.GetAllAsync();
+        var filtered = students.AsEnumerable();
+
+        if (classId.HasValue && classId.Value > 0)
+            filtered = filtered.Where(s => s.ClassID == classId.Value);
+        if (sectionId.HasValue && sectionId.Value > 0)
+            filtered = filtered.Where(s => s.SectionID == sectionId.Value);
+        if (!string.IsNullOrWhiteSpace(name))
+            filtered = filtered.Where(s => s.Name != null && s.Name.Contains(name, StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrWhiteSpace(rollNo))
+            filtered = filtered.Where(s => s.RollNo != null && s.RollNo.Contains(rollNo, StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrWhiteSpace(fatherName))
+            filtered = filtered.Where(s => s.FatherName != null && s.FatherName.Contains(fatherName, StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrWhiteSpace(fatherCNIC))
+            filtered = filtered.Where(s => s.FatherCNIC != null && s.FatherCNIC.Contains(fatherCNIC, StringComparison.OrdinalIgnoreCase));
+
+        return Ok(filtered.ToList());
+    }
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {

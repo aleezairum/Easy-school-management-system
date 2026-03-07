@@ -28,68 +28,77 @@
             <div class="px-4 pb-4">
 
                 <!-- ══════════════════════════════════════════════
-                     SECTION 1 — STUDENT SELECTION
+                     SECTION 1 — FIND STUDENT
                 ══════════════════════════════════════════════ -->
                 <div class="section-card mb-3">
                     <div class="section-header">
-                        <i class="bi bi-person-circle me-2"></i>Student Selection
-                        <!-- Search By tabs -->
-                        <div class="search-by-tabs ms-auto">
-                            <button class="search-tab active" onclick="setSearchBy('normal', this)">Normal</button>
-                            <button class="search-tab" onclick="setSearchBy('fatherName', this)">Father's Name</button>
-                            <button class="search-tab" onclick="setSearchBy('cnic', this)">Father's CNIC</button>
-                        </div>
+                        <i class="bi bi-search me-2"></i>Find Student
                     </div>
                     <div class="section-body">
                         <div class="row g-3">
-                            <div class="col-lg-2 col-md-4 col-sm-6 col-12" id="classField">
-                                <label class="form-label">Class <span class="req">*</span></label>
-                                <select class="form-select" id="classId" onchange="loadSections()">
-                                    <option value="">-- Select Class --</option>
+                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                                <label class="form-label">Class</label>
+                                <select class="form-select" id="filterClass" onchange="onFilterClassChange()">
+                                    <option value="">-- All Classes --</option>
                                 </select>
                             </div>
-                            <div class="col-lg-2 col-md-4 col-sm-6 col-12" id="sectionField">
-                                <label class="form-label">Section <span class="req">*</span></label>
-                                <select class="form-select" id="sectionId" disabled onchange="loadStudents()">
-                                    <option value="">-- Select Section --</option>
+                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                                <label class="form-label">Section</label>
+                                <select class="form-select" id="filterSection" disabled>
+                                    <option value="">-- All Sections --</option>
                                 </select>
                             </div>
-                            <div class="col-lg-2 col-md-4 col-sm-6 col-12" id="rollNoField">
+                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                                <label class="form-label">Student Name</label>
+                                <input type="text" class="form-control" id="filterName" placeholder="Name..." />
+                            </div>
+                            <div class="col-lg-1 col-md-3 col-sm-6 col-12">
                                 <label class="form-label">Roll No</label>
-                                <select class="form-select" id="rollNo" onchange="selectStudentByRoll()">
-                                    <option value="">-- Roll No --</option>
-                                </select>
+                                <input type="text" class="form-control" id="filterRollNo" placeholder="Roll#" />
                             </div>
-                            <div class="col-lg-3 col-md-4 col-sm-6 col-12" id="studentField">
-                                <label class="form-label">Student <span class="req">*</span></label>
-                                <select class="form-select" id="studentId" onchange="onStudentSelected()">
-                                    <option value="">-- Select Student --</option>
-                                </select>
+                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                                <label class="form-label">Father Name</label>
+                                <input type="text" class="form-control" id="filterFatherName" placeholder="Father Name..." />
                             </div>
-                            <!-- Father Name search -->
-                            <div class="col-lg-3 col-md-6 col-12 d-none" id="fatherNameField">
-                                <label class="form-label">Father's Name</label>
-                                <div class="input-group">
-                                    <input type="text" class="form-control" id="fatherNameSearch" placeholder="Enter father's name..." />
-                                    <button class="btn btn-primary" onclick="searchByFather()"><i class="bi bi-search"></i></button>
-                                </div>
+                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                                <label class="form-label">Father CNIC</label>
+                                <input type="text" class="form-control" id="filterFatherCNIC" placeholder="CNIC..." />
                             </div>
-                            <!-- CNIC search -->
-                            <div class="col-lg-3 col-md-6 col-12 d-none" id="cnicField">
-                                <label class="form-label">Father's CNIC</label>
-                                <div class="input-group">
-                                    <input type="text" class="form-control" id="cnicSearch" placeholder="XXXXX-XXXXXXX-X" />
-                                    <button class="btn btn-primary" onclick="searchByCnic()"><i class="bi bi-search"></i></button>
-                                </div>
+                            <div class="col-lg-1 col-md-3 col-sm-6 col-12 d-flex align-items-end">
+                                <button type="button" class="btn btn-save w-100" onclick="searchStudents()">
+                                    <i class="bi bi-search"></i>
+                                </button>
                             </div>
-                            <!-- Student info chips -->
-                            <div class="col-12" id="studentInfoRow" style="display:none;">
-                                <div class="student-info-bar">
-                                    <span class="info-chip"><i class="bi bi-person me-1"></i><span id="infoStudentName">—</span></span>
-                                    <span class="info-chip"><i class="bi bi-people me-1"></i>Father: <span id="infoFatherName">—</span></span>
-                                    <span class="info-chip"><i class="bi bi-card-text me-1"></i>ID: <span id="infoStudentId">—</span></span>
-                                    <span class="info-chip balance-chip"><i class="bi bi-wallet2 me-1"></i>Balance: <span id="infoBalance">0.00</span></span>
-                                </div>
+                        </div>
+
+                        <!-- Search Results -->
+                        <div id="searchResultsSection" class="mt-3" style="display: none;">
+                            <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                                <table class="table table-hover fee-table table-sm mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 36px;"></th>
+                                            <th>Name</th>
+                                            <th>Roll No</th>
+                                            <th>Class</th>
+                                            <th>Section</th>
+                                            <th>Father Name</th>
+                                            <th>Father CNIC</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="searchResultsBody">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Selected Student Info -->
+                        <div class="col-12 mt-3" id="studentInfoRow" style="display:none;">
+                            <div class="student-info-bar">
+                                <span class="info-chip"><i class="bi bi-person me-1"></i><span id="infoStudentName">—</span></span>
+                                <span class="info-chip"><i class="bi bi-people me-1"></i>Father: <span id="infoFatherName">—</span></span>
+                                <span class="info-chip"><i class="bi bi-card-text me-1"></i>ID: <span id="infoStudentId">—</span></span>
+                                <span class="info-chip balance-chip"><i class="bi bi-wallet2 me-1"></i>Balance: <span id="infoBalance">0.00</span></span>
                             </div>
                         </div>
                     </div>
@@ -307,30 +316,6 @@
             padding: 16px;
         }
 
-        /* ── Search By Tabs ── */
-        .search-by-tabs {
-            display: flex;
-            gap: 4px;
-        }
-
-        .search-tab {
-            padding: 3px 12px;
-            font-size: 12px;
-            border: 1px solid #e2e8f0;
-            border-radius: 20px;
-            background: white;
-            color: #64748b;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.15s;
-        }
-
-            .search-tab.active {
-                background: #008649;
-                color: white;
-                border-color: #008649;
-            }
-
         /* ── Student Info Bar ── */
         .student-info-bar {
             display: flex;
@@ -503,7 +488,7 @@
 
 @section Scripts {
     <script>
-        let isSyncing    = false;
+        let selectedStudentId = null;
         let selectedFees = [];   // checked fee VIDs
 
         $(document).ready(function () {
@@ -534,109 +519,106 @@
             } catch { }
         }
 
-        // ── Search By Tabs ────────────────────────────────────────
-        function setSearchBy(type, btn) {
-            $('.search-tab').removeClass('active');
-            $(btn).addClass('active');
-
-            $('#fatherNameField, #cnicField').addClass('d-none');
-            $('#classField, #sectionField, #rollNoField, #studentField').show();
-
-            if (type === 'fatherName') {
-                $('#classField, #sectionField, #rollNoField, #studentField').hide();
-                $('#fatherNameField').removeClass('d-none');
-            } else if (type === 'cnic') {
-                $('#classField, #sectionField, #rollNoField, #studentField').hide();
-                $('#cnicField').removeClass('d-none');
-            }
-        }
-
         // ── Dropdowns ─────────────────────────────────────────────
         async function loadDropdowns() {
             try {
-                const [classes] = await Promise.all([
-                    fetch(`${API_BASE}/class`).then(r => r.ok ? r.json() : [])
-                ]);
-                classes.forEach(c => $('#classId').append(`<option value="${c.vid}">${c.vName}</option>`));
+                const r = await fetch(`${API_BASE}/class`);
+                if (r.ok) {
+                    const classes = await r.json();
+                    classes.forEach(c => $('#filterClass').append(`<option value="${c.vid}">${c.vName}</option>`));
+                }
             } catch (e) { console.error(e); }
         }
 
-        // ── Load Sections ─────────────────────────────────────────
-        async function loadSections() {
-            const classId = $('#classId').val();
-            $('#sectionId').find('option:not(:first)').remove().prop('disabled', true);
-            $('#rollNo, #studentId').find('option:not(:first)').remove();
-            if (!classId) return;
+        // ── Class → Section cascade ──────────────────────────────
+        async function onFilterClassChange() {
+            const classId = $('#filterClass').val();
+            const secSelect = $('#filterSection');
+            secSelect.find('option:not(:first)').remove();
+
+            if (!classId) {
+                secSelect.prop('disabled', true);
+                return;
+            }
 
             try {
                 const r = await fetch(`${API_BASE}/section/byClass/${classId}`);
                 if (r.ok) {
                     const sections = await r.json();
-                    sections.forEach(s => $('#sectionId').append(`<option value="${s.vid}">${s.vName}</option>`));
-                    $('#sectionId').prop('disabled', false);
-                }
-            } catch (e) { console.error(e); }
-
-            await loadStudents();
-        }
-
-        // ── Load Students ─────────────────────────────────────────
-        async function loadStudents() {
-            const classId   = $('#classId').val()   || 0;
-            const sectionId = $('#sectionId').val() || 0;
-            $('#rollNo, #studentId').find('option:not(:first)').remove();
-
-            try {
-                const r = await fetch(`${API_BASE}/Student/students?classId=${classId}&sectionId=${sectionId}`);
-                if (r.ok) {
-                    const students = await r.json();
-                    students.forEach(s => {
-                        const roll = s.classRollNo || s.rollNo || '-';
-                        $('#rollNo').append(`<option value="${s.vid}">${roll}</option>`);
-                        $('#studentId').append(`<option value="${s.vid}" data-father="${s.fatherName || ''}">${s.name || '-'}</option>`);
-                    });
+                    sections.forEach(s => secSelect.append(`<option value="${s.vid}">${s.vName}</option>`));
+                    secSelect.prop('disabled', false);
                 }
             } catch (e) { console.error(e); }
         }
 
-        // ── Sync Roll ↔ Student ───────────────────────────────────
-        function selectStudentByRoll() {
-            if (isSyncing) return;
-            isSyncing = true;
-            const val = $('#rollNo').val();
-            if (val) { $('#studentId').val(val); onStudentSelected(); }
-            isSyncing = false;
-        }
+        // ── Search Students ──────────────────────────────────────
+        async function searchStudents() {
+            const params = new URLSearchParams();
+            const classId    = $('#filterClass').val();
+            const sectionId  = $('#filterSection').val();
+            const name       = $('#filterName').val().trim();
+            const rollNo     = $('#filterRollNo').val().trim();
+            const fatherName = $('#filterFatherName').val().trim();
+            const fatherCNIC = $('#filterFatherCNIC').val().trim();
 
-        function selectRollByStudent() {
-            if (isSyncing) return;
-            isSyncing = true;
-            const val = $('#studentId').val();
-            if (val) $('#rollNo').val(val);
-            isSyncing = false;
-        }
+            if (classId)    params.append('classId', classId);
+            if (sectionId)  params.append('sectionId', sectionId);
+            if (name)       params.append('name', name);
+            if (rollNo)     params.append('rollNo', rollNo);
+            if (fatherName) params.append('fatherName', fatherName);
+            if (fatherCNIC) params.append('fatherCNIC', fatherCNIC);
 
-        // ── On Student Selected ───────────────────────────────────
-        async function onStudentSelected() {
-            selectRollByStudent();
-            const studentId = $('#studentId').val();
-            if (!studentId) {
-                $('#studentInfoRow').hide();
-                resetFeeGrid();
+            if (!params.toString()) {
+                toastWarning('Please enter at least one filter');
                 return;
             }
 
-            const selectedOption = $('#studentId option:selected');
-            const fatherName     = selectedOption.data('father') || '';
-            const studentName    = selectedOption.text();
+            const tbody = $('#searchResultsBody');
+            tbody.html('<tr><td colspan="7" class="text-center text-muted py-3"><span class="spinner-border spinner-border-sm me-2"></span>Searching...</td></tr>');
+            $('#searchResultsSection').show();
 
-            $('#infoStudentName').text(studentName);
-            $('#infoFatherName').text(fatherName || '—');
-            $('#infoStudentId').text(studentId);
-            $('#fatherName').val(fatherName);
+            try {
+                const r = await fetch(`${API_BASE}/student/search?${params}`);
+                if (!r.ok) { tbody.html('<tr><td colspan="7" class="text-center text-muted py-3">Search failed</td></tr>'); return; }
+
+                const students = await r.json();
+                if (students.length === 0) {
+                    tbody.html('<tr><td colspan="7" class="text-center text-muted py-3">No students found</td></tr>');
+                    return;
+                }
+
+                let rows = '';
+                students.forEach(s => {
+                    rows += `
+                        <tr style="cursor:pointer;" onclick="selectStudent(${s.vid}, '${(s.name || '').replace(/'/g, "\\'")}', '${(s.fatherName || '').replace(/'/g, "\\'")}', '${s.rollNo || s.classRollNo || ''}', '${(s.fatherCNIC || '').replace(/'/g, "\\'")}')">
+                            <td class="text-center text-success"><i class="bi bi-arrow-right-circle"></i></td>
+                            <td>${s.name || '-'}</td>
+                            <td>${s.rollNo || s.classRollNo || '-'}</td>
+                            <td>${s.className || '-'}</td>
+                            <td>${s.sectionName || '-'}</td>
+                            <td>${s.fatherName || '-'}</td>
+                            <td>${s.fatherCNIC || '-'}</td>
+                        </tr>`;
+                });
+                tbody.html(rows);
+            } catch (e) {
+                console.error(e);
+                tbody.html('<tr><td colspan="7" class="text-center text-muted py-3">Error searching students</td></tr>');
+            }
+        }
+
+        // ── Select Student from search results ───────────────────
+        async function selectStudent(id, name, father, rollNo, fatherCNIC) {
+            selectedStudentId = id;
+            $('#searchResultsSection').hide();
+
+            $('#infoStudentName').text(name || '—');
+            $('#infoFatherName').text(father || '—');
+            $('#infoStudentId').text(id);
+            $('#fatherName').val(father || '');
             $('#studentInfoRow').show();
 
-            await loadPendingFees(studentId);
+            await loadPendingFees(id);
         }
 
         // ── Load Pending Fees ─────────────────────────────────────
@@ -732,35 +714,20 @@
                                  .toggleClass('text-success', remaining <= 0);
         }
 
-        // ── Search by Father / CNIC ───────────────────────────────
-        async function searchByFather() {
-            const name = $('#fatherNameSearch').val().trim();
-            if (!name) return;
-            // Implement as needed
-            toastWarning('Father name search — implement API');
-        }
-
-        async function searchByCnic() {
-            const cnic = $('#cnicSearch').val().trim();
-            if (!cnic) return;
-            toastWarning('CNIC search — implement API');
-        }
-
         // ── Save ──────────────────────────────────────────────────
         async function saveVoucher(printAfter) {
-            const studentId    = $('#studentId').val();
             const paymentDate  = $('#paymentDate').val();
             const paymentMethod= $('#paymentMethod').val();
             const paidAmount   = parseFloat($('#paidAmount').val()) || 0;
 
-            if (!studentId)     { toastWarning('Please select a student'); return; }
+            if (!selectedStudentId) { toastWarning('Please select a student'); return; }
             if (!paymentDate)   { toastWarning('Please select date'); return; }
             if (!paymentMethod) { toastWarning('Please select payment method'); return; }
             if (selectedFees.length === 0) { toastWarning('Please select at least one fee'); return; }
             if (paidAmount <= 0){ toastWarning('Please enter paid amount'); return; }
 
             const payload = {
-                studentId:       parseInt(studentId),
+                studentId:       parseInt(selectedStudentId),
                 paymentDate:     paymentDate,
                 paymentMethodId: parseInt(paymentMethod),
                 paidAmount:      paidAmount,
