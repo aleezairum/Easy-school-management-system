@@ -1,833 +1,813 @@
-@{
-    ViewData["Title"] = ViewData["Title"] ?? "Fee Voucher";
+﻿@{
+    ViewData["Title"] = "Receive Payment";
     Layout = "~/Views/Shared/_DashboardLayout.cshtml";
-    var voucherId = ViewData["VoucherId"];
-    var isEdit = voucherId != null;
 }
 
-<style>
-    .card {
-        border: none;
-        border-radius: 16px;
-        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-        margin-bottom: 24px;
-    }
-
-    .card-header {
-        background: white;
-        border-bottom: 1px solid #e2e8f0;
-        padding: 20px 24px;
-        border-radius: 16px 16px 0 0 !important;
-    }
-
-    .card-header h5 {
-        margin: 0;
-        font-weight: 600;
-        color: #1e293b;
-    }
-
-    .card-body {
-        padding: 24px;
-    }
-
-    .form-label {
-        font-weight: 500;
-        color: #475569;
-        margin-bottom: 8px;
-        font-size: 14px;
-    }
-
-    .form-control, .form-select {
-        border: 2px solid #e2e8f0;
-        border-radius: 10px;
-        padding: 10px 14px;
-        font-size: 14px;
-        transition: all 0.2s;
-    }
-
-    .form-control:focus, .form-select:focus {
-        border-color: #008649;
-        box-shadow: 0 0 0 4px rgba(0, 134, 73, 0.1);
-    }
-
-    .form-control[readonly] {
-        background-color: #f8fafc;
-    }
-
-    .btn-primary {
-        background: linear-gradient(135deg, #008649 0%, #006d3b 100%);
-        border: none;
-        border-radius: 10px;
-        padding: 12px 24px;
-        font-weight: 600;
-        font-size: 14px;
-    }
-
-    .btn-secondary {
-        background: #f1f5f9;
-        border: 2px solid #e2e8f0;
-        border-radius: 10px;
-        padding: 12px 24px;
-        font-weight: 600;
-        font-size: 14px;
-        color: #64748b;
-    }
-
-    .btn-info {
-        background: linear-gradient(135deg, #008649 0%, #006d3b 100%);
-        border: none;
-        border-radius: 10px;
-        color: white;
-        padding: 12px 24px;
-        font-weight: 600;
-        font-size: 14px;
-    }
-
-    .section-title {
-        font-size: 14px;
-        font-weight: 600;
-        color: #64748b;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 16px;
-        padding-bottom: 8px;
-        border-bottom: 2px solid #e2e8f0;
-    }
-
-    .section-box {
-        background: #f8fafc;
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 20px;
-        height: 100%;
-    }
-
-    .table {
-        margin-bottom: 0;
-    }
-
-    .table thead th {
-        background: #f8fafc;
-        border-bottom: 2px solid #e2e8f0;
-        padding: 12px 16px;
-        font-weight: 600;
-        font-size: 13px;
-        color: #475569;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        white-space: nowrap;
-    }
-
-    .table tbody td {
-        padding: 10px 16px;
-        vertical-align: middle;
-        border-bottom: 1px solid #f1f5f9;
-        font-size: 14px;
-    }
-
-    .table tbody tr:hover {
-        background: #f8fafc;
-    }
-
-    .form-check-input:checked {
-        background-color: #008649;
-        border-color: #008649;
-    }
-
-    .radio-group {
-        display: flex;
-        gap: 20px;
-    }
-
-    .radio-group .form-check {
-        padding-left: 0;
-    }
-
-    .radio-group .form-check-input {
-        margin-right: 8px;
-    }
-
-    .footer-section {
-        background: #f8fafc;
-        border-radius: 12px;
-        padding: 20px;
-        margin-top: 20px;
-    }
-
-    .balance-display {
-        font-size: 18px;
-        font-weight: 700;
-        color: #dc2626;
-    }
-
-    .fee-table-container {
-        max-height: 300px;
-        overflow-y: auto;
-    }
-
-    @@media (max-width: 991px) {
-        .fee-table-container {
-            max-height: 200px;
-        }
-    }
-
-    @@media (max-width: 767px) {
-        .fee-table-container {
-            max-height: 150px;
-        }
-    }
-</style>
-
-<div class="container-fluid">
+<div class="container-fluid px-0">
     <div id="alertContainer"></div>
 
-    <div class="card">
-        <div class="card-body">
-            <div class="d-flex justify-content-end mb-3">
-                <a href="/feevoucher" class="btn btn-secondary">
+    <div class="card main-card">
+        <div class="card-body p-0">
+
+            <!-- Top Bar -->
+            <div class="top-bar d-flex justify-content-between align-items-center px-4 py-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="voucher-icon">
+                        <i class="bi bi-receipt"></i>
+                    </div>
+                    <div>
+                        <div class="page-title">Receive Payment</div>
+                        <div class="voucher-no" id="voucherNoDisplay">New Voucher</div>
+                    </div>
+                </div>
+                <a href="/feevoucher" class="btn btn-back">
                     <i class="bi bi-arrow-left me-1"></i> Back to List
                 </a>
             </div>
-            <form id="voucherForm">
-                <input type="hidden" id="voucherId" value="@(voucherId ?? 0)" />
 
-                <!-- Header Section -->
-                <div class="section-title">
-                    <i class="bi bi-info-circle me-2"></i>Voucher Information
-                </div>
-                <div class="row g-3 mb-4">
-                    <div class="col-md-3">
-                        <label class="form-label">Voucher No</label>
-                        <input type="text" class="form-control" id="voucherNo" readonly placeholder="Auto Generated" />
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Date <span class="text-danger">*</span></label>
-                        <input type="date" class="form-control" id="voucherDate" required />
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Search By</label>
-                        <div class="radio-group mt-2">
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="searchType" id="searchNormal" value="normal" checked onchange="toggleSearchFields()">
-                                <label class="form-check-label" for="searchNormal">Normal</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="searchType" id="searchFatherName" value="fatherName" onchange="toggleSearchFields()">
-                                <label class="form-check-label" for="searchFatherName">Father's Name</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="searchType" id="searchFatherCnic" value="fatherCnic" onchange="toggleSearchFields()">
-                                <label class="form-check-label" for="searchFatherCnic">Father's CNIC</label>
-                            </div>
+            <div class="px-4 pb-4">
+
+                <!-- ══════════════════════════════════════════════
+                     SECTION 1 — STUDENT SELECTION
+                ══════════════════════════════════════════════ -->
+                <div class="section-card mb-3">
+                    <div class="section-header">
+                        <i class="bi bi-person-circle me-2"></i>Student Selection
+                        <!-- Search By tabs -->
+                        <div class="search-by-tabs ms-auto">
+                            <button class="search-tab active" onclick="setSearchBy('normal', this)">Normal</button>
+                            <button class="search-tab" onclick="setSearchBy('fatherName', this)">Father's Name</button>
+                            <button class="search-tab" onclick="setSearchBy('cnic', this)">Father's CNIC</button>
                         </div>
                     </div>
-                </div>
-
-                <!-- Search Section (shown when Father's Name or CNIC is selected) -->
-                <div id="searchSection" class="row g-3 mb-4" style="display: none;">
-                    <div class="col-md-4" id="fatherNameField" style="display: none;">
-                        <label class="form-label">Father's Name</label>
-                        <div class="input-group">
-                            <input type="text" class="form-control" id="fatherName" placeholder="Enter father's name" />
-                            <button class="btn btn-primary" type="button" onclick="searchByFather()">
-                                <i class="bi bi-search"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="col-md-4" id="fatherCnicField" style="display: none;">
-                        <label class="form-label">Father's CNIC</label>
-                        <div class="input-group">
-                            <input type="text" class="form-control" id="fatherCnic" placeholder="XXXXX-XXXXXXX-X" />
-                            <button class="btn btn-primary" type="button" onclick="searchByCnic()">
-                                <i class="bi bi-search"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Main Content: Two Panels -->
-                <div class="row">
-                    <!-- Left Panel: Pay Fee(s) -->
-                    <div class="col-lg-6 col-12">
-                        <div class="section-box">
-                            <div class="section-title">
-                                <i class="bi bi-person-fill me-2"></i>Pay Fee(s)
+                    <div class="section-body">
+                        <div class="row g-3">
+                            <div class="col-lg-2 col-md-4 col-sm-6 col-12" id="classField">
+                                <label class="form-label">Class <span class="req">*</span></label>
+                                <select class="form-select" id="classId" onchange="loadSections()">
+                                    <option value="">-- Select Class --</option>
+                                </select>
                             </div>
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label class="form-label">Class <span class="text-danger">*</span></label>
-                                    <select class="form-select" id="classId" required onchange="loadSections()">
-                                        <option value="">Select Class</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Section <span class="text-danger">*</span></label>
-                                    <select class="form-select" id="sectionId" required onchange="loadStudents()">
-                                        <option value="">Select Section</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Roll No</label>
-                                    <input type="text" class="form-control" id="rollNo" placeholder="Roll No" onchange="searchByRollNo()" />
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Student <span class="text-danger">*</span></label>
-                                    <select class="form-select" id="studentId" required onchange="loadStudentDetails()">
-                                        <option value="">Select Student</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Student ID</label>
-                                    <input type="text" class="form-control" id="studentCode" readonly />
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Balance</label>
-                                    <input type="text" class="form-control balance-display" id="studentBalance" readonly value="0.00" />
+                            <div class="col-lg-2 col-md-4 col-sm-6 col-12" id="sectionField">
+                                <label class="form-label">Section <span class="req">*</span></label>
+                                <select class="form-select" id="sectionId" disabled onchange="loadStudents()">
+                                    <option value="">-- Select Section --</option>
+                                </select>
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-sm-6 col-12" id="rollNoField">
+                                <label class="form-label">Roll No</label>
+                                <select class="form-select" id="rollNo" onchange="selectStudentByRoll()">
+                                    <option value="">-- Roll No --</option>
+                                </select>
+                            </div>
+                            <div class="col-lg-3 col-md-4 col-sm-6 col-12" id="studentField">
+                                <label class="form-label">Student <span class="req">*</span></label>
+                                <select class="form-select" id="studentId" onchange="onStudentSelected()">
+                                    <option value="">-- Select Student --</option>
+                                </select>
+                            </div>
+                            <!-- Father Name search -->
+                            <div class="col-lg-3 col-md-6 col-12 d-none" id="fatherNameField">
+                                <label class="form-label">Father's Name</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="fatherNameSearch" placeholder="Enter father's name..." />
+                                    <button class="btn btn-primary" onclick="searchByFather()"><i class="bi bi-search"></i></button>
                                 </div>
                             </div>
-
-                            <!-- Payment To Section -->
-                            <div class="section-title mt-4">
-                                <i class="bi bi-arrow-right-circle me-2"></i>Payment To
-                            </div>
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label class="form-label">To Type</label>
-                                    <select class="form-select" id="toType" onchange="loadToOptions()">
-                                        <option value="">Select Type</option>
-                                        <option value="bank">Bank</option>
-                                        <option value="cash">Cash</option>
-                                        <option value="wallet">Mobile Wallet</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">To</label>
-                                    <select class="form-select" id="toAccount">
-                                        <option value="">Select Account</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-12">
-                                    <label class="form-label">Balance</label>
-                                    <input type="text" class="form-control" id="accountBalance" readonly value="0.00" />
+                            <!-- CNIC search -->
+                            <div class="col-lg-3 col-md-6 col-12 d-none" id="cnicField">
+                                <label class="form-label">Father's CNIC</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="cnicSearch" placeholder="XXXXX-XXXXXXX-X" />
+                                    <button class="btn btn-primary" onclick="searchByCnic()"><i class="bi bi-search"></i></button>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- Right Panel: Choose Fee(s) -->
-                    <div class="col-lg-6 col-12">
-                        <div class="section-box">
-                            <div class="section-title">
-                                <i class="bi bi-list-check me-2"></i>Choose Fee(s)
-                            </div>
-                            <div class="fee-table-container">
-                                <table class="table table-hover" id="feeTable">
-                                    <thead>
-                                        <tr>
-                                            <th style="width: 40px;">
-                                                <input type="checkbox" class="form-check-input" id="selectAllFees" onchange="toggleAllFees()" />
-                                            </th>
-                                            <th>Fee Type</th>
-                                            <th>Apply Date</th>
-                                            <th class="text-end">Amount</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="feeTableBody">
-                                        <tr>
-                                            <td colspan="4" class="text-center text-muted py-4">Select a student to load fees</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <!-- Student info chips -->
+                            <div class="col-12" id="studentInfoRow" style="display:none;">
+                                <div class="student-info-bar">
+                                    <span class="info-chip"><i class="bi bi-person me-1"></i><span id="infoStudentName">—</span></span>
+                                    <span class="info-chip"><i class="bi bi-people me-1"></i>Father: <span id="infoFatherName">—</span></span>
+                                    <span class="info-chip"><i class="bi bi-card-text me-1"></i>ID: <span id="infoStudentId">—</span></span>
+                                    <span class="info-chip balance-chip"><i class="bi bi-wallet2 me-1"></i>Balance: <span id="infoBalance">0.00</span></span>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Footer Section -->
-                <div class="footer-section">
-                    <div class="row g-3 align-items-end">
-                        <div class="col-lg-2 col-md-4 col-sm-6 col-12">
-                            <label class="form-label">Amount</label>
-                            <input type="number" class="form-control" id="totalAmount" readonly value="0.00" />
+                <!-- ══════════════════════════════════════════════
+                     SECTION 2 — FEE GRID (Pending Fees)
+                ══════════════════════════════════════════════ -->
+                <div class="section-card mb-3">
+                    <div class="section-header">
+                        <i class="bi bi-table me-2"></i>Pending Fees
+                        <span id="feeGridCount" class="badge-count ms-2"></span>
+                        <div class="ms-auto d-flex gap-2 align-items-center">
+                            <button class="btn btn-xs btn-outline-primary" onclick="selectAllFees()">Select All</button>
+                            <button class="btn btn-xs btn-outline-secondary" onclick="clearFeeSelection()">Clear</button>
                         </div>
-                        <div class="col-lg-2 col-md-4 col-sm-6 col-12">
-                            <label class="form-label">Paid <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" id="paidAmount" step="0.01" value="0.00" onchange="calculateChange()" />
+                    </div>
+                    <div class="section-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover fee-table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th style="width:40px;"><input type="checkbox" id="selectAllCheck" onchange="toggleAllFees(this)"></th>
+                                        <th>Month</th>
+                                        <th>Student</th>
+                                        <th>Class</th>
+                                        <th>Section</th>
+                                        <th>Grade</th>
+                                        <th>Fee Type</th>
+                                        <th class="text-end">Fee Amount</th>
+                                        <th class="text-end">Cleared</th>
+                                        <th class="text-end">Pending</th>
+                                        <th>Remarks</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="feeGridBody">
+                                    <tr>
+                                        <td colspan="11" class="text-center text-muted py-4">
+                                            <i class="bi bi-person-x me-2"></i>Select a student to load fees
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
-                        <div class="col-lg-3 col-md-6 col-12">
-                            <label class="form-label">Description</label>
-                            <input type="text" class="form-control" id="description" placeholder="Payment description" />
-                        </div>
-                        <div class="col-lg-2 col-md-4 col-sm-6 col-12">
-                            <label class="form-label">Printer</label>
-                            <div class="radio-group">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="printerType" id="printerThermal" value="thermal" checked>
-                                    <label class="form-check-label" for="printerThermal">Thermal</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="printerType" id="printerNormal" value="normal">
-                                    <label class="form-check-label" for="printerNormal">Normal</label>
-                                </div>
+                    </div>
+                </div>
+
+                <!-- ══════════════════════════════════════════════
+                     SECTION 3 — PAYMENT DETAILS
+                ══════════════════════════════════════════════ -->
+                <div class="section-card mb-3">
+                    <div class="section-header">
+                        <i class="bi bi-cash-stack me-2"></i>Payment Details
+                    </div>
+                    <div class="section-body">
+                        <div class="row g-3">
+                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                                <label class="form-label">Voucher No</label>
+                                <input type="text" class="form-control" id="voucherNo" readonly placeholder="Auto generated" />
                             </div>
-                        </div>
-                        <div class="col-lg-2 col-md-4 col-sm-6 col-12">
-                            <div class="form-check mt-4">
-                                <input class="form-check-input" type="checkbox" id="sendMessage">
-                                <label class="form-check-label" for="sendMessage">Send Message</label>
+                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                                <label class="form-label">Date <span class="req">*</span></label>
+                                <input type="date" class="form-control" id="paymentDate" />
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                                <label class="form-label">Payment Method <span class="req">*</span></label>
+                                <select class="form-select" id="paymentMethod">
+                                    <option value="">-- Select --</option>
+                                    <option value="1">JazzCash</option>
+                                    <option value="2">EasyPaisa</option>
+                                    <option value="3">Cash</option>
+                                    <option value="4">Bank Transfer</option>
+                                </select>
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                                <label class="form-label">Father's Name</label>
+                                <input type="text" class="form-control" id="fatherName" readonly placeholder="Auto filled" />
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                                <label class="form-label">Balance</label>
+                                <input type="text" class="form-control text-danger fw-bold" id="paymentBalance" readonly value="0.00" />
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                                <label class="form-label">Amount <span class="req">*</span></label>
+                                <input type="number" class="form-control fw-bold" id="totalAmount" readonly value="0.00" placeholder="0.00" />
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                                <label class="form-label">Paid Amount <span class="req">*</span></label>
+                                <input type="number" class="form-control text-success fw-bold" id="paidAmount"
+                                       placeholder="0.00" oninput="calcRemaining()" />
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                                <label class="form-label">Remaining</label>
+                                <input type="text" class="form-control text-warning fw-bold" id="remainingAmount" readonly value="0.00" />
+                            </div>
+                            <div class="col-lg-4 col-md-6 col-12">
+                                <label class="form-label">Remarks</label>
+                                <input type="text" class="form-control" id="remarks" placeholder="Optional note..." />
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Action Buttons -->
-                <div class="d-flex justify-content-end gap-2 mt-4">
-                    <a href="/feevoucher" class="btn btn-secondary">
-                        <i class="bi bi-x-lg me-1"></i> Close
-                    </a>
-                    <button type="button" class="btn btn-primary" onclick="saveVoucher()">
-                        <i class="bi bi-check-lg me-1"></i> Save
-                    </button>
-                    <button type="button" class="btn btn-success" onclick="saveAndPrint()">
-                        <i class="bi bi-printer me-1"></i> Save & Print
-                    </button>
+                <!-- ══════════════════════════════════════════════
+                     ACTION BAR
+                ══════════════════════════════════════════════ -->
+                <div class="action-bar d-flex justify-content-between align-items-center">
+                    <div class="d-flex gap-2 align-items-center">
+                        <label class="form-label mb-0 me-1" style="color:#475569;font-size:13px;">Printer:</label>
+                        <div class="form-check form-check-inline mb-0">
+                            <input class="form-check-input" type="radio" name="printerType" id="printerThermal" value="thermal" checked>
+                            <label class="form-check-label" for="printerThermal">Thermal</label>
+                        </div>
+                        <div class="form-check form-check-inline mb-0">
+                            <input class="form-check-input" type="radio" name="printerType" id="printerNormal" value="normal">
+                            <label class="form-check-label" for="printerNormal">Normal</label>
+                        </div>
+                        <div class="form-check form-check-inline mb-0 ms-2">
+                            <input class="form-check-input" type="checkbox" id="sendMessage">
+                            <label class="form-check-label" for="sendMessage">Send Message</label>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="/feevoucher" class="btn btn-cancel">
+                            <i class="bi bi-x-lg me-1"></i> Close
+                        </a>
+                        <button type="button" class="btn btn-save" onclick="saveVoucher(false)">
+                            <i class="bi bi-check-lg me-1"></i> Save
+                        </button>
+                        <button type="button" class="btn btn-save-print" onclick="saveVoucher(true)">
+                            <i class="bi bi-printer me-1"></i> Save & Print
+                        </button>
+                    </div>
                 </div>
-            </form>
+
+            </div>
         </div>
     </div>
 </div>
 
+@section Styles {
+    <style>
+        .main-card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        /* ── Top Bar ── */
+        .top-bar {
+            background: linear-gradient(135deg, #008649 0%, #005f33 100%);
+            color: white;
+        }
+
+        .voucher-icon {
+            width: 44px;
+            height: 44px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .page-title {
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+
+        .voucher-no {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-top: 2px;
+        }
+
+        .btn-back {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            font-size: 13px;
+            padding: 6px 14px;
+        }
+
+            .btn-back:hover {
+                background: rgba(255,255,255,0.25);
+                color: white;
+            }
+
+        /* ── Section Cards ── */
+        .section-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 16px;
+        }
+
+        .section-header {
+            background: #f8fafc;
+            padding: 10px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .section-body {
+            padding: 16px;
+        }
+
+        /* ── Search By Tabs ── */
+        .search-by-tabs {
+            display: flex;
+            gap: 4px;
+        }
+
+        .search-tab {
+            padding: 3px 12px;
+            font-size: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            background: white;
+            color: #64748b;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.15s;
+        }
+
+            .search-tab.active {
+                background: #008649;
+                color: white;
+                border-color: #008649;
+            }
+
+        /* ── Student Info Bar ── */
+        .student-info-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 10px 14px;
+            background: #f0fdf4;
+            border-radius: 8px;
+            border: 1px solid #bbf7d0;
+        }
+
+        .info-chip {
+            font-size: 13px;
+            color: #166534;
+            background: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 1px solid #bbf7d0;
+            font-weight: 500;
+        }
+
+        .balance-chip {
+            background: #166534;
+            color: white;
+            border-color: #166534;
+        }
+
+        /* ── Fee Table ── */
+        .fee-table thead th {
+            background: #f8fafc;
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            padding: 10px 12px;
+            border-bottom: 2px solid #e2e8f0;
+            white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .fee-table tbody td {
+            font-size: 13px;
+            padding: 10px 12px;
+            vertical-align: middle;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .fee-table tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .fee-table tbody tr.selected-row {
+            background: #f0fdf4;
+        }
+
+        .badge-count {
+            background: #008649;
+            color: white;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        /* ── Form Controls ── */
+        .form-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .req {
+            color: #ef4444;
+        }
+
+        .form-control, .form-select {
+            border: 1.5px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 13px;
+            padding: 8px 12px;
+            transition: all 0.2s;
+        }
+
+            .form-control:focus, .form-select:focus {
+                border-color: #008649;
+                box-shadow: 0 0 0 3px rgba(0,134,73,0.1);
+            }
+
+            .form-control[readonly] {
+                background: #f8fafc;
+                color: #64748b;
+            }
+
+        /* ── Action Bar ── */
+        .action-bar {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 14px 20px;
+            margin-top: 16px;
+        }
+
+        .btn-cancel {
+            background: #f1f5f9;
+            border: 1.5px solid #e2e8f0;
+            color: #64748b;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 8px 18px;
+        }
+
+            .btn-cancel:hover {
+                background: #e2e8f0;
+            }
+
+        .btn-save {
+            background: linear-gradient(135deg, #008649, #005f33);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 8px 20px;
+        }
+
+            .btn-save:hover {
+                background: linear-gradient(135deg, #006d3b, #004d29);
+                color: white;
+            }
+
+        .btn-save-print {
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 8px 20px;
+        }
+
+            .btn-save-print:hover {
+                opacity: 0.9;
+                color: white;
+            }
+
+        .btn-xs {
+            font-size: 11px;
+            padding: 3px 10px;
+            border-radius: 6px;
+        }
+
+        /* ── Misc ── */
+        .text-success {
+            color: #16a34a !important;
+        }
+
+        .text-danger {
+            color: #dc2626 !important;
+        }
+
+        .text-warning {
+            color: #d97706 !important;
+        }
+    </style>
+}
+
 @section Scripts {
     <script>
-         const voucherId = parseInt('@(voucherId ?? 0)') || 0;
-        let selectedFees = [];
+        let isSyncing    = false;
+        let selectedFees = [];   // checked fee VIDs
 
         $(document).ready(function () {
-            $('#voucherDate').val(new Date().toISOString().split('T')[0]);
-            loadClasses();
-
-            if (voucherId > 0) {
-                loadVoucher(voucherId);
-            } else {
-                generateVoucherNo();
-            }
+            setToday();
+            loadDropdowns();
+            loadVoucherNo();
         });
 
-        function generateVoucherNo() {
-            const timestamp = Date.now().toString().slice(-8);
-            $('#voucherNo').val('FV-' + timestamp);
+        // ── Today ─────────────────────────────────────────────────
+        function setToday() {
+            const today = new Date();
+            const yyyy  = today.getFullYear();
+            const mm    = String(today.getMonth() + 1).padStart(2, '0');
+            const dd    = String(today.getDate()).padStart(2, '0');
+            $('#paymentDate').val(`${yyyy}-${mm}-${dd}`);
         }
 
-        function toggleSearchFields() {
-            const searchType = $('input[name="searchType"]:checked').val();
-
-            if (searchType === 'normal') {
-                $('#searchSection').hide();
-                $('#fatherNameField').hide();
-                $('#fatherCnicField').hide();
-            } else if (searchType === 'fatherName') {
-                $('#searchSection').show();
-                $('#fatherNameField').show();
-                $('#fatherCnicField').hide();
-            } else if (searchType === 'fatherCnic') {
-                $('#searchSection').show();
-                $('#fatherNameField').hide();
-                $('#fatherCnicField').show();
-            }
-        }
-
-        async function searchByFather() {
-            const fatherName = $('#fatherName').val();
-            if (!fatherName) {
-                showAlert('Please enter father\'s name', 'warning');
-                return;
-            }
-            // API call to search by father's name
+        // ── Voucher No ────────────────────────────────────────────
+        async function loadVoucherNo() {
             try {
-                const response = await fetch(`${API_BASE}/Student/searchByFather?name=${encodeURIComponent(fatherName)}`);
-                if (response.ok) {
-                    const students = await response.json();
-                    populateStudentDropdown(students);
+                const r = await fetch(`${API_BASE}/FeeVoucher/nextvoucherno`);
+                if (r.ok) {
+                    const data = await r.json();
+                    const no = data.voucherNo || data;
+                    $('#voucherNo').val(no);
+                    $('#voucherNoDisplay').text(no);
                 }
-            } catch (error) {
-                console.error('Error searching:', error);
+            } catch { }
+        }
+
+        // ── Search By Tabs ────────────────────────────────────────
+        function setSearchBy(type, btn) {
+            $('.search-tab').removeClass('active');
+            $(btn).addClass('active');
+
+            $('#fatherNameField, #cnicField').addClass('d-none');
+            $('#classField, #sectionField, #rollNoField, #studentField').show();
+
+            if (type === 'fatherName') {
+                $('#classField, #sectionField, #rollNoField, #studentField').hide();
+                $('#fatherNameField').removeClass('d-none');
+            } else if (type === 'cnic') {
+                $('#classField, #sectionField, #rollNoField, #studentField').hide();
+                $('#cnicField').removeClass('d-none');
             }
         }
 
-        async function searchByCnic() {
-            const cnic = $('#fatherCnic').val();
-            if (!cnic) {
-                showAlert('Please enter father\'s CNIC', 'warning');
-                return;
-            }
-            // API call to search by CNIC
+        // ── Dropdowns ─────────────────────────────────────────────
+        async function loadDropdowns() {
             try {
-                const response = await fetch(`${API_BASE}/Student/searchByCnic?cnic=${encodeURIComponent(cnic)}`);
-                if (response.ok) {
-                    const students = await response.json();
-                    populateStudentDropdown(students);
-                }
-            } catch (error) {
-                console.error('Error searching:', error);
-            }
+                const [classes] = await Promise.all([
+                    fetch(`${API_BASE}/class`).then(r => r.ok ? r.json() : [])
+                ]);
+                classes.forEach(c => $('#classId').append(`<option value="${c.vid}">${c.vName}</option>`));
+            } catch (e) { console.error(e); }
         }
 
-        async function loadClasses() {
-            try {
-                const response = await fetch(`${API_BASE}/SMSClass`);
-                if (response.ok) {
-                    const classes = await response.json();
-                    const select = $('#classId');
-                    select.find('option:not(:first)').remove();
-                    classes.forEach(c => {
-                        select.append(`<option value="${c.id}">${c.vName}</option>`);
-                    });
-                }
-            } catch (error) {
-                console.error('Error loading classes:', error);
-            }
-        }
-
+        // ── Load Sections ─────────────────────────────────────────
         async function loadSections() {
             const classId = $('#classId').val();
-            const select = $('#sectionId');
-            select.find('option:not(:first)').remove();
-            $('#studentId').find('option:not(:first)').remove();
-
+            $('#sectionId').find('option:not(:first)').remove().prop('disabled', true);
+            $('#rollNo, #studentId').find('option:not(:first)').remove();
             if (!classId) return;
 
             try {
-                const response = await fetch(`${API_BASE}/SMSSection/byClass/${classId}`);
-                if (response.ok) {
-                    const sections = await response.json();
-                    sections.forEach(s => {
-                        select.append(`<option value="${s.id}">${s.vName}</option>`);
-                    });
+                const r = await fetch(`${API_BASE}/section/byClass/${classId}`);
+                if (r.ok) {
+                    const sections = await r.json();
+                    sections.forEach(s => $('#sectionId').append(`<option value="${s.vid}">${s.vName}</option>`));
+                    $('#sectionId').prop('disabled', false);
                 }
-            } catch (error) {
-                console.error('Error loading sections:', error);
-            }
+            } catch (e) { console.error(e); }
+
+            await loadStudents();
         }
 
+        // ── Load Students ─────────────────────────────────────────
         async function loadStudents() {
-            const classId = $('#classId').val();
-            const sectionId = $('#sectionId').val();
-            const select = $('#studentId');
-            select.find('option:not(:first)').remove();
-
-            if (!classId || !sectionId) return;
+            const classId   = $('#classId').val()   || 0;
+            const sectionId = $('#sectionId').val() || 0;
+            $('#rollNo, #studentId').find('option:not(:first)').remove();
 
             try {
-                const response = await fetch(`${API_BASE}/Student/byClassSection?classId=${classId}&sectionId=${sectionId}`);
-                if (response.ok) {
-                    const students = await response.json();
-                    populateStudentDropdown(students);
+                const r = await fetch(`${API_BASE}/Student/students?classId=${classId}&sectionId=${sectionId}`);
+                if (r.ok) {
+                    const students = await r.json();
+                    students.forEach(s => {
+                        const roll = s.classRollNo || s.rollNo || '-';
+                        $('#rollNo').append(`<option value="${s.vid}">${roll}</option>`);
+                        $('#studentId').append(`<option value="${s.vid}" data-father="${s.fatherName || ''}">${s.name || '-'}</option>`);
+                    });
                 }
-            } catch (error) {
-                console.error('Error loading students:', error);
-            }
+            } catch (e) { console.error(e); }
         }
 
-        function populateStudentDropdown(students) {
-            const select = $('#studentId');
-            select.find('option:not(:first)').remove();
-            students.forEach(s => {
-                select.append(`<option value="${s.id}" data-student='${JSON.stringify(s)}'>${s.studentName} - ${s.rollNo || ''}</option>`);
-            });
+        // ── Sync Roll ↔ Student ───────────────────────────────────
+        function selectStudentByRoll() {
+            if (isSyncing) return;
+            isSyncing = true;
+            const val = $('#rollNo').val();
+            if (val) { $('#studentId').val(val); onStudentSelected(); }
+            isSyncing = false;
         }
 
-        async function loadStudentDetails() {
-            const selected = $('#studentId option:selected');
-            if (!selected.val()) {
-                $('#studentCode').val('');
-                $('#studentBalance').val('0.00');
-                clearFeeTable();
+        function selectRollByStudent() {
+            if (isSyncing) return;
+            isSyncing = true;
+            const val = $('#studentId').val();
+            if (val) $('#rollNo').val(val);
+            isSyncing = false;
+        }
+
+        // ── On Student Selected ───────────────────────────────────
+        async function onStudentSelected() {
+            selectRollByStudent();
+            const studentId = $('#studentId').val();
+            if (!studentId) {
+                $('#studentInfoRow').hide();
+                resetFeeGrid();
                 return;
             }
 
-            const student = JSON.parse(selected.attr('data-student') || '{}');
-            $('#studentCode').val(student.studentCode || student.id);
-            $('#rollNo').val(student.rollNo || '');
+            const selectedOption = $('#studentId option:selected');
+            const fatherName     = selectedOption.data('father') || '';
+            const studentName    = selectedOption.text();
 
-            // Load student fees
-            await loadStudentFees(selected.val());
+            $('#infoStudentName').text(studentName);
+            $('#infoFatherName').text(fatherName || '—');
+            $('#infoStudentId').text(studentId);
+            $('#fatherName').val(fatherName);
+            $('#studentInfoRow').show();
+
+            await loadPendingFees(studentId);
         }
 
-        async function loadStudentFees(studentId) {
-            try {
-                const response = await fetch(`${API_BASE}/FeeVoucher/pendingFees/${studentId}`);
-                if (response.ok) {
-                    const fees = await response.json();
-                    renderFeeTable(fees);
-                    calculateTotalBalance(fees);
-                } else {
-                    // Mock data if API doesn't exist yet
-                    const mockFees = [
-                        { id: 1, feeType: 'Monthly Fee', applyDate: '2024-01-01', amount: 5000, selected: false },
-                        { id: 2, feeType: 'Admission Fee', applyDate: '2024-01-01', amount: 10000, selected: false },
-                        { id: 3, feeType: 'Lab Fee', applyDate: '2024-01-01', amount: 2000, selected: false }
-                    ];
-                    renderFeeTable(mockFees);
-                    calculateTotalBalance(mockFees);
-                }
-            } catch (error) {
-                console.error('Error loading fees:', error);
-            }
-        }
-
-        function renderFeeTable(fees) {
-            const tbody = $('#feeTableBody');
-            tbody.empty();
-
-            if (!fees || fees.length === 0) {
-                tbody.html('<tr><td colspan="4" class="text-center text-muted py-4">No pending fees found</td></tr>');
-                return;
-            }
-
-            fees.forEach(fee => {
-                const row = `
-                    <tr data-fee='${JSON.stringify(fee)}'>
-                        <td>
-                            <input type="checkbox" class="form-check-input fee-checkbox"
-                                   data-id="${fee.id}" data-amount="${fee.amount}"
-                                   onchange="updateSelectedFees()" />
-                        </td>
-                        <td>${fee.feeType}</td>
-                        <td>${formatDate(fee.applyDate)}</td>
-                        <td class="text-end">${formatCurrency(fee.amount)}</td>
-                    </tr>
-                `;
-                tbody.append(row);
-            });
-        }
-
-        function calculateTotalBalance(fees) {
-            const total = fees.reduce((sum, fee) => sum + (fee.amount || 0), 0);
-            $('#studentBalance').val(formatCurrency(total));
-        }
-
-        function clearFeeTable() {
-            $('#feeTableBody').html('<tr><td colspan="4" class="text-center text-muted py-4">Select a student to load fees</td></tr>');
-        }
-
-        function toggleAllFees() {
-            const isChecked = $('#selectAllFees').is(':checked');
-            $('.fee-checkbox').prop('checked', isChecked);
-            updateSelectedFees();
-        }
-
-        function updateSelectedFees() {
-            let total = 0;
+        // ── Load Pending Fees ─────────────────────────────────────
+        async function loadPendingFees(studentId) {
+            $('#feeGridBody').html('<tr><td colspan="11" class="text-center text-muted py-3"><span class="spinner-border spinner-border-sm me-2"></span>Loading fees...</td></tr>');
             selectedFees = [];
+            updateTotals();
 
-            $('.fee-checkbox:checked').each(function () {
-                const amount = parseFloat($(this).data('amount')) || 0;
-                const id = $(this).data('id');
-                total += amount;
-                selectedFees.push(id);
+            try {
+                const r = await fetch(`${API_BASE}/ApplyFee?studentId=${studentId}&dateFrom=2000-01-01&dateTo=2099-12-31`);
+                if (!r.ok) { resetFeeGrid('Failed to load fees'); return; }
+
+                const fees = await r.json();
+                const pending = fees.filter(f => !f.isClear);
+
+                if (pending.length === 0) {
+                    $('#feeGridBody').html('<tr><td colspan="11" class="text-center text-muted py-4"><i class="bi bi-check-circle text-success me-2"></i>No pending fees</td></tr>');
+                    $('#feeGridCount').text('');
+                    return;
+                }
+
+                $('#feeGridCount').text(pending.length);
+
+                let rows = '';
+                pending.forEach(f => {
+                    const month = new Date(f.vDate).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+                    rows += `
+                        <tr id="feeRow_${f.vid}" data-vid="${f.vid}" data-pending="${f.pendingAmount || 0}">
+                            <td><input type="checkbox" class="fee-check" value="${f.vid}"
+                                       data-amount="${f.pendingAmount || 0}"
+                                       onchange="onFeeChecked(this)"></td>
+                            <td>${month}</td>
+                            <td>${f.studentName || '-'}</td>
+                            <td>${f.className   || '-'}</td>
+                            <td>${f.sectionName || '-'}</td>
+                            <td>${f.gradeName   || '-'}</td>
+                            <td>${f.feeTypeName || '-'}</td>
+                            <td class="text-end">${fmt(f.feeAmount)}</td>
+                            <td class="text-end text-success">${fmt(f.clearedAmount)}</td>
+                            <td class="text-end text-danger fw-bold">${fmt(f.pendingAmount)}</td>
+                            <td>${f.remarks || '-'}</td>
+                        </tr>`;
+                });
+                $('#feeGridBody').html(rows);
+
+                // Balance = total pending
+                const totalPending = pending.reduce((s, f) => s + (f.pendingAmount || 0), 0);
+                $('#infoBalance').text(fmt(totalPending));
+                $('#paymentBalance').val(fmt(totalPending));
+
+            } catch (e) {
+                console.error(e);
+                resetFeeGrid('Error loading fees');
+            }
+        }
+
+        // ── Fee Checkbox Logic ────────────────────────────────────
+        function onFeeChecked(chk) {
+            const row = $(chk).closest('tr');
+            if (chk.checked) {
+                row.addClass('selected-row');
+                selectedFees.push({ vid: chk.value, amount: parseFloat(chk.dataset.amount) || 0 });
+            } else {
+                row.removeClass('selected-row');
+                selectedFees = selectedFees.filter(f => f.vid !== chk.value);
+            }
+            updateTotals();
+        }
+
+        function toggleAllFees(masterChk) {
+            $('.fee-check').each(function () {
+                this.checked = masterChk.checked;
+                onFeeChecked(this);
             });
+        }
 
+        function selectAllFees()    { $('#selectAllCheck').prop('checked', true).trigger('change'); }
+        function clearFeeSelection(){ $('#selectAllCheck').prop('checked', false).trigger('change'); }
+
+        // ── Update Totals ─────────────────────────────────────────
+        function updateTotals() {
+            const total = selectedFees.reduce((s, f) => s + f.amount, 0);
             $('#totalAmount').val(total.toFixed(2));
-            $('#paidAmount').val(total.toFixed(2));
+            calcRemaining();
         }
 
-        function loadToOptions() {
-            const toType = $('#toType').val();
-            const select = $('#toAccount');
-            select.find('option:not(:first)').remove();
-
-            if (toType === 'bank') {
-                select.append('<option value="1">HBL - 1234567890</option>');
-                select.append('<option value="2">UBL - 0987654321</option>');
-            } else if (toType === 'cash') {
-                select.append('<option value="3">Main Cash</option>');
-                select.append('<option value="4">Petty Cash</option>');
-            } else if (toType === 'wallet') {
-                select.append('<option value="5">JazzCash</option>');
-                select.append('<option value="6">EasyPaisa</option>');
-            }
+        function calcRemaining() {
+            const total   = parseFloat($('#totalAmount').val())  || 0;
+            const paid    = parseFloat($('#paidAmount').val())   || 0;
+            const remaining = total - paid;
+            $('#remainingAmount').val(remaining.toFixed(2));
+            $('#remainingAmount').toggleClass('text-danger', remaining > 0)
+                                 .toggleClass('text-success', remaining <= 0);
         }
 
-        function searchByRollNo() {
-            const rollNo = $('#rollNo').val();
-            const classId = $('#classId').val();
-            const sectionId = $('#sectionId').val();
-
-            if (!rollNo || !classId || !sectionId) return;
-
-            // Find student by roll number in the dropdown
-            const options = $('#studentId option');
-            options.each(function () {
-                const studentData = $(this).attr('data-student');
-                if (studentData) {
-                    const student = JSON.parse(studentData);
-                    if (student.rollNo === rollNo) {
-                        $('#studentId').val($(this).val());
-                        loadStudentDetails();
-                        return false;
-                    }
-                }
-            });
+        // ── Search by Father / CNIC ───────────────────────────────
+        async function searchByFather() {
+            const name = $('#fatherNameSearch').val().trim();
+            if (!name) return;
+            // Implement as needed
+            toastWarning('Father name search — implement API');
         }
 
-        function calculateChange() {
-            const total = parseFloat($('#totalAmount').val()) || 0;
-            const paid = parseFloat($('#paidAmount').val()) || 0;
-            // Could show change/due here if needed
+        async function searchByCnic() {
+            const cnic = $('#cnicSearch').val().trim();
+            if (!cnic) return;
+            toastWarning('CNIC search — implement API');
         }
 
-        async function saveVoucher() {
-            if (!validateForm()) return;
+        // ── Save ──────────────────────────────────────────────────
+        async function saveVoucher(printAfter) {
+            const studentId    = $('#studentId').val();
+            const paymentDate  = $('#paymentDate').val();
+            const paymentMethod= $('#paymentMethod').val();
+            const paidAmount   = parseFloat($('#paidAmount').val()) || 0;
 
-            const data = buildVoucherData();
+            if (!studentId)     { toastWarning('Please select a student'); return; }
+            if (!paymentDate)   { toastWarning('Please select date'); return; }
+            if (!paymentMethod) { toastWarning('Please select payment method'); return; }
+            if (selectedFees.length === 0) { toastWarning('Please select at least one fee'); return; }
+            if (paidAmount <= 0){ toastWarning('Please enter paid amount'); return; }
+
+            const payload = {
+                studentId:       parseInt(studentId),
+                paymentDate:     paymentDate,
+                paymentMethodId: parseInt(paymentMethod),
+                paidAmount:      paidAmount,
+                remarks:         $('#remarks').val(),
+                sendMessage:     $('#sendMessage').is(':checked'),
+                feeVids:         selectedFees.map(f => parseInt(f.vid))
+            };
 
             try {
-                let response;
-                if (voucherId > 0) {
-                    response = await fetch(`${API_BASE}/FeeVoucher/${voucherId}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(data)
-                    });
-                } else {
-                    response = await fetch(`${API_BASE}/FeeVoucher`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(data)
-                    });
-                }
-
-                if (response.ok) {
-                    showAlert('Fee voucher saved successfully!', 'success');
-                    setTimeout(() => window.location.href = '/feevoucher', 1500);
-                } else {
-                    const error = await response.json();
-                    showAlert(error.message || 'Failed to save voucher', 'danger');
-                }
-            } catch (error) {
-                showAlert('Error saving voucher: ' + error.message, 'danger');
-            }
-        }
-
-        async function saveAndPrint() {
-            if (!validateForm()) return;
-
-            const data = buildVoucherData();
-
-            try {
-                const response = await fetch(`${API_BASE}/FeeVoucher`, {
+                $('[onclick*="saveVoucher"]').prop('disabled', true);
+                const r = await fetch(`${API_BASE}/FeeVoucher`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify(payload)
                 });
 
-                if (response.ok) {
-                    const result = await response.json();
-                    showAlert('Fee voucher saved successfully!', 'success');
+                const result = await r.json();
 
-                    const printerType = $('input[name="printerType"]:checked').val();
-                    if (printerType === 'thermal') {
-                        window.open(`/feevoucher/print/${result.id}?thermal=true`, '_blank');
-                    } else {
-                        window.open(`/feevoucher/print/${result.id}`, '_blank');
+                if (r.ok) {
+                    toastSuccess('Voucher saved successfully!');
+                    if (printAfter) {
+                        const printer = $('input[name="printerType"]:checked').val();
+                        window.open(`/feevoucher/print/${result.id}?printer=${printer}`, '_blank');
                     }
-
-                    if ($('#sendMessage').is(':checked')) {
-                        sendPaymentMessage(result.id);
-                    }
-
-                    setTimeout(() => window.location.href = '/feevoucher', 2000);
+                    setTimeout(() => window.location.href = '/feevoucher', 1200);
                 } else {
-                    const error = await response.json();
-                    showAlert(error.message || 'Failed to save voucher', 'danger');
+                    toastError(result.message || 'Failed to save voucher');
                 }
-            } catch (error) {
-                showAlert('Error saving voucher: ' + error.message, 'danger');
+            } catch (e) {
+                console.error(e);
+                toastError('Error saving voucher');
+            } finally {
+                $('[onclick*="saveVoucher"]').prop('disabled', false);
             }
         }
 
-        function validateForm() {
-            const studentId = $('#studentId').val();
-            const paidAmount = parseFloat($('#paidAmount').val());
-
-            if (!studentId) {
-                showAlert('Please select a student', 'warning');
-                return false;
-            }
-
-            if (selectedFees.length === 0) {
-                showAlert('Please select at least one fee', 'warning');
-                return false;
-            }
-
-            if (!paidAmount || paidAmount <= 0) {
-                showAlert('Please enter a valid paid amount', 'warning');
-                return false;
-            }
-
-            return true;
+        // ── Helpers ───────────────────────────────────────────────
+        function resetFeeGrid(msg) {
+            const text = msg || 'Select a student to load fees';
+            $('#feeGridBody').html(`<tr><td colspan="11" class="text-center text-muted py-4"><i class="bi bi-person-x me-2"></i>${text}</td></tr>`);
+            $('#feeGridCount').text('');
+            selectedFees = [];
+            updateTotals();
         }
 
-        function buildVoucherData() {
-            return {
-                VoucherNumber: $('#voucherNo').val(),
-                VoucherDate: $('#voucherDate').val(),
-                StudentId: parseInt($('#studentId').val()),
-                TotalAmount: parseFloat($('#totalAmount').val()),
-                PaidAmount: parseFloat($('#paidAmount').val()),
-                Description: $('#description').val(),
-                ToType: $('#toType').val(),
-                ToAccountId: $('#toAccount').val() ? parseInt($('#toAccount').val()) : null,
-                FeeIds: selectedFees,
-                SendMessage: $('#sendMessage').is(':checked')
-            };
-        }
-
-        async function sendPaymentMessage(voucherId) {
-            try {
-                await fetch(`${API_BASE}/FeeVoucher/sendMessage/${voucherId}`, {
-                    method: 'POST'
-                });
-            } catch (error) {
-                console.error('Error sending message:', error);
-            }
-        }
-
-        async function loadVoucher(id) {
-            try {
-                const response = await fetch(`${API_BASE}/FeeVoucher/${id}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    // Populate form fields with existing data
-                    $('#voucherNo').val(data.voucherNumber);
-                    $('#voucherDate').val(data.voucherDate?.split('T')[0]);
-                    // ... populate other fields
-                }
-            } catch (error) {
-                console.error('Error loading voucher:', error);
-            }
-        }
-
-        function formatDate(dateString) {
-            if (!dateString) return '-';
-            const date = new Date(dateString);
-            return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-        }
-
-        function formatCurrency(amount) {
-            return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount || 0);
-        }
-
-        function showAlert(message, type) {
-            if (type === 'success') {
-                toastSuccess(message);
-            } else if (type === 'danger' || type === 'error') {
-                toastError(message);
-            } else if (type === 'warning') {
-                toastWarning(message);
-            } else {
-                toastInfo(message);
-            }
+        function fmt(val) {
+            return (val || 0).toLocaleString('en-PK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
     </script>
 }

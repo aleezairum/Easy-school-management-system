@@ -1,234 +1,7 @@
-﻿@{
-    ViewData["Title"] = "Receive Payment";
+@{
+    ViewData["Title"] = "Fee Vouchers";
     Layout = "~/Views/Shared/_DashboardLayout.cshtml";
 }
-
-<div class="container-fluid px-0">
-    <div id="alertContainer"></div>
-
-    <div class="card main-card">
-        <div class="card-body p-0">
-
-            <!-- Top Bar -->
-            <div class="top-bar d-flex justify-content-between align-items-center px-4 py-3">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="voucher-icon">
-                        <i class="bi bi-receipt"></i>
-                    </div>
-                    <div>
-                        <div class="page-title">Receive Payment</div>
-                        <div class="voucher-no" id="voucherNoDisplay">New Voucher</div>
-                    </div>
-                </div>
-                <a href="/feevoucher" class="btn btn-back">
-                    <i class="bi bi-arrow-left me-1"></i> Back to List
-                </a>
-            </div>
-
-            <div class="px-4 pb-4">
-
-                <!-- ══════════════════════════════════════════════
-                     SECTION 1 — STUDENT SELECTION
-                ══════════════════════════════════════════════ -->
-                <div class="section-card mb-3">
-                    <div class="section-header">
-                        <i class="bi bi-person-circle me-2"></i>Student Selection
-                        <!-- Search By tabs -->
-                        <div class="search-by-tabs ms-auto">
-                            <button class="search-tab active" onclick="setSearchBy('normal', this)">Normal</button>
-                            <button class="search-tab" onclick="setSearchBy('fatherName', this)">Father's Name</button>
-                            <button class="search-tab" onclick="setSearchBy('cnic', this)">Father's CNIC</button>
-                        </div>
-                    </div>
-                    <div class="section-body">
-                        <div class="row g-3">
-                            <div class="col-lg-2 col-md-4 col-sm-6 col-12" id="classField">
-                                <label class="form-label">Class <span class="req">*</span></label>
-                                <select class="form-select" id="classId" onchange="loadSections()">
-                                    <option value="">-- Select Class --</option>
-                                </select>
-                            </div>
-                            <div class="col-lg-2 col-md-4 col-sm-6 col-12" id="sectionField">
-                                <label class="form-label">Section <span class="req">*</span></label>
-                                <select class="form-select" id="sectionId" disabled onchange="loadStudents()">
-                                    <option value="">-- Select Section --</option>
-                                </select>
-                            </div>
-                            <div class="col-lg-2 col-md-4 col-sm-6 col-12" id="rollNoField">
-                                <label class="form-label">Roll No</label>
-                                <select class="form-select" id="rollNo" onchange="selectStudentByRoll()">
-                                    <option value="">-- Roll No --</option>
-                                </select>
-                            </div>
-                            <div class="col-lg-3 col-md-4 col-sm-6 col-12" id="studentField">
-                                <label class="form-label">Student <span class="req">*</span></label>
-                                <select class="form-select" id="studentId" onchange="onStudentSelected()">
-                                    <option value="">-- Select Student --</option>
-                                </select>
-                            </div>
-                            <!-- Father Name search -->
-                            <div class="col-lg-3 col-md-6 col-12 d-none" id="fatherNameField">
-                                <label class="form-label">Father's Name</label>
-                                <div class="input-group">
-                                    <input type="text" class="form-control" id="fatherNameSearch" placeholder="Enter father's name..." />
-                                    <button class="btn btn-primary" onclick="searchByFather()"><i class="bi bi-search"></i></button>
-                                </div>
-                            </div>
-                            <!-- CNIC search -->
-                            <div class="col-lg-3 col-md-6 col-12 d-none" id="cnicField">
-                                <label class="form-label">Father's CNIC</label>
-                                <div class="input-group">
-                                    <input type="text" class="form-control" id="cnicSearch" placeholder="XXXXX-XXXXXXX-X" />
-                                    <button class="btn btn-primary" onclick="searchByCnic()"><i class="bi bi-search"></i></button>
-                                </div>
-                            </div>
-                            <!-- Student info chips -->
-                            <div class="col-12" id="studentInfoRow" style="display:none;">
-                                <div class="student-info-bar">
-                                    <span class="info-chip"><i class="bi bi-person me-1"></i><span id="infoStudentName">—</span></span>
-                                    <span class="info-chip"><i class="bi bi-people me-1"></i>Father: <span id="infoFatherName">—</span></span>
-                                    <span class="info-chip"><i class="bi bi-card-text me-1"></i>ID: <span id="infoStudentId">—</span></span>
-                                    <span class="info-chip balance-chip"><i class="bi bi-wallet2 me-1"></i>Balance: <span id="infoBalance">0.00</span></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ══════════════════════════════════════════════
-                     SECTION 2 — FEE GRID (Pending Fees)
-                ══════════════════════════════════════════════ -->
-                <div class="section-card mb-3">
-                    <div class="section-header">
-                        <i class="bi bi-table me-2"></i>Pending Fees
-                        <span id="feeGridCount" class="badge-count ms-2"></span>
-                        <div class="ms-auto d-flex gap-2 align-items-center">
-                            <button class="btn btn-xs btn-outline-primary" onclick="selectAllFees()">Select All</button>
-                            <button class="btn btn-xs btn-outline-secondary" onclick="clearFeeSelection()">Clear</button>
-                        </div>
-                    </div>
-                    <div class="section-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover fee-table mb-0">
-                                <thead>
-                                    <tr>
-                                        <th style="width:40px;"><input type="checkbox" id="selectAllCheck" onchange="toggleAllFees(this)"></th>
-                                        <th>Month</th>
-                                        <th>Student</th>
-                                        <th>Class</th>
-                                        <th>Section</th>
-                                        <th>Grade</th>
-                                        <th>Fee Type</th>
-                                        <th class="text-end">Fee Amount</th>
-                                        <th class="text-end">Cleared</th>
-                                        <th class="text-end">Pending</th>
-                                        <th>Remarks</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="feeGridBody">
-                                    <tr>
-                                        <td colspan="11" class="text-center text-muted py-4">
-                                            <i class="bi bi-person-x me-2"></i>Select a student to load fees
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ══════════════════════════════════════════════
-                     SECTION 3 — PAYMENT DETAILS
-                ══════════════════════════════════════════════ -->
-                <div class="section-card mb-3">
-                    <div class="section-header">
-                        <i class="bi bi-cash-stack me-2"></i>Payment Details
-                    </div>
-                    <div class="section-body">
-                        <div class="row g-3">
-                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
-                                <label class="form-label">Voucher No</label>
-                                <input type="text" class="form-control" id="voucherNo" readonly placeholder="Auto generated" />
-                            </div>
-                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
-                                <label class="form-label">Date <span class="req">*</span></label>
-                                <input type="date" class="form-control" id="paymentDate" />
-                            </div>
-                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
-                                <label class="form-label">Payment Method <span class="req">*</span></label>
-                                <select class="form-select" id="paymentMethod">
-                                    <option value="">-- Select --</option>
-                                    <option value="1">JazzCash</option>
-                                    <option value="2">EasyPaisa</option>
-                                    <option value="3">Cash</option>
-                                    <option value="4">Bank Transfer</option>
-                                </select>
-                            </div>
-                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
-                                <label class="form-label">Father's Name</label>
-                                <input type="text" class="form-control" id="fatherName" readonly placeholder="Auto filled" />
-                            </div>
-                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
-                                <label class="form-label">Balance</label>
-                                <input type="text" class="form-control text-danger fw-bold" id="paymentBalance" readonly value="0.00" />
-                            </div>
-                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
-                                <label class="form-label">Amount <span class="req">*</span></label>
-                                <input type="number" class="form-control fw-bold" id="totalAmount" readonly value="0.00" placeholder="0.00" />
-                            </div>
-                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
-                                <label class="form-label">Paid Amount <span class="req">*</span></label>
-                                <input type="number" class="form-control text-success fw-bold" id="paidAmount"
-                                       placeholder="0.00" oninput="calcRemaining()" />
-                            </div>
-                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
-                                <label class="form-label">Remaining</label>
-                                <input type="text" class="form-control text-warning fw-bold" id="remainingAmount" readonly value="0.00" />
-                            </div>
-                            <div class="col-lg-4 col-md-6 col-12">
-                                <label class="form-label">Remarks</label>
-                                <input type="text" class="form-control" id="remarks" placeholder="Optional note..." />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ══════════════════════════════════════════════
-                     ACTION BAR
-                ══════════════════════════════════════════════ -->
-                <div class="action-bar d-flex justify-content-between align-items-center">
-                    <div class="d-flex gap-2 align-items-center">
-                        <label class="form-label mb-0 me-1" style="color:#475569;font-size:13px;">Printer:</label>
-                        <div class="form-check form-check-inline mb-0">
-                            <input class="form-check-input" type="radio" name="printerType" id="printerThermal" value="thermal" checked>
-                            <label class="form-check-label" for="printerThermal">Thermal</label>
-                        </div>
-                        <div class="form-check form-check-inline mb-0">
-                            <input class="form-check-input" type="radio" name="printerType" id="printerNormal" value="normal">
-                            <label class="form-check-label" for="printerNormal">Normal</label>
-                        </div>
-                        <div class="form-check form-check-inline mb-0 ms-2">
-                            <input class="form-check-input" type="checkbox" id="sendMessage">
-                            <label class="form-check-label" for="sendMessage">Send Message</label>
-                        </div>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <a href="/feevoucher" class="btn btn-cancel">
-                            <i class="bi bi-x-lg me-1"></i> Close
-                        </a>
-                        <button type="button" class="btn btn-save" onclick="saveVoucher(false)">
-                            <i class="bi bi-check-lg me-1"></i> Save
-                        </button>
-                        <button type="button" class="btn btn-save-print" onclick="saveVoucher(true)">
-                            <i class="bi bi-printer me-1"></i> Save & Print
-                        </button>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </div>
-</div>
 
 @section Styles {
     <style>
@@ -239,13 +12,12 @@
             overflow: hidden;
         }
 
-        /* ── Top Bar ── */
         .top-bar {
             background: linear-gradient(135deg, #008649 0%, #005f33 100%);
             color: white;
         }
 
-        .voucher-icon {
+        .page-icon {
             width: 44px;
             height: 44px;
             background: rgba(255,255,255,0.2);
@@ -262,27 +34,27 @@
             letter-spacing: 0.3px;
         }
 
-        .voucher-no {
+        .page-subtitle {
             font-size: 12px;
             opacity: 0.8;
             margin-top: 2px;
         }
 
-        .btn-back {
+        .btn-add {
             background: rgba(255,255,255,0.15);
             color: white;
             border: 1px solid rgba(255,255,255,0.3);
             border-radius: 8px;
             font-size: 13px;
-            padding: 6px 14px;
+            font-weight: 600;
+            padding: 8px 16px;
         }
 
-            .btn-back:hover {
-                background: rgba(255,255,255,0.25);
-                color: white;
-            }
+        .btn-add:hover {
+            background: rgba(255,255,255,0.25);
+            color: white;
+        }
 
-        /* ── Section Cards ── */
         .section-card {
             border: 1px solid #e2e8f0;
             border-radius: 12px;
@@ -307,59 +79,29 @@
             padding: 16px;
         }
 
-        /* ── Search By Tabs ── */
-        .search-by-tabs {
-            display: flex;
-            gap: 4px;
-        }
-
-        .search-tab {
-            padding: 3px 12px;
+        .form-label {
             font-size: 12px;
-            border: 1px solid #e2e8f0;
-            border-radius: 20px;
-            background: white;
+            font-weight: 600;
             color: #64748b;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.15s;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
         }
 
-            .search-tab.active {
-                background: #008649;
-                color: white;
-                border-color: #008649;
-            }
-
-        /* ── Student Info Bar ── */
-        .student-info-bar {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            padding: 10px 14px;
-            background: #f0fdf4;
+        .form-control, .form-select {
+            border: 1.5px solid #e2e8f0;
             border-radius: 8px;
-            border: 1px solid #bbf7d0;
-        }
-
-        .info-chip {
             font-size: 13px;
-            color: #166534;
-            background: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            border: 1px solid #bbf7d0;
-            font-weight: 500;
+            padding: 8px 12px;
+            transition: all 0.2s;
         }
 
-        .balance-chip {
-            background: #166534;
-            color: white;
-            border-color: #166534;
+        .form-control:focus, .form-select:focus {
+            border-color: #008649;
+            box-shadow: 0 0 0 3px rgba(0,134,73,0.1);
         }
 
-        /* ── Fee Table ── */
-        .fee-table thead th {
+        .voucher-table thead th {
             background: #f8fafc;
             font-size: 12px;
             font-weight: 600;
@@ -371,19 +113,75 @@
             letter-spacing: 0.3px;
         }
 
-        .fee-table tbody td {
+        .voucher-table tbody td {
             font-size: 13px;
             padding: 10px 12px;
             vertical-align: middle;
             border-bottom: 1px solid #f1f5f9;
         }
 
-        .fee-table tbody tr:hover {
-            background: #f8fafc;
+        .voucher-table tbody tr:hover {
+            background: #f0fdf4;
         }
 
-        .fee-table tbody tr.selected-row {
-            background: #f0fdf4;
+        .btn-action {
+            border: none;
+            border-radius: 6px;
+            padding: 5px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.15s;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-1px);
+            color: white;
+        }
+
+        .btn-edit {
+            background: linear-gradient(135deg, #008649, #005f33);
+        }
+
+        .btn-edit:hover {
+            box-shadow: 0 3px 8px rgba(0,134,73,0.3);
+        }
+
+        .btn-print {
+            background: linear-gradient(135deg, #008649, #005f33);
+        }
+
+        .btn-print:hover {
+            box-shadow: 0 3px 8px rgba(0,134,73,0.3);
+        }
+
+        .btn-search {
+            background: linear-gradient(135deg, #008649, #005f33);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 8px 18px;
+        }
+
+        .btn-search:hover {
+            background: linear-gradient(135deg, #006d3b, #004d29);
+            color: white;
+        }
+
+        .btn-clear {
+            background: #f1f5f9;
+            border: 1.5px solid #e2e8f0;
+            color: #64748b;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 8px 18px;
+        }
+
+        .btn-clear:hover {
+            background: #e2e8f0;
         }
 
         .badge-count {
@@ -395,415 +193,293 @@
             font-weight: 600;
         }
 
-        /* ── Form Controls ── */
-        .form-label {
-            font-size: 12px;
-            font-weight: 600;
-            color: #64748b;
-            margin-bottom: 5px;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
+        .summary-bar {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
         }
 
-        .req {
-            color: #ef4444;
-        }
-
-        .form-control, .form-select {
-            border: 1.5px solid #e2e8f0;
+        .summary-item {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
             border-radius: 8px;
-            font-size: 13px;
-            padding: 8px 12px;
-            transition: all 0.2s;
-        }
-
-            .form-control:focus, .form-select:focus {
-                border-color: #008649;
-                box-shadow: 0 0 0 3px rgba(0,134,73,0.1);
-            }
-
-            .form-control[readonly] {
-                background: #f8fafc;
-                color: #64748b;
-            }
-
-        /* ── Action Bar ── */
-        .action-bar {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 14px 20px;
-            margin-top: 16px;
-        }
-
-        .btn-cancel {
-            background: #f1f5f9;
-            border: 1.5px solid #e2e8f0;
-            color: #64748b;
-            border-radius: 8px;
+            padding: 8px 16px;
             font-size: 13px;
             font-weight: 600;
-            padding: 8px 18px;
+            color: #166534;
         }
 
-            .btn-cancel:hover {
-                background: #e2e8f0;
-            }
-
-        .btn-save {
-            background: linear-gradient(135deg, #008649, #005f33);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            padding: 8px 20px;
-        }
-
-            .btn-save:hover {
-                background: linear-gradient(135deg, #006d3b, #004d29);
-                color: white;
-            }
-
-        .btn-save-print {
-            background: linear-gradient(135deg, #0ea5e9, #0284c7);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            padding: 8px 20px;
-        }
-
-            .btn-save-print:hover {
-                opacity: 0.9;
-                color: white;
-            }
-
-        .btn-xs {
+        .summary-item .label {
             font-size: 11px;
-            padding: 3px 10px;
-            border-radius: 6px;
-        }
-
-        /* ── Misc ── */
-        .text-success {
-            color: #16a34a !important;
-        }
-
-        .text-danger {
-            color: #dc2626 !important;
-        }
-
-        .text-warning {
-            color: #d97706 !important;
+            font-weight: 500;
+            color: #64748b;
+            text-transform: uppercase;
         }
     </style>
 }
 
+<div class="container-fluid px-0">
+    <div id="alertContainer"></div>
+
+    <div class="card main-card">
+        <div class="card-body p-0">
+
+            <!-- Top Bar -->
+            <div class="top-bar d-flex justify-content-between align-items-center px-4 py-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="page-icon">
+                        <i class="bi bi-receipt"></i>
+                    </div>
+                    <div>
+                        <div class="page-title">Fee Vouchers</div>
+                        <div class="page-subtitle">Payment Records</div>
+                    </div>
+                </div>
+                <a href="/feevoucher/form" class="btn btn-add">
+                    <i class="bi bi-plus-lg me-1"></i> Receive Payment
+                </a>
+            </div>
+
+            <div class="px-4 pb-4">
+
+                <!-- Filter Section -->
+                <div class="section-card mb-3">
+                    <div class="section-header">
+                        <i class="bi bi-funnel me-2"></i>Filters
+                    </div>
+                    <div class="section-body">
+                        <div class="row g-3">
+                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                                <label class="form-label">From Date</label>
+                                <input type="date" class="form-control" id="filterFromDate" />
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                                <label class="form-label">To Date</label>
+                                <input type="date" class="form-control" id="filterToDate" />
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                                <label class="form-label">Payment Method</label>
+                                <select class="form-select" id="filterPaymentMethod">
+                                    <option value="">All Methods</option>
+                                </select>
+                            </div>
+                            <div class="col-lg-3 col-md-6 col-12">
+                                <label class="form-label">Search</label>
+                                <input type="text" class="form-control" id="searchText" placeholder="Voucher #, Student, Roll No..." />
+                            </div>
+                            <div class="col-lg-3 col-md-6 col-12 d-flex align-items-end gap-2">
+                                <button type="button" class="btn btn-search" onclick="applyFilters()">
+                                    <i class="bi bi-search me-1"></i> Search
+                                </button>
+                                <button type="button" class="btn btn-clear" onclick="clearFilters()">
+                                    <i class="bi bi-x-lg me-1"></i> Clear
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary -->
+                <div class="summary-bar mb-3" id="summaryBar" style="display: none;">
+                    <div class="summary-item">
+                        <div class="label">Total Records</div>
+                        <div id="summaryCount">0</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="label">Total Amount</div>
+                        <div id="summaryAmount">0.00</div>
+                    </div>
+                </div>
+
+                <!-- Voucher Grid -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <i class="bi bi-table me-2"></i>Payment Records
+                        <span id="gridCount" class="badge-count ms-2"></span>
+                    </div>
+                    <div class="section-body p-0">
+                        <div class="table-responsive">
+                            <table class="table voucher-table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 50px;">Sr#</th>
+                                        <th>Voucher #</th>
+                                        <th>Student</th>
+                                        <th>Roll No</th>
+                                        <th>Payment Method</th>
+                                        <th>Date</th>
+                                        <th class="text-end">Amount Paid</th>
+                                        <th>Reference</th>
+                                        <th class="text-center" style="width: 120px;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="voucherBody">
+                                    <tr>
+                                        <td colspan="9" class="text-center text-muted py-4">
+                                            <i class="bi bi-receipt me-2"></i>Loading payment records...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
-        let isSyncing    = false;
-        let selectedFees = [];   // checked fee VIDs
+        let allVouchers = [];
 
         $(document).ready(function () {
-            setToday();
-            loadDropdowns();
-            loadVoucherNo();
+            const today = new Date();
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            $('#filterFromDate').val(firstDay.toISOString().split('T')[0]);
+            $('#filterToDate').val(today.toISOString().split('T')[0]);
+
+            loadPaymentMethods();
+            loadVouchers();
         });
 
-        // ── Today ─────────────────────────────────────────────────
-        function setToday() {
-            const today = new Date();
-            const yyyy  = today.getFullYear();
-            const mm    = String(today.getMonth() + 1).padStart(2, '0');
-            const dd    = String(today.getDate()).padStart(2, '0');
-            $('#paymentDate').val(`${yyyy}-${mm}-${dd}`);
-        }
+        async function loadPaymentMethods() {
+            const staticMethods = [
+                { id: 1, name: 'JazzCash' },
+                { id: 2, name: 'EasyPaisa' },
+                { id: 3, name: 'Cash' },
+                { id: 4, name: 'Bank Transfer' }
+            ];
 
-        // ── Voucher No ────────────────────────────────────────────
-        async function loadVoucherNo() {
+            let methods = staticMethods;
             try {
-                const r = await fetch(`${API_BASE}/FeeVoucher/nextvoucherno`);
+                const r = await fetch(`${API_BASE}/PaymentMethod/dropdown`);
                 if (r.ok) {
                     const data = await r.json();
-                    const no = data.voucherNo || data;
-                    $('#voucherNo').val(no);
-                    $('#voucherNoDisplay').text(no);
+                    if (data && data.length > 0) methods = data;
                 }
             } catch { }
-        }
 
-        // ── Search By Tabs ────────────────────────────────────────
-        function setSearchBy(type, btn) {
-            $('.search-tab').removeClass('active');
-            $(btn).addClass('active');
-
-            $('#fatherNameField, #cnicField').addClass('d-none');
-            $('#classField, #sectionField, #rollNoField, #studentField').show();
-
-            if (type === 'fatherName') {
-                $('#classField, #sectionField, #rollNoField, #studentField').hide();
-                $('#fatherNameField').removeClass('d-none');
-            } else if (type === 'cnic') {
-                $('#classField, #sectionField, #rollNoField, #studentField').hide();
-                $('#cnicField').removeClass('d-none');
-            }
-        }
-
-        // ── Dropdowns ─────────────────────────────────────────────
-        async function loadDropdowns() {
-            try {
-                const [classes] = await Promise.all([
-                    fetch(`${API_BASE}/class`).then(r => r.ok ? r.json() : [])
-                ]);
-                classes.forEach(c => $('#classId').append(`<option value="${c.vid}">${c.vName}</option>`));
-            } catch (e) { console.error(e); }
-        }
-
-        // ── Load Sections ─────────────────────────────────────────
-        async function loadSections() {
-            const classId = $('#classId').val();
-            $('#sectionId').find('option:not(:first)').remove().prop('disabled', true);
-            $('#rollNo, #studentId').find('option:not(:first)').remove();
-            if (!classId) return;
-
-            try {
-                const r = await fetch(`${API_BASE}/section/byClass/${classId}`);
-                if (r.ok) {
-                    const sections = await r.json();
-                    sections.forEach(s => $('#sectionId').append(`<option value="${s.vid}">${s.vName}</option>`));
-                    $('#sectionId').prop('disabled', false);
-                }
-            } catch (e) { console.error(e); }
-
-            await loadStudents();
-        }
-
-        // ── Load Students ─────────────────────────────────────────
-        async function loadStudents() {
-            const classId   = $('#classId').val()   || 0;
-            const sectionId = $('#sectionId').val() || 0;
-            $('#rollNo, #studentId').find('option:not(:first)').remove();
-
-            try {
-                const r = await fetch(`${API_BASE}/Student/students?classId=${classId}&sectionId=${sectionId}`);
-                if (r.ok) {
-                    const students = await r.json();
-                    students.forEach(s => {
-                        const roll = s.classRollNo || s.rollNo || '-';
-                        $('#rollNo').append(`<option value="${s.vid}">${roll}</option>`);
-                        $('#studentId').append(`<option value="${s.vid}" data-father="${s.fatherName || ''}">${s.name || '-'}</option>`);
-                    });
-                }
-            } catch (e) { console.error(e); }
-        }
-
-        // ── Sync Roll ↔ Student ───────────────────────────────────
-        function selectStudentByRoll() {
-            if (isSyncing) return;
-            isSyncing = true;
-            const val = $('#rollNo').val();
-            if (val) { $('#studentId').val(val); onStudentSelected(); }
-            isSyncing = false;
-        }
-
-        function selectRollByStudent() {
-            if (isSyncing) return;
-            isSyncing = true;
-            const val = $('#studentId').val();
-            if (val) $('#rollNo').val(val);
-            isSyncing = false;
-        }
-
-        // ── On Student Selected ───────────────────────────────────
-        async function onStudentSelected() {
-            selectRollByStudent();
-            const studentId = $('#studentId').val();
-            if (!studentId) {
-                $('#studentInfoRow').hide();
-                resetFeeGrid();
-                return;
-            }
-
-            const selectedOption = $('#studentId option:selected');
-            const fatherName     = selectedOption.data('father') || '';
-            const studentName    = selectedOption.text();
-
-            $('#infoStudentName').text(studentName);
-            $('#infoFatherName').text(fatherName || '—');
-            $('#infoStudentId').text(studentId);
-            $('#fatherName').val(fatherName);
-            $('#studentInfoRow').show();
-
-            await loadPendingFees(studentId);
-        }
-
-        // ── Load Pending Fees ─────────────────────────────────────
-        async function loadPendingFees(studentId) {
-            $('#feeGridBody').html('<tr><td colspan="11" class="text-center text-muted py-3"><span class="spinner-border spinner-border-sm me-2"></span>Loading fees...</td></tr>');
-            selectedFees = [];
-            updateTotals();
-
-            try {
-                const r = await fetch(`${API_BASE}/ApplyFee?studentId=${studentId}&dateFrom=2000-01-01&dateTo=2099-12-31`);
-                if (!r.ok) { resetFeeGrid('Failed to load fees'); return; }
-
-                const fees = await r.json();
-                const pending = fees.filter(f => !f.isClear);
-
-                if (pending.length === 0) {
-                    $('#feeGridBody').html('<tr><td colspan="11" class="text-center text-muted py-4"><i class="bi bi-check-circle text-success me-2"></i>No pending fees</td></tr>');
-                    $('#feeGridCount').text('');
-                    return;
-                }
-
-                $('#feeGridCount').text(pending.length);
-
-                let rows = '';
-                pending.forEach(f => {
-                    const month = new Date(f.vDate).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
-                    rows += `
-                        <tr id="feeRow_${f.vid}" data-vid="${f.vid}" data-pending="${f.pendingAmount || 0}">
-                            <td><input type="checkbox" class="fee-check" value="${f.vid}"
-                                       data-amount="${f.pendingAmount || 0}"
-                                       onchange="onFeeChecked(this)"></td>
-                            <td>${month}</td>
-                            <td>${f.studentName || '-'}</td>
-                            <td>${f.className   || '-'}</td>
-                            <td>${f.sectionName || '-'}</td>
-                            <td>${f.gradeName   || '-'}</td>
-                            <td>${f.feeTypeName || '-'}</td>
-                            <td class="text-end">${fmt(f.feeAmount)}</td>
-                            <td class="text-end text-success">${fmt(f.clearedAmount)}</td>
-                            <td class="text-end text-danger fw-bold">${fmt(f.pendingAmount)}</td>
-                            <td>${f.remarks || '-'}</td>
-                        </tr>`;
-                });
-                $('#feeGridBody').html(rows);
-
-                // Balance = total pending
-                const totalPending = pending.reduce((s, f) => s + (f.pendingAmount || 0), 0);
-                $('#infoBalance').text(fmt(totalPending));
-                $('#paymentBalance').val(fmt(totalPending));
-
-            } catch (e) {
-                console.error(e);
-                resetFeeGrid('Error loading fees');
-            }
-        }
-
-        // ── Fee Checkbox Logic ────────────────────────────────────
-        function onFeeChecked(chk) {
-            const row = $(chk).closest('tr');
-            if (chk.checked) {
-                row.addClass('selected-row');
-                selectedFees.push({ vid: chk.value, amount: parseFloat(chk.dataset.amount) || 0 });
-            } else {
-                row.removeClass('selected-row');
-                selectedFees = selectedFees.filter(f => f.vid !== chk.value);
-            }
-            updateTotals();
-        }
-
-        function toggleAllFees(masterChk) {
-            $('.fee-check').each(function () {
-                this.checked = masterChk.checked;
-                onFeeChecked(this);
+            const select = $('#filterPaymentMethod');
+            methods.forEach(pm => {
+                select.append(`<option value="${pm.id}">${pm.name}</option>`);
             });
         }
 
-        function selectAllFees()    { $('#selectAllCheck').prop('checked', true).trigger('change'); }
-        function clearFeeSelection(){ $('#selectAllCheck').prop('checked', false).trigger('change'); }
-
-        // ── Update Totals ─────────────────────────────────────────
-        function updateTotals() {
-            const total = selectedFees.reduce((s, f) => s + f.amount, 0);
-            $('#totalAmount').val(total.toFixed(2));
-            calcRemaining();
-        }
-
-        function calcRemaining() {
-            const total   = parseFloat($('#totalAmount').val())  || 0;
-            const paid    = parseFloat($('#paidAmount').val())   || 0;
-            const remaining = total - paid;
-            $('#remainingAmount').val(remaining.toFixed(2));
-            $('#remainingAmount').toggleClass('text-danger', remaining > 0)
-                                 .toggleClass('text-success', remaining <= 0);
-        }
-
-        // ── Search by Father / CNIC ───────────────────────────────
-        async function searchByFather() {
-            const name = $('#fatherNameSearch').val().trim();
-            if (!name) return;
-            // Implement as needed
-            toastWarning('Father name search — implement API');
-        }
-
-        async function searchByCnic() {
-            const cnic = $('#cnicSearch').val().trim();
-            if (!cnic) return;
-            toastWarning('CNIC search — implement API');
-        }
-
-        // ── Save ──────────────────────────────────────────────────
-        async function saveVoucher(printAfter) {
-            const studentId    = $('#studentId').val();
-            const paymentDate  = $('#paymentDate').val();
-            const paymentMethod= $('#paymentMethod').val();
-            const paidAmount   = parseFloat($('#paidAmount').val()) || 0;
-
-            if (!studentId)     { toastWarning('Please select a student'); return; }
-            if (!paymentDate)   { toastWarning('Please select date'); return; }
-            if (!paymentMethod) { toastWarning('Please select payment method'); return; }
-            if (selectedFees.length === 0) { toastWarning('Please select at least one fee'); return; }
-            if (paidAmount <= 0){ toastWarning('Please enter paid amount'); return; }
-
-            const payload = {
-                studentId:       parseInt(studentId),
-                paymentDate:     paymentDate,
-                paymentMethodId: parseInt(paymentMethod),
-                paidAmount:      paidAmount,
-                remarks:         $('#remarks').val(),
-                sendMessage:     $('#sendMessage').is(':checked'),
-                feeVids:         selectedFees.map(f => parseInt(f.vid))
-            };
+        async function loadVouchers() {
+            $('#voucherBody').html('<tr><td colspan="9" class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm me-2"></span>Loading...</td></tr>');
 
             try {
-                $('[onclick*="saveVoucher"]').prop('disabled', true);
-                const r = await fetch(`${API_BASE}/FeeVoucher`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                const result = await r.json();
-
+                const r = await fetch(`${API_BASE}/FeeVoucher`);
                 if (r.ok) {
-                    toastSuccess('Voucher saved successfully!');
-                    if (printAfter) {
-                        const printer = $('input[name="printerType"]:checked').val();
-                        window.open(`/feevoucher/print/${result.id}?printer=${printer}`, '_blank');
-                    }
-                    setTimeout(() => window.location.href = '/feevoucher', 1200);
+                    allVouchers = await r.json();
+                    applyFilters();
                 } else {
-                    toastError(result.message || 'Failed to save voucher');
+                    $('#voucherBody').html('<tr><td colspan="9" class="text-center text-muted py-4">Failed to load vouchers</td></tr>');
                 }
             } catch (e) {
-                console.error(e);
-                toastError('Error saving voucher');
-            } finally {
-                $('[onclick*="saveVoucher"]').prop('disabled', false);
+                console.error('Error loading vouchers:', e);
+                $('#voucherBody').html('<tr><td colspan="9" class="text-center text-muted py-4">Error loading vouchers</td></tr>');
             }
         }
 
-        // ── Helpers ───────────────────────────────────────────────
-        function resetFeeGrid(msg) {
-            const text = msg || 'Select a student to load fees';
-            $('#feeGridBody').html(`<tr><td colspan="11" class="text-center text-muted py-4"><i class="bi bi-person-x me-2"></i>${text}</td></tr>`);
-            $('#feeGridCount').text('');
-            selectedFees = [];
-            updateTotals();
+        function applyFilters() {
+            let filtered = [...allVouchers];
+
+            const fromDate = $('#filterFromDate').val();
+            const toDate = $('#filterToDate').val();
+            const paymentMethodId = $('#filterPaymentMethod').val();
+            const searchText = $('#searchText').val().toLowerCase().trim();
+
+            if (fromDate) {
+                filtered = filtered.filter(v => v.paymentDate && v.paymentDate.split('T')[0] >= fromDate);
+            }
+            if (toDate) {
+                filtered = filtered.filter(v => v.paymentDate && v.paymentDate.split('T')[0] <= toDate);
+            }
+            if (paymentMethodId) {
+                filtered = filtered.filter(v => v.paymentMethodId == paymentMethodId);
+            }
+            if (searchText) {
+                filtered = filtered.filter(v =>
+                    (v.voucherNumber && v.voucherNumber.toLowerCase().includes(searchText)) ||
+                    (v.studentName && v.studentName.toLowerCase().includes(searchText)) ||
+                    (v.rollNumber && v.rollNumber.toLowerCase().includes(searchText)) ||
+                    (v.challanNumber && v.challanNumber.toLowerCase().includes(searchText)) ||
+                    (v.transactionReference && v.transactionReference.toLowerCase().includes(searchText))
+                );
+            }
+
+            renderList(filtered);
+            updateSummary(filtered);
+        }
+
+        function renderList(items) {
+            const tbody = $('#voucherBody');
+            tbody.empty();
+
+            $('#gridCount').text(items.length > 0 ? items.length : '');
+
+            if (items.length === 0) {
+                tbody.html('<tr><td colspan="9" class="text-center text-muted py-4"><i class="bi bi-inbox me-2"></i>No payment records found</td></tr>');
+                return;
+            }
+
+            items.forEach((item, index) => {
+                const row = `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td><strong>${item.voucherNumber || '-'}</strong></td>
+                        <td>${item.studentName || '-'}</td>
+                        <td>${item.rollNumber || '-'}</td>
+                        <td>${item.paymentMethodName || '-'}</td>
+                        <td>${formatDate(item.paymentDate)}</td>
+                        <td class="text-end fw-bold text-success">${fmt(item.amountPaid)}</td>
+                        <td>${item.transactionReference || '-'}</td>
+                        <td class="text-center">
+                            <button type="button" class="btn-action btn-edit me-1" onclick="editVoucher(${item.id})" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button type="button" class="btn-action btn-print" onclick="printVoucher(${item.id})" title="Print">
+                                <i class="bi bi-printer"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.append(row);
+            });
+        }
+
+        function updateSummary(items) {
+            const total = items.reduce((s, v) => s + (v.amountPaid || 0), 0);
+            $('#summaryCount').text(items.length);
+            $('#summaryAmount').text(fmt(total));
+            $('#summaryBar').show();
+        }
+
+        function editVoucher(id) {
+            window.location.href = `/feevoucher/form/${id}`;
+        }
+
+        function printVoucher(id) {
+            window.open(`/feevoucher/print/${id}`, '_blank');
+        }
+
+        function clearFilters() {
+            const today = new Date();
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            $('#filterFromDate').val(firstDay.toISOString().split('T')[0]);
+            $('#filterToDate').val(today.toISOString().split('T')[0]);
+            $('#filterPaymentMethod').val('');
+            $('#searchText').val('');
+            applyFilters();
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const d = new Date(dateString);
+            return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
         }
 
         function fmt(val) {
