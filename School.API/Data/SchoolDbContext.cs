@@ -51,11 +51,12 @@ namespace School.API.Data
         // Accounts entities
         public DbSet<SMSFeeType> FeeTypes { get; set; }
         public DbSet<FeeStructure> FeeStructures { get; set; }
+        public DbSet<PaymentMethod> PaymentMethods { get; set; }
 
         // SMS entities
         public DbSet<SmsMessage> SmsMessages { get; set; }
 
-        // Keyless entities — for SP results
+        // Keyless entities ï¿½ for SP results
         public DbSet<ResponseDto> AcademicSessionYearResponses { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

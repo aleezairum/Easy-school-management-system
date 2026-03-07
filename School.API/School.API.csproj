@@ -66,27 +66,21 @@
   <ItemGroup>
     <Compile Remove="Controllers\11ClassController.cs" />
     <!-- Exclude old Accounts files but keep FeeType -->
-    <Compile Remove="Data\DBModels\FeeManagement\PaymentMethod.cs" />
     <Compile Remove="Data\DBModels\FeeManagement\ChallanVoucher.cs" />
     <Compile Remove="Data\DBModels\FeeManagement\FeeVoucher.cs" />
     <Compile Remove="Controllers\FeeManagement\PaymentMethodController.cs" />
     <Compile Remove="Controllers\FeeManagement\ChallanVoucherController.cs" />
     <Compile Remove="Controllers\FeeManagement\FeeVoucherController.cs" />
-    <Compile Remove="DTOs\FeeManagement\PaymentMethod*" />
     <Compile Remove="DTOs\FeeManagement\ChallanVoucher*" />
     <Compile Remove="DTOs\FeeManagement\FeeVoucher*" />
     <Compile Remove="Data\DBModels\HR\Employee.cs" />
     <Compile Remove="DTOs\EmployeeDto.cs" />
-    <Compile Remove="Repositories\Interfaces\FeeManagement\IPaymentMethodRepository.cs" />
     <Compile Remove="Repositories\Interfaces\FeeManagement\IChallanVoucherRepository.cs" />
     <Compile Remove="Repositories\Interfaces\FeeManagement\IFeeVoucherRepository.cs" />
-    <Compile Remove="Repositories\Implementations\FeeManagement\PaymentMethodRepository.cs" />
     <Compile Remove="Repositories\Implementations\FeeManagement\ChallanVoucherRepository.cs" />
     <Compile Remove="Repositories\Implementations\FeeManagement\FeeVoucherRepository.cs" />
-    <Compile Remove="Services\Interfaces\FeeManagement\IPaymentMethodService.cs" />
     <Compile Remove="Services\Interfaces\FeeManagement\IChallanVoucherService.cs" />
     <Compile Remove="Services\Interfaces\FeeManagement\IFeeVoucherService.cs" />
-    <Compile Remove="Services\Implementations\FeeManagement\PaymentMethodService.cs" />
     <Compile Remove="Services\Implementations\FeeManagement\ChallanVoucherService.cs" />
     <Compile Remove="Services\Implementations\FeeManagement\FeeVoucherService.cs" />
   </ItemGroup>
