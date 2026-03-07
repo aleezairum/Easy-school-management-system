@@ -38,5 +38,9 @@ namespace School.API.Services.Implementations.Academic
             => _repo.ToggleStatusAsync(vid, userId, userIp);
         public Task<ResponseDto> AvailAcademyAsync(int vid, bool IsAvailAcademy, int userId, string userIp)
             => _repo.AvailAcademyAsync(vid, IsAvailAcademy, userId, userIp);
+
+        public Task<List<StudentComboDto>> GetStudentsForComboAsync(int classId, int sectionId)
+            => _repo.GetStudentsForComboAsync(classId, sectionId); 
+
     }
 }

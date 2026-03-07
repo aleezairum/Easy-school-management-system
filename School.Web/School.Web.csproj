@@ -21,4 +21,11 @@
     <PackageReference Include="Microsoft.VisualStudio.TextManager.Interop.9.0" Version="17.14.40260" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Update="Views\Fee\ApplyFeeList.cshtml">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

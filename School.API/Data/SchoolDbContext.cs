@@ -62,6 +62,16 @@ namespace School.API.Data
         {
             base.OnModelCreating(modelBuilder);
 
+
+            modelBuilder.Entity<StudentFeePreviewResultDto>().HasNoKey();
+            modelBuilder.Entity<ResponseDto>().HasNoKey();
+
+            // SchoolDbContext.cs — OnModelCreating
+            modelBuilder.Entity<StudentComboDto>().HasNoKey();
+
+            // SchoolDbContext.cs — OnModelCreating
+            modelBuilder.Entity<StudentFeeListDto>().HasNoKey();
+
             //  Keyless entities (SP result DTOs) 
             modelBuilder.Entity<ResponseDto>().HasNoKey();
             modelBuilder.Entity<AcademicSessionYearSaveDto>().HasNoKey();

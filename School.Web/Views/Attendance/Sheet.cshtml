@@ -225,18 +225,17 @@
                                 <th>Student Name</th>
                                 <th>Father's Name</th>
                                 <th style="width: 120px;">Contact</th>
-                                <th class="text-center" style="width: 70px;"></th>
-                                <th style="width: 70px;"></th>
-                                <th style="width: 70px;"></th>
-                                <th style="width: 70px;"></th>
-                                <th style="width: 70px;"></th>
-                                <th style="width: 70px;"></th>
-                                <th style="width: 150px;"></th>
+                                <th class="text-center" style="width: 60px;"></th>
+                                <th style="width: 60px;"></th>
+                                <th style="width: 60px;"></th>
+                                <th style="width: 60px;"></th>
+                                <th style="width: 60px;"></th>
+                                <th style="width: 60px;"></th>
                             </tr>
                         </thead>
                         <tbody id="attendanceBody">
                             <tr>
-                                <td colspan="12" class="text-center text-muted py-4">
+                                <td colspan="11" class="text-center text-muted py-4">
                                     Select a Class and Section, then click Search to load students.
                                 </td>
                             </tr>
@@ -344,7 +343,7 @@
         tbody.empty();
 
         if (items.length === 0) {
-            tbody.html('<tr><td colspan="12" class="text-center text-muted py-4">No students found.</td></tr>');
+            tbody.html('<tr><td colspan="11" class="text-center text-muted py-4">No students found.</td></tr>');
             return;
         }
 

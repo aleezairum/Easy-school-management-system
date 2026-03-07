@@ -101,4 +101,13 @@ namespace School.API.DTOs.Academic
         public DateTime? UpdatedDate { get; set; }
         public string? UpdatedIp { get; set; }
     }
+
+    public class StudentComboDto
+    {
+        public int VID { get; set; }
+        public string RollNo { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string? Name_Urdu { get; set; }
+        public string? ClassRollNo { get; set; }
+    }
 }

@@ -34,6 +34,13 @@ public class StudentController : ControllerBase
         return record == null ? NotFound() : Ok(record);
     }
 
+    [HttpGet("students")]
+    public async Task<IActionResult> GetStudents([FromQuery] int classId, [FromQuery] int sectionId)
+    {
+        var result = await _service.GetStudentsForComboAsync(classId, sectionId);
+        return Ok(result);
+    }
+
     [HttpPost]
     public async Task<IActionResult> Save(StudentSaveDto dto)
     {

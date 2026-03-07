@@ -255,5 +255,18 @@ namespace School.API.Repositories.Implementations.Academic
             };
         }
 
+        public async Task<List<StudentComboDto>> GetStudentsForComboAsync(int classId, int sectionId)
+        {
+            return await _context
+                .Set<StudentComboDto>()
+                .FromSqlRaw(
+                    "EXEC SpFillCombo_SMSStudent @ClassID={0}, @SectionID={1}",
+                    classId,
+                    sectionId)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
+
     }
 }

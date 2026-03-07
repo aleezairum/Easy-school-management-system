@@ -15,5 +15,6 @@ namespace School.API.Services.Interfaces.Academic
         Task<ResponseDto?> DeleteByIdAsync(int id);
         Task<ResponseDto> ToggleStatusAsync(int vid, int userId, string userIp);
         Task<ResponseDto> AvailAcademyAsync(int vid, bool IsAvailAcademy, int userId, string userIp);
+        Task<List<StudentComboDto>> GetStudentsForComboAsync(int classId, int sectionId);
     }
 }
