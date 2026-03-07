@@ -64,6 +64,22 @@ namespace School.API.Repositories.Implementations.Academic
             var result = resultList.FirstOrDefault();
             return result;
         }
+        public async Task<ResponseDto> AvailAcademyAsync(int vid, bool IsAvailAcademy, int userId, string userIp)
+        {
+            var resultList = await _context
+                .Set<ResponseDto>()
+                .FromSqlRaw(
+                    "EXEC SpAvailAcademy_SMSStudent @StudentID={0}, @IsAvailAcademy={1}, @UserID={2}, @UserIP={3}",
+                    vid,
+                    IsAvailAcademy,
+                    userId,
+                    userIp)
+                .AsNoTracking()
+                .ToListAsync();
+
+            var result = resultList.FirstOrDefault();
+            return result;
+        }
 
         public async Task<ResponseDto> SaveAsync(StudentSaveDto dto, int userId, string userIp)
         {
@@ -185,5 +201,72 @@ namespace School.API.Repositories.Implementations.Academic
                 ReturnMessage = "No response from stored procedure"
             };
         }
+        public async Task<ResponseDto> GradeChangeAsync(string StudentIDs, int GradeID, string GradeChangeDescription, int userId, string userIp)
+        {
+            var parameters = new[]
+            {
+                new SqlParameter("@VIDs",      StudentIDs),
+                new SqlParameter("@GradeID",     GradeID),
+                new SqlParameter("@GradeChangeDescription",     GradeChangeDescription),
+                new SqlParameter("@UserID",         userId),
+                new SqlParameter("@UserIP",         (object?)userIp             ?? DBNull.Value)
+    };
+
+            var resultList = await _context
+                .Set<ResponseDto>()
+                .FromSqlRaw(
+                    @"EXEC SpGradeChange_SMSStudentAcademic @VIDs, @GradeID, GradeChangeDescription,@UserID, @UserIP",
+                    parameters)
+                .AsNoTracking()
+                .ToListAsync();
+
+            return resultList.FirstOrDefault() ?? new ResponseDto
+            {
+                VID = 0,
+                ReturnCode = -1,
+                ReturnMessage = "No response from stored procedure"
+            };
+        }
+
+        public async Task<ResponseDto> FeeChangeAsync(string StudentIDs, Decimal Fee, string FeeChangeDescription, int userId, string userIp)
+        {
+            var parameters = new[]
+            {
+                new SqlParameter("@VIDs",      StudentIDs),
+                new SqlParameter("@Fee",     Fee),
+                new SqlParameter("@FeeChangeDescription",     FeeChangeDescription),
+                new SqlParameter("@UserID",         userId),
+                new SqlParameter("@UserIP",         (object?)userIp             ?? DBNull.Value)
+    };
+
+            var resultList = await _context
+                .Set<ResponseDto>()
+                .FromSqlRaw(
+                    @"EXEC SpFeeChange_SMSStudentAcademic @VIDs, @Fee, @FeeChangeDescription,@UserID, @UserIP",
+                    parameters)
+                .AsNoTracking()
+                .ToListAsync();
+
+            return resultList.FirstOrDefault() ?? new ResponseDto
+            {
+                VID = 0,
+                ReturnCode = -1,
+                ReturnMessage = "No response from stored procedure"
+            };
+        }
+
+        public async Task<List<StudentComboDto>> GetStudentsForComboAsync(int classId, int sectionId)
+        {
+            return await _context
+                .Set<StudentComboDto>()
+                .FromSqlRaw(
+                    "EXEC SpFillCombo_SMSStudent @ClassID={0}, @SectionID={1}",
+                    classId,
+                    sectionId)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
+
     }
 }

@@ -9,18 +9,19 @@
     <div class="card" style="border-radius: 16px; border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
         <div class="card-body p-4">
             <div class="d-flex justify-content-end mb-3">
-                <a href="/feevoucher" class="btn btn-secondary">
+                <a href="/feeList" class="btn btn-secondary">
                     <i class="bi bi-arrow-left me-1"></i> Back
                 </a>
             </div>
-            <!-- Top Section - Application Details -->
+
+            <!-- Top Section -->
             <div class="filter-section" style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
                 <div class="row g-3 align-items-end">
                     <div class="col-lg-3 col-md-4 col-sm-6 col-12">
                         <label for="monthRange" class="form-label">Month Range <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="monthRange" placeholder="Select month range" required readonly style="background: white; cursor: pointer;" />
                     </div>
-                    <div class="col-lg-4 col-md-6 col-12">
+                    <div class="col-lg-5 col-md-6 col-12">
                         <label class="form-label">Choose</label>
                         <div class="d-flex gap-3 pt-2">
                             <div class="form-check">
@@ -67,7 +68,7 @@
                     </div>
                     <div class="col-lg-3 col-md-4 col-sm-6 col-12" id="studentField">
                         <label for="studentId" class="form-label">Student</label>
-                        <select class="form-select" id="studentId">
+                        <select class="form-select" id="studentId" onchange="selectRollByStudent()">
                             <option value="">-- Select Student --</option>
                         </select>
                     </div>
@@ -78,9 +79,17 @@
                         </select>
                     </div>
                     <div class="col-lg-2 col-md-4 col-sm-6 col-12">
-                        <label for="filterFeeType" class="form-label">Fee Type</label>
+                        <label for="filterFeeType" class="form-label">Fee Type <span class="text-danger">*</span></label>
                         <select class="form-select" id="filterFeeType">
                             <option value="">-- All Fee Types --</option>
+                        </select>
+                    </div>
+                    <!-- NEW: Avail Academy Filter -->
+                    <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                        <label for="filterAvailAcademy" class="form-label">Avail Academy</label>
+                        <select class="form-select" id="filterAvailAcademy">
+                            <option value="0">-- All --</option>
+                            <option value="1">Yes</option>
                         </select>
                     </div>
                     <div class="col-lg-2 col-md-4 col-sm-6 col-12">
@@ -98,18 +107,19 @@
                     <table class="table table-hover" id="previewTable">
                         <thead>
                             <tr style="background: #f8fafc;">
-                                <th style="width: 60px;">Sr#</th>
+                                <th style="width: 50px;">Sr#</th>
                                 <th>Class</th>
                                 <th>Section</th>
                                 <th>Roll No</th>
                                 <th>Student Name</th>
                                 <th>Grade</th>
+                                <th>Avail Academy</th>
                                 <th style="width: 130px;">Fee</th>
                             </tr>
                         </thead>
                         <tbody id="previewBody">
                             <tr>
-                                <td colspan="7" class="text-center text-muted py-4">Select options and click Preview to see students</td>
+                                <td colspan="8" class="text-center text-muted py-4">Select options and click Preview to see students</td>
                             </tr>
                         </tbody>
                     </table>
@@ -139,293 +149,346 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/style.css">
     <style>
-        .flatpickr-monthSelect-month.selected, .flatpickr-monthSelect-month.startRange, .flatpickr-monthSelect-month.endRange {
+        .flatpickr-monthSelect-month.selected,
+        .flatpickr-monthSelect-month.startRange,
+        .flatpickr-monthSelect-month.endRange {
             background: #008649 !important;
             border-color: #008649 !important;
         }
+
         .flatpickr-monthSelect-month.inRange {
             background: rgba(0,134,73,0.15) !important;
+        }
+
+        .badge-academy-yes {
+            background-color: #d1fae5;
+            color: #065f46;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-academy-no {
+            background-color: #f1f5f9;
+            color: #64748b;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
         }
     </style>
 }
 
 @section Scripts {
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/index.js"></script>
-<script>
-    let previewStudents = [];
-    let monthPicker = null;
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/index.js"></script>
+    <script>
+        let previewStudents = [];
+        let monthPicker = null;
 
-    $(document).ready(function () {
-        monthPicker = flatpickr('#monthRange', {
-            plugins: [new monthSelectPlugin({ shorthand: true, dateFormat: 'M Y', altFormat: 'M Y' })],
-            mode: 'range',
-            dateFormat: 'Y-m',
-            altInput: true,
-            altFormat: 'M Y',
-            defaultDate: [new Date(), new Date()],
-            onChange: function(dates, dateStr) {
-                // dates array contains from/to
-            }
+        $(document).ready(function () {
+            monthPicker = flatpickr('#monthRange', {
+                plugins: [new monthSelectPlugin({ shorthand: true, dateFormat: 'M Y', altFormat: 'M Y' })],
+                mode: 'range',
+                dateFormat: 'Y-m',
+                altInput: true,
+                altFormat: 'M Y',
+                defaultDate: [new Date(), new Date()],
+                onChange: function (dates, dateStr) { }
+            });
+            loadDropdowns();
+            toggleChoiceFields();
+            loadStudents();
         });
-        loadDropdowns();
-        toggleChoiceFields();
-    });
 
-    async function loadDropdowns() {
-        try {
-            const [classes, feeTypes, grades] = await Promise.all([
+        async function loadDropdowns() {
+            try {
+                const [classes, feeTypes, grades] = await Promise.all([
                     fetch(`${API_BASE}/class`).then(r => r.ok ? r.json() : []),
                     fetch(`${API_BASE}/feetype`).then(r => r.ok ? r.json() : []),
                     fetch(`${API_BASE}/AcademicGrade`).then(r => r.ok ? r.json() : [])
-            ]);
+                ]);
 
-            const classSelect = $('#classId');
-            classSelect.find('option:not(:first)').remove();
-            classes.forEach(c => {
-                classSelect.append(`<option value="${c.vid}">${c.vName}</option>`);
-            });
+                const classSelect = $('#classId');
+                classSelect.find('option:not(:first)').remove();
+                classes.forEach(c => classSelect.append(`<option value="${c.vid}">${c.vName}</option>`));
 
-            const filterFeeType = $('#filterFeeType');
-            filterFeeType.find('option:not(:first)').remove();
-            feeTypes.forEach(f => {
-                filterFeeType.append(`<option value="${f.vid}">${f.vName}</option>`);
-            });
+                const filterFeeType = $('#filterFeeType');
+                filterFeeType.find('option:not(:first)').remove();
+                feeTypes.forEach(f => filterFeeType.append(`<option value="${f.vid}">${f.vName}</option>`));
 
-            const gradeSelect = $('#filterGrade');
-            gradeSelect.find('option:not(:first)').remove();
-            grades.forEach(g => {
-                gradeSelect.append(`<option value="${g.vid}">${g.vName}</option>`);
-            });
-        } catch (error) {
-            console.error('Error loading dropdowns:', error);
-        }
-    }
+                const gradeSelect = $('#filterGrade');
+                gradeSelect.find('option:not(:first)').remove();
+                grades.forEach(g => gradeSelect.append(`<option value="${g.vid}">${g.vName}</option>`));
 
-    function toggleChoiceFields() {
-        const choice = $('input[name="applyChoice"]:checked').val();
-
-        $('#classField').toggle(choice !== 'all');
-        $('#sectionField').toggle(choice === 'section' || choice === 'student');
-        $('#rollNoField').toggle(choice === 'student');
-        $('#studentField').toggle(choice === 'student');
-
-        // Reset fields
-        if (choice === 'all') {
-            $('#classId').val('');
-        }
-        if (choice === 'class' || choice === 'all') {
-            $('#sectionId').val('').prop('disabled', true);
-        }
-        if (choice !== 'student') {
-            $('#rollNo').val('');
-            $('#studentId').val('');
-        }
-    }
-
-    async function loadSections() {
-        const classId = $('#classId').val();
-        const sectionSelect = $('#sectionId');
-        sectionSelect.find('option:not(:first)').remove();
-        sectionSelect.prop('disabled', true);
-
-        if (!classId) return;
-
-        try {
-            const response = await fetch(`${API_BASE}/section/byClass/${classId}`);
-            if (response.ok) {
-                const sections = await response.json();
-                sections.forEach(s => {
-                    sectionSelect.append(`<option value="${s.vid}">${s.vName}</option>`);
-                });
-                sectionSelect.prop('disabled', false);
+            } catch (error) {
+                console.error('Error loading dropdowns:', error);
             }
-        } catch (error) {
-            console.error('Error loading sections:', error);
         }
-    }
 
-    async function loadStudents() {
-        const classId = $('#classId').val();
-        const sectionId = $('#sectionId').val();
-        const rollSelect = $('#rollNo');
-        const studentSelect = $('#studentId');
+        function toggleChoiceFields() {
+            const choice = $('input[name="applyChoice"]:checked').val();
 
-        rollSelect.find('option:not(:first)').remove();
-        studentSelect.find('option:not(:first)').remove();
+            $('#classField').toggle(choice !== 'all');
+            $('#sectionField').toggle(choice === 'section' || choice === 'student');
+            $('#rollNoField').toggle(choice === 'student');
+            $('#studentField').toggle(choice === 'student');
 
-        if (!classId || !sectionId) return;
+            if (choice === 'all') $('#classId').val('');
+            if (choice === 'class' || choice === 'all') $('#sectionId').val('').prop('disabled', true);
+            if (choice !== 'student') { $('#rollNo').val(''); $('#studentId').val(''); }
+        }
 
-        try {
-            const response = await fetch(`${API_BASE}/Student/byClassSection?classId=${classId}&sectionId=${sectionId}`);
-            if (response.ok) {
+                async function loadSections() {
+            const classId = $('#classId').val();
+            const sectionSelect = $('#sectionId');
+            sectionSelect.find('option:not(:first)').remove();
+            sectionSelect.prop('disabled', true);
+
+            // Reset section then reload students by class only
+            $('#sectionId').val('');
+            await loadStudents();  // ← load by class only (sectionId = 0)
+
+            if (!classId) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/section/byClass/${classId}`);
+                if (response.ok) {
+                    const sections = await response.json();
+                    sections.forEach(s => sectionSelect.append(`<option value="${s.vid}">${s.vName}</option>`));
+                    sectionSelect.prop('disabled', false);
+                }
+            } catch (error) {
+                console.error('Error loading sections:', error);
+            }
+        }
+               async function loadStudents() {
+            const classId   = $('#classId').val()   || 0;
+            const sectionId = $('#sectionId').val() || 0;
+
+            const rollSelect    = $('#rollNo');
+            const studentSelect = $('#studentId');
+
+            rollSelect.find('option:not(:first)').remove();
+            studentSelect.find('option:not(:first)').remove();
+
+            try {
+                const response = await fetch(`${API_BASE}/Student/students?classId=${classId}&sectionId=${sectionId}`);
+
+                if (response.ok) {
+                    const students = await response.json();
+
+                    if (students.length === 0) return;
+
+                    students.forEach(s => {
+                        rollSelect.append(
+                            `<option value="${s.vid}" data-name="${s.name}">
+                                ${s.classRollNo || s.rollNo || '-'}
+                            </option>`
+                        );
+                        studentSelect.append(
+                            `<option value="${s.vid}" data-roll="${s.classRollNo || s.rollNo}">
+                                ${s.name || '-'}
+                            </option>`
+                        );
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading students:', error);
+            }
+        }
+                let isSyncing = false;
+
+        // ── Sync Roll → Student ───────────────────────────────────────────
+        function selectStudentByRoll() {
+            if (isSyncing) return;
+            isSyncing = true;
+            const val = $('#rollNo').val();
+            if (val) $('#studentId').val(val).trigger('change');
+            isSyncing = false;
+        }
+
+        // ── Sync Student → Roll ───────────────────────────────────────────
+        function selectRollByStudent() {
+            if (isSyncing) return;
+            isSyncing = true;
+            const val = $('#studentId').val();
+            if (val) $('#rollNo').val(val).trigger('change');
+            isSyncing = false;
+        }
+        async function loadPreview() {
+            const choice      = $('input[name="applyChoice"]:checked').val();
+            const classId     = parseInt($('#classId').val())           || 0;
+            const sectionId   = parseInt($('#sectionId').val())         || 0;
+            const studentId   = parseInt($('#studentId').val())         || 0;
+            const gradeId     = parseInt($('#filterGrade').val())        || 0;
+            const feeTypeId   = parseInt($('#filterFeeType').val())      || 0;
+            const availAcademy = parseInt($('#filterAvailAcademy').val()) || 0;
+
+            // FeeTypeID is required by the stored procedure
+            if (!feeTypeId) {
+                toastWarning('Please select a Fee Type');
+                return;
+            }
+
+            // Validate per choice
+            if (choice === 'student' && !studentId) { toastWarning('Please select a Student'); return; }
+            if (choice === 'section' && (!classId || !sectionId)) { toastWarning('Please select Class and Section'); return; }
+            if (choice === 'class'   && !classId)  { toastWarning('Please select a Class'); return; }
+
+            previewStudents = [];
+            $('#previewBody').html('<tr><td colspan="8" class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm me-2"></span>Loading...</td></tr>');
+
+            try {
+                const payload = {
+                    classID:        choice === 'all' ? 0 : classId,
+                    sectionID:      (choice === 'section' || choice === 'student') ? sectionId : 0,
+                    studentID:      choice === 'student' ? studentId : 0,
+                    gradeID:        gradeId,
+                    isAvailAcademy: availAcademy,
+                    feeTypeID:      feeTypeId
+                };
+
+                const response = await fetch(`${API_BASE}/ApplyFee/preview`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    toastError('Failed to load preview');
+                    renderPreviewGrid();
+                    return;
+                }
+
                 const students = await response.json();
-                students.forEach(s => {
-                    rollSelect.append(`<option value="${s.id}" data-name="${s.studentName || s.name}">${s.rollNo || '-'}</option>`);
-                    studentSelect.append(`<option value="${s.id}" data-roll="${s.rollNo}">${s.studentName || s.name}</option>`);
-                });
-            }
-        } catch (error) {
-            console.error('Error loading students:', error);
-        }
-    }
 
-    function selectStudentByRoll() {
-        const rollOption = $('#rollNo option:selected');
-        const studentId = rollOption.val();
-        if (studentId) {
-            $('#studentId').val(studentId);
-        }
-    }
+            previewStudents = students.map(s => ({
+            id:             s.studentID,
+            className:      s.class       || '-',
+            sectionName:    s.section     || '-',
+            rollNo:         s.rollNo      || '-',
+            studentName:    s.studentName || '-',
+            gradeName:      s.grade       || '-',
+            isAvailAcademy: s.isAvailAcademy,
+            fee:            s.fee         || 0,
+            // ── Required for SP ──────────────────
+            sectionID:      s.sectionID   || 0,
+            gradeID:        s.gradeID     || 0
+        }));
 
-    async function loadPreview() {
-        const choice = $('input[name="applyChoice"]:checked').val();
-        const classId = $('#classId').val();
-        const sectionId = $('#sectionId').val();
-        const studentId = $('#studentId').val();
-        const filterGrade = $('#filterGrade').val();
-
-        previewStudents = [];
-
-        try {
-            let rawStudents = [];
-
-            if (choice === 'student' && studentId) {
-                // Single student — fetch all and find by id
-                const response = await fetch(`${API_BASE}/Student`);
-                if (response.ok) {
-                    const allStudents = await response.json();
-                    const found = allStudents.find(s => String(s.vid || s.id) === String(studentId));
-                    if (found) rawStudents = [found];
-                }
-            } else if (choice === 'section' && classId && sectionId) {
-                const response = await fetch(`${API_BASE}/Student`);
-                if (response.ok) {
-                    const allStudents = await response.json();
-                    rawStudents = allStudents.filter(s =>
-                        String(s.classID) === String(classId) &&
-                        String(s.sectionID) === String(sectionId) &&
-                        s.statusID === 1 && s.isActive === true
-                    );
-                }
-            } else if (choice === 'class' && classId) {
-                const response = await fetch(`${API_BASE}/Student`);
-                if (response.ok) {
-                    const allStudents = await response.json();
-                    rawStudents = allStudents.filter(s =>
-                        String(s.classID) === String(classId) &&
-                        s.statusID === 1 && s.isActive === true
-                    );
-                }
-            } else if (choice === 'all') {
-                const response = await fetch(`${API_BASE}/Student`);
-                if (response.ok) {
-                    const allStudents = await response.json();
-                    rawStudents = allStudents.filter(s => s.statusID === 1 && s.isActive === true);
-                }
-            }
-
-            // Apply grade filter
-            if (filterGrade) {
-                rawStudents = rawStudents.filter(s => String(s.gradeID) === String(filterGrade));
-            }
-
-            // Map to preview format
-            previewStudents = rawStudents.map(s => ({
-                id: s.vid || s.id,
-                className: s.className || '-',
-                sectionName: s.sectionName || '-',
-                rollNo: s.rollNo || '-',
-                studentName: s.studentName || s.name || '-',
-                gradeName: s.gradeName || '-',
-                fee: s.fee || 0
-            }));
-
-            // Sort by roll number
-            previewStudents.sort((a, b) => (parseInt(a.rollNo) || 0) - (parseInt(b.rollNo) || 0));
-
-            renderPreviewGrid();
-        } catch (error) {
-            console.error('Error loading preview:', error);
-            toastError('Error loading preview');
-        }
-    }
-
-    function renderPreviewGrid() {
-        const tbody = $('#previewBody');
-        tbody.empty();
-
-        if (previewStudents.length === 0) {
-            tbody.html('<tr><td colspan="7" class="text-center text-muted py-4">No students found for selected criteria</td></tr>');
-            return;
-        }
-
-        previewStudents.forEach((student, index) => {
-            const row = `
-                <tr>
-                    <td>${index + 1}</td>
-                    <td>${student.className}</td>
-                    <td>${student.sectionName}</td>
-                    <td><strong>${student.rollNo}</strong></td>
-                    <td>${student.studentName}</td>
-                    <td>${student.gradeName}</td>
-                    <td><input type="number" class="form-control form-control-sm fee-input" data-index="${index}" value="${student.fee}" min="0" onchange="updateStudentFee(${index}, this.value)" /></td>
-                </tr>
-            `;
-            tbody.append(row);
-        });
-    }
-
-    function updateStudentFee(index, value) {
-        previewStudents[index].fee = parseFloat(value) || 0;
-    }
-
-    async function applyFee() {
-        const selectedDates = monthPicker.selectedDates;
-        const description = $('#description').val();
-
-        if (!selectedDates || selectedDates.length === 0) {
-            toastWarning('Please select Month Range');
-            return;
-        }
-
-        const monthFrom = selectedDates[0].toISOString().slice(0, 7);
-        const monthTo = selectedDates.length > 1 ? selectedDates[1].toISOString().slice(0, 7) : monthFrom;
-
-        if (previewStudents.length === 0) {
-            toastWarning('Please preview and select students first');
-            return;
-        }
-
-        const feeData = {
-            monthFrom: monthFrom,
-            monthTo: monthTo,
-            description: description,
-            studentIds: previewStudents.map(s => s.id),
-            studentFees: previewStudents.map(s => ({ studentId: s.id, amount: s.fee }))
-        };
-
-        try {
-            const response = await fetch(`${API_BASE}/ChallanVoucher/apply`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(feeData)
-            });
-
-            if (response.ok) {
-                toastSuccess(`Fee applied successfully to ${previewStudents.length} student(s)!`);
-                previewStudents = [];
                 renderPreviewGrid();
-            } else {
-                const error = await response.text();
-                toastError(error || 'Failed to apply fee');
+
+                if (previewStudents.length === 0) toastWarning('No students found for selected criteria');
+
+            } catch (error) {
+                console.error('Error loading preview:', error);
+                toastError('Error loading preview');
+                renderPreviewGrid();
             }
-        } catch (error) {
-            console.error('Error applying fee:', error);
-            toastError('Error applying fee');
         }
-    }
 
+        function renderPreviewGrid() {
+            const tbody = $('#previewBody');
+            tbody.empty();
 
-</script>
+            if (previewStudents.length === 0) {
+                tbody.html('<tr><td colspan="8" class="text-center text-muted py-4">No students found for selected criteria</td></tr>');
+                return;
+            }
+
+            previewStudents.forEach((student, index) => {
+                const academyBadge = student.isAvailAcademy
+                    ? `<span class="badge-academy-yes">Yes</span>`
+                    : `<span class="badge-academy-no">No</span>`;
+
+                tbody.append(`
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${student.className}</td>
+                        <td>${student.sectionName}</td>
+                        <td><strong>${student.rollNo}</strong></td>
+                        <td>${student.studentName}</td>
+                        <td>${student.gradeName}</td>
+                        <td>${academyBadge}</td>
+                        <td>
+                            <input type="number"
+                                   class="form-control form-control-sm fee-input"
+                                   data-index="${index}"
+                                   value="${student.fee}"
+                                   min="0"
+                                   onchange="updateStudentFee(${index}, this.value)" />
+                        </td>
+                    </tr>
+                `);
+            });
+        }
+
+        function updateStudentFee(index, value) {
+            previewStudents[index].fee = parseFloat(value) || 0;
+        }
+
+                async function applyFee() {
+            const selectedDates = monthPicker.selectedDates;
+            const description   = $('#description').val();
+            const feeTypeId     = parseInt($('#filterFeeType').val()) || 0;
+
+            if (!selectedDates || selectedDates.length === 0) {
+                toastWarning('Please select Month Range'); return;
+            }
+            if (!feeTypeId) {
+                toastWarning('Please select a Fee Type'); return;
+            }
+            if (previewStudents.length === 0) {
+                toastWarning('Please preview students first'); return;
+            }
+
+            const monthFrom = selectedDates[0].toISOString().slice(0, 7);
+            const monthTo   = selectedDates.length > 1
+                                ? selectedDates[1].toISOString().slice(0, 7)
+                                : monthFrom;
+
+            const feeData = {
+                monthFrom:   monthFrom,
+                monthTo:     monthTo,
+                description: description,
+                feeTypeID:   feeTypeId,
+                studentFees: previewStudents.map(s => ({
+                    studentId: s.id,
+                    sectionID: s.sectionID,    // ← preview se aa raha
+                    gradeID:   s.gradeID,      // ← preview se aa raha
+                    sessionID: 1,    
+                    amount:    s.fee
+                }))
+            };
+            console.log('Fee payload:', JSON.stringify(feeData, null, 2));
+
+            try {
+                $('#btnApply').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Applying...');
+
+                const response = await fetch(`${API_BASE}/ApplyFee/apply`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(feeData)
+                });
+
+                const result = await response.json();
+
+                if (result.totalSaved > 0) {
+                    toastSuccess(`Applied: ${result.totalSaved} | Skipped: ${result.totalSkipped} | Failed: ${result.totalFailed}`);
+                    previewStudents = [];
+                    renderPreviewGrid();
+                } else {
+                    toastError(`No fees applied. Skipped: ${result.totalSkipped} | Failed: ${result.totalFailed}`);
+                }
+
+            } catch (error) {
+                console.error('Error applying fee:', error);
+                toastError('Error applying fee');
+            } finally {
+                $('#btnApply').prop('disabled', false).html('<i class="bi bi-check-lg me-1"></i> Apply');
+            }
+        }
+    </script>
 }

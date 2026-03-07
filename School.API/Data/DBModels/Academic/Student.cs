@@ -2,6 +2,11 @@ using System.ComponentModel.DataAnnotations;
 
 namespace School.API.Data.DBModels.Accounts
 {
+    public class AvailAcademyRequest
+    {
+        public int StudentId { get; set; }
+        public bool IsAvailAcademy { get; set; }
+    }
     public class Student
     {
         [Key]

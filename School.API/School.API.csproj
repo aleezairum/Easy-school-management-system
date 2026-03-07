@@ -69,7 +69,6 @@
     <Compile Remove="Data\DBModels\FeeManagement\ChallanVoucher.cs" />
     <Compile Remove="Data\DBModels\FeeManagement\FeeVoucher.cs" />
     <Compile Remove="Controllers\FeeManagement\PaymentMethodController.cs" />
-    <Compile Remove="Controllers\FeeManagement\ChallanVoucherController.cs" />
     <Compile Remove="Controllers\FeeManagement\FeeVoucherController.cs" />
     <Compile Remove="DTOs\FeeManagement\ChallanVoucher*" />
     <Compile Remove="DTOs\FeeManagement\FeeVoucher*" />

@@ -51,7 +51,6 @@
                 <!-- TAB 1: STAFF SMS -->
                 <div class="tab-pane fade" id="staff" role="tabpanel">
                     <div class="row">
-                        <!-- Left Panel - Message Composition -->
                         <div class="col-lg-6 col-12">
                             <div class="p-3" style="background: #f8fafc; border-radius: 12px;">
                                 <h6 class="mb-3" style="font-weight: 600; color: #475569;">Compose Message</h6>
@@ -88,16 +87,11 @@
                                     <small class="text-muted">Characters: <span id="staffCharCount">0</span></small>
                                 </div>
                                 <div class="d-flex gap-2">
-                                    <button type="button" class="btn btn-primary" onclick="sendStaffSMS()">
-                                        <i class="bi bi-send me-1"></i> Send
-                                    </button>
-                                    <button type="button" class="btn btn-secondary" onclick="clearStaffForm()">
-                                        <i class="bi bi-x-lg me-1"></i> Clear
-                                    </button>
+                                    <button type="button" class="btn btn-primary" onclick="sendStaffSMS()"><i class="bi bi-send me-1"></i> Send</button>
+                                    <button type="button" class="btn btn-secondary" onclick="clearStaffForm()"><i class="bi bi-x-lg me-1"></i> Clear</button>
                                 </div>
                             </div>
                         </div>
-                        <!-- Right Panel - Sending Status -->
                         <div class="col-lg-6 col-12">
                             <div class="p-3" style="background: #f8fafc; border-radius: 12px; height: 100%;">
                                 <h6 class="mb-3" style="font-weight: 600; color: #475569;">Sending Detail - Message Sent (<span id="staffSentCount">0</span>)</h6>
@@ -110,71 +104,33 @@
                 <!-- TAB 2: GENERAL SMS -->
                 <div class="tab-pane fade show active" id="general" role="tabpanel">
                     <div class="row">
-                        <!-- Left Panel - Message Composition -->
                         <div class="col-lg-6 col-12">
                             <div class="p-3" style="background: #f8fafc; border-radius: 12px;">
                                 <h6 class="mb-3" style="font-weight: 600; color: #475569;">Compose Message</h6>
                                 <div class="mb-3">
                                     <label class="form-label">Choose</label>
                                     <div class="d-flex gap-3">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="generalChoose" id="generalStudent" value="student" checked onchange="toggleGeneralFields()">
-                                            <label class="form-check-label" for="generalStudent">Student</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="generalChoose" id="generalSection" value="section" onchange="toggleGeneralFields()">
-                                            <label class="form-check-label" for="generalSection">Section</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="generalChoose" id="generalClass" value="class" onchange="toggleGeneralFields()">
-                                            <label class="form-check-label" for="generalClass">Class</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="generalChoose" id="generalAll" value="all" onchange="toggleGeneralFields()">
-                                            <label class="form-check-label" for="generalAll">All</label>
-                                        </div>
+                                        <div class="form-check"><input class="form-check-input" type="radio" name="generalChoose" id="generalStudent" value="student" checked onchange="toggleGeneralFields()"><label class="form-check-label" for="generalStudent">Student</label></div>
+                                        <div class="form-check"><input class="form-check-input" type="radio" name="generalChoose" id="generalSection" value="section" onchange="toggleGeneralFields()"><label class="form-check-label" for="generalSection">Section</label></div>
+                                        <div class="form-check"><input class="form-check-input" type="radio" name="generalChoose" id="generalClass" value="class" onchange="toggleGeneralFields()"><label class="form-check-label" for="generalClass">Class</label></div>
+                                        <div class="form-check"><input class="form-check-input" type="radio" name="generalChoose" id="generalAll" value="all" onchange="toggleGeneralFields()"><label class="form-check-label" for="generalAll">All</label></div>
                                     </div>
                                 </div>
-                                <div class="mb-3">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="generalSmsUrdu">
-                                        <label class="form-check-label" for="generalSmsUrdu">SMS in Urdu</label>
-                                    </div>
-                                </div>
-                                <div class="mb-3" id="generalClassField">
-                                    <label class="form-label">Class</label>
-                                    <select class="form-select" id="generalClassId" onchange="loadGeneralSections()">
-                                        <option value="">-- Select Class --</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3" id="generalSectionField">
-                                    <label class="form-label">Section</label>
-                                    <select class="form-select" id="generalSectionId" onchange="loadGeneralStudents()">
-                                        <option value="">-- Select Section --</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3" id="generalStudentField">
-                                    <label class="form-label">Student</label>
-                                    <select class="form-select" id="generalStudentId">
-                                        <option value="">-- Select Student --</option>
-                                    </select>
-                                </div>
+                                <div class="mb-3"><div class="form-check"><input class="form-check-input" type="checkbox" id="generalSmsUrdu"><label class="form-check-label" for="generalSmsUrdu">SMS in Urdu</label></div></div>
+                                <div class="mb-3" id="generalClassField"><label class="form-label">Class</label><select class="form-select" id="generalClassId" onchange="loadGeneralSections()"><option value="">-- Select Class --</option></select></div>
+                                <div class="mb-3" id="generalSectionField"><label class="form-label">Section</label><select class="form-select" id="generalSectionId" onchange="loadGeneralStudents()"><option value="">-- Select Section --</option></select></div>
+                                <div class="mb-3" id="generalStudentField"><label class="form-label">Student</label><select class="form-select" id="generalStudentId"><option value="">-- Select Student --</option></select></div>
                                 <div class="mb-3">
                                     <label class="form-label">Message</label>
                                     <textarea class="form-control" id="generalMessage" rows="5" placeholder="Type your message here..." onkeyup="updateCharCount('generalMessage', 'generalCharCount')"></textarea>
                                     <small class="text-muted">Characters: <span id="generalCharCount">0</span></small>
                                 </div>
                                 <div class="d-flex gap-2">
-                                    <button type="button" class="btn btn-primary" onclick="sendGeneralSMS()">
-                                        <i class="bi bi-send me-1"></i> Send
-                                    </button>
-                                    <button type="button" class="btn btn-secondary" onclick="clearGeneralForm()">
-                                        <i class="bi bi-x-lg me-1"></i> Clear
-                                    </button>
+                                    <button type="button" class="btn btn-primary" onclick="sendGeneralSMS()"><i class="bi bi-send me-1"></i> Send</button>
+                                    <button type="button" class="btn btn-secondary" onclick="clearGeneralForm()"><i class="bi bi-x-lg me-1"></i> Clear</button>
                                 </div>
                             </div>
                         </div>
-                        <!-- Right Panel - Sending Status -->
                         <div class="col-lg-6 col-12">
                             <div class="p-3" style="background: #f8fafc; border-radius: 12px; height: 100%;">
                                 <h6 class="mb-3" style="font-weight: 600; color: #475569;">Sending Detail - Message Sent (<span id="generalSentCount">0</span>)</h6>
@@ -187,67 +143,28 @@
                 <!-- TAB 3: ABSENT SMS -->
                 <div class="tab-pane fade" id="absent" role="tabpanel">
                     <div class="row">
-                        <!-- Left Panel - Filter & Send -->
                         <div class="col-lg-6 col-12">
                             <div class="p-3" style="background: #f8fafc; border-radius: 12px;">
                                 <h6 class="mb-3" style="font-weight: 600; color: #475569;">Send Absent Notification</h6>
                                 <div class="mb-3">
                                     <label class="form-label">Choose</label>
                                     <div class="d-flex gap-3">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="absentChoose" id="absentStudent" value="student" checked onchange="toggleAbsentFields()">
-                                            <label class="form-check-label" for="absentStudent">Student</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="absentChoose" id="absentSection" value="section" onchange="toggleAbsentFields()">
-                                            <label class="form-check-label" for="absentSection">Section</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="absentChoose" id="absentClass" value="class" onchange="toggleAbsentFields()">
-                                            <label class="form-check-label" for="absentClass">Class</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="absentChoose" id="absentAll" value="all" onchange="toggleAbsentFields()">
-                                            <label class="form-check-label" for="absentAll">All</label>
-                                        </div>
+                                        <div class="form-check"><input class="form-check-input" type="radio" name="absentChoose" id="absentStudent" value="student" checked onchange="toggleAbsentFields()"><label class="form-check-label" for="absentStudent">Student</label></div>
+                                        <div class="form-check"><input class="form-check-input" type="radio" name="absentChoose" id="absentSection" value="section" onchange="toggleAbsentFields()"><label class="form-check-label" for="absentSection">Section</label></div>
+                                        <div class="form-check"><input class="form-check-input" type="radio" name="absentChoose" id="absentClass" value="class" onchange="toggleAbsentFields()"><label class="form-check-label" for="absentClass">Class</label></div>
+                                        <div class="form-check"><input class="form-check-input" type="radio" name="absentChoose" id="absentAll" value="all" onchange="toggleAbsentFields()"><label class="form-check-label" for="absentAll">All</label></div>
                                     </div>
                                 </div>
-                                <div class="mb-3">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="absentSmsUrdu">
-                                        <label class="form-check-label" for="absentSmsUrdu">SMS in Urdu</label>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Date <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control" id="absentDate" required />
-                                </div>
-                                <div class="mb-3" id="absentClassField">
-                                    <label class="form-label">Class</label>
-                                    <select class="form-select" id="absentClassId" onchange="loadAbsentSections()">
-                                        <option value="">-- Select Class --</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3" id="absentSectionField">
-                                    <label class="form-label">Section</label>
-                                    <select class="form-select" id="absentSectionId" onchange="loadAbsentStudents()">
-                                        <option value="">-- Select Section --</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3" id="absentStudentField">
-                                    <label class="form-label">Student</label>
-                                    <select class="form-select" id="absentStudentId">
-                                        <option value="">-- Select Student --</option>
-                                    </select>
-                                </div>
+                                <div class="mb-3"><div class="form-check"><input class="form-check-input" type="checkbox" id="absentSmsUrdu"><label class="form-check-label" for="absentSmsUrdu">SMS in Urdu</label></div></div>
+                                <div class="mb-3"><label class="form-label">Date <span class="text-danger">*</span></label><input type="date" class="form-control" id="absentDate" required /></div>
+                                <div class="mb-3" id="absentClassField"><label class="form-label">Class</label><select class="form-select" id="absentClassId" onchange="loadAbsentSections()"><option value="">-- Select Class --</option></select></div>
+                                <div class="mb-3" id="absentSectionField"><label class="form-label">Section</label><select class="form-select" id="absentSectionId" onchange="loadAbsentStudents()"><option value="">-- Select Section --</option></select></div>
+                                <div class="mb-3" id="absentStudentField"><label class="form-label">Student</label><select class="form-select" id="absentStudentId"><option value="">-- Select Student --</option></select></div>
                                 <div class="d-flex gap-2">
-                                    <button type="button" class="btn btn-primary" onclick="sendAbsentSMS()">
-                                        <i class="bi bi-send me-1"></i> Send
-                                    </button>
+                                    <button type="button" class="btn btn-primary" onclick="sendAbsentSMS()"><i class="bi bi-send me-1"></i> Send</button>
                                 </div>
                             </div>
                         </div>
-                        <!-- Right Panel - Sending Status -->
                         <div class="col-lg-6 col-12">
                             <div class="p-3" style="background: #f8fafc; border-radius: 12px; height: 100%;">
                                 <h6 class="mb-3" style="font-weight: 600; color: #475569;">Sending Detail - Message Sent (<span id="absentSentCount">0</span>)</h6>
@@ -266,56 +183,19 @@
                                 <div class="mb-3">
                                     <label class="form-label">Choose</label>
                                     <div class="d-flex gap-3">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="lateChoose" id="lateStudent" value="student" checked onchange="toggleLateFields()">
-                                            <label class="form-check-label" for="lateStudent">Student</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="lateChoose" id="lateSection" value="section" onchange="toggleLateFields()">
-                                            <label class="form-check-label" for="lateSection">Section</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="lateChoose" id="lateClass" value="class" onchange="toggleLateFields()">
-                                            <label class="form-check-label" for="lateClass">Class</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="lateChoose" id="lateAll" value="all" onchange="toggleLateFields()">
-                                            <label class="form-check-label" for="lateAll">All</label>
-                                        </div>
+                                        <div class="form-check"><input class="form-check-input" type="radio" name="lateChoose" id="lateStudent" value="student" checked onchange="toggleLateFields()"><label class="form-check-label" for="lateStudent">Student</label></div>
+                                        <div class="form-check"><input class="form-check-input" type="radio" name="lateChoose" id="lateSection" value="section" onchange="toggleLateFields()"><label class="form-check-label" for="lateSection">Section</label></div>
+                                        <div class="form-check"><input class="form-check-input" type="radio" name="lateChoose" id="lateClass" value="class" onchange="toggleLateFields()"><label class="form-check-label" for="lateClass">Class</label></div>
+                                        <div class="form-check"><input class="form-check-input" type="radio" name="lateChoose" id="lateAll" value="all" onchange="toggleLateFields()"><label class="form-check-label" for="lateAll">All</label></div>
                                     </div>
                                 </div>
-                                <div class="mb-3">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="lateSmsUrdu">
-                                        <label class="form-check-label" for="lateSmsUrdu">SMS in Urdu</label>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Date <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control" id="lateDate" required />
-                                </div>
-                                <div class="mb-3" id="lateClassField">
-                                    <label class="form-label">Class</label>
-                                    <select class="form-select" id="lateClassId" onchange="loadLateSections()">
-                                        <option value="">-- Select Class --</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3" id="lateSectionField">
-                                    <label class="form-label">Section</label>
-                                    <select class="form-select" id="lateSectionId" onchange="loadLateStudents()">
-                                        <option value="">-- Select Section --</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3" id="lateStudentField">
-                                    <label class="form-label">Student</label>
-                                    <select class="form-select" id="lateStudentId">
-                                        <option value="">-- Select Student --</option>
-                                    </select>
-                                </div>
+                                <div class="mb-3"><div class="form-check"><input class="form-check-input" type="checkbox" id="lateSmsUrdu"><label class="form-check-label" for="lateSmsUrdu">SMS in Urdu</label></div></div>
+                                <div class="mb-3"><label class="form-label">Date <span class="text-danger">*</span></label><input type="date" class="form-control" id="lateDate" required /></div>
+                                <div class="mb-3" id="lateClassField"><label class="form-label">Class</label><select class="form-select" id="lateClassId" onchange="loadLateSections()"><option value="">-- Select Class --</option></select></div>
+                                <div class="mb-3" id="lateSectionField"><label class="form-label">Section</label><select class="form-select" id="lateSectionId" onchange="loadLateStudents()"><option value="">-- Select Section --</option></select></div>
+                                <div class="mb-3" id="lateStudentField"><label class="form-label">Student</label><select class="form-select" id="lateStudentId"><option value="">-- Select Student --</option></select></div>
                                 <div class="d-flex gap-2">
-                                    <button type="button" class="btn btn-primary" onclick="sendLateSMS()">
-                                        <i class="bi bi-send me-1"></i> Send
-                                    </button>
+                                    <button type="button" class="btn btn-primary" onclick="sendLateSMS()"><i class="bi bi-send me-1"></i> Send</button>
                                 </div>
                             </div>
                         </div>
@@ -337,56 +217,19 @@
                                 <div class="mb-3">
                                     <label class="form-label">Choose</label>
                                     <div class="d-flex gap-3">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="againChoose" id="againStudent" value="student" checked onchange="toggleAgainFields()">
-                                            <label class="form-check-label" for="againStudent">Student</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="againChoose" id="againSection" value="section" onchange="toggleAgainFields()">
-                                            <label class="form-check-label" for="againSection">Section</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="againChoose" id="againClass" value="class" onchange="toggleAgainFields()">
-                                            <label class="form-check-label" for="againClass">Class</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="againChoose" id="againAll" value="all" onchange="toggleAgainFields()">
-                                            <label class="form-check-label" for="againAll">All</label>
-                                        </div>
+                                        <div class="form-check"><input class="form-check-input" type="radio" name="againChoose" id="againStudent" value="student" checked onchange="toggleAgainFields()"><label class="form-check-label" for="againStudent">Student</label></div>
+                                        <div class="form-check"><input class="form-check-input" type="radio" name="againChoose" id="againSection" value="section" onchange="toggleAgainFields()"><label class="form-check-label" for="againSection">Section</label></div>
+                                        <div class="form-check"><input class="form-check-input" type="radio" name="againChoose" id="againClass" value="class" onchange="toggleAgainFields()"><label class="form-check-label" for="againClass">Class</label></div>
+                                        <div class="form-check"><input class="form-check-input" type="radio" name="againChoose" id="againAll" value="all" onchange="toggleAgainFields()"><label class="form-check-label" for="againAll">All</label></div>
                                     </div>
                                 </div>
-                                <div class="mb-3">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="againSmsUrdu">
-                                        <label class="form-check-label" for="againSmsUrdu">SMS in Urdu</label>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Date <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control" id="againDate" required />
-                                </div>
-                                <div class="mb-3" id="againClassField">
-                                    <label class="form-label">Class</label>
-                                    <select class="form-select" id="againClassId" onchange="loadAgainSections()">
-                                        <option value="">-- Select Class --</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3" id="againSectionField">
-                                    <label class="form-label">Section</label>
-                                    <select class="form-select" id="againSectionId" onchange="loadAgainStudents()">
-                                        <option value="">-- Select Section --</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3" id="againStudentField">
-                                    <label class="form-label">Student</label>
-                                    <select class="form-select" id="againStudentId">
-                                        <option value="">-- Select Student --</option>
-                                    </select>
-                                </div>
+                                <div class="mb-3"><div class="form-check"><input class="form-check-input" type="checkbox" id="againSmsUrdu"><label class="form-check-label" for="againSmsUrdu">SMS in Urdu</label></div></div>
+                                <div class="mb-3"><label class="form-label">Date <span class="text-danger">*</span></label><input type="date" class="form-control" id="againDate" required /></div>
+                                <div class="mb-3" id="againClassField"><label class="form-label">Class</label><select class="form-select" id="againClassId" onchange="loadAgainSections()"><option value="">-- Select Class --</option></select></div>
+                                <div class="mb-3" id="againSectionField"><label class="form-label">Section</label><select class="form-select" id="againSectionId" onchange="loadAgainStudents()"><option value="">-- Select Section --</option></select></div>
+                                <div class="mb-3" id="againStudentField"><label class="form-label">Student</label><select class="form-select" id="againStudentId"><option value="">-- Select Student --</option></select></div>
                                 <div class="d-flex gap-2">
-                                    <button type="button" class="btn btn-primary" onclick="sendAgainSMS()">
-                                        <i class="bi bi-send me-1"></i> Send
-                                    </button>
+                                    <button type="button" class="btn btn-primary" onclick="sendAgainSMS()"><i class="bi bi-send me-1"></i> Send</button>
                                 </div>
                             </div>
                         </div>
@@ -408,82 +251,22 @@
                                 <div class="mb-3">
                                     <label class="form-label">Choose</label>
                                     <div class="d-flex gap-3">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="feeChoose" id="feeStudent" value="student" checked onchange="toggleFeeFields()">
-                                            <label class="form-check-label" for="feeStudent">Student</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="feeChoose" id="feeSection" value="section" onchange="toggleFeeFields()">
-                                            <label class="form-check-label" for="feeSection">Section</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="feeChoose" id="feeClass" value="class" onchange="toggleFeeFields()">
-                                            <label class="form-check-label" for="feeClass">Class</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="feeChoose" id="feeAll" value="all" onchange="toggleFeeFields()">
-                                            <label class="form-check-label" for="feeAll">All</label>
-                                        </div>
+                                        <div class="form-check"><input class="form-check-input" type="radio" name="feeChoose" id="feeStudent" value="student" checked onchange="toggleFeeFields()"><label class="form-check-label" for="feeStudent">Student</label></div>
+                                        <div class="form-check"><input class="form-check-input" type="radio" name="feeChoose" id="feeSection" value="section" onchange="toggleFeeFields()"><label class="form-check-label" for="feeSection">Section</label></div>
+                                        <div class="form-check"><input class="form-check-input" type="radio" name="feeChoose" id="feeClass" value="class" onchange="toggleFeeFields()"><label class="form-check-label" for="feeClass">Class</label></div>
+                                        <div class="form-check"><input class="form-check-input" type="radio" name="feeChoose" id="feeAll" value="all" onchange="toggleFeeFields()"><label class="form-check-label" for="feeAll">All</label></div>
                                     </div>
                                 </div>
-                                <div class="mb-3">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="feeSmsUrdu">
-                                        <label class="form-check-label" for="feeSmsUrdu">SMS in Urdu</label>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Fee Type</label>
-                                    <select class="form-select" id="feeFeeType">
-                                        <option value="">-- Select Fee Type --</option>
-                                        <option value="school">School Fee</option>
-                                        <option value="transport">Transport Fee</option>
-                                        <option value="admission">Admission Fee</option>
-                                        <option value="exam">Exam Fee</option>
-                                        <option value="lab">Lab Fee</option>
-                                        <option value="sports">Sports Fee</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Fee Status</label>
-                                    <select class="form-select" id="feeFeeStatus">
-                                        <option value="">-- Select Status --</option>
-                                        <option value="pending">Pending</option>
-                                        <option value="due">Due</option>
-                                        <option value="overdue">Overdue</option>
-                                        <option value="paid">Paid</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3" id="feeClassField">
-                                    <label class="form-label">Class</label>
-                                    <select class="form-select" id="feeClassId" onchange="loadFeeSections()">
-                                        <option value="">-- Select Class --</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3" id="feeSectionField">
-                                    <label class="form-label">Section</label>
-                                    <select class="form-select" id="feeSectionId" onchange="loadFeeStudents()">
-                                        <option value="">-- Select Section --</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3" id="feeStudentField">
-                                    <label class="form-label">Student</label>
-                                    <select class="form-select" id="feeStudentId">
-                                        <option value="">-- Select Student --</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Message</label>
-                                    <textarea class="form-control" id="feeMessage" rows="4" placeholder="Optional custom message..." onkeyup="updateCharCount('feeMessage', 'feeCharCount')"></textarea>
-                                    <small class="text-muted">Characters: <span id="feeCharCount">0</span></small>
-                                </div>
+                                <div class="mb-3"><div class="form-check"><input class="form-check-input" type="checkbox" id="feeSmsUrdu"><label class="form-check-label" for="feeSmsUrdu">SMS in Urdu</label></div></div>
+                                <div class="mb-3"><label class="form-label">Fee Type</label><select class="form-select" id="feeFeeType"><option value="">-- Select Fee Type --</option><option value="school">School Fee</option><option value="transport">Transport Fee</option><option value="admission">Admission Fee</option><option value="exam">Exam Fee</option><option value="lab">Lab Fee</option><option value="sports">Sports Fee</option></select></div>
+                                <div class="mb-3"><label class="form-label">Fee Status</label><select class="form-select" id="feeFeeStatus"><option value="">-- Select Status --</option><option value="pending">Pending</option><option value="due">Due</option><option value="overdue">Overdue</option><option value="paid">Paid</option></select></div>
+                                <div class="mb-3" id="feeClassField"><label class="form-label">Class</label><select class="form-select" id="feeClassId" onchange="loadFeeSections()"><option value="">-- Select Class --</option></select></div>
+                                <div class="mb-3" id="feeSectionField"><label class="form-label">Section</label><select class="form-select" id="feeSectionId" onchange="loadFeeStudents()"><option value="">-- Select Section --</option></select></div>
+                                <div class="mb-3" id="feeStudentField"><label class="form-label">Student</label><select class="form-select" id="feeStudentId"><option value="">-- Select Student --</option></select></div>
+                                <div class="mb-3"><label class="form-label">Message</label><textarea class="form-control" id="feeMessage" rows="4" placeholder="Optional custom message..." onkeyup="updateCharCount('feeMessage', 'feeCharCount')"></textarea><small class="text-muted">Characters: <span id="feeCharCount">0</span></small></div>
                                 <div class="d-flex gap-2">
-                                    <button type="button" class="btn btn-primary" onclick="sendFeeSMS()">
-                                        <i class="bi bi-send me-1"></i> Send
-                                    </button>
-                                    <button type="button" class="btn btn-secondary" onclick="clearFeeForm()">
-                                        <i class="bi bi-x-lg me-1"></i> Clear
-                                    </button>
+                                    <button type="button" class="btn btn-primary" onclick="sendFeeSMS()"><i class="bi bi-send me-1"></i> Send</button>
+                                    <button type="button" class="btn btn-secondary" onclick="clearFeeForm()"><i class="bi bi-x-lg me-1"></i> Clear</button>
                                 </div>
                             </div>
                         </div>
@@ -505,74 +288,22 @@
                                 <div class="mb-3">
                                     <label class="form-label">Choose</label>
                                     <div class="d-flex gap-3">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="resultChoose" id="resultStudent" value="student" checked onchange="toggleResultFields()">
-                                            <label class="form-check-label" for="resultStudent">Student</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="resultChoose" id="resultSection" value="section" onchange="toggleResultFields()">
-                                            <label class="form-check-label" for="resultSection">Section</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="resultChoose" id="resultClass" value="class" onchange="toggleResultFields()">
-                                            <label class="form-check-label" for="resultClass">Class</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="resultChoose" id="resultAll" value="all" onchange="toggleResultFields()">
-                                            <label class="form-check-label" for="resultAll">All</label>
-                                        </div>
+                                        <div class="form-check"><input class="form-check-input" type="radio" name="resultChoose" id="resultStudent" value="student" checked onchange="toggleResultFields()"><label class="form-check-label" for="resultStudent">Student</label></div>
+                                        <div class="form-check"><input class="form-check-input" type="radio" name="resultChoose" id="resultSection" value="section" onchange="toggleResultFields()"><label class="form-check-label" for="resultSection">Section</label></div>
+                                        <div class="form-check"><input class="form-check-input" type="radio" name="resultChoose" id="resultClass" value="class" onchange="toggleResultFields()"><label class="form-check-label" for="resultClass">Class</label></div>
+                                        <div class="form-check"><input class="form-check-input" type="radio" name="resultChoose" id="resultAll" value="all" onchange="toggleResultFields()"><label class="form-check-label" for="resultAll">All</label></div>
                                     </div>
                                 </div>
-                                <div class="mb-3">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="resultSmsUrdu">
-                                        <label class="form-check-label" for="resultSmsUrdu">SMS in Urdu</label>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Exam <span class="text-danger">*</span></label>
-                                    <select class="form-select" id="resultExamId" required>
-                                        <option value="">-- Select Exam --</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3" id="resultClassField">
-                                    <label class="form-label">Class</label>
-                                    <select class="form-select" id="resultClassId" onchange="loadResultSections()">
-                                        <option value="">-- Select Class --</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3" id="resultSectionField">
-                                    <label class="form-label">Section</label>
-                                    <select class="form-select" id="resultSectionId" onchange="loadResultStudents()">
-                                        <option value="">-- Select Section --</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3" id="resultStudentField">
-                                    <label class="form-label">Student</label>
-                                    <select class="form-select" id="resultStudentId">
-                                        <option value="">-- Select Student --</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Result Status</label>
-                                    <select class="form-select" id="resultStatus">
-                                        <option value="">-- All --</option>
-                                        <option value="pass">Pass</option>
-                                        <option value="fail">Fail</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Message</label>
-                                    <textarea class="form-control" id="resultMessage" rows="4" placeholder="Optional custom message..." onkeyup="updateCharCount('resultMessage', 'resultCharCount')"></textarea>
-                                    <small class="text-muted">Characters: <span id="resultCharCount">0</span></small>
-                                </div>
+                                <div class="mb-3"><div class="form-check"><input class="form-check-input" type="checkbox" id="resultSmsUrdu"><label class="form-check-label" for="resultSmsUrdu">SMS in Urdu</label></div></div>
+                                <div class="mb-3"><label class="form-label">Exam <span class="text-danger">*</span></label><select class="form-select" id="resultExamId" required><option value="">-- Select Exam --</option></select></div>
+                                <div class="mb-3" id="resultClassField"><label class="form-label">Class</label><select class="form-select" id="resultClassId" onchange="loadResultSections()"><option value="">-- Select Class --</option></select></div>
+                                <div class="mb-3" id="resultSectionField"><label class="form-label">Section</label><select class="form-select" id="resultSectionId" onchange="loadResultStudents()"><option value="">-- Select Section --</option></select></div>
+                                <div class="mb-3" id="resultStudentField"><label class="form-label">Student</label><select class="form-select" id="resultStudentId"><option value="">-- Select Student --</option></select></div>
+                                <div class="mb-3"><label class="form-label">Result Status</label><select class="form-select" id="resultStatus"><option value="">-- All --</option><option value="pass">Pass</option><option value="fail">Fail</option></select></div>
+                                <div class="mb-3"><label class="form-label">Message</label><textarea class="form-control" id="resultMessage" rows="4" placeholder="Optional custom message..." onkeyup="updateCharCount('resultMessage', 'resultCharCount')"></textarea><small class="text-muted">Characters: <span id="resultCharCount">0</span></small></div>
                                 <div class="d-flex gap-2">
-                                    <button type="button" class="btn btn-primary" onclick="sendResultSMS()">
-                                        <i class="bi bi-send me-1"></i> Send
-                                    </button>
-                                    <button type="button" class="btn btn-secondary" onclick="clearResultForm()">
-                                        <i class="bi bi-x-lg me-1"></i> Clear
-                                    </button>
+                                    <button type="button" class="btn btn-primary" onclick="sendResultSMS()"><i class="bi bi-send me-1"></i> Send</button>
+                                    <button type="button" class="btn btn-secondary" onclick="clearResultForm()"><i class="bi bi-x-lg me-1"></i> Clear</button>
                                 </div>
                             </div>
                         </div>
@@ -594,80 +325,25 @@
                                 <div class="mb-3">
                                     <label class="form-label">Choose</label>
                                     <div class="d-flex gap-3">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="fromtoChoose" id="fromtoStudent" value="student" checked onchange="toggleFromToFields()">
-                                            <label class="form-check-label" for="fromtoStudent">Student</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="fromtoChoose" id="fromtoSection" value="section" onchange="toggleFromToFields()">
-                                            <label class="form-check-label" for="fromtoSection">Section</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="fromtoChoose" id="fromtoClass" value="class" onchange="toggleFromToFields()">
-                                            <label class="form-check-label" for="fromtoClass">Class</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="fromtoChoose" id="fromtoAll" value="all" onchange="toggleFromToFields()">
-                                            <label class="form-check-label" for="fromtoAll">All</label>
-                                        </div>
+                                        <div class="form-check"><input class="form-check-input" type="radio" name="fromtoChoose" id="fromtoStudent" value="student" checked onchange="toggleFromToFields()"><label class="form-check-label" for="fromtoStudent">Student</label></div>
+                                        <div class="form-check"><input class="form-check-input" type="radio" name="fromtoChoose" id="fromtoSection" value="section" onchange="toggleFromToFields()"><label class="form-check-label" for="fromtoSection">Section</label></div>
+                                        <div class="form-check"><input class="form-check-input" type="radio" name="fromtoChoose" id="fromtoClass" value="class" onchange="toggleFromToFields()"><label class="form-check-label" for="fromtoClass">Class</label></div>
+                                        <div class="form-check"><input class="form-check-input" type="radio" name="fromtoChoose" id="fromtoAll" value="all" onchange="toggleFromToFields()"><label class="form-check-label" for="fromtoAll">All</label></div>
                                     </div>
                                 </div>
-                                <div class="mb-3">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="fromtoSmsUrdu">
-                                        <label class="form-check-label" for="fromtoSmsUrdu">SMS in Urdu</label>
-                                    </div>
-                                </div>
+                                <div class="mb-3"><div class="form-check"><input class="form-check-input" type="checkbox" id="fromtoSmsUrdu"><label class="form-check-label" for="fromtoSmsUrdu">SMS in Urdu</label></div></div>
                                 <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label">From Date <span class="text-danger">*</span></label>
-                                        <input type="date" class="form-control" id="fromtoFromDate" required />
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label">To Date <span class="text-danger">*</span></label>
-                                        <input type="date" class="form-control" id="fromtoToDate" required />
-                                    </div>
+                                    <div class="col-md-6 mb-3"><label class="form-label">From Date <span class="text-danger">*</span></label><input type="date" class="form-control" id="fromtoFromDate" required /></div>
+                                    <div class="col-md-6 mb-3"><label class="form-label">To Date <span class="text-danger">*</span></label><input type="date" class="form-control" id="fromtoToDate" required /></div>
                                 </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Filter Type</label>
-                                    <select class="form-select" id="fromtoFilterType">
-                                        <option value="">-- Select Filter --</option>
-                                        <option value="absent">Absent</option>
-                                        <option value="late">Late</option>
-                                        <option value="feedue">Fee Due</option>
-                                        <option value="again">Again</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3" id="fromtoClassField">
-                                    <label class="form-label">Class</label>
-                                    <select class="form-select" id="fromtoClassId" onchange="loadFromToSections()">
-                                        <option value="">-- Select Class --</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3" id="fromtoSectionField">
-                                    <label class="form-label">Section</label>
-                                    <select class="form-select" id="fromtoSectionId" onchange="loadFromToStudents()">
-                                        <option value="">-- Select Section --</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3" id="fromtoStudentField">
-                                    <label class="form-label">Student</label>
-                                    <select class="form-select" id="fromtoStudentId">
-                                        <option value="">-- Select Student --</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Message</label>
-                                    <textarea class="form-control" id="fromtoMessage" rows="4" placeholder="Type your message here..." onkeyup="updateCharCount('fromtoMessage', 'fromtoCharCount')"></textarea>
-                                    <small class="text-muted">Characters: <span id="fromtoCharCount">0</span></small>
-                                </div>
+                                <div class="mb-3"><label class="form-label">Filter Type</label><select class="form-select" id="fromtoFilterType"><option value="">-- Select Filter --</option><option value="absent">Absent</option><option value="late">Late</option><option value="feedue">Fee Due</option><option value="again">Again</option></select></div>
+                                <div class="mb-3" id="fromtoClassField"><label class="form-label">Class</label><select class="form-select" id="fromtoClassId" onchange="loadFromToSections()"><option value="">-- Select Class --</option></select></div>
+                                <div class="mb-3" id="fromtoSectionField"><label class="form-label">Section</label><select class="form-select" id="fromtoSectionId" onchange="loadFromToStudents()"><option value="">-- Select Section --</option></select></div>
+                                <div class="mb-3" id="fromtoStudentField"><label class="form-label">Student</label><select class="form-select" id="fromtoStudentId"><option value="">-- Select Student --</option></select></div>
+                                <div class="mb-3"><label class="form-label">Message</label><textarea class="form-control" id="fromtoMessage" rows="4" placeholder="Type your message here..." onkeyup="updateCharCount('fromtoMessage', 'fromtoCharCount')"></textarea><small class="text-muted">Characters: <span id="fromtoCharCount">0</span></small></div>
                                 <div class="d-flex gap-2">
-                                    <button type="button" class="btn btn-primary" onclick="sendFromToSMS()">
-                                        <i class="bi bi-send me-1"></i> Send
-                                    </button>
-                                    <button type="button" class="btn btn-secondary" onclick="clearFromToForm()">
-                                        <i class="bi bi-x-lg me-1"></i> Clear
-                                    </button>
+                                    <button type="button" class="btn btn-primary" onclick="sendFromToSMS()"><i class="bi bi-send me-1"></i> Send</button>
+                                    <button type="button" class="btn btn-secondary" onclick="clearFromToForm()"><i class="bi bi-x-lg me-1"></i> Clear</button>
                                 </div>
                             </div>
                         </div>
@@ -680,45 +356,64 @@
                     </div>
                 </div>
 
-                <!-- TAB 9: FROM EXCEL SMS -->
+                <!-- TAB 9: FROM EXCEL SMS — FULLY IMPLEMENTED -->
                 <div class="tab-pane fade" id="fromexcel" role="tabpanel">
                     <div class="row">
                         <div class="col-lg-6 col-12">
                             <div class="p-3" style="background: #f8fafc; border-radius: 12px;">
                                 <h6 class="mb-3" style="font-weight: 600; color: #475569;">Upload & Send SMS from Excel</h6>
+
+                                <!-- Format Guide -->
+                                <div class="alert alert-info py-2 mb-3" style="font-size: 13px;">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    <strong>Excel Format:</strong> File must have columns for <strong>Phone</strong> and <strong>Message</strong>.
+                                    Supported formats: .xlsx, .xls, .csv
+                                    <br>
+                                    <strong>Phone formats accepted:</strong> 0300-1234567 &nbsp;|&nbsp; 03001234567 &nbsp;|&nbsp; 923001234567
+                                </div>
+
                                 <div class="mb-3">
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" id="excelSmsUrdu">
                                         <label class="form-check-label" for="excelSmsUrdu">SMS in Urdu</label>
                                     </div>
                                 </div>
+
                                 <div class="mb-3">
                                     <label class="form-label">Upload Excel File <span class="text-danger">*</span></label>
                                     <input type="file" class="form-control" id="excelFile" accept=".xlsx,.xls,.csv" onchange="previewExcelFile()" />
-                                    <small class="text-muted">Accepted formats: .xlsx, .xls, .csv</small>
+                                    <small class="text-muted">Accepted: .xlsx, .xls, .csv</small>
                                 </div>
+
+                                <!-- File Preview Info -->
                                 <div class="mb-3" id="excelPreviewSection" style="display: none;">
-                                    <label class="form-label">File Preview</label>
-                                    <div class="p-2 border rounded" style="background: #fff;">
-                                        <span id="excelFileName"></span> - <span id="excelRowCount">0</span> rows
+                                    <div class="p-2 border rounded d-flex justify-content-between align-items-center" style="background: #fff;">
+                                        <span><i class="bi bi-file-earmark-excel text-success me-1"></i> <span id="excelFileName"></span></span>
+                                        <span class="badge bg-success" id="excelRowCount">0 rows</span>
                                     </div>
                                 </div>
+
+                                <!-- Column Mapping -->
                                 <div class="mb-3" id="excelColumnsSection" style="display: none;">
+                                    <label class="form-label fw-semibold">Map Columns</label>
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
-                                            <label class="form-label">Phone Column</label>
+                                            <label class="form-label">Phone Column <span class="text-danger">*</span></label>
                                             <select class="form-select" id="excelPhoneColumn">
-                                                <option value="">-- Select Column --</option>
+                                                <option value="">-- Select --</option>
                                             </select>
                                         </div>
                                         <div class="col-md-6 mb-3">
-                                            <label class="form-label">Message Column</label>
+                                            <label class="form-label">Message Column <span class="text-danger">*</span></label>
                                             <select class="form-select" id="excelMessageColumn">
-                                                <option value="">-- Select Column --</option>
+                                                <option value="">-- Select --</option>
                                             </select>
                                         </div>
                                     </div>
                                 </div>
+
+                                <!-- Preview Table (injected by JS) -->
+
                                 <div class="d-flex gap-2">
                                     <button type="button" class="btn btn-primary" onclick="sendExcelSMS()">
                                         <i class="bi bi-send me-1"></i> Send
@@ -747,72 +442,22 @@
                                 <div class="mb-3">
                                     <label class="form-label">Choose</label>
                                     <div class="d-flex gap-3">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="rcardChoose" id="rcardStudent" value="student" checked onchange="toggleRcardFields()">
-                                            <label class="form-check-label" for="rcardStudent">Student</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="rcardChoose" id="rcardSection" value="section" onchange="toggleRcardFields()">
-                                            <label class="form-check-label" for="rcardSection">Section</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="rcardChoose" id="rcardClass" value="class" onchange="toggleRcardFields()">
-                                            <label class="form-check-label" for="rcardClass">Class</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="rcardChoose" id="rcardAll" value="all" onchange="toggleRcardFields()">
-                                            <label class="form-check-label" for="rcardAll">All</label>
-                                        </div>
+                                        <div class="form-check"><input class="form-check-input" type="radio" name="rcardChoose" id="rcardStudent" value="student" checked onchange="toggleRcardFields()"><label class="form-check-label" for="rcardStudent">Student</label></div>
+                                        <div class="form-check"><input class="form-check-input" type="radio" name="rcardChoose" id="rcardSection" value="section" onchange="toggleRcardFields()"><label class="form-check-label" for="rcardSection">Section</label></div>
+                                        <div class="form-check"><input class="form-check-input" type="radio" name="rcardChoose" id="rcardClass" value="class" onchange="toggleRcardFields()"><label class="form-check-label" for="rcardClass">Class</label></div>
+                                        <div class="form-check"><input class="form-check-input" type="radio" name="rcardChoose" id="rcardAll" value="all" onchange="toggleRcardFields()"><label class="form-check-label" for="rcardAll">All</label></div>
                                     </div>
                                 </div>
-                                <div class="mb-3">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="rcardSmsUrdu">
-                                        <label class="form-check-label" for="rcardSmsUrdu">SMS in Urdu</label>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Exam <span class="text-danger">*</span></label>
-                                    <select class="form-select" id="rcardExamId" required>
-                                        <option value="">-- Select Exam --</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3" id="rcardClassField">
-                                    <label class="form-label">Class</label>
-                                    <select class="form-select" id="rcardClassId" onchange="loadRcardSections()">
-                                        <option value="">-- Select Class --</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3" id="rcardSectionField">
-                                    <label class="form-label">Section</label>
-                                    <select class="form-select" id="rcardSectionId" onchange="loadRcardStudents()">
-                                        <option value="">-- Select Section --</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3" id="rcardStudentField">
-                                    <label class="form-label">Student</label>
-                                    <select class="form-select" id="rcardStudentId">
-                                        <option value="">-- Select Student --</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="rcardIncludeLink">
-                                        <label class="form-check-label" for="rcardIncludeLink">Include Report Card Download Link</label>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Message</label>
-                                    <textarea class="form-control" id="rcardMessage" rows="4" placeholder="Optional custom message..." onkeyup="updateCharCount('rcardMessage', 'rcardCharCount')"></textarea>
-                                    <small class="text-muted">Characters: <span id="rcardCharCount">0</span></small>
-                                </div>
+                                <div class="mb-3"><div class="form-check"><input class="form-check-input" type="checkbox" id="rcardSmsUrdu"><label class="form-check-label" for="rcardSmsUrdu">SMS in Urdu</label></div></div>
+                                <div class="mb-3"><label class="form-label">Exam <span class="text-danger">*</span></label><select class="form-select" id="rcardExamId" required><option value="">-- Select Exam --</option></select></div>
+                                <div class="mb-3" id="rcardClassField"><label class="form-label">Class</label><select class="form-select" id="rcardClassId" onchange="loadRcardSections()"><option value="">-- Select Class --</option></select></div>
+                                <div class="mb-3" id="rcardSectionField"><label class="form-label">Section</label><select class="form-select" id="rcardSectionId" onchange="loadRcardStudents()"><option value="">-- Select Section --</option></select></div>
+                                <div class="mb-3" id="rcardStudentField"><label class="form-label">Student</label><select class="form-select" id="rcardStudentId"><option value="">-- Select Student --</option></select></div>
+                                <div class="mb-3"><div class="form-check"><input class="form-check-input" type="checkbox" id="rcardIncludeLink"><label class="form-check-label" for="rcardIncludeLink">Include Report Card Download Link</label></div></div>
+                                <div class="mb-3"><label class="form-label">Message</label><textarea class="form-control" id="rcardMessage" rows="4" placeholder="Optional custom message..." onkeyup="updateCharCount('rcardMessage', 'rcardCharCount')"></textarea><small class="text-muted">Characters: <span id="rcardCharCount">0</span></small></div>
                                 <div class="d-flex gap-2">
-                                    <button type="button" class="btn btn-primary" onclick="sendRcardSMS()">
-                                        <i class="bi bi-send me-1"></i> Send
-                                    </button>
-                                    <button type="button" class="btn btn-secondary" onclick="clearRcardForm()">
-                                        <i class="bi bi-x-lg me-1"></i> Clear
-                                    </button>
+                                    <button type="button" class="btn btn-primary" onclick="sendRcardSMS()"><i class="bi bi-send me-1"></i> Send</button>
+                                    <button type="button" class="btn btn-secondary" onclick="clearRcardForm()"><i class="bi bi-x-lg me-1"></i> Clear</button>
                                 </div>
                             </div>
                         </div>
@@ -829,73 +474,25 @@
                 <div class="tab-pane fade" id="websmsdetail" role="tabpanel">
                     <div class="p-3" style="background: #f8fafc; border-radius: 12px;">
                         <h6 class="mb-3" style="font-weight: 600; color: #475569;">SMS Sending History</h6>
-                        <!-- Filter Section -->
                         <div class="row g-3 mb-4">
-                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
-                                <label class="form-label">From Date</label>
-                                <input type="date" class="form-control" id="historyFromDate" />
-                            </div>
-                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
-                                <label class="form-label">To Date</label>
-                                <input type="date" class="form-control" id="historyToDate" />
-                            </div>
-                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
-                                <label class="form-label">Recipient Type</label>
-                                <select class="form-select" id="historyRecipientType">
-                                    <option value="">All</option>
-                                    <option value="student">Student</option>
-                                    <option value="staff">Staff</option>
-                                    <option value="section">Section</option>
-                                    <option value="class">Class</option>
-                                </select>
-                            </div>
-                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
-                                <label class="form-label">Status</label>
-                                <select class="form-select" id="historyStatus">
-                                    <option value="">All</option>
-                                    <option value="sent">Sent</option>
-                                    <option value="failed">Failed</option>
-                                    <option value="pending">Pending</option>
-                                </select>
-                            </div>
-                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
-                                <label class="form-label">Search</label>
-                                <input type="text" class="form-control" id="historySearch" placeholder="Search..." />
-                            </div>
+                            <div class="col-lg-2 col-md-4 col-sm-6 col-12"><label class="form-label">From Date</label><input type="date" class="form-control" id="historyFromDate" /></div>
+                            <div class="col-lg-2 col-md-4 col-sm-6 col-12"><label class="form-label">To Date</label><input type="date" class="form-control" id="historyToDate" /></div>
+                            <div class="col-lg-2 col-md-4 col-sm-6 col-12"><label class="form-label">Recipient Type</label><select class="form-select" id="historyRecipientType"><option value="">All</option><option value="student">Student</option><option value="staff">Staff</option><option value="section">Section</option><option value="class">Class</option></select></div>
+                            <div class="col-lg-2 col-md-4 col-sm-6 col-12"><label class="form-label">Status</label><select class="form-select" id="historyStatus"><option value="">All</option><option value="sent">Sent</option><option value="failed">Failed</option><option value="pending">Pending</option></select></div>
+                            <div class="col-lg-2 col-md-4 col-sm-6 col-12"><label class="form-label">Search</label><input type="text" class="form-control" id="historySearch" placeholder="Search..." /></div>
                             <div class="col-lg-2 col-md-4 col-sm-6 col-12 d-flex align-items-end gap-2">
-                                <button type="button" class="btn btn-primary" onclick="filterHistory()">
-                                    <i class="bi bi-search me-1"></i> Filter
-                                </button>
-                                <button type="button" class="btn btn-secondary" onclick="refreshHistory()">
-                                    <i class="bi bi-arrow-clockwise"></i>
-                                </button>
+                                <button type="button" class="btn btn-primary" onclick="filterHistory()"><i class="bi bi-search me-1"></i> Filter</button>
+                                <button type="button" class="btn btn-secondary" onclick="refreshHistory()"><i class="bi bi-arrow-clockwise"></i></button>
                             </div>
                         </div>
-                        <!-- History Table -->
                         <div class="table-responsive">
                             <table class="table table-hover" id="historyTable">
-                                <thead>
-                                    <tr style="background: #e2e8f0;">
-                                        <th>Date/Time</th>
-                                        <th>Recipient Type</th>
-                                        <th>Recipient Name/Count</th>
-                                        <th>Message Preview</th>
-                                        <th>Status</th>
-                                        <th>Sent By</th>
-                                        <th>Total Count</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="historyBody">
-                                    <tr>
-                                        <td colspan="7" class="text-center text-muted py-4">No SMS history found. Use filters and click Filter to search.</td>
-                                    </tr>
-                                </tbody>
+                                <thead><tr style="background: #e2e8f0;"><th>Date/Time</th><th>Recipient Type</th><th>Recipient Name/Count</th><th>Message Preview</th><th>Status</th><th>Sent By</th><th>Total Count</th></tr></thead>
+                                <tbody id="historyBody"><tr><td colspan="7" class="text-center text-muted py-4">No SMS history found. Use filters and click Filter to search.</td></tr></tbody>
                             </table>
                         </div>
                         <div class="d-flex justify-content-end mt-3">
-                            <button type="button" class="btn btn-secondary" onclick="exportHistory()">
-                                <i class="bi bi-download me-1"></i> Export
-                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="exportHistory()"><i class="bi bi-download me-1"></i> Export</button>
                         </div>
                     </div>
                 </div>
@@ -906,584 +503,409 @@
 </div>
 
 @section Styles {
-<style>
-    .nav-tabs .nav-link {
-        border: none;
-        color: #64748b;
-        font-weight: 500;
-        padding: 12px 16px;
-        margin-bottom: -2px;
-        font-size: 14px;
-        white-space: nowrap;
-    }
-    .nav-tabs .nav-link:hover {
-        color: #008649;
-        border: none;
-    }
-    .nav-tabs .nav-link.active {
-        color: #008649;
-        border: none;
-        border-bottom: 3px solid #008649;
-        background: transparent;
-    }
-    @@media (max-width: 991px) {
-        .nav-tabs {
-            flex-wrap: nowrap !important;
-            overflow-x: auto;
-            overflow-y: hidden;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
-        }
-        .nav-tabs::-webkit-scrollbar {
-            display: none;
-        }
+    <style>
         .nav-tabs .nav-link {
-            padding: 10px 14px;
-            font-size: 13px;
+            border: none;
+            color: #64748b;
+            font-weight: 500;
+            padding: 12px 16px;
+            margin-bottom: -2px;
+            font-size: 14px;
+            white-space: nowrap;
         }
-    }
-    @@media (max-width: 767px) {
-        .nav-tabs .nav-link {
-            padding: 8px 12px;
-            font-size: 12px;
+
+            .nav-tabs .nav-link:hover {
+                color: #008649;
+                border: none;
+            }
+
+            .nav-tabs .nav-link.active {
+                color: #008649;
+                border: none;
+                border-bottom: 3px solid #008649;
+                background: transparent;
+            }
+
+        @@media (max-width: 991px) {
+            .nav-tabs {
+                flex-wrap: nowrap !important;
+                overflow-x: auto;
+                overflow-y: hidden;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+
+                .nav-tabs::-webkit-scrollbar {
+                    display: none;
+                }
+
+                .nav-tabs .nav-link {
+                    padding: 10px 14px;
+                    font-size: 13px;
+                }
         }
-    }
-</style>
+
+        @@media (max-width: 767px) {
+            .nav-tabs .nav-link {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+        }
+    </style>
 }
 
 @section Scripts {
-<script>
-    ////const API_BASE = 'http://localhost:5266/api';
+    <!-- SheetJS for Excel parsing (required for From Excel tab) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-    $(document).ready(function () {
-        // Set default dates
-        const today = new Date().toISOString().split('T')[0];
-        $('#absentDate, #lateDate, #againDate').val(today);
-        $('#fromtoFromDate, #historyFromDate').val(today);
-        $('#fromtoToDate, #historyToDate').val(today);
+    <script>
+        // Global Excel state
+        let excelParsedData = [];
+        let excelHeaders    = [];
 
-        loadAllDropdowns();
+        $(document).ready(function () {
+            const today = new Date().toISOString().split('T')[0];
+            $('#absentDate, #lateDate, #againDate').val(today);
+            $('#fromtoFromDate, #historyFromDate').val(today);
+            $('#fromtoToDate, #historyToDate').val(today);
+            loadAllDropdowns();
+            toggleGeneralFields();
+            toggleAbsentFields();
+            toggleLateFields();
+            toggleAgainFields();
+            toggleFeeFields();
+            toggleResultFields();
+            toggleFromToFields();
+            toggleRcardFields();
+        });
 
-        // Initialize field visibility based on default selections
-        toggleGeneralFields();
-        toggleAbsentFields();
-        toggleLateFields();
-        toggleAgainFields();
-        toggleFeeFields();
-        toggleResultFields();
-        toggleFromToFields();
-        toggleRcardFields();
-    });
-
-    async function loadAllDropdowns() {
-        try {
-            const [classes, exams] = await Promise.all([
-                fetch(`${API_BASE}/SMSClass`).then(r => r.ok ? r.json() : []),
-                fetch(`${API_BASE}/Exam`).then(r => r.ok ? r.json() : [])
-            ]);
-
-            // Populate all class dropdowns
-            const classDropdowns = [
-                'generalClassId', 'absentClassId', 'lateClassId', 'againClassId',
-                'feeClassId', 'resultClassId', 'fromtoClassId', 'rcardClassId'
-            ];
-            classDropdowns.forEach(id => {
-                const select = $(`#${id}`);
-                select.find('option:not(:first)').remove();
-                classes.forEach(c => {
-                    select.append(`<option value="${c.viD}">${c.vName}</option>`);
+        async function loadAllDropdowns() {
+            try {
+                const [classes, exams] = await Promise.all([
+                    fetch(`${API_BASE}/class`).then(r => r.ok ? r.json() : []),
+                    fetch(`${API_BASE}/Exam`).then(r => r.ok ? r.json() : [])
+                ]);
+                const classDropdowns = ['generalClassId','absentClassId','lateClassId','againClassId','feeClassId','resultClassId','fromtoClassId','rcardClassId'];
+                classDropdowns.forEach(id => {
+                    const select = $(`#${id}`);
+                    select.find('option:not(:first)').remove();
+                    classes.forEach(c => select.append(`<option value="${c.vid}">${c.vName}</option>`));
                 });
-            });
-
-            // Populate exam dropdowns
-            const examDropdowns = ['resultExamId', 'rcardExamId'];
-            examDropdowns.forEach(id => {
-                const select = $(`#${id}`);
-                select.find('option:not(:first)').remove();
-                exams.forEach(e => {
-                    select.append(`<option value="${e.id}">${e.examName}</option>`);
+                const examDropdowns = ['resultExamId','rcardExamId'];
+                examDropdowns.forEach(id => {
+                    const select = $(`#${id}`);
+                    select.find('option:not(:first)').remove();
+                    exams.forEach(e => select.append(`<option value="${e.id}">${e.examName}</option>`));
                 });
-            });
-        } catch (error) {
-            console.error('Error loading dropdowns:', error);
+            } catch (error) { console.error('Error loading dropdowns:', error); }
         }
-    }
 
-    // Character count update
-    function updateCharCount(textareaId, counterId) {
-        const count = $(`#${textareaId}`).val().length;
-        $(`#${counterId}`).text(count);
-    }
+        function updateCharCount(textareaId, counterId) { $(`#${counterId}`).text($(`#${textareaId}`).val().length); }
 
-    // Toggle functions for each tab
-    function toggleGeneralFields() {
-        const choice = $('input[name="generalChoose"]:checked').val();
-        $('#generalClassField').toggle(choice !== 'all');
-        $('#generalSectionField').toggle(choice === 'section' || choice === 'student');
-        $('#generalStudentField').toggle(choice === 'student');
-    }
+        function toggleGeneralFields() { const c = $('input[name="generalChoose"]:checked').val(); $('#generalClassField').toggle(c !== 'all'); $('#generalSectionField').toggle(c === 'section' || c === 'student'); $('#generalStudentField').toggle(c === 'student'); }
+        function toggleAbsentFields()  { const c = $('input[name="absentChoose"]:checked').val();  $('#absentClassField').toggle(c !== 'all');  $('#absentSectionField').toggle(c === 'section' || c === 'student');  $('#absentStudentField').toggle(c === 'student'); }
+        function toggleLateFields()    { const c = $('input[name="lateChoose"]:checked').val();    $('#lateClassField').toggle(c !== 'all');    $('#lateSectionField').toggle(c === 'section' || c === 'student');    $('#lateStudentField').toggle(c === 'student'); }
+        function toggleAgainFields()   { const c = $('input[name="againChoose"]:checked').val();   $('#againClassField').toggle(c !== 'all');   $('#againSectionField').toggle(c === 'section' || c === 'student');   $('#againStudentField').toggle(c === 'student'); }
+        function toggleFeeFields()     { const c = $('input[name="feeChoose"]:checked').val();     $('#feeClassField').toggle(c !== 'all');     $('#feeSectionField').toggle(c === 'section' || c === 'student');     $('#feeStudentField').toggle(c === 'student'); }
+        function toggleResultFields()  { const c = $('input[name="resultChoose"]:checked').val();  $('#resultClassField').toggle(c !== 'all');  $('#resultSectionField').toggle(c === 'section' || c === 'student');  $('#resultStudentField').toggle(c === 'student'); }
+        function toggleFromToFields()  { const c = $('input[name="fromtoChoose"]:checked').val();  $('#fromtoClassField').toggle(c !== 'all');  $('#fromtoSectionField').toggle(c === 'section' || c === 'student');  $('#fromtoStudentField').toggle(c === 'student'); }
+        function toggleRcardFields()   { const c = $('input[name="rcardChoose"]:checked').val();   $('#rcardClassField').toggle(c !== 'all');   $('#rcardSectionField').toggle(c === 'section' || c === 'student');   $('#rcardStudentField').toggle(c === 'student'); }
 
-    function toggleAbsentFields() {
-        const choice = $('input[name="absentChoose"]:checked').val();
-        $('#absentClassField').toggle(choice !== 'all');
-        $('#absentSectionField').toggle(choice === 'section' || choice === 'student');
-        $('#absentStudentField').toggle(choice === 'student');
-    }
+        async function loadSectionsFor(classId, sectionId) {
+            const classVal = $(`#${classId}`).val();
+            const sec = $(`#${sectionId}`);
+            sec.find('option:not(:first)').remove();
+            if (!classVal) return;
+            try { const r = await fetch(`${API_BASE}/section/byClass/${classVal}`); if (r.ok) { const s = await r.json(); s.forEach(x => sec.append(`<option value="${x.vid}">${x.vName}</option>`)); } } catch (e) { console.error(e); }
+        }
 
-    function toggleLateFields() {
-        const choice = $('input[name="lateChoose"]:checked').val();
-        $('#lateClassField').toggle(choice !== 'all');
-        $('#lateSectionField').toggle(choice === 'section' || choice === 'student');
-        $('#lateStudentField').toggle(choice === 'student');
-    }
+        async function loadStudentsFor(classId, sectionId, studentId) {
+            const classVal = $(`#${classId}`).val(); const secVal = $(`#${sectionId}`).val();
+            const std = $(`#${studentId}`);
+            std.find('option:not(:first)').remove();
+            if (!classVal || !secVal) return;
+            try { const r = await fetch(`${API_BASE}/Student/byClassSection?classId=${classVal}&sectionId=${secVal}`); if (r.ok) { const s = await r.json(); s.forEach(x => std.append(`<option value="${x.id}" data-phone="${x.mobile || ''}">${x.studentName || x.name} (${x.rollNo || '-'})</option>`)); } } catch (e) { console.error(e); }
+        }
 
-    function toggleAgainFields() {
-        const choice = $('input[name="againChoose"]:checked').val();
-        $('#againClassField').toggle(choice !== 'all');
-        $('#againSectionField').toggle(choice === 'section' || choice === 'student');
-        $('#againStudentField').toggle(choice === 'student');
-    }
+        async function loadGeneralSections() { await loadSectionsFor('generalClassId','generalSectionId'); }
+        async function loadAbsentSections()  { await loadSectionsFor('absentClassId','absentSectionId'); }
+        async function loadLateSections()    { await loadSectionsFor('lateClassId','lateSectionId'); }
+        async function loadAgainSections()   { await loadSectionsFor('againClassId','againSectionId'); }
+        async function loadFeeSections()     { await loadSectionsFor('feeClassId','feeSectionId'); }
+        async function loadResultSections()  { await loadSectionsFor('resultClassId','resultSectionId'); }
+        async function loadFromToSections()  { await loadSectionsFor('fromtoClassId','fromtoSectionId'); }
+        async function loadRcardSections()   { await loadSectionsFor('rcardClassId','rcardSectionId'); }
 
-    function toggleFeeFields() {
-        const choice = $('input[name="feeChoose"]:checked').val();
-        $('#feeClassField').toggle(choice !== 'all');
-        $('#feeSectionField').toggle(choice === 'section' || choice === 'student');
-        $('#feeStudentField').toggle(choice === 'student');
-    }
+        async function loadGeneralStudents() { await loadStudentsFor('generalClassId','generalSectionId','generalStudentId'); }
+        async function loadAbsentStudents()  { await loadStudentsFor('absentClassId','absentSectionId','absentStudentId'); }
+        async function loadLateStudents()    { await loadStudentsFor('lateClassId','lateSectionId','lateStudentId'); }
+        async function loadAgainStudents()   { await loadStudentsFor('againClassId','againSectionId','againStudentId'); }
+        async function loadFeeStudents()     { await loadStudentsFor('feeClassId','feeSectionId','feeStudentId'); }
+        async function loadResultStudents()  { await loadStudentsFor('resultClassId','resultSectionId','resultStudentId'); }
+        async function loadFromToStudents()  { await loadStudentsFor('fromtoClassId','fromtoSectionId','fromtoStudentId'); }
+        async function loadRcardStudents()   { await loadStudentsFor('rcardClassId','rcardSectionId','rcardStudentId'); }
 
-    function toggleResultFields() {
-        const choice = $('input[name="resultChoose"]:checked').val();
-        $('#resultClassField').toggle(choice !== 'all');
-        $('#resultSectionField').toggle(choice === 'section' || choice === 'student');
-        $('#resultStudentField').toggle(choice === 'student');
-    }
+        async function loadStaffByType() {
+            const staffSelect = $('#staffTo');
+            staffSelect.find('option:not(:first)').remove();
+            const type = $('#staffType').val();
+            if (!type) return;
+            try { const r = await fetch(`${API_BASE}/Employee`); if (r.ok) { const s = await r.json(); s.forEach(x => staffSelect.append(`<option value="${x.id}" data-phone="${x.mobile || x.phone || ''}">${x.fullName || x.name}</option>`)); } } catch (e) { console.error(e); }
+        }
 
-    function toggleFromToFields() {
-        const choice = $('input[name="fromtoChoose"]:checked').val();
-        $('#fromtoClassField').toggle(choice !== 'all');
-        $('#fromtoSectionField').toggle(choice === 'section' || choice === 'student');
-        $('#fromtoStudentField').toggle(choice === 'student');
-    }
+        function updateStaffContact() { const phone = $('#staffTo option:selected').data('phone'); if (phone) $('#staffContactNo').val(phone); }
 
-    function toggleRcardFields() {
-        const choice = $('input[name="rcardChoose"]:checked').val();
-        $('#rcardClassField').toggle(choice !== 'all');
-        $('#rcardSectionField').toggle(choice === 'section' || choice === 'student');
-        $('#rcardStudentField').toggle(choice === 'student');
-    }
+        function logSMS(logId, countId, message) {
+            const ts = new Date().toLocaleString();
+            const log = $(`#${logId}`);
+            log.val(log.val() + `[${ts}] ${message}\n`);
+            log.scrollTop(log[0].scrollHeight);
+            $(`#${countId}`).text(parseInt($(`#${countId}`).text()) + 1);
+        }
 
-    // Generic section loading function
-    async function loadSectionsFor(classDropdownId, sectionDropdownId) {
-        const classId = $(`#${classDropdownId}`).val();
-        const sectionSelect = $(`#${sectionDropdownId}`);
-        sectionSelect.find('option:not(:first)').remove();
-
-        if (!classId) return;
-
-        try {
-            const response = await fetch(`${API_BASE}/SMSSection/byClass/${classId}`);
-            if (response.ok) {
-                const sections = await response.json();
-                sections.forEach(s => {
-                    sectionSelect.append(`<option value="${s.viD}">${s.vName}</option>`);
+        async function sendSmsViaApi(recipients, message, messageType, logId, countId) {
+            if (!recipients || recipients.length === 0) { toastWarning('No recipients found'); return; }
+            if (!message) { toastWarning('Please enter a message'); return; }
+            try {
+                const response = await fetch(`${API_BASE}/Sms/send`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ recipients, message, messageType })
                 });
-            }
-        } catch (error) {
-            console.error('Error loading sections:', error);
-        }
-    }
-
-    // Generic student loading function
-    async function loadStudentsFor(classDropdownId, sectionDropdownId, studentDropdownId) {
-        const classId = $(`#${classDropdownId}`).val();
-        const sectionId = $(`#${sectionDropdownId}`).val();
-        const studentSelect = $(`#${studentDropdownId}`);
-        studentSelect.find('option:not(:first)').remove();
-
-        if (!classId || !sectionId) return;
-
-        try {
-            const response = await fetch(`${API_BASE}/Student/byClassSection?classId=${classId}&sectionId=${sectionId}`);
-            if (response.ok) {
-                const students = await response.json();
-                students.forEach(s => {
-                    studentSelect.append(`<option value="${s.id}">${s.studentName || s.name} (${s.rollNo || '-'})</option>`);
-                });
-            }
-        } catch (error) {
-            console.error('Error loading students:', error);
-        }
-    }
-
-    // Section loading functions for each tab
-    async function loadGeneralSections() { await loadSectionsFor('generalClassId', 'generalSectionId'); }
-    async function loadAbsentSections() { await loadSectionsFor('absentClassId', 'absentSectionId'); }
-    async function loadLateSections() { await loadSectionsFor('lateClassId', 'lateSectionId'); }
-    async function loadAgainSections() { await loadSectionsFor('againClassId', 'againSectionId'); }
-    async function loadFeeSections() { await loadSectionsFor('feeClassId', 'feeSectionId'); }
-    async function loadResultSections() { await loadSectionsFor('resultClassId', 'resultSectionId'); }
-    async function loadFromToSections() { await loadSectionsFor('fromtoClassId', 'fromtoSectionId'); }
-    async function loadRcardSections() { await loadSectionsFor('rcardClassId', 'rcardSectionId'); }
-
-    // Student loading functions for each tab
-    async function loadGeneralStudents() { await loadStudentsFor('generalClassId', 'generalSectionId', 'generalStudentId'); }
-    async function loadAbsentStudents() { await loadStudentsFor('absentClassId', 'absentSectionId', 'absentStudentId'); }
-    async function loadLateStudents() { await loadStudentsFor('lateClassId', 'lateSectionId', 'lateStudentId'); }
-    async function loadAgainStudents() { await loadStudentsFor('againClassId', 'againSectionId', 'againStudentId'); }
-    async function loadFeeStudents() { await loadStudentsFor('feeClassId', 'feeSectionId', 'feeStudentId'); }
-    async function loadResultStudents() { await loadStudentsFor('resultClassId', 'resultSectionId', 'resultStudentId'); }
-    async function loadFromToStudents() { await loadStudentsFor('fromtoClassId', 'fromtoSectionId', 'fromtoStudentId'); }
-    async function loadRcardStudents() { await loadStudentsFor('rcardClassId', 'rcardSectionId', 'rcardStudentId'); }
-
-    // Staff functions
-    async function loadStaffByType() {
-        const type = $('#staffType').val();
-        const staffSelect = $('#staffTo');
-        staffSelect.find('option:not(:first)').remove();
-
-        if (!type) return;
-
-        try {
-            const response = await fetch(`${API_BASE}/Employee`);
-            if (response.ok) {
-                const staff = await response.json();
-                staff.forEach(s => {
-                    staffSelect.append(`<option value="${s.id}" data-phone="${s.mobile || s.phone}">${s.fullName || s.name}</option>`);
-                });
-            }
-        } catch (error) {
-            console.error('Error loading staff:', error);
-        }
-    }
-
-    function updateStaffContact() {
-        const selectedOption = $('#staffTo option:selected');
-        const phone = selectedOption.data('phone');
-        if (phone) {
-            $('#staffContactNo').val(phone);
-        }
-    }
-
-    // SMS logging function
-    function logSMS(logId, countId, message) {
-        const timestamp = new Date().toLocaleString();
-        const log = $(`#${logId}`);
-        log.val(log.val() + `[${timestamp}] ${message}\n`);
-
-        const count = parseInt($(`#${countId}`).text()) + 1;
-        $(`#${countId}`).text(count);
-    }
-
-    // Generic SMS send helper
-    async function sendSmsViaApi(recipients, message, messageType, logId, countId) {
-        if (!recipients || recipients.length === 0) {
-            toastWarning('No recipients found');
-            return;
-        }
-        if (!message) {
-            toastWarning('Please enter a message');
-            return;
+                if (!response.ok) { const err = await response.json().catch(() => ({ message: 'Send failed' })); toastError(err.message || 'Failed to send SMS'); return; }
+                const result = await response.json();
+                logSMS(logId, countId, `Sent: ${result.totalSent}, Failed: ${result.totalFailed}`);
+                result.totalFailed > 0 ? toastWarning(`${result.totalSent} sent, ${result.totalFailed} failed`) : toastSuccess(`${result.totalSent} SMS sent successfully!`);
+            } catch (ex) { console.error(ex); toastError('Network error sending SMS'); }
         }
 
-        try {
-            const response = await fetch(`${API_BASE}/Sms/send`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    recipients: recipients,
-                    message: message,
-                    messageType: messageType
-                })
-            });
-
-            if (!response.ok) {
-                const err = await response.json().catch(() => ({ message: 'Send failed' }));
-                toastError(err.message || 'Failed to send SMS');
-                return;
-            }
-
-            const result = await response.json();
-            logSMS(logId, countId, `Sent: ${result.totalSent}, Failed: ${result.totalFailed}`);
-            if (result.totalFailed > 0) {
-                toastWarning(`${result.totalSent} sent, ${result.totalFailed} failed`);
-            } else {
-                toastSuccess(`${result.totalSent} SMS sent successfully!`);
-            }
-        } catch (ex) {
-            console.error('SMS send error:', ex);
-            toastError('Network error sending SMS');
+        async function sendStaffSMS() {
+            const message = $('#staffMessage').val();
+            if (!message) { toastWarning('Please enter a message'); return; }
+            const phone = $('#staffContactNo').val();
+            if (!phone) { toastWarning('Please select a staff member or enter a contact number'); return; }
+            await sendSmsViaApi([{ phone, name: $('#staffTo option:selected').text() }], message, 1, 'staffSendingLog', 'staffSentCount');
         }
-    }
 
-    // Send SMS functions
-    async function sendStaffSMS() {
-        const message = $('#staffMessage').val();
-        if (!message) { toastWarning('Please enter a message'); return; }
-
-        const phone = $('#staffContactNo').val();
-        const name = $('#staffTo option:selected').text();
-        if (!phone) { toastWarning('Please select a staff member or enter a contact number'); return; }
-
-        await sendSmsViaApi([{ phone, name }], message, 1, 'staffSendingLog', 'staffSentCount');
-    }
-
-    async function sendGeneralSMS() {
-        const message = $('#generalMessage').val();
-        if (!message) { toastWarning('Please enter a message'); return; }
-
-        // For now, send to manually specified recipients from the form
-        // In a full implementation, this would fetch students based on class/section selection
-        const studentSelect = $('#generalStudentId');
-        const phone = studentSelect.find(':selected').data('phone');
-        const name = studentSelect.find(':selected').text();
-        if (!phone) { toastWarning('Please select a student with a phone number'); return; }
-
-        await sendSmsViaApi([{ phone, name }], message, 2, 'generalSendingLog', 'generalSentCount');
-    }
-
-    async function sendAbsentSMS() {
-        const date = $('#absentDate').val();
-        if (!date) { toastWarning('Please select a date'); return; }
-        const message = $('#absentMessage') && $('#absentMessage').val() ? $('#absentMessage').val()
-            : 'Dear Parent, your child was marked absent on ' + date + '. Please contact the school.';
-
-        try {
-            const resp = await fetch(`${API_BASE}/Sms/absent-students?date=${date}`);
-            const students = await resp.json();
-            if (!students || students.length === 0) {
-                toastWarning('No absent students found for this date');
-                return;
-            }
-            await sendSmsViaApi(students, message, 3, 'absentSendingLog', 'absentSentCount');
-        } catch (ex) {
-            console.error(ex);
-            toastError('Failed to fetch absent students');
+        async function sendGeneralSMS() {
+            const message = $('#generalMessage').val();
+            if (!message) { toastWarning('Please enter a message'); return; }
+            const phone = $('#generalStudentId option:selected').data('phone');
+            if (!phone) { toastWarning('Please select a student with a phone number'); return; }
+            await sendSmsViaApi([{ phone, name: $('#generalStudentId option:selected').text() }], message, 2, 'generalSendingLog', 'generalSentCount');
         }
-    }
 
-    async function sendLateSMS() {
-        const date = $('#lateDate').val();
-        if (!date) { toastWarning('Please select a date'); return; }
-        const message = $('#lateMessage') && $('#lateMessage').val() ? $('#lateMessage').val()
-            : 'Dear Parent, your child was marked late on ' + date + '. Please ensure punctuality.';
-
-        try {
-            const resp = await fetch(`${API_BASE}/Sms/late-students?date=${date}`);
-            const students = await resp.json();
-            if (!students || students.length === 0) {
-                toastWarning('No late students found for this date');
-                return;
-            }
-            await sendSmsViaApi(students, message, 4, 'lateSendingLog', 'lateSentCount');
-        } catch (ex) {
-            console.error(ex);
-            toastError('Failed to fetch late students');
+        async function sendAbsentSMS() {
+            const date = $('#absentDate').val();
+            if (!date) { toastWarning('Please select a date'); return; }
+            const message = 'Dear Parent, your child was marked absent on ' + date + '. Please contact the school.';
+            try {
+                const resp = await fetch(`${API_BASE}/Sms/absent-students?date=${date}`);
+                const students = await resp.json();
+                if (!students || students.length === 0) { toastWarning('No absent students found for this date'); return; }
+                await sendSmsViaApi(students, message, 3, 'absentSendingLog', 'absentSentCount');
+            } catch (ex) { console.error(ex); toastError('Failed to fetch absent students'); }
         }
-    }
 
-    async function sendAgainSMS() {
-        const date = $('#againDate').val();
-        if (!date) { toastWarning('Please select a date'); return; }
-        const message = $('#againMessage') && $('#againMessage').val() ? $('#againMessage').val()
-            : 'Dear Parent, your child was marked absent on ' + date + '. This is a reminder.';
-
-        try {
-            const resp = await fetch(`${API_BASE}/Sms/absent-students?date=${date}`);
-            const students = await resp.json();
-            if (!students || students.length === 0) {
-                toastWarning('No absent students found for this date');
-                return;
-            }
-            await sendSmsViaApi(students, message, 3, 'againSendingLog', 'againSentCount');
-        } catch (ex) {
-            console.error(ex);
-            toastError('Failed to fetch absent students');
+        async function sendLateSMS() {
+            const date = $('#lateDate').val();
+            if (!date) { toastWarning('Please select a date'); return; }
+            const message = 'Dear Parent, your child was marked late on ' + date + '. Please ensure punctuality.';
+            try {
+                const resp = await fetch(`${API_BASE}/Sms/late-students?date=${date}`);
+                const students = await resp.json();
+                if (!students || students.length === 0) { toastWarning('No late students found for this date'); return; }
+                await sendSmsViaApi(students, message, 4, 'lateSendingLog', 'lateSentCount');
+            } catch (ex) { console.error(ex); toastError('Failed to fetch late students'); }
         }
-    }
 
-    async function sendFeeSMS() {
-        const message = $('#feeMessage') && $('#feeMessage').val() ? $('#feeMessage').val()
-            : 'Dear Parent, your child\'s school fee is pending. Please submit at your earliest convenience.';
-
-        try {
-            const resp = await fetch(`${API_BASE}/Sms/fee-defaulters`);
-            const students = await resp.json();
-            if (!students || students.length === 0) {
-                toastWarning('No fee defaulters found');
-                return;
-            }
-            await sendSmsViaApi(students, message, 5, 'feeSendingLog', 'feeSentCount');
-        } catch (ex) {
-            console.error(ex);
-            toastError('Failed to fetch fee defaulters');
+        async function sendAgainSMS() {
+            const date = $('#againDate').val();
+            if (!date) { toastWarning('Please select a date'); return; }
+            const message = 'Dear Parent, your child was marked absent on ' + date + '. This is a reminder.';
+            try {
+                const resp = await fetch(`${API_BASE}/Sms/absent-students?date=${date}`);
+                const students = await resp.json();
+                if (!students || students.length === 0) { toastWarning('No absent students found for this date'); return; }
+                await sendSmsViaApi(students, message, 3, 'againSendingLog', 'againSentCount');
+            } catch (ex) { console.error(ex); toastError('Failed to fetch absent students'); }
         }
-    }
 
-    async function sendResultSMS() {
-        const examId = $('#resultExamId').val();
-        if (!examId) { toastWarning('Please select an exam'); return; }
-        const message = $('#resultMessage') && $('#resultMessage').val() ? $('#resultMessage').val()
-            : 'Dear Parent, your child\'s exam results are available. Please check with the school.';
-
-        // Result SMS currently sends to all students — can be refined later with exam result data
-        const studentSelect = $('#resultStudentId');
-        const phone = studentSelect.find(':selected').data('phone');
-        const name = studentSelect.find(':selected').text();
-        if (phone) {
-            await sendSmsViaApi([{ phone, name }], message, 6, 'resultSendingLog', 'resultSentCount');
-        } else {
-            toastWarning('Please select a student with a phone number');
+        async function sendFeeSMS() {
+            const message = $('#feeMessage').val() || 'Dear Parent, your child\'s school fee is pending. Please submit at your earliest convenience.';
+            try {
+                const resp = await fetch(`${API_BASE}/Sms/fee-defaulters`);
+                const students = await resp.json();
+                if (!students || students.length === 0) { toastWarning('No fee defaulters found'); return; }
+                await sendSmsViaApi(students, message, 5, 'feeSendingLog', 'feeSentCount');
+            } catch (ex) { console.error(ex); toastError('Failed to fetch fee defaulters'); }
         }
-    }
 
-    async function sendFromToSMS() {
-        const fromDate = $('#fromtoFromDate').val();
-        const toDate = $('#fromtoToDate').val();
-        if (!fromDate || !toDate) { toastWarning('Please select date range'); return; }
-        const message = $('#fromtoMessage') && $('#fromtoMessage').val() ? $('#fromtoMessage').val()
-            : 'Dear Parent, attendance notification for period ' + fromDate + ' to ' + toDate + '.';
-
-        const studentSelect = $('#fromtoStudentId');
-        const phone = studentSelect.find(':selected').data('phone');
-        const name = studentSelect.find(':selected').text();
-        if (phone) {
-            await sendSmsViaApi([{ phone, name }], message, 7, 'fromtoSendingLog', 'fromtoSentCount');
-        } else {
-            toastWarning('Please select a student with a phone number');
+        async function sendResultSMS() {
+            const examId = $('#resultExamId').val();
+            if (!examId) { toastWarning('Please select an exam'); return; }
+            const message = $('#resultMessage').val() || 'Dear Parent, your child\'s exam results are available. Please check with the school.';
+            const phone = $('#resultStudentId option:selected').data('phone');
+            if (!phone) { toastWarning('Please select a student with a phone number'); return; }
+            await sendSmsViaApi([{ phone, name: $('#resultStudentId option:selected').text() }], message, 6, 'resultSendingLog', 'resultSentCount');
         }
-    }
 
-    async function sendExcelSMS() {
-        const file = $('#excelFile').val();
-        if (!file) { toastWarning('Please upload an Excel file'); return; }
-        // Excel SMS — placeholder, requires server-side Excel parsing in a future iteration
-        logSMS('excelSendingLog', 'excelSentCount', 'Excel SMS feature coming soon');
-        toastWarning('Excel SMS sending requires server-side file upload — coming soon');
-    }
-
-    async function sendRcardSMS() {
-        const examId = $('#rcardExamId').val();
-        if (!examId) { toastWarning('Please select an exam'); return; }
-        const message = 'Dear Parent, your child\'s report card is ready. Please collect from the school.';
-
-        const studentSelect = $('#rcardStudentId');
-        const phone = studentSelect.find(':selected').data('phone');
-        const name = studentSelect.find(':selected').text();
-        if (phone) {
-            await sendSmsViaApi([{ phone, name }], message, 9, 'rcardSendingLog', 'rcardSentCount');
-        } else {
-            toastWarning('Please select a student with a phone number');
+        async function sendFromToSMS() {
+            const fromDate = $('#fromtoFromDate').val(); const toDate = $('#fromtoToDate').val();
+            if (!fromDate || !toDate) { toastWarning('Please select date range'); return; }
+            const message = $('#fromtoMessage').val() || 'Dear Parent, attendance notification for period ' + fromDate + ' to ' + toDate + '.';
+            const phone = $('#fromtoStudentId option:selected').data('phone');
+            if (!phone) { toastWarning('Please select a student with a phone number'); return; }
+            await sendSmsViaApi([{ phone, name: $('#fromtoStudentId option:selected').text() }], message, 7, 'fromtoSendingLog', 'fromtoSentCount');
         }
-    }
 
-    // Excel file preview
-    function previewExcelFile() {
-        const fileInput = $('#excelFile')[0];
-        if (fileInput.files && fileInput.files[0]) {
+        async function sendRcardSMS() {
+            const examId = $('#rcardExamId').val();
+            if (!examId) { toastWarning('Please select an exam'); return; }
+            const message = 'Dear Parent, your child\'s report card is ready. Please collect from the school.';
+            const phone = $('#rcardStudentId option:selected').data('phone');
+            if (!phone) { toastWarning('Please select a student with a phone number'); return; }
+            await sendSmsViaApi([{ phone, name: $('#rcardStudentId option:selected').text() }], message, 9, 'rcardSendingLog', 'rcardSentCount');
+        }
+
+        // ================================================================
+        // EXCEL SMS — COMPLETE IMPLEMENTATION
+        // ================================================================
+
+        function previewExcelFile() {
+            const fileInput = $('#excelFile')[0];
+            if (!fileInput.files || !fileInput.files[0]) return;
             const file = fileInput.files[0];
-            $('#excelFileName').text(file.name);
-            $('#excelRowCount').text('--');
-            $('#excelPreviewSection').show();
-            $('#excelColumnsSection').show();
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const data     = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const sheet    = workbook.Sheets[workbook.SheetNames[0]];
+                    excelParsedData = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+                    excelHeaders    = excelParsedData.length > 0 ? Object.keys(excelParsedData[0]) : [];
 
-            // Mock column options
-            const columns = ['Column A', 'Column B', 'Column C', 'Name', 'Phone', 'Message'];
-            const phoneSelect = $('#excelPhoneColumn');
-            const messageSelect = $('#excelMessageColumn');
-            phoneSelect.find('option:not(:first)').remove();
-            messageSelect.find('option:not(:first)').remove();
-            columns.forEach(col => {
-                phoneSelect.append(`<option value="${col}">${col}</option>`);
-                messageSelect.append(`<option value="${col}">${col}</option>`);
+                    if (excelParsedData.length === 0) { toastWarning('Excel file is empty or has no data rows'); clearExcelForm(); return; }
+
+                    $('#excelFileName').text(file.name);
+                    $('#excelRowCount').text(excelParsedData.length + ' rows');
+                    $('#excelPreviewSection').show();
+
+                    const phoneSelect   = $('#excelPhoneColumn');
+                    const messageSelect = $('#excelMessageColumn');
+                    phoneSelect.find('option:not(:first)').remove();
+                    messageSelect.find('option:not(:first)').remove();
+                    excelHeaders.forEach(col => {
+                        phoneSelect.append(`<option value="${col}">${col}</option>`);
+                        messageSelect.append(`<option value="${col}">${col}</option>`);
+                    });
+
+                    // Auto-select common column names
+                    autoSelectColumn(phoneSelect,   ['phone','mobile','contact','number','mobileno','phoneno','cell']);
+                    autoSelectColumn(messageSelect, ['message','msg','text','sms','content']);
+
+                    $('#excelColumnsSection').show();
+                    renderExcelPreviewTable();
+                    toastSuccess(`File loaded: ${excelParsedData.length} rows found`);
+                } catch (err) { console.error(err); toastError('Failed to read Excel file. Make sure it is a valid .xlsx, .xls or .csv file.'); }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function autoSelectColumn(selectElement, keywords) {
+            selectElement.find('option').each(function () {
+                if (keywords.some(k => $(this).val().toLowerCase().replace(/\s/g, '').includes(k))) {
+                    selectElement.val($(this).val());
+                    return false;
+                }
             });
         }
-    }
 
-    // Clear form functions
-    function clearStaffForm() {
-        $('#staffType').val('');
-        $('#staffTo').val('');
-        $('#staffContactNo').val('');
-        $('#staffMessage').val('');
-        $('#staffCharCount').text('0');
-        $('#staffSmsUrdu').prop('checked', false);
-    }
+        function renderExcelPreviewTable() {
+            $('#excelPreviewTable').remove();
+            if (!excelParsedData.length || !excelHeaders.length) return;
+            const rows = excelParsedData.slice(0, 5);
+            let html = `<div id="excelPreviewTable" class="mt-3"><label class="form-label fw-semibold">Data Preview (first 5 rows)</label><div class="table-responsive"><table class="table table-sm table-bordered" style="font-size:12px;"><thead style="background:#e2e8f0;"><tr>`;
+            excelHeaders.forEach(h => html += `<th>${h}</th>`);
+            html += `</tr></thead><tbody>`;
+            rows.forEach(row => { html += '<tr>'; excelHeaders.forEach(h => { html += `<td>${row[h] ?? ''}</td>`; }); html += '</tr>'; });
+            html += `</tbody></table></div></div>`;
+            $('#excelColumnsSection').after(html);
+        }
 
-    function clearGeneralForm() {
-        $('#generalClassId').val('');
-        $('#generalSectionId').val('');
-        $('#generalStudentId').val('');
-        $('#generalMessage').val('');
-        $('#generalCharCount').text('0');
-        $('#generalSmsUrdu').prop('checked', false);
-    }
+        async function sendExcelSMS() {
+            if (!$('#excelFile').val())              { toastWarning('Please upload an Excel file'); return; }
+            const phoneCol   = $('#excelPhoneColumn').val();
+            const messageCol = $('#excelMessageColumn').val();
+            if (!phoneCol)                           { toastWarning('Please select the Phone column'); return; }
+            if (!messageCol)                         { toastWarning('Please select the Message column'); return; }
+            if (excelParsedData.length === 0)        { toastWarning('No data found in Excel file'); return; }
 
-    function clearFeeForm() {
-        $('#feeFeeType').val('');
-        $('#feeFeeStatus').val('');
-        $('#feeClassId').val('');
-        $('#feeSectionId').val('');
-        $('#feeStudentId').val('');
-        $('#feeMessage').val('');
-        $('#feeCharCount').text('0');
-        $('#feeSmsUrdu').prop('checked', false);
-    }
+            const recipients = [];
+            const skipped    = [];
 
-    function clearResultForm() {
-        $('#resultExamId').val('');
-        $('#resultClassId').val('');
-        $('#resultSectionId').val('');
-        $('#resultStudentId').val('');
-        $('#resultStatus').val('');
-        $('#resultMessage').val('');
-        $('#resultCharCount').text('0');
-        $('#resultSmsUrdu').prop('checked', false);
-    }
+            excelParsedData.forEach((row, i) => {
+                const rawPhone   = String(row[phoneCol]  ?? '').trim();
+                const rawMessage = String(row[messageCol] ?? '').trim();
+                const name       = String(row['Name'] ?? row['name'] ?? row['StudentName'] ?? `Row ${i + 2}`).trim();
+                if (!rawPhone)   { skipped.push(`Row ${i + 2}: empty phone`);   return; }
+                if (!rawMessage) { skipped.push(`Row ${i + 2}: empty message`); return; }
+                const phone = normalizePhone(rawPhone);
+                if (!phone)      { skipped.push(`Row ${i + 2}: invalid phone "${rawPhone}"`); return; }
+                recipients.push({ phone, name, message: rawMessage });
+            });
 
-    function clearFromToForm() {
-        $('#fromtoFromDate').val('');
-        $('#fromtoToDate').val('');
-        $('#fromtoFilterType').val('');
-        $('#fromtoClassId').val('');
-        $('#fromtoSectionId').val('');
-        $('#fromtoStudentId').val('');
-        $('#fromtoMessage').val('');
-        $('#fromtoCharCount').text('0');
-        $('#fromtoSmsUrdu').prop('checked', false);
-    }
+            if (recipients.length === 0) { toastWarning('No valid recipients found. Check phone and message columns.'); return; }
 
-    function clearExcelForm() {
-        $('#excelFile').val('');
-        $('#excelPreviewSection').hide();
-        $('#excelColumnsSection').hide();
-        $('#excelSmsUrdu').prop('checked', false);
-    }
+            if (skipped.length > 0)
+                logSMS('excelSendingLog', 'excelSentCount', `⚠️ Skipped ${skipped.length} rows: ${skipped.slice(0, 3).join(', ')}${skipped.length > 3 ? '...' : ''}`);
 
-    function clearRcardForm() {
-        $('#rcardExamId').val('');
-        $('#rcardClassId').val('');
-        $('#rcardSectionId').val('');
-        $('#rcardStudentId').val('');
-        $('#rcardIncludeLink').prop('checked', false);
-        $('#rcardMessage').val('');
-        $('#rcardCharCount').text('0');
-        $('#rcardSmsUrdu').prop('checked', false);
-    }
+            logSMS('excelSendingLog', 'excelSentCount', `📤 Sending to ${recipients.length} recipients...`);
 
-    // History functions
-    function filterHistory() {
-        toastInfo('Filtering SMS history...');
-        // Implementation for filtering history
-    }
+            try {
+                const response = await fetch(`${API_BASE}/Sms/send`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ recipients, message: '', messageType: 8 })
+                });
+                if (!response.ok) { const err = await response.json().catch(() => ({ message: 'Send failed' })); toastError(err.message || 'Failed to send SMS'); return; }
+                const result = await response.json();
+                logSMS('excelSendingLog', 'excelSentCount', `✅ Sent: ${result.totalSent} | ❌ Failed: ${result.totalFailed}`);
+                result.totalFailed > 0 ? toastWarning(`${result.totalSent} sent, ${result.totalFailed} failed`) : toastSuccess(`${result.totalSent} messages sent successfully!`);
+            } catch (ex) { console.error(ex); toastError('Network error while sending SMS'); }
+        }
 
-    function refreshHistory() {
-        toastInfo('Refreshing SMS history...');
-        // Implementation for refreshing history
-    }
+        function normalizePhone(raw) {
+            let d = raw.replace(/\D/g, '');
+            if (!d) return null;
+            if (d.startsWith('92') && d.length === 12) return d;
+            if (d.startsWith('0')  && d.length === 11) return '92' + d.substring(1);
+            if (d.length === 10    && d.startsWith('3')) return '92' + d;
+            return d.length >= 10 ? d : null;
+        }
 
-    function exportHistory() {
-        toastInfo('Exporting SMS history...');
-        // Implementation for exporting history
-    }
-</script>
+        function clearExcelForm() {
+            $('#excelFile').val('');
+            $('#excelPreviewSection').hide();
+            $('#excelColumnsSection').hide();
+            $('#excelPreviewTable').remove();
+            $('#excelSmsUrdu').prop('checked', false);
+            $('#excelSendingLog').val('');
+            $('#excelSentCount').text('0');
+            excelParsedData = [];
+            excelHeaders    = [];
+        }
+
+        // Clear functions
+        function clearStaffForm()   { $('#staffType,#staffTo,#staffContactNo,#staffMessage').val(''); $('#staffCharCount').text('0'); $('#staffSmsUrdu').prop('checked', false); }
+        function clearGeneralForm() { $('#generalClassId,#generalSectionId,#generalStudentId,#generalMessage').val(''); $('#generalCharCount').text('0'); $('#generalSmsUrdu').prop('checked', false); }
+        function clearFeeForm()     { $('#feeFeeType,#feeFeeStatus,#feeClassId,#feeSectionId,#feeStudentId,#feeMessage').val(''); $('#feeCharCount').text('0'); $('#feeSmsUrdu').prop('checked', false); }
+        function clearResultForm()  { $('#resultExamId,#resultClassId,#resultSectionId,#resultStudentId,#resultStatus,#resultMessage').val(''); $('#resultCharCount').text('0'); $('#resultSmsUrdu').prop('checked', false); }
+        function clearFromToForm()  { $('#fromtoFromDate,#fromtoToDate,#fromtoFilterType,#fromtoClassId,#fromtoSectionId,#fromtoStudentId,#fromtoMessage').val(''); $('#fromtoCharCount').text('0'); $('#fromtoSmsUrdu').prop('checked', false); }
+        function clearRcardForm()   { $('#rcardExamId,#rcardClassId,#rcardSectionId,#rcardStudentId,#rcardMessage').val(''); $('#rcardIncludeLink').prop('checked', false); $('#rcardCharCount').text('0'); $('#rcardSmsUrdu').prop('checked', false); }
+
+        function filterHistory()  { toastInfo('Filtering SMS history...'); }
+        function refreshHistory() { toastInfo('Refreshing SMS history...'); }
+        function exportHistory()  { toastInfo('Exporting SMS history...'); }
+    </script>
 }

@@ -422,7 +422,8 @@
 
 	$(document).ready(function () {
 		loadDropdowns();
-		$('#studentsBody').html('<tr><td colspan="11" class="text-center text-muted py-4">Use filters above and click Search to load students.</td></tr>');
+		loadStudents();
+		// $('#studentsBody').html('<tr><td colspan="11" class="text-center text-muted py-4">Use filters above and click Search to load students.</td></tr>');
 	});
 
 	async function loadDropdowns() {
@@ -695,7 +696,10 @@
 
 			const data = {
 				StudentIds: StudentIds,
-				StatusID: StatusID
+				StatusID: StatusID,
+				Fee: 0,
+				Description: ''
+
 			};
 
 			showLoading();
@@ -765,7 +769,9 @@
 
 			const data = {
 				StudentIds: StudentIds,
-				StatusID: StatusID
+				StatusID: StatusID,
+				Fee: 0,
+				Description: ''
 			};
 
 			showLoading();
@@ -841,7 +847,8 @@
 	async function saveGrade(StudentIds, GradeID, Description) {
 		const data = {
 			StudentIds: StudentIds,
-			GradeID: GradeID,
+			StatusID: GradeID,
+			Fee: 0,
 			Description: Description
 		};
 
@@ -914,6 +921,7 @@
 	async function saveFee(StudentIds, Fee, Description) {
 		const data = {
 			StudentIds: StudentIds,
+			StatusID: 0,
 			Fee: Fee,
 			Description: Description
 		};
@@ -941,12 +949,12 @@
 	async function toggleAvailAcademy(toggle) {
 		const studentId = $(toggle).data('id');
 		const isAvail = $(toggle).is(':checked');
-
+			
 		try {
-			const response = await fetch(`${API_BASE}/student/avail-academy`, {
+				const response = await fetch(`${API_BASE}/student/${studentId}/avail-academy`, {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ StudentId: studentId, IsAvailAcademy: isAvail })
+				body: JSON.stringify({ IsAvailAcademy: isAvail })
 			});
 
 			if (response.ok) {

@@ -21,8 +21,13 @@ namespace School.API.Controllers
             if (dto.Recipients == null || dto.Recipients.Count == 0)
                 return BadRequest(new { message = "No recipients specified" });
 
-            if (string.IsNullOrWhiteSpace(dto.Message))
-                return BadRequest(new { message = "Message is required" });
+            // Allow empty global message if each recipient has their own message
+            // (Used by Excel SMS where each row has its own message)
+            bool hasGlobalMessage = !string.IsNullOrWhiteSpace(dto.Message);
+            bool allHaveOwnMessages = dto.Recipients.All(r => !string.IsNullOrWhiteSpace(r.Message));
+
+            if (!hasGlobalMessage && !allHaveOwnMessages)
+                return BadRequest(new { message = "Message is required (either global message or per-recipient message)" });
 
             var result = await _smsService.SendBulkAsync(dto);
             return Ok(result);
@@ -33,7 +38,6 @@ namespace School.API.Controllers
         {
             var messages = await _smsService.GetHistoryAsync(filter);
             var total = await _smsService.GetHistoryCountAsync(filter);
-
             return Ok(new
             {
                 data = messages,

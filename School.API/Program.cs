@@ -57,6 +57,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 
+// Program.cs — verify these lines exist
+builder.Services.AddScoped<IApplyFeeRepository, ApplyFeeRepository>();
+builder.Services.AddScoped<IApplyFeeService, ApplyFeeService>();
+
 builder.Services.AddScoped<IStdAttendenceRepository, StdAttendenceRepository>();
 builder.Services.AddScoped<IStdAttendenceService, StdAttendenceService>();
 
