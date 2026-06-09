@@ -82,6 +82,10 @@ namespace School.API.Services.Implementations.Academic
         }
         public Task<List<StudentFeeListDto>> GetListAsync(GetStudentFeeRequestDto dto)
             => _repo.GetListAsync(dto);
+        public Task<List<StudentFeeReportDto>> GetReportAsync(GetStudentFeeReportRequestDto dto)
+            => _repo.GetReportAsync(dto);
+       public Task<List<StudentFeeListDto>> GetPendingsAsync(int studentId)
+            => _repo.GetPendingsAsync(studentId);
         public async Task<ResponseDto> DeleteAsync(int vid, int userId, string userIp)
             => await _repo.DeleteAsync(vid, userId, userIp);
 

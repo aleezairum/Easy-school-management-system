@@ -5,14 +5,32 @@
       "Bash(dotnet add:*)",
       "Bash(if not exist \"E:\\easy-school-management-system\\School.Web\\wwwroot\\images\" mkdir \"E:\\easy-school-management-system\\School.Web\\wwwroot\\images\")",
       "Bash(ls -la \"E:\\easy-school-management-system\\School.Web\"\" | grep -E \"^d \")",
-<<<<<<< HEAD
-      "Bash(dotnet build:*)"
-=======
       "Bash(dotnet build:*)",
       "Bash(dir:*)",
       "Bash(tasklist:*)",
-      "Bash(findstr:*)"
->>>>>>> ddd2cfec04642aebc056f91a2df1715e14979d68
+      "Bash(findstr:*)",
+      "Bash(cp \"C:/Users/Admin/Desktop/SpGet_SMSStudentLeavingCertificate.sql\" \"D:/Customiz Softwares/01 School Management/01 EasySchool/School.API/Scripts/\")",
+      "Bash(cp \"C:/Users/Admin/Desktop/SpGet_SMSStudentProvisionalCertificate.sql\" \"D:/Customiz Softwares/01 School Management/01 EasySchool/School.API/Scripts/\")",
+      "Bash(dotnet run *)",
+      "Bash(break)",
+      "Bash(curl *)",
+      "PowerShell(Start-Process \"http://localhost:5267/EasySchool/certificates\")",
+      "PowerShell($q = \"SELECT name FROM sys.procedures WHERE name LIKE '%SMSExam%' ORDER BY name; SELECT name FROM sys.tables WHERE name LIKE '%Exam%' ORDER BY name;\"; sqlcmd -S . -U dev -P 786 -d EasySchoolDB -Q $q -W)",
+      "PowerShell($q = \"EXEC SpSave_SMSExam @VID=0, @VName='__TestExam_DELETE_ME__', @IsActive=1, @UserID=0, @UserIP='127.0.0.1';\"; sqlcmd -S . -U dev -P 786 -d EasySchoolDB -Q $q -W)",
+      "PowerShell($q = \"SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, COLUMN_DEFAULT FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'SMSExam' ORDER BY ORDINAL_POSITION;\"; sqlcmd -S . -U dev -P 786 -d EasySchoolDB -Q $q -W)",
+      "PowerShell($q = \"EXEC sp_helptext 'SpSave_SMSExam';\"; sqlcmd -S . -U dev -P 786 -d EasySchoolDB -Q $q -W -y 0)",
+      "PowerShell($q = \"EXEC sp_helptext 'SpSave_SMSExam';\"; sqlcmd -S . -U dev -P 786 -d EasySchoolDB -Q $q -y 0)",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\Admin\\\\Desktop\\\\\" | Where-Object { $_.Name -match \"SMS|SQL\" } | Select-Object Name, FullName)",
+      "Bash(xargs grep -l \"SMSExamResult\\\\|SMSSubject\\\\|class SMSStudent\\\\|ToTable\")",
+      "Bash(xargs grep -l \"SpGet_SMSExamResult\\\\|SMSExamResult\")",
+      "Bash(sqlcmd *)",
+      "Bash(Get-ChildItem \"D:\\\\02 Personal Data\\\\Customiz Softwares\\\\01 School Management\\\\01 EasySchool\" -Directory)",
+      "Bash(Select-Object Name)",
+      "PowerShell($sqlcmd = Get-Command sqlcmd -ErrorAction SilentlyContinue; if \\($sqlcmd\\) { \"sqlcmd FOUND: $\\($sqlcmd.Source\\)\" } else { \"sqlcmd NOT FOUND\" })",
+      "PowerShell($f = \"D:\\\\02 Personal Data\\\\Customiz Softwares\\\\01 School Management\\\\01 EasySchool\\\\School.API\\\\Scripts\\\\SpDelete_StdAttendenceByFilter.sql\"; sqlcmd -S \".\" -d \"EasySchoolDB\" -U \"sa\" -P \"786\" -C -b -i $f; \"EXIT CODE: $LASTEXITCODE\")",
+      "PowerShell(sqlcmd *)",
+      "Bash(xargs grep -l \"GetUserId\")",
+      "PowerShell($f = \"D:\\\\02 Personal Data\\\\Customiz Softwares\\\\01 School Management\\\\01 EasySchool\\\\School.API\\\\Scripts\\\\SpDelete_StdAttendence.sql\"; sqlcmd -S \".\" -d \"EasySchoolDB\" -U \"sa\" -P \"786\" -C -b -i $f; \"EXIT CODE: $LASTEXITCODE\")"
     ],
     "deny": [],
     "ask": []

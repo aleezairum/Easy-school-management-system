@@ -65,6 +65,26 @@ namespace School.API.Repositories.Implementations.Student
             return result.FirstOrDefault();
         }
 
+        public async Task<ResponseDto?> DeleteByFilterAsync(StdAttendenceFilterDto filter, int userId, string userIp)
+        {
+            var result = await _context
+                .Set<ResponseDto>()
+                .FromSqlRaw(
+                    "EXEC SpDelete_StdAttendenceByFilter @VID={0}, @SessionID={1}, @StudentID={2}, @SectionID={3}, @DateFrom={4}, @DateTo={5}, @UserID={6}, @UserIP={7}",
+                    filter.VID ?? (object)DBNull.Value,
+                    filter.SessionID ?? (object)DBNull.Value,
+                    filter.StudentID ?? (object)DBNull.Value,
+                    filter.SectionID ?? (object)DBNull.Value,
+                    filter.DateFrom ?? (object)DBNull.Value,
+                    filter.DateTo ?? (object)DBNull.Value,
+                    userId,
+                    (object?)userIp ?? DBNull.Value)
+                .AsNoTracking()
+                .ToListAsync();
+
+            return result.FirstOrDefault();
+        }
+
         public async Task<ResponseDto> SaveAsync(StdAttendenceSaveDto dto, int userId, string userIp)
         {
             var result = await _context

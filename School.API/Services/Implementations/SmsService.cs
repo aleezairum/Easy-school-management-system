@@ -3,41 +3,58 @@ using Microsoft.EntityFrameworkCore;
 using School.API.Data;
 using School.API.Data.DBModels.SMS;
 using School.API.DTOs;
+using School.API.DTOs.SMS;
 using School.API.Repositories.Interfaces;
 using School.API.Services.Interfaces;
 
 namespace School.API.Services.Implementations
 {
+    // Enqueues SMS messages into the database queue. Actual delivery is
+    // handled by SmsQueueProcessor (BackgroundService) which polls the
+    // SmsMessages table for Status=Pending rows and sends them with a
+    // randomized delay. This service never calls ISmsSender directly.
     public class SmsService : ISmsService
     {
         private readonly ISmsMessageRepository _repository;
-        private readonly ISmsSender _smsSender;
         private readonly SchoolDbContext _context;
         private readonly ILogger<SmsService> _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         public SmsService(
             ISmsMessageRepository repository,
-            ISmsSender smsSender,
             SchoolDbContext context,
             ILogger<SmsService> logger,
             IHttpContextAccessor httpContextAccessor)
         {
             _repository = repository;
-            _smsSender = smsSender;
             _context = context;
             _logger = logger;
             _httpContextAccessor = httpContextAccessor;
         }
 
-        public async Task<SmsSendResponseDto> SendBulkAsync(SmsSendDto dto)
+        private (int userId, string userIp) GetAuditContext()
         {
             int userId = 1; // later from JWT
-            string userIp = _httpContextAccessor.HttpContext?
-                                .Connection.RemoteIpAddress?.ToString() ?? "unknown";
+            string userIp = "unknown";
+            try
+            {
+                userIp = _httpContextAccessor.HttpContext?
+                            .Connection.RemoteIpAddress?.ToString() ?? "unknown";
+            }
+            catch { /* background context — no HttpContext */ }
+            return (userId, userIp);
+        }
 
-            var response = new SmsSendResponseDto();
-            var messages = new List<SmsMessage>();
+        // ─────────────────────────────────────────────────────────────
+        // Bulk Enqueue (General / Absent / Late / Excel / Staff etc.)
+        // ─────────────────────────────────────────────────────────────
+        public async Task<SmsQueueStatusDto> EnqueueBulkAsync(SmsSendDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.JobId))
+                dto.JobId = Guid.NewGuid().ToString();
+
+            var (userId, userIp) = GetAuditContext();
+            var messages = new List<SmsMessage>(dto.Recipients.Count);
 
             foreach (var recipient in dto.Recipients)
             {
@@ -45,62 +62,125 @@ namespace School.API.Services.Implementations
                     ? recipient.Message
                     : dto.Message;
 
-                var smsMessage = new SmsMessage
+                if (string.IsNullOrWhiteSpace(recipient.Phone) ||
+                    string.IsNullOrWhiteSpace(messageText))
+                    continue;
+
+                messages.Add(new SmsMessage
                 {
                     RecipientPhone = recipient.Phone,
                     RecipientName = recipient.Name,
                     MessageText = messageText,
                     MessageType = dto.MessageType,
                     Status = SmsStatus.Pending,
-                    InsertedDate = DateTime.UtcNow
-                };
-
-                try
-                {
-                    var success = await _smsSender.SendAsync(recipient.Phone, messageText);
-
-                    if (success)
-                    {
-                        smsMessage.Status = SmsStatus.Sent;
-                        smsMessage.SentAt = DateTime.UtcNow;
-                        response.TotalSent++;
-                    }
-                    else
-                    {
-                        smsMessage.Status = SmsStatus.Failed;
-                        smsMessage.ErrorMessage = "Send returned false";
-                        response.TotalFailed++;
-                    }
-
-                    response.Results.Add(new SmsSendResultDto
-                    {
-                        Phone = recipient.Phone,
-                        Name = recipient.Name,
-                        Success = success
-                    });
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Failed to send SMS to {Phone}", recipient.Phone);
-                    smsMessage.Status = SmsStatus.Failed;
-                    smsMessage.ErrorMessage = ex.Message;
-                    response.TotalFailed++;
-                    response.Results.Add(new SmsSendResultDto
-                    {
-                        Phone = recipient.Phone,
-                        Name = recipient.Name,
-                        Success = false,
-                        Error = ex.Message
-                    });
-                }
-
-                messages.Add(smsMessage);
+                    JobId = dto.JobId
+                });
             }
 
-            await _repository.AddRangeAsync(messages, userId, userIp);
-            return response;
+            if (messages.Count > 0)
+                await _repository.EnqueueAsync(messages, userId, userIp);
+
+            _logger.LogInformation(
+                "Enqueued {Count} SMS for job {JobId} (type {Type})",
+                messages.Count, dto.JobId, dto.MessageType);
+
+            return new SmsQueueStatusDto
+            {
+                JobId = dto.JobId,
+                Total = messages.Count,
+                Pending = messages.Count
+            };
         }
 
+        // ─────────────────────────────────────────────────────────────
+        // Fee Reminder — ONE message per student, enqueued
+        // ─────────────────────────────────────────────────────────────
+        public async Task<SmsQueueStatusDto> EnqueueFeeReminderAsync(FeeSmsSendDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.JobId))
+                dto.JobId = Guid.NewGuid().ToString();
+
+            var (userId, userIp) = GetAuditContext();
+
+            var feeRows = await GetPendingFeeRowsAsync(
+                dto.StudentId, dto.SessionId, dto.ClassId, dto.SectionId);
+
+            if (!feeRows.Any())
+            {
+                return new SmsQueueStatusDto { JobId = dto.JobId };
+            }
+
+            // Group by StudentId — one message per student, aggregating all fees.
+            var grouped = feeRows.GroupBy(f => f.StudentId).ToList();
+            var messages = new List<SmsMessage>(grouped.Count);
+
+            foreach (var group in grouped)
+            {
+                var first = group.First();
+
+                string phone = GetPreferredPhone(
+                    first.IsFatherSMS, first.FatherMobile,
+                    first.IsGuardianSMS, first.GuardianMobile,
+                    first.IsMotherSMS, first.MotherMobile,
+                    first.IsSMS, first.MobileNo);
+
+                if (string.IsNullOrEmpty(phone)) continue;
+
+                var feeLines = group
+                    .OrderBy(f => f.VDate)
+                    .Select(f => $"• {f.FeeTypeName} {f.VDate:MMMM yyyy} = Rs. {f.PendingAmount:N0}")
+                    .ToList();
+
+                decimal total = group.Sum(f => f.PendingAmount);
+                string dueDate = dto.DueDate.ToString("dd-MM-yyyy");
+
+                string text =
+                    $"Dear Parents, Assalam o Alaikum!\n\n" +
+                    $"Detail of Remaining Fee of *{first.StudentName}* Class *{first.ClassName}*\n\n" +
+                    string.Join("\n", feeLines) + "\n" +
+                    $"──────────────────\n" +
+                    $"*Total Remaning Fee = Rs.{total:N0}*\n\n" +
+                    $"*Please submit Total Remaining Fee upto {dueDate}.*\n\n" +
+                    $"SIR SYED MODEL HIGH SCHOOL (BOYS & GIRLS) CHHONAWALA ROAD HASILPUR";
+
+                messages.Add(new SmsMessage
+                {
+                    RecipientPhone = phone,
+                    RecipientName = first.StudentName,
+                    MessageText = text,
+                    MessageType = SmsMessageType.Fee,
+                    Status = SmsStatus.Pending,
+                    JobId = dto.JobId
+                });
+            }
+
+            if (messages.Count > 0)
+                await _repository.EnqueueAsync(messages, userId, userIp);
+
+            _logger.LogInformation(
+                "Enqueued {Count} fee reminders for job {JobId}",
+                messages.Count, dto.JobId);
+
+            return new SmsQueueStatusDto
+            {
+                JobId = dto.JobId,
+                Total = messages.Count,
+                Pending = messages.Count
+            };
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // Queue status — DB-backed, survives server restarts
+        // ─────────────────────────────────────────────────────────────
+        public Task<SmsQueueStatusDto> GetJobStatusAsync(string jobId)
+            => _repository.GetJobStatusAsync(jobId);
+
+        public Task<int> GetOverallPendingCountAsync()
+            => _repository.GetOverallPendingCountAsync();
+
+        // ─────────────────────────────────────────────────────────────
+        // History
+        // ─────────────────────────────────────────────────────────────
         public async Task<IEnumerable<SmsHistoryDto>> GetHistoryAsync(SmsHistoryFilterDto filter)
         {
             var messages = await _repository.GetHistoryAsync(
@@ -129,25 +209,23 @@ namespace School.API.Services.Implementations
                 filter.FromDate, filter.ToDate);
         }
 
+        // ─────────────────────────────────────────────────────────────
+        // Absent / Late / Fee Defaulters
+        // ─────────────────────────────────────────────────────────────
         public async Task<List<SmsRecipientDto>> GetAbsentStudentsAsync(DateTime date)
-        {
-            return await GetStudentsForSmsAsync("Absent", date);
-        }
+            => await GetStudentsForSmsAsync("Absent", date);
 
         public async Task<List<SmsRecipientDto>> GetLateStudentsAsync(DateTime date)
-        {
-            return await GetStudentsForSmsAsync("Late", date);
-        }
+            => await GetStudentsForSmsAsync("Late", date);
 
         public async Task<List<SmsRecipientDto>> GetFeeDefaultersAsync()
-        {
-            return await GetStudentsForSmsAsync("FeeDefaulter", null);
-        }
+            => await GetStudentsForSmsAsync("FeeDefaulter", null);
 
-        //  Pure ADO.NET � SP call directly 
+        // ─────────────────────────────────────────────────────────────
+        // SpGet_StudentsForSms
+        // ─────────────────────────────────────────────────────────────
         private async Task<List<SmsRecipientDto>> GetStudentsForSmsAsync(
-            string type,
-            DateTime? date)
+            string type, DateTime? date)
         {
             var recipients = new List<SmsRecipientDto>();
             var connStr = _context.Database.GetConnectionString();
@@ -168,64 +246,105 @@ namespace School.API.Services.Implementations
                 string className = reader["ClassName"]?.ToString() ?? "";
                 string message = BuildMessage(type, name, className, date);
 
-                // Student
                 bool isSMS = reader["IsSMS"] != DBNull.Value && (bool)reader["IsSMS"];
                 string mobileNo = reader["MobileNo"]?.ToString() ?? "";
                 if (isSMS && !string.IsNullOrEmpty(mobileNo))
-                    recipients.Add(new SmsRecipientDto
-                    {
-                        Phone = mobileNo,
-                        Name = name,
-                        Message = message
-                    });
+                    recipients.Add(new SmsRecipientDto { Phone = mobileNo, Name = name, Message = message });
 
-                // Father
-                bool isFatherSMS = reader["IsFatherSMS"] != DBNull.Value && (bool)reader["IsFatherSMS"];
-                string fatherMobile = reader["FatherMobile"]?.ToString() ?? "";
-                if (isFatherSMS && !string.IsNullOrEmpty(fatherMobile))
-                    recipients.Add(new SmsRecipientDto
-                    {
-                        Phone = fatherMobile,
-                        Name = name,
-                        Message = message
-                    });
+                bool isFather = reader["IsFatherSMS"] != DBNull.Value && (bool)reader["IsFatherSMS"];
+                string fatherMob = reader["FatherMobile"]?.ToString() ?? "";
+                if (isFather && !string.IsNullOrEmpty(fatherMob))
+                    recipients.Add(new SmsRecipientDto { Phone = fatherMob, Name = name, Message = message });
 
-                // Mother
-                bool isMotherSMS = reader["IsMotherSMS"] != DBNull.Value && (bool)reader["IsMotherSMS"];
-                string motherMobile = reader["MotherMobile"]?.ToString() ?? "";
-                if (isMotherSMS && !string.IsNullOrEmpty(motherMobile))
-                    recipients.Add(new SmsRecipientDto
-                    {
-                        Phone = motherMobile,
-                        Name = name,
-                        Message = message
-                    });
+                bool isMother = reader["IsMotherSMS"] != DBNull.Value && (bool)reader["IsMotherSMS"];
+                string motherMob = reader["MotherMobile"]?.ToString() ?? "";
+                if (isMother && !string.IsNullOrEmpty(motherMob))
+                    recipients.Add(new SmsRecipientDto { Phone = motherMob, Name = name, Message = message });
 
-                // Guardian
-                bool isGuardianSMS = reader["IsGuardianSMS"] != DBNull.Value && (bool)reader["IsGuardianSMS"];
-                string guardianMobile = reader["GuardianMobile"]?.ToString() ?? "";
-                if (isGuardianSMS && !string.IsNullOrEmpty(guardianMobile))
-                    recipients.Add(new SmsRecipientDto
-                    {
-                        Phone = guardianMobile,
-                        Name = name,
-                        Message = message
-                    });
+                bool isGuard = reader["IsGuardianSMS"] != DBNull.Value && (bool)reader["IsGuardianSMS"];
+                string guardMob = reader["GuardianMobile"]?.ToString() ?? "";
+                if (isGuard && !string.IsNullOrEmpty(guardMob))
+                    recipients.Add(new SmsRecipientDto { Phone = guardMob, Name = name, Message = message });
             }
 
-            // Remove duplicate phone numbers
             return recipients
                 .GroupBy(r => r.Phone)
                 .Select(g => g.First())
                 .ToList();
         }
 
-        //  Message templates � no header 
+        // ─────────────────────────────────────────────────────────────
+        // SpGetPending_SMSStudentFee_Msg
+        // ─────────────────────────────────────────────────────────────
+        private async Task<List<StudentFeeDetailDto>> GetPendingFeeRowsAsync(
+            int? studentId, int? sessionId, int? classId, int? sectionId)
+        {
+            var result = new List<StudentFeeDetailDto>();
+            var connStr = _context.Database.GetConnectionString();
+
+            await using var conn = new SqlConnection(connStr);
+            await conn.OpenAsync();
+
+            await using var cmd = new SqlCommand("SpGetPending_SMSStudentFee_Msg", conn);
+            cmd.CommandType = System.Data.CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@VID", DBNull.Value);
+            cmd.Parameters.AddWithValue("@StudentID",
+                studentId.HasValue ? (object)studentId.Value : DBNull.Value);
+            cmd.Parameters.AddWithValue("@SessionID",
+                sessionId.HasValue ? (object)sessionId.Value : DBNull.Value);
+            cmd.Parameters.AddWithValue("@ClassID",
+                classId.HasValue ? (object)classId.Value : DBNull.Value);
+            cmd.Parameters.AddWithValue("@SectionID",
+                sectionId.HasValue ? (object)sectionId.Value : DBNull.Value);
+
+            await using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                result.Add(new StudentFeeDetailDto
+                {
+                    StudentId = reader["StudentID"] != DBNull.Value ? Convert.ToInt32(reader["StudentID"]) : 0,
+                    VDate = reader["VDate"] != DBNull.Value ? Convert.ToDateTime(reader["VDate"]) : DateTime.Now,
+                    StudentName = reader["StudentName"]?.ToString() ?? "",
+                    ClassName = reader["ClassName"]?.ToString() ?? "",
+                    SectionName = reader["SectionName"]?.ToString() ?? "",
+                    FeeTypeName = reader["FeeTypeName"]?.ToString() ?? "",
+                    FeeAmount = reader["FeeAmount"] != DBNull.Value ? Convert.ToDecimal(reader["FeeAmount"]) : 0,
+                    ClearedAmount = reader["ClearedAmount"] != DBNull.Value ? Convert.ToDecimal(reader["ClearedAmount"]) : 0,
+                    PendingAmount = reader["PendingAmount"] != DBNull.Value ? Convert.ToDecimal(reader["PendingAmount"]) : 0,
+                    FatherMobile = reader["FatherMobile"]?.ToString() ?? "",
+                    GuardianMobile = reader["GuardianMobile"]?.ToString() ?? "",
+                    MotherMobile = reader["MotherMobile"]?.ToString() ?? "",
+                    MobileNo = reader["MobileNo"]?.ToString() ?? "",
+                    IsFatherSMS = reader["IsFatherSMS"] != DBNull.Value && (bool)reader["IsFatherSMS"],
+                    IsGuardianSMS = reader["IsGuardianSMS"] != DBNull.Value && (bool)reader["IsGuardianSMS"],
+                    IsMotherSMS = reader["IsMotherSMS"] != DBNull.Value && (bool)reader["IsMotherSMS"],
+                    IsSMS = reader["IsSMS"] != DBNull.Value && (bool)reader["IsSMS"],
+                });
+            }
+            return result;
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // Phone Priority Logic
+        // ─────────────────────────────────────────────────────────────
+        private static string GetPreferredPhone(
+            bool isFather, string fatherMob,
+            bool isGuard, string guardMob,
+            bool isMother, string motherMob,
+            bool isSMS, string mobileNo)
+        {
+            if (isFather && !string.IsNullOrEmpty(fatherMob)) return fatherMob;
+            if (isGuard && !string.IsNullOrEmpty(guardMob)) return guardMob;
+            if (isMother && !string.IsNullOrEmpty(motherMob)) return motherMob;
+            if (isSMS && !string.IsNullOrEmpty(mobileNo)) return mobileNo;
+            return fatherMob ?? guardMob ?? motherMob ?? mobileNo ?? "";
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // Message Templates
+        // ─────────────────────────────────────────────────────────────
         private static string BuildMessage(
-            string type,
-            string studentName,
-            string className,
-            DateTime? date = null)
+            string type, string studentName, string className, DateTime? date = null)
         {
             return type switch
             {

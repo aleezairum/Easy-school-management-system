@@ -16,8 +16,12 @@
             font-family: 'Inter', sans-serif;
         }
 
+        html {
+            font-size: 10px;
+        }
+
         :root {
-            --sidebar-width: 260px;
+            --sidebar-width: 180px;
             --primary-color: #008649;
             --primary-dark: #006d3b;
             --primary-light: #00a65a;
@@ -56,7 +60,7 @@
         }
 
         .sidebar-header {
-            padding: 24px 20px;
+            padding: 12px 12px;
             border-bottom: 1px solid rgba(255,255,255,0.08);
         }
 
@@ -68,15 +72,15 @@
         }
 
         .sidebar-brand-icon {
-            width: 44px;
-            height: 44px;
+            width: 32px;
+            height: 32px;
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-            border-radius: 12px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 22px;
+            font-size: 16px;
             overflow: hidden;
         }
 
@@ -88,20 +92,28 @@
 
         .sidebar-brand-text h4 {
             color: white;
-            font-size: 16px;
+            font-size: 13px;
             font-weight: 700;
             margin: 0;
         }
 
         .sidebar-brand-text span {
             color: #ffffff;
-            font-size: 14px;
+            font-size: 11px;
             font-weight: 500;
+        }
+
+        .sidebar-top {
+            padding: 8px 8px 0;
+        }
+
+        .sidebar.collapsed .sidebar-top {
+            padding: 8px 6px 0;
         }
 
         .sidebar-menu {
             flex: 1;
-            padding: 16px 12px;
+            padding: 8px;
             overflow-y: auto;
             scrollbar-width: thin;
             scrollbar-color: rgba(255,255,255,0.2) transparent;
@@ -121,22 +133,22 @@
             }
 
         .menu-section {
-            margin-bottom: 24px;
+            margin-bottom: 14px;
         }
 
         .menu-section-title {
             color: #ffffff;
-            font-size: 14px;
+            font-size: 11.5px;
             font-weight: 600;
             text-transform: none;
             letter-spacing: 0;
-            padding: 12px 16px;
+            padding: 6px 10px;
             margin-bottom: 0;
             display: flex;
             align-items: center;
             justify-content: space-between;
             cursor: pointer;
-            border-radius: 10px;
+            border-radius: 6px;
             transition: all 0.2s ease;
             user-select: none;
         }
@@ -146,11 +158,11 @@
             }
 
             .menu-section-title span .bi {
-                font-size: 14px;
+                font-size: 13px;
             }
 
             .menu-section-title .section-toggle {
-                font-size: 12px;
+                font-size: 11px;
                 transition: transform 0.3s ease;
             }
 
@@ -177,13 +189,13 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 12px 16px;
+            padding: 6px 10px;
             color: #ffffff;
             text-decoration: none;
-            border-radius: 10px;
-            margin-bottom: 4px;
+            border-radius: 6px;
+            margin-bottom: 2px;
             transition: all 0.2s ease;
-            font-size: 14px;
+            font-size: 11.5px;
             cursor: pointer;
             font-weight: 500;
         }
@@ -199,13 +211,13 @@
             }
 
                 .menu-item-parent .parent-left i {
-                    font-size: 18px;
-                    width: 24px;
+                    font-size: 13px;
+                    width: 18px;
                     text-align: center;
                 }
 
             .menu-item-parent .submenu-toggle {
-                font-size: 12px;
+                font-size: 11px;
                 transition: transform 0.3s ease;
             }
 
@@ -229,11 +241,11 @@
             }
 
             .submenu .menu-item {
-                padding: 10px 16px 10px 24px;
-                font-size: 14px;
+                padding: 5px 10px 5px 16px;
+                font-size: 11.5px;
                 border-left: 2px solid rgba(255, 255, 255, 0.2);
-                border-radius: 0 10px 10px 0;
-                margin-left: 12px;
+                border-radius: 0 6px 6px 0;
+                margin-left: 10px;
             }
 
                 .submenu .menu-item:hover {
@@ -248,23 +260,23 @@
         .menu-item {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
+            gap: 8px;
+            padding: 6px 10px;
             color: #ffffff;
             text-decoration: none;
-            border-radius: 10px;
-            margin-bottom: 4px;
+            border-radius: 6px;
+            margin-bottom: 2px;
             transition: all 0.2s ease;
-            font-size: 14px;
+            font-size: 11.5px;
             font-weight: 500;
         }
 
         /* Align flat menu items with submenu children */
         .menu-section-items > .menu-item {
-            padding: 10px 16px 10px 24px;
+            padding: 5px 10px 5px 16px;
             border-left: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 0 10px 10px 0;
-            margin-left: 32px;
+            border-radius: 0 6px 6px 0;
+            margin-left: 26px;
         }
 
             .menu-section-items > .menu-item:hover {
@@ -288,8 +300,8 @@
             }
 
             .menu-item i {
-                font-size: 18px;
-                width: 24px;
+                font-size: 13px;
+                width: 18px;
                 text-align: center;
             }
 
@@ -303,56 +315,93 @@
             }
 
         .sidebar-footer {
-            padding: 16px;
+            padding: 10px;
             border-top: 1px solid rgba(255,255,255,0.08);
         }
 
         .user-profile {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 12px;
+            gap: 10px;
+            padding: 8px;
             background: var(--sidebar-hover);
-            border-radius: 12px;
+            border-radius: 8px;
         }
 
         .user-avatar {
-            width: 42px;
-            height: 42px;
+            width: 32px;
+            height: 32px;
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-            border-radius: 10px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
             font-weight: 600;
-            font-size: 16px;
+            font-size: 13px;
         }
 
         .user-info h6 {
             color: white;
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 600;
             margin: 0;
         }
 
         .user-info span {
             color: var(--text-secondary);
-            font-size: 12px;
+            font-size: 11px;
         }
 
         /* Main Content */
         .main-content {
             margin-left: var(--sidebar-width);
             flex: 1;
+            min-width: 0;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
         }
 
+        .content-area {
+            min-width: 0;
+            overflow-x: hidden;
+        }
+
+        .content-area .container-fluid,
+        .content-area > .container-fluid {
+            padding-left: 6px;
+            padding-right: 6px;
+            max-width: 100%;
+        }
+
+        .content-area .row {
+            --bs-gutter-x: 0.75rem;
+            --bs-gutter-y: 0.5rem;
+        }
+
+        .content-area .card {
+            max-width: 100%;
+        }
+
+        .content-area .table-responsive {
+            overflow-x: auto;
+            max-width: 100%;
+        }
+
+        .content-area .table {
+            width: 100%;
+            max-width: 100%;
+        }
+
+        /* Wide tables inside cards: wrap them so only table scrolls, not whole page */
+        .content-area .card .table:not(.table-responsive) {
+            display: table;
+        }
+
         .top-header {
             background: white;
-            padding: 16px 32px;
+            padding: 6px 14px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -364,14 +413,14 @@
 
         .page-title h4 {
             margin: 0;
-            font-size: 20px;
+            font-size: 12.5px;
             font-weight: 700;
             color: var(--text-primary);
         }
 
         .page-title .breadcrumb {
             margin: 0;
-            font-size: 13px;
+            font-size: 10px;
         }
 
         .breadcrumb-item a {
@@ -394,18 +443,18 @@
         }
 
             .header-search input {
-                width: 280px;
-                padding: 10px 16px 10px 42px;
-                border: 2px solid var(--border-color);
-                border-radius: 10px;
-                font-size: 14px;
+                width: 200px;
+                padding: 5px 9px 5px 28px;
+                border: 1px solid var(--border-color);
+                border-radius: 6px;
+                font-size: 11px;
                 transition: all 0.2s;
             }
 
                 .header-search input:focus {
                     outline: none;
                     border-color: var(--primary-color);
-                    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+                    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
                 }
 
             .header-search i {
@@ -417,11 +466,11 @@
             }
 
         .header-btn {
-            width: 42px;
-            height: 42px;
-            border: 2px solid var(--border-color);
+            width: 28px;
+            height: 28px;
+            border: 1px solid var(--border-color);
             background: white;
-            border-radius: 10px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -447,17 +496,17 @@
             }
 
         .content-area {
-            padding: 32px;
+            padding: 8px 12px;
             flex: 1;
         }
 
         /* Welcome Banner */
         .welcome-banner {
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-            border-radius: 16px;
-            padding: 32px;
+            border-radius: 12px;
+            padding: 20px;
             color: white;
-            margin-bottom: 32px;
+            margin-bottom: 20px;
             position: relative;
             overflow: hidden;
         }
@@ -485,13 +534,13 @@
             }
 
             .welcome-banner h2 {
-                font-size: 26px;
+                font-size: 20px;
                 font-weight: 700;
-                margin-bottom: 8px;
+                margin-bottom: 6px;
             }
 
             .welcome-banner p {
-                font-size: 15px;
+                font-size: 13px;
                 opacity: 0.9;
                 margin: 0;
             }
@@ -506,30 +555,30 @@
             }
 
                 .welcome-banner .date-display .day {
-                    font-size: 42px;
+                    font-size: 32px;
                     font-weight: 700;
                     line-height: 1;
                 }
 
                 .welcome-banner .date-display .month-year {
-                    font-size: 14px;
+                    font-size: 12px;
                     opacity: 0.9;
                 }
 
         /* Hamburger Menu Button */
         .hamburger-btn {
-            width: 42px;
-            height: 42px;
+            width: 28px;
+            height: 28px;
             border: none;
             background: var(--primary-color);
-            border-radius: 10px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
             cursor: pointer;
             transition: all 0.2s;
-            font-size: 20px;
+            font-size: 16px;
         }
 
             .hamburger-btn:hover {
@@ -538,19 +587,218 @@
 
         /* Sidebar Collapsed State */
         .sidebar.collapsed {
-            width: 70px;
+            width: 60px;
         }
 
             .sidebar.collapsed .sidebar-brand-text,
-            .sidebar.collapsed .menu-section-title,
             .sidebar.collapsed .menu-item span,
             .sidebar.collapsed .user-info,
             .sidebar.collapsed .menu-item .badge {
                 display: none;
             }
 
+            /* When collapsed: show section title as icon-only */
+            .sidebar.collapsed .menu-section-title {
+                justify-content: center;
+                padding: 8px 4px;
+            }
+
+                .sidebar.collapsed .menu-section-title > span {
+                    font-size: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                    .sidebar.collapsed .menu-section-title > span > i.bi {
+                        font-size: 16px !important;
+                        margin: 0 !important;
+                        color: #ffffff;
+                    }
+
+                .sidebar.collapsed .menu-section-title .section-toggle {
+                    display: none;
+                }
+
+            /* When collapsed: show nested section parent as icon-only */
+            .sidebar.collapsed .menu-item-parent {
+                justify-content: center;
+                padding: 8px 4px;
+            }
+
+                .sidebar.collapsed .menu-item-parent .parent-left {
+                    justify-content: center;
+                    gap: 0;
+                }
+
+                    .sidebar.collapsed .menu-item-parent .parent-left span {
+                        display: none;
+                    }
+
+                .sidebar.collapsed .menu-item-parent .submenu-toggle {
+                    display: none;
+                }
+
+            /* When collapsed: reset child item indentation/border */
+            .sidebar.collapsed .menu-section-items > .menu-item,
+            .sidebar.collapsed .submenu .menu-item {
+                margin-left: 0;
+                padding: 8px 4px;
+                border-left: none;
+                border-radius: 6px;
+                justify-content: center;
+            }
+
+            .sidebar.collapsed .submenu {
+                padding-left: 0;
+            }
+
+            /* ── Segregation: expanded section's children (flat items) ── */
+            .sidebar.collapsed .menu-section:not(.collapsed) .menu-section-items {
+                background: rgba(0, 0, 0, 0.18);
+                border-radius: 8px;
+                padding: 4px 2px;
+                margin: 2px 4px 6px;
+                position: relative;
+                box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+            }
+
+                .sidebar.collapsed .menu-section:not(.collapsed) .menu-section-items::before {
+                    content: '';
+                    position: absolute;
+                    left: -2px;
+                    top: 6px;
+                    bottom: 6px;
+                    width: 3px;
+                    background: linear-gradient(180deg, rgba(255,255,255,0.55), rgba(255,255,255,0.15));
+                    border-radius: 2px;
+                }
+
+                .sidebar.collapsed .menu-section:not(.collapsed) .menu-section-items > .menu-item {
+                    padding: 6px 4px;
+                    margin-bottom: 1px;
+                    background: transparent;
+                }
+
+                    .sidebar.collapsed .menu-section:not(.collapsed) .menu-section-items > .menu-item i {
+                        font-size: 12px;
+                        opacity: 0.9;
+                    }
+
+                    .sidebar.collapsed .menu-section:not(.collapsed) .menu-section-items > .menu-item:hover {
+                        background: rgba(255, 255, 255, 0.12);
+                    }
+
+                    .sidebar.collapsed .menu-section:not(.collapsed) .menu-section-items > .menu-item.active {
+                        background: rgba(255, 255, 255, 0.22);
+                    }
+
+                        .sidebar.collapsed .menu-section:not(.collapsed) .menu-section-items > .menu-item.active i {
+                            opacity: 1;
+                        }
+
+            /* Highlight the section title whose items are open */
+            .sidebar.collapsed .menu-section:not(.collapsed) > .menu-section-title {
+                background: rgba(255, 255, 255, 0.08);
+                border-radius: 6px 6px 0 0;
+                margin-bottom: 0;
+            }
+
+            /* ── Segregation: nested submenu children (Setups/Day-to-Day) ── */
+            .sidebar.collapsed .submenu.open {
+                background: rgba(0, 0, 0, 0.22);
+                border-radius: 8px;
+                padding: 4px 2px;
+                margin: 0 2px 4px;
+                position: relative;
+                box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+            }
+
+                .sidebar.collapsed .submenu.open::before {
+                    content: '';
+                    position: absolute;
+                    left: -2px;
+                    top: 6px;
+                    bottom: 6px;
+                    width: 3px;
+                    background: linear-gradient(180deg, rgba(255,255,255,0.65), rgba(255,255,255,0.2));
+                    border-radius: 2px;
+                }
+
+                .sidebar.collapsed .submenu.open .menu-item {
+                    padding: 6px 4px;
+                    margin-bottom: 1px;
+                    background: transparent;
+                }
+
+                    .sidebar.collapsed .submenu.open .menu-item i {
+                        font-size: 12px;
+                        opacity: 0.9;
+                    }
+
+                    .sidebar.collapsed .submenu.open .menu-item:hover {
+                        background: rgba(255, 255, 255, 0.12);
+                    }
+
+                    .sidebar.collapsed .submenu.open .menu-item.active {
+                        background: rgba(255, 255, 255, 0.22);
+                    }
+
+                        .sidebar.collapsed .submenu.open .menu-item.active i {
+                            opacity: 1;
+                        }
+
+            /* Highlight the nested parent whose submenu is open */
+            .sidebar.collapsed .menu-item-parent.expanded {
+                background: rgba(255, 255, 255, 0.08);
+                border-radius: 6px 6px 0 0;
+                margin-bottom: 0;
+            }
+
+            /* Allow tooltips to escape sidebar when collapsed */
+            .sidebar.collapsed {
+                overflow: visible;
+            }
+
+                .sidebar.collapsed .sidebar-menu {
+                    overflow: visible;
+                }
+
+                /* Expanded sections: let their items' tooltips escape horizontally */
+                .sidebar.collapsed .menu-section:not(.collapsed) .menu-section-items {
+                    overflow: visible;
+                }
+
+                .sidebar.collapsed .submenu.open {
+                    overflow: visible;
+                }
+
+            /* Tooltip shown on hover of collapsed sidebar items */
+            .sidebar.collapsed [data-title] {
+                position: relative;
+            }
+
+                .sidebar.collapsed [data-title]:hover::after {
+                    content: attr(data-title);
+                    position: absolute;
+                    left: calc(100% + 10px);
+                    top: 50%;
+                    transform: translateY(-50%);
+                    background: #1e293b;
+                    color: #fff;
+                    padding: 5px 10px;
+                    border-radius: 5px;
+                    font-size: 11.5px;
+                    font-weight: 500;
+                    white-space: nowrap;
+                    z-index: 10000;
+                    box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+                    pointer-events: none;
+                    letter-spacing: 0.2px;
+                }
+
             .sidebar.collapsed .sidebar-header {
-                padding: 24px 13px;
+                padding: 16px 10px;
             }
 
             .sidebar.collapsed .sidebar-brand {
@@ -576,11 +824,12 @@
             }
 
         .main-content.expanded {
-            margin-left: 70px;
+            margin-left: 60px;
         }
 
-        /* Smooth transitions for sidebar */
-        .sidebar, .main-content {
+        /* Smooth transitions for sidebar — enabled only after initial paint to prevent flicker */
+        body.sidebar-transitions-ready .sidebar,
+        body.sidebar-transitions-ready .main-content {
             transition: all 0.3s ease;
         }
 
@@ -605,22 +854,22 @@
             }
 
         .header-user-avatar {
-            width: 36px;
-            height: 36px;
+            width: 30px;
+            height: 30px;
             background: var(--primary-color);
-            border-radius: 8px;
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
             font-weight: 600;
-            font-size: 14px;
+            font-size: 12px;
         }
 
         .header-user-name {
             font-weight: 600;
             color: var(--text-primary);
-            font-size: 14px;
+            font-size: 12.5px;
         }
 
         /* User Dropdown Menu */
@@ -628,9 +877,9 @@
             position: absolute;
             top: calc(100% + 8px);
             right: 0;
-            width: 280px;
+            width: 240px;
             background: white;
-            border-radius: 12px;
+            border-radius: 10px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
             border: 1px solid var(--border-color);
             opacity: 0;
@@ -647,35 +896,35 @@
             }
 
         .user-dropdown-header {
-            padding: 16px;
+            padding: 12px;
             border-bottom: 1px solid var(--border-color);
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
         }
 
         .user-dropdown-avatar {
-            width: 44px;
-            height: 44px;
+            width: 36px;
+            height: 36px;
             background: var(--primary-color);
-            border-radius: 10px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
             font-weight: 600;
-            font-size: 16px;
+            font-size: 14px;
         }
 
         .user-dropdown-info h6 {
             margin: 0;
-            font-size: 14px;
+            font-size: 12.5px;
             font-weight: 600;
             color: var(--text-primary);
         }
 
         .user-dropdown-info span {
-            font-size: 12px;
+            font-size: 11px;
             color: var(--text-secondary);
         }
 
@@ -686,10 +935,10 @@
         .user-dropdown-item {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 10px 12px;
-            border-radius: 8px;
-            font-size: 14px;
+            gap: 10px;
+            padding: 8px 10px;
+            border-radius: 6px;
+            font-size: 12.5px;
             font-weight: 500;
             color: var(--text-primary);
             text-decoration: none;
@@ -705,9 +954,9 @@
             }
 
             .user-dropdown-item i {
-                font-size: 18px;
+                font-size: 15px;
                 color: var(--text-secondary);
-                width: 24px;
+                width: 20px;
                 text-align: center;
             }
 
@@ -744,8 +993,8 @@
         .toast-item {
             display: flex;
             align-items: flex-start;
-            gap: 12px;
-            padding: 16px 20px;
+            gap: 10px;
+            padding: 12px 16px;
             background: white;
             border-radius: 12px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
@@ -840,13 +1089,13 @@
 
         .toast-title {
             font-weight: 600;
-            font-size: 14px;
+            font-size: 12.5px;
             color: #1e293b;
             margin-bottom: 2px;
         }
 
         .toast-message {
-            font-size: 13px;
+            font-size: 12px;
             color: #64748b;
             line-height: 1.4;
         }
@@ -905,28 +1154,28 @@
         .btn-primary {
             background: linear-gradient(135deg, #008649 0%, #006d3b 100%);
             border: none;
-            border-radius: 10px;
-            padding: 10px 20px;
+            border-radius: 4px;
+            padding: 3px 9px;
             font-weight: 600;
-            font-size: 14px;
+            font-size: 11px;
             color: white;
             transition: all 0.2s;
         }
 
             .btn-primary:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(0, 134, 73, 0.4);
+                transform: translateY(-1px);
+                box-shadow: 0 3px 10px rgba(0, 134, 73, 0.4);
                 background: linear-gradient(135deg, #006d3b 0%, #005a30 100%);
                 color: white;
             }
 
         .btn-secondary {
             background: #f1f5f9;
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 10px 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            padding: 3px 9px;
             font-weight: 600;
-            font-size: 14px;
+            font-size: 11px;
             color: #64748b;
             transition: all 0.2s;
         }
@@ -940,17 +1189,17 @@
         .btn-success {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             border: none;
-            border-radius: 10px;
-            padding: 10px 20px;
+            border-radius: 4px;
+            padding: 3px 9px;
             font-weight: 600;
-            font-size: 14px;
+            font-size: 11px;
             color: white;
             transition: all 0.2s;
         }
 
             .btn-success:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+                transform: translateY(-1px);
+                box-shadow: 0 3px 10px rgba(16, 185, 129, 0.4);
                 background: linear-gradient(135deg, #059669 0%, #047857 100%);
                 color: white;
             }
@@ -958,41 +1207,41 @@
         .btn-info {
             background: linear-gradient(135deg, #008649 0%, #006d3b 100%);
             border: none;
-            border-radius: 10px;
-            padding: 10px 20px;
+            border-radius: 4px;
+            padding: 3px 9px;
             font-weight: 600;
-            font-size: 14px;
+            font-size: 11px;
             color: white;
             transition: all 0.2s;
         }
 
             .btn-info:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(0, 134, 73, 0.4);
+                transform: translateY(-1px);
+                box-shadow: 0 3px 10px rgba(0, 134, 73, 0.4);
                 color: white;
             }
 
         .btn-danger {
             background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
             border: none;
-            border-radius: 10px;
-            padding: 10px 20px;
+            border-radius: 4px;
+            padding: 3px 9px;
             font-weight: 600;
-            font-size: 14px;
+            font-size: 11px;
             color: white;
             transition: all 0.2s;
         }
 
             .btn-danger:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+                transform: translateY(-1px);
+                box-shadow: 0 3px 10px rgba(239, 68, 68, 0.4);
                 color: white;
             }
 
         .btn-sm {
-            padding: 6px 12px;
-            font-size: 13px;
-            border-radius: 8px;
+            padding: 2px 6px;
+            font-size: 10px;
+            border-radius: 4px;
         }
 
             .btn-sm:hover {
@@ -1251,23 +1500,23 @@
 
         /* ====== SELECT2 THEME OVERRIDES ====== */
         .select2-container--bootstrap-5 .select2-selection {
-            border: 2px solid #e2e8f0 !important;
-            border-radius: 10px !important;
-            padding: 6px 10px !important;
-            min-height: 44px !important;
-            font-size: 14px !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 5px !important;
+            padding: 1px 6px !important;
+            min-height: 24px !important;
+            font-size: 11px !important;
             transition: all 0.2s;
         }
 
         .select2-container--bootstrap-5.select2-container--focus .select2-selection,
         .select2-container--bootstrap-5.select2-container--open .select2-selection {
             border-color: #008649 !important;
-            box-shadow: 0 0 0 4px rgba(0, 134, 73, 0.1) !important;
+            box-shadow: 0 0 0 3px rgba(0, 134, 73, 0.1) !important;
         }
 
         .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
             color: #1e293b;
-            line-height: 30px;
+            line-height: 18px;
         }
 
         .select2-container--bootstrap-5 .select2-selection--single .select2-selection__placeholder {
@@ -1275,24 +1524,24 @@
         }
 
         .select2-container--bootstrap-5 .select2-dropdown {
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
             overflow: hidden;
             z-index: 1061;
         }
 
         .select2-container--bootstrap-5 .select2-search--dropdown .select2-search__field {
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 8px 12px;
-            font-size: 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            padding: 3px 7px;
+            font-size: 11px;
         }
 
             .select2-container--bootstrap-5 .select2-search--dropdown .select2-search__field:focus {
                 border-color: #008649;
                 outline: none;
-                box-shadow: 0 0 0 3px rgba(0, 134, 73, 0.1);
+                box-shadow: 0 0 0 2px rgba(0, 134, 73, 0.1);
             }
 
         .select2-container--bootstrap-5 .select2-results__option--highlighted.select2-results__option--selectable {
@@ -1306,13 +1555,13 @@
         }
 
         .select2-container--bootstrap-5 .select2-results__option {
-            padding: 10px 14px;
-            font-size: 14px;
+            padding: 3px 7px;
+            font-size: 11px;
         }
 
         .select2-container--bootstrap-5 .select2-selection__clear {
             color: #94a3b8;
-            font-size: 18px;
+            font-size: 13px;
         }
 
             .select2-container--bootstrap-5 .select2-selection__clear:hover {
@@ -1322,6 +1571,16 @@
         /* Fix Select2 inside modals */
         .modal .select2-container {
             z-index: 1060;
+        }
+
+        /* Prevent Select2 from forcing parent column wider */
+        .select2-container {
+            max-width: 100% !important;
+        }
+
+        .content-area img {
+            max-width: 100%;
+            height: auto;
         }
 
         /* ====== SORTABLE TABLE HEADERS ====== */
@@ -1363,6 +1622,89 @@
             color: var(--primary-color, #008649);
         }
 
+        /* ====== GLOBAL COMPACT OVERRIDES ====== */
+        .form-control, .form-select {
+            font-size: 11px;
+            padding: 2px 7px;
+            border-radius: 5px;
+        }
+
+        .form-control-sm, .form-select-sm {
+            font-size: 10px;
+            padding: 2px 6px;
+        }
+
+        .form-label {
+            font-size: 10.5px;
+            margin-bottom: 2px;
+            font-weight: 500;
+        }
+
+        .form-check-label {
+            font-size: 10.5px;
+        }
+
+        .table th {
+            font-size: 10.5px;
+            padding: 3px 6px;
+            font-weight: 600;
+        }
+
+        .table td {
+            font-size: 10.5px;
+            padding: 3px 6px;
+        }
+
+        .card {
+            border-radius: 7px;
+        }
+
+        .card-body {
+            padding: 8px;
+        }
+
+        .card-header {
+            padding: 5px 8px;
+            font-size: 11.5px;
+        }
+
+        .modal-title {
+            font-size: 12.5px;
+        }
+
+        .modal-body {
+            padding: 8px;
+            font-size: 11px;
+        }
+
+        .modal-header, .modal-footer {
+            padding: 5px 8px;
+        }
+
+        h5, .h5 { font-size: 12.5px; }
+        h6, .h6 { font-size: 11.5px; }
+
+        .badge {
+            font-size: 9.5px;
+            padding: 2px 5px;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection {
+            min-height: 24px !important;
+            padding: 1px 6px !important;
+            font-size: 11px !important;
+            border-radius: 5px !important;
+        }
+
+        .select2-container--bootstrap-5 .select2-results__option {
+            padding: 3px 7px;
+            font-size: 11px;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+            font-size: 11px;
+        }
+
     </style>
     @await RenderSectionAsync("Styles", required: false)
 </head>
@@ -1377,6 +1719,16 @@
     <div class="wrapper">
         <!-- Sidebar -->
         <nav class="sidebar">
+            <script>
+                // Apply collapsed state SYNCHRONOUSLY during HTML parsing — prevents flicker on navigation
+                (function () {
+                    try {
+                        if (window.innerWidth > 991 && localStorage.getItem('sidebarCollapsed') === 'true') {
+                            document.currentScript.parentElement.classList.add('collapsed');
+                        }
+                    } catch (e) { }
+                })();
+            </script>
             <div class="sidebar-header">
                 <a href="/" class="sidebar-brand">
                     <div class="sidebar-brand-icon">
@@ -1389,6 +1741,13 @@
                 </a>
             </div>
 
+            <div class="sidebar-top">
+                <a href="/Dashboard" class="menu-item" id="sidebarDashboardLink" data-title="Dashboard">
+                    <i class="bi bi-grid-1x2-fill"></i>
+                    <span>Dashboard</span>
+                </a>
+            </div>
+
             <div class="sidebar-menu" id="sidebarMenu">
                 <!-- Menu will be loaded dynamically from API -->
                 <div class="text-center py-4">
@@ -1398,6 +1757,15 @@
                 </div>
             </div>
             <script>
+                // Dashboard link active state
+                (function () {
+                    var _p = window.location.pathname.toLowerCase();
+                    var _d = document.getElementById('sidebarDashboardLink');
+                    if (_d && (_p === '/' || _p.startsWith('/dashboard'))) {
+                        _d.classList.add('active');
+                    }
+                })();
+
                 // Instant sidebar restore from cache (runs synchronously before page paints)
                 try {
                     var _c = sessionStorage.getItem('sidebarData');
@@ -1405,6 +1773,11 @@
                         var _p = JSON.parse(_c);
                         if (Date.now() - _p.timestamp < 1800000) {
                             var _html = sessionStorage.getItem('sidebarHtml');
+                            // Invalidate old cache that doesn't include tooltip data-title attributes
+                            if (_html && _html.indexOf('data-title=') === -1) {
+                                sessionStorage.removeItem('sidebarHtml');
+                                _html = null;
+                            }
                             if (_html) {
                                 document.getElementById('sidebarMenu').innerHTML = _html;
                                 // Re-apply active state and expand parent section/submenu
@@ -1438,7 +1811,7 @@
             </script>
 
             <div class="sidebar-footer">
-                <a href="/my-institute" class="menu-item" style="margin: 0;">
+                <a href="/my-institute" class="menu-item" style="margin: 0;" data-title="My Institute">
                     <i class="bi bi-building"></i>
                     <span>My Institute</span>
                 </a>
@@ -1447,6 +1820,16 @@
 
         <!-- Main Content -->
         <div class="main-content">
+            <script>
+                // Apply expanded state SYNCHRONOUSLY to match collapsed sidebar — prevents layout jump
+                (function () {
+                    try {
+                        if (window.innerWidth > 991 && localStorage.getItem('sidebarCollapsed') === 'true') {
+                            document.currentScript.parentElement.classList.add('expanded');
+                        }
+                    } catch (e) { }
+                })();
+            </script>
             <header class="top-header">
                 <div class="d-flex align-items-center gap-3">
                     <button class="hamburger-btn" onclick="toggleSidebar()">
@@ -1528,13 +1911,13 @@
                     <form id="switchCredentialsForm">
                         <div class="mb-3">
                             <label class="form-label fw-medium">Institute Name</label>
-                            <select class="form-select" id="instituteSelect" required style="border: 2px solid #e2e8f0; border-radius: 10px; padding: 10px 14px;">
+                            <select class="form-select" id="instituteSelect" required style="border: 1px solid #e2e8f0;">
                                 <option value="" disabled selected>Select Institute</option>
                             </select>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-medium">Academic Session</label>
-                            <select class="form-select" id="sessionSelect" required style="border: 2px solid #e2e8f0; border-radius: 10px; padding: 10px 14px;">
+                            <select class="form-select" id="sessionSelect" required style="border: 1px solid #e2e8f0;">
                                 <option value="" disabled selected>Select Session</option>
                             </select>
                         </div>
@@ -1551,7 +1934,38 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="~/js/common.js"></script>
+    <script>
+        // ====== GLOBAL DELETE CONFIRMATION (SweetAlert2) ======
+        // Usage: if (!await confirmDelete('Delete "X"?')) return;
+        //    or: if (!await confirmDelete({ title: 'Delete?', html: '...' })) return;
+        window.confirmDelete = async function (arg) {
+            const o = (typeof arg === 'string') ? { html: arg } : (arg || {});
+            if (typeof Swal === 'undefined') {
+                const msg = [o.title, (o.html || o.text)].filter(Boolean).join('\n')
+                            .replace(/<[^>]*>/g, '');
+                return window.confirm(msg || 'Are you sure you want to delete this item?');
+            }
+            const res = await Swal.fire({
+                title:              o.title || 'Delete?',
+                html:               o.html || o.text || 'This item will be permanently deleted.<br><span style="color:#94a3b8;font-size:13px;">This action cannot be undone.</span>',
+                icon:               o.icon || 'warning',
+                showCancelButton:   true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor:  '#64748b',
+                confirmButtonText:  o.confirmButtonText || 'Yes, Delete',
+                cancelButtonText:   o.cancelButtonText || 'Cancel',
+                reverseButtons:     true,
+                focusCancel:        true
+            });
+            return res.isConfirmed;
+        };
+    </script>
+    <script>
+        USER_ID = @(Context.Session.GetInt32("UserId") ?? 0);
+        SESSION_ID = @(Context.Session.GetInt32("SessionId") ?? 0);
+    </script>
 
     <script>
         // ====== TOAST NOTIFICATION SYSTEM ======
@@ -1654,16 +2068,22 @@
         }
 
         // Restore sidebar collapsed state on page load (desktop only)
+        // Classes are already applied synchronously by inline scripts inside .sidebar/.main-content;
+        // here we only sync the hamburger icon and enable transitions for subsequent user toggles.
         function restoreSidebarState() {
-            if (window.innerWidth > 991 && localStorage.getItem('sidebarCollapsed') === 'true') {
-                const sidebar = document.querySelector('.sidebar');
-                const mainContent = document.querySelector('.main-content');
-                const hamburgerIcon = document.getElementById('hamburgerIcon');
+            const sidebar = document.querySelector('.sidebar');
+            const hamburgerIcon = document.getElementById('hamburgerIcon');
 
-                sidebar.classList.add('collapsed');
-                mainContent.classList.add('expanded');
+            if (sidebar && sidebar.classList.contains('collapsed') && hamburgerIcon) {
                 hamburgerIcon.classList.replace('bi-list', 'bi-chevron-right');
             }
+
+            // Enable transitions after initial paint so user-triggered toggles animate smoothly
+            requestAnimationFrame(function () {
+                requestAnimationFrame(function () {
+                    document.body.classList.add('sidebar-transitions-ready');
+                });
+            });
         }
 
         // ====== MENU SECTION TOGGLE ======
@@ -1831,7 +2251,7 @@
 
                 menuHtml += `<div class="menu-section ${collapsedClass}" id="${sectionId}">`;
                 menuHtml += `
-                    <div class="menu-section-title" onclick="toggleMenuSection('${sectionId}')">
+                    <div class="menu-section-title" data-title="${section.title}" onclick="toggleMenuSection('${sectionId}')">
                         <span><i class="bi ${section.icon} me-2"></i>${section.title}</span>
                         <i class="bi bi-chevron-down section-toggle"></i>
                     </div>
@@ -1853,7 +2273,7 @@
                         const submenuOpen = submenuUserToggled === 'open' || (submenuUserToggled === null && submenuHasActive);
 
                         menuHtml += `
-                            <div class="menu-item-parent ${submenuOpen ? 'expanded' : ''}" onclick="toggleSubmenu('${submenuId}')">
+                            <div class="menu-item-parent ${submenuOpen ? 'expanded' : ''}" data-title="${item.title}" onclick="toggleSubmenu('${submenuId}')">
                                 <div class="parent-left">
                                     <i class="bi ${item.icon}"></i>
                                     <span>${item.title}</span>
@@ -1867,7 +2287,7 @@
                             const isChildActive = currentPath.toLowerCase().startsWith(child.url.toLowerCase());
                             const childBadgeHtml = child.badge ? `<span class="badge">${child.badge}</span>` : '';
                             menuHtml += `
-                                <a href="${child.url}" class="menu-item ${isChildActive ? 'active' : ''}">
+                                <a href="${child.url}" class="menu-item ${isChildActive ? 'active' : ''}" data-title="${child.title}">
                                     <i class="bi ${child.icon}"></i>
                                     <span>${child.title}</span>
                                     ${childBadgeHtml}
@@ -1881,7 +2301,7 @@
                                          (item.url === '/Dashboard' && currentPath === '/');
                         const badgeHtml = item.badge ? `<span class="badge">${item.badge}</span>` : '';
                         menuHtml += `
-                            <a href="${item.url}" class="menu-item ${isActive ? 'active' : ''}">
+                            <a href="${item.url}" class="menu-item ${isActive ? 'active' : ''}" data-title="${item.title}">
                                 <i class="bi ${item.icon}"></i>
                                 <span>${item.title}</span>
                                 ${badgeHtml}

@@ -6,146 +6,214 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Fee Voucher</title>
+    <meta charset="UTF-8" />
+    <title>Fee Receipt Voucher</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; font-size: 12px; padding: 20px; }
-        .voucher { border: 2px solid #000; padding: 20px; max-width: 600px; margin: 0 auto; }
-        .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 15px; }
-        .header h1 { font-size: 24px; margin-bottom: 5px; }
-        .header h2 { font-size: 16px; font-weight: normal; color: #008649; }
-        .voucher-no { text-align: right; font-size: 14px; font-weight: bold; margin-bottom: 15px; }
-        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .info-item .label { font-size: 10px; color: #666; text-transform: uppercase; }
-        .info-item .value { font-size: 14px; font-weight: bold; }
-        .amount-box { background: #008649; color: white; padding: 20px; text-align: center; border-radius: 10px; margin: 20px 0; }
-        .amount-box .label { font-size: 12px; opacity: 0.8; }
-        .amount-box .amount { font-size: 32px; font-weight: bold; }
-        .payment-info { background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
-        .payment-info .row { display: flex; justify-content: space-between; margin-bottom: 8px; }
-        .payment-info .row:last-child { margin-bottom: 0; }
-        .footer { margin-top: 30px; display: flex; justify-content: space-between; }
-        .signature { width: 150px; text-align: center; }
-        .signature-line { border-top: 1px solid #000; margin-top: 40px; padding-top: 5px; font-size: 10px; }
-        .print-btn { position: fixed; top: 20px; right: 20px; padding: 10px 20px; background: #008649; color: white; border: none; cursor: pointer; border-radius: 5px; }
-        @@media print { .print-btn { display: none; } }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .print-container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px 40px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            text-align: center;
+            max-width: 450px;
+            width: 100%;
+        }
+
+        .print-container h2 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 6px;
+        }
+
+        .print-container p {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 24px;
+        }
+
+        .voucher-id {
+            font-size: 14px;
+            color: #334155;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn-group button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+
+        .btn-group button:hover {
+            opacity: 0.85;
+        }
+
+        .btn-group button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-thermal {
+            background: #008649;
+            color: white;
+        }
+
+        .btn-a4 {
+            background: #1d4ed8;
+            color: white;
+        }
+
+        .btn-close-page {
+            background: #64748b;
+            color: white;
+        }
+
+        .icon {
+            font-size: 18px;
+        }
+
+        .status-msg {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 16px;
+            min-height: 18px;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #94a3b8;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+
+        @@keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
-    <button class="print-btn" onclick="window.print()">Print Voucher</button>
-
-    <div class="voucher" id="voucherContent">
-        <div class="header">
-            <h1>SCHOOL NAME</h1>
-            <h2>Payment Receipt</h2>
+    <div class="print-container">
+        <h2>Fee Receipt Voucher</h2>
+        <p>Select format to print on default printer</p>
+        <div class="voucher-id" id="voucherInfo">Voucher #<span id="vid">@voucherId</span></div>
+        <div class="btn-group">
+            <button class="btn-thermal" id="btnThermal" onclick="printDirect('thermal')">
+                <span class="icon">&#x1F5A8;</span> Thermal Print (80mm)
+            </button>
+            <button class="btn-a4" id="btnA4" onclick="printDirect('a4')">
+                <span class="icon">&#x1F4C4;</span> A4 Print
+            </button>
+            <button class="btn-close-page" onclick="window.close()">Close</button>
         </div>
-
-        <div class="voucher-no">
-            Voucher No: <span id="voucherNumber">-</span>
-        </div>
-
-        <div class="info-grid">
-            <div class="info-item">
-                <div class="label">Student Name</div>
-                <div class="value" id="studentName">-</div>
-            </div>
-            <div class="info-item">
-                <div class="label">Roll Number</div>
-                <div class="value" id="rollNumber">-</div>
-            </div>
-            <div class="info-item">
-                <div class="label">Challan Number</div>
-                <div class="value" id="challanNumber">-</div>
-            </div>
-            <div class="info-item">
-                <div class="label">Payment Date</div>
-                <div class="value" id="paymentDate">-</div>
-            </div>
-        </div>
-
-        <div class="amount-box">
-            <div class="label">Amount Received</div>
-            <div class="amount">Rs. <span id="amountPaid">0.00</span></div>
-        </div>
-
-        <div class="payment-info">
-            <div class="row">
-                <span>Payment Method:</span>
-                <strong id="paymentMethod">-</strong>
-            </div>
-            <div class="row" id="transRefRow" style="display: none;">
-                <span>Transaction Ref:</span>
-                <strong id="transactionRef">-</strong>
-            </div>
-            <div class="row" id="chequeRow" style="display: none;">
-                <span>Cheque Number:</span>
-                <strong id="chequeNumber">-</strong>
-            </div>
-            <div class="row" id="receivedByRow" style="display: none;">
-                <span>Received By:</span>
-                <strong id="receivedBy">-</strong>
-            </div>
-        </div>
-
-        <div class="footer">
-            <div class="signature">
-                <div class="signature-line">Student/Parent</div>
-            </div>
-            <div class="signature">
-                <div class="signature-line">Accountant</div>
-            </div>
-        </div>
+        <div class="status-msg" id="statusMsg"></div>
     </div>
 
+    <!-- Hidden iframe for printing -->
+    <iframe id="printFrame" style="position:absolute;left:-9999px;width:0;height:0;border:none;"></iframe>
+
+    <script src="~/js/common.js"></script>
     <script>
-        ////const API_BASE = 'http://localhost:5266/api';
-        const voucherId = @(voucherId ?? 0);
+        const pathParts = window.location.pathname.split('/').filter(Boolean);
+        const voucherId = parseInt(pathParts[pathParts.length - 1]) || @(voucherId ?? 0);
 
-        document.addEventListener('DOMContentLoaded', function() {
-            if (voucherId > 0) {
-                loadVoucher();
-            }
-        });
+        async function printDirect(type) {
+            const btnThermal = document.getElementById('btnThermal');
+            const btnA4 = document.getElementById('btnA4');
+            const statusMsg = document.getElementById('statusMsg');
 
-        async function loadVoucher() {
+            // Disable buttons while loading
+            btnThermal.disabled = true;
+            btnA4.disabled = true;
+            statusMsg.innerHTML = '<span class="spinner"></span> Loading receipt...';
+
             try {
-                const response = await fetch(`${API_BASE}/FeeVoucher/${voucherId}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    displayVoucher(data);
+                const response = await fetch(`${API_BASE}/FeeVoucher/ReceiptPdf/${voucherId}?type=${type}`);
+                if (!response.ok) {
+                    statusMsg.textContent = 'Error: Could not load receipt.';
+                    btnThermal.disabled = false;
+                    btnA4.disabled = false;
+                    return;
                 }
-            } catch (error) {
-                console.error('Error:', error);
+
+                const blob = await response.blob();
+                const blobUrl = URL.createObjectURL(blob);
+                const printFrame = document.getElementById('printFrame');
+
+                printFrame.onload = function () {
+                    statusMsg.innerHTML = '<span class="spinner"></span> Sending to printer...';
+                    // Small delay to ensure PDF is fully rendered in the iframe
+                    setTimeout(function () {
+                        try {
+                            printFrame.contentWindow.focus();
+                            printFrame.contentWindow.print();
+                        } catch (e) {
+                            // Fallback: open in new window for printing
+                            const w = window.open(blobUrl);
+                            if (w) {
+                                w.onload = function () { w.print(); };
+                            }
+                        }
+                        statusMsg.textContent = 'Print dialog opened.';
+                        btnThermal.disabled = false;
+                        btnA4.disabled = false;
+                    }, 500);
+                };
+
+                printFrame.src = blobUrl;
+
+            } catch (err) {
+                console.error(err);
+                statusMsg.textContent = 'Error: ' + err.message;
+                btnThermal.disabled = false;
+                btnA4.disabled = false;
             }
         }
 
-        function displayVoucher(data) {
-            document.getElementById('voucherNumber').textContent = data.voucherNumber;
-            document.getElementById('studentName').textContent = data.studentName || '-';
-            document.getElementById('rollNumber').textContent = data.rollNumber || '-';
-            document.getElementById('challanNumber').textContent = data.challanNumber || '-';
-            document.getElementById('paymentDate').textContent = formatDate(data.paymentDate);
-            document.getElementById('amountPaid').textContent = data.amountPaid.toFixed(2);
-            document.getElementById('paymentMethod').textContent = data.paymentMethodName || '-';
-
-            if (data.transactionReference) {
-                document.getElementById('transRefRow').style.display = 'flex';
-                document.getElementById('transactionRef').textContent = data.transactionReference;
-            }
-
-            if (data.chequeNumber) {
-                document.getElementById('chequeRow').style.display = 'flex';
-                document.getElementById('chequeNumber').textContent = data.chequeNumber;
-            }
-
-            if (data.receivedBy) {
-                document.getElementById('receivedByRow').style.display = 'flex';
-                document.getElementById('receivedBy').textContent = data.receivedBy;
-            }
-        }
-
-        function formatDate(dateStr) {
-            return new Date(dateStr).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        // Auto-print if printer param is passed
+        const urlParams = new URLSearchParams(window.location.search);
+        const printerArg = urlParams.get('printer');
+        if (printerArg === 'thermal') {
+            printDirect('thermal');
+        } else if (printerArg === 'normal') {
+            printDirect('a4');
         }
     </script>
 </body>

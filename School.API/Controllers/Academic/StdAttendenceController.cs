@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using School.API.DTOs.Student;
+using School.API.Extensions;
 using School.API.Services.Interfaces.Student;
 
 [ApiController]
@@ -29,17 +30,27 @@ public class StdAttendenceController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteById(int id)
     {
-        int userId = 1; // later from JWT
+        int userId = Request.GetUserId();
         string userIp = HttpContext.Connection.RemoteIpAddress?.ToString();
 
         var record = await _service.DeleteByIdAsync(id, userId, userIp);
         return record == null ? NotFound() : Ok(record);
     }
 
+    [HttpDelete("by-filter")]
+    public async Task<IActionResult> DeleteByFilter([FromQuery] StdAttendenceFilterDto filter)
+    {
+        int userId = Request.GetUserId();
+        string userIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+
+        var result = await _service.DeleteByFilterAsync(filter, userId, userIp);
+        return result == null ? NotFound() : Ok(result);
+    }
+
     [HttpPost]
     public async Task<IActionResult> Save(StdAttendenceSaveDto dto)
     {
-        int userId = 1; // later from JWT
+        int userId = Request.GetUserId();
         string userIp = HttpContext.Connection.RemoteIpAddress?.ToString();
 
         var result = await _service.SaveAsync(dto, userId, userIp);

@@ -51,6 +51,11 @@ namespace School.API.Data.DBModels.SMS
         [MaxLength(500)]
         public string? ErrorMessage { get; set; }
 
+        // Groups a batch of enqueued messages so the UI can poll progress
+        // per job. Nullable for legacy rows inserted before the queue.
+        [MaxLength(100)]
+        public string? JobId { get; set; }
+
         // Audit fields
         public int? InsertedBy { get; set; }
         public DateTime InsertedDate { get; set; } = DateTime.UtcNow;

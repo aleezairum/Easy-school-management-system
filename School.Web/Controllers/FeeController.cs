@@ -17,5 +17,12 @@ namespace School.Web.Controllers
             ViewData["Title"] = "Apply Fee List";
             return View();
         }
+
+        [Route("fee-report")]
+        public IActionResult FeeReport()
+        {
+            ViewData["Title"] = "Fee Reports";
+            return View();
+        }
     }
 }

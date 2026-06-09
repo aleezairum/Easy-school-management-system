@@ -429,7 +429,13 @@
             previewStudents[index].fee = parseFloat(value) || 0;
         }
 
-                async function applyFee() {
+                // Replace this helper at the top of applyFee():
+        function formatLocalMonth(date) {
+            const year  = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            return `${year}-${month}`;
+        }
+        async function applyFee() {
             const selectedDates = monthPicker.selectedDates;
             const description   = $('#description').val();
             const feeTypeId     = parseInt($('#filterFeeType').val()) || 0;
@@ -444,10 +450,10 @@
                 toastWarning('Please preview students first'); return;
             }
 
-            const monthFrom = selectedDates[0].toISOString().slice(0, 7);
+            const monthFrom = formatLocalMonth(selectedDates[0]);
             const monthTo   = selectedDates.length > 1
-                                ? selectedDates[1].toISOString().slice(0, 7)
-                                : monthFrom;
+                            ? formatLocalMonth(selectedDates[1])
+                            : monthFrom;
 
             const feeData = {
                 monthFrom:   monthFrom,

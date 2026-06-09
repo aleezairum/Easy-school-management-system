@@ -51,8 +51,10 @@ namespace School.API.BackgroundJobs
                 MessageType = SmsMessageType.Fee
             };
 
-            var result = await smsService.SendBulkAsync(dto);
-            logger.LogInformation("[FeeReminder] Sent: {Sent}, Failed: {Failed}", result.TotalSent, result.TotalFailed);
+            var result = await smsService.EnqueueBulkAsync(dto);
+            logger.LogInformation(
+                "[FeeReminder] Queued: {Total} (JobId={JobId})",
+                result.Total, result.JobId);
 
             _lastRunMonth = DateTime.Today;
         }

@@ -1,14 +1,22 @@
-using School.API.DTOs;
+using School.API.Data.DBModels.Academic;
+using School.API.Data.DBModels.Accounts;
+using School.API.DTOs.Academic;
+using School.API.DTOs.Common;
+using School.API.DTOs.FeeManagement;
+using School.API.Repositories.Interfaces.Academic;
+using School.API.Repositories.Interfaces.Accounts;
 
 namespace School.API.Services.Interfaces.Accounts
 {
     public interface IPaymentMethodService
     {
-        Task<IEnumerable<PaymentMethodListDto>> GetAllAsync();
-        Task<PaymentMethodDto?> GetByIdAsync(int id);
-        Task<PaymentMethodDto> CreateAsync(CreatePaymentMethodDto dto);
-        Task<PaymentMethodDto?> UpdateAsync(int id, UpdatePaymentMethodDto dto);
-        Task<bool> DeleteAsync(int id);
-        Task<IEnumerable<PaymentMethodDropdownDto>> GetDropdownAsync();
+        Task<ResponseDto> SaveAsync(
+            PaymentMethodDto dto,
+            int userId,
+            string userIp);
+
+        Task<List<PaymentMethod>> GetAllAsync();
+        Task<PaymentMethod?> GetByIdAsync(int id);
+        Task<ResponseDto?> DeleteByIdAsync(int id);
     }
 }

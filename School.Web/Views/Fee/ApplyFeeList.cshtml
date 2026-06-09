@@ -6,41 +6,44 @@
 <div class="container-fluid">
     <div id="alertContainer"></div>
 
-    <div class="card" style="border-radius: 16px; border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
-        <div class="card-body p-4">
+    <div class="card" style="border-radius: 10px; border: none; box-shadow: 0 2px 12px rgba(0,0,0,0.08);">
+        <div class="card-body p-3">
 
             <!-- Header -->
-            <div class="d-flex justify-content-end mb-3">
-                <a href="/apply-fee" class="btn btn-primary">
+            <div class="d-flex justify-content-end mb-2 gap-2">
+                <button type="button" class="btn btn-success btn-sm" onclick="printReport()" id="btnPrint" style="display:none;">
+                    <i class="bi bi-printer me-1"></i> Print Report
+                </button>
+                <a href="/apply-fee" class="btn btn-primary btn-sm">
                     <i class="bi bi-plus-lg me-1"></i> Apply Fee
                 </a>
             </div>
 
             <!-- Filter Row 1: Month Range + Choose -->
-            <div class="filter-section" style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
-                <div class="row g-3 align-items-end">
+            <div class="filter-section" style="background: #f8fafc; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px;">
+                <div class="row g-2 align-items-end">
                     <div class="col-lg-3 col-md-4 col-sm-6 col-12">
-                        <label for="monthRange" class="form-label">Month Range</label>
-                        <input type="text" class="form-control" id="monthRange"
+                        <label for="monthRange" class="form-label form-label-sm mb-1">Month Range</label>
+                        <input type="text" class="form-control form-control-sm" id="monthRange"
                                placeholder="Select month range" readonly
                                style="background: white; cursor: pointer;" />
                     </div>
                     <div class="col-lg-6 col-md-6 col-12">
-                        <label class="form-label">Choose</label>
-                        <div class="d-flex gap-3 pt-1">
-                            <div class="form-check">
+                        <label class="form-label form-label-sm mb-1">Choose</label>
+                        <div class="d-flex gap-3">
+                            <div class="form-check form-check-sm">
                                 <input class="form-check-input" type="radio" name="listChoice" id="choiceStudent" value="student" checked onchange="toggleChoiceFields()">
                                 <label class="form-check-label" for="choiceStudent">Student</label>
                             </div>
-                            <div class="form-check">
+                            <div class="form-check form-check-sm">
                                 <input class="form-check-input" type="radio" name="listChoice" id="choiceSection" value="section" onchange="toggleChoiceFields()">
                                 <label class="form-check-label" for="choiceSection">Section</label>
                             </div>
-                            <div class="form-check">
+                            <div class="form-check form-check-sm">
                                 <input class="form-check-input" type="radio" name="listChoice" id="choiceClass" value="class" onchange="toggleChoiceFields()">
                                 <label class="form-check-label" for="choiceClass">Class</label>
                             </div>
-                            <div class="form-check">
+                            <div class="form-check form-check-sm">
                                 <input class="form-check-input" type="radio" name="listChoice" id="choiceAll" value="all" onchange="toggleChoiceFields()">
                                 <label class="form-check-label" for="choiceAll">All</label>
                             </div>
@@ -50,49 +53,49 @@
             </div>
 
             <!-- Filter Row 2 -->
-            <div class="filter-section" style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
-                <div class="row g-3 align-items-end">
+            <div class="filter-section" style="background: #f8fafc; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px;">
+                <div class="row g-2 align-items-end">
                     <div class="col-lg-2 col-md-4 col-sm-6 col-12" id="classField">
-                        <label for="filterClass" class="form-label">Class</label>
-                        <select class="form-select" id="filterClass" onchange="loadFilterSections()">
+                        <label for="filterClass" class="form-label form-label-sm mb-1">Class</label>
+                        <select class="form-select form-select-sm" id="filterClass" onchange="loadFilterSections()">
                             <option value="">-- Select Class --</option>
                         </select>
                     </div>
                     <div class="col-lg-2 col-md-4 col-sm-6 col-12" id="sectionField">
-                        <label for="filterSection" class="form-label">Section</label>
-                        <select class="form-select" id="filterSection" disabled onchange="loadStudents()">
+                        <label for="filterSection" class="form-label form-label-sm mb-1">Section</label>
+                        <select class="form-select form-select-sm" id="filterSection" disabled onchange="loadStudents()">
                             <option value="">-- Select Section --</option>
                         </select>
                     </div>
                     <div class="col-lg-2 col-md-4 col-sm-6 col-12" id="rollNoField">
-                        <label for="filterRollNo" class="form-label">Roll No</label>
-                        <select class="form-select" id="filterRollNo" onchange="selectStudentByRoll()">
+                        <label for="filterRollNo" class="form-label form-label-sm mb-1">Roll No</label>
+                        <select class="form-select form-select-sm" id="filterRollNo" onchange="selectStudentByRoll()">
                             <option value="">-- Select Roll --</option>
                         </select>
                     </div>
                     <div class="col-lg-2 col-md-4 col-sm-6 col-12" id="studentField">
-                        <label for="filterStudent" class="form-label">Student</label>
-                        <select class="form-select" id="filterStudent" onchange="selectRollByStudent()">
+                        <label for="filterStudent" class="form-label form-label-sm mb-1">Student</label>
+                        <select class="form-select form-select-sm" id="filterStudent" onchange="selectRollByStudent()">
                             <option value="">-- Select Student --</option>
                         </select>
                     </div>
                     <div class="col-lg-2 col-md-4 col-sm-6 col-12">
-                        <label for="filterGrade" class="form-label">Grade</label>
-                        <select class="form-select" id="filterGrade">
+                        <label for="filterGrade" class="form-label form-label-sm mb-1">Grade</label>
+                        <select class="form-select form-select-sm" id="filterGrade">
                             <option value="">-- All Grades --</option>
                         </select>
                     </div>
                     <div class="col-lg-2 col-md-4 col-sm-6 col-12">
-                        <label for="filterFeeType" class="form-label">Fee Type</label>
-                        <select class="form-select" id="filterFeeType">
+                        <label for="filterFeeType" class="form-label form-label-sm mb-1">Fee Type</label>
+                        <select class="form-select form-select-sm" id="filterFeeType">
                             <option value="">-- All Fee Types --</option>
                         </select>
                     </div>
                     <div class="col-lg-2 col-md-4 col-sm-6 col-12 d-flex gap-2 align-items-end">
-                        <button type="button" class="btn btn-primary w-100" onclick="loadList()">
+                        <button type="button" class="btn btn-primary btn-sm w-100" onclick="loadList()">
                             <i class="bi bi-search me-1"></i> Preview
                         </button>
-                        <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()" title="Clear">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearFilters()" title="Clear">
                             <i class="bi bi-x-lg"></i>
                         </button>
                     </div>
@@ -100,53 +103,50 @@
             </div>
 
             <!-- Summary Cards -->
-            <div class="row g-3 mb-4" id="summaryCards" style="display:none!important;">
+            <div class="row g-2 mb-3" id="summaryCards" style="display:none!important;">
                 <div class="col-lg-3 col-md-6 col-12">
-                    <div style="background: #f0fdf4; border-radius: 12px; padding: 16px;">
-                        <div style="font-size: 12px; color: #16a34a; font-weight: 600;">TOTAL RECORDS</div>
-                        <div style="font-size: 24px; font-weight: 700; color: #15803d;" id="totalRecords">0</div>
+                    <div style="background: #f0fdf4; border-radius: 8px; padding: 10px 12px;">
+                        <div style="font-size: 11px; color: #16a34a; font-weight: 600;">TOTAL RECORDS</div>
+                        <div style="font-size: 18px; font-weight: 700; color: #15803d;" id="totalRecords">0</div>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-6 col-12">
-                    <div style="background: #eff6ff; border-radius: 12px; padding: 16px;">
-                        <div style="font-size: 12px; color: #2563eb; font-weight: 600;">TOTAL FEE</div>
-                        <div style="font-size: 24px; font-weight: 700; color: #1d4ed8;" id="totalFee">0</div>
+                    <div style="background: #eff6ff; border-radius: 8px; padding: 10px 12px;">
+                        <div style="font-size: 11px; color: #2563eb; font-weight: 600;">TOTAL FEE</div>
+                        <div style="font-size: 18px; font-weight: 700; color: #1d4ed8;" id="totalFee">0</div>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-6 col-12">
-                    <div style="background: #f0fdf4; border-radius: 12px; padding: 16px;">
-                        <div style="font-size: 12px; color: #16a34a; font-weight: 600;">CLEARED</div>
-                        <div style="font-size: 24px; font-weight: 700; color: #15803d;" id="totalCleared">0</div>
+                    <div style="background: #f0fdf4; border-radius: 8px; padding: 10px 12px;">
+                        <div style="font-size: 11px; color: #16a34a; font-weight: 600;">CLEARED</div>
+                        <div style="font-size: 18px; font-weight: 700; color: #15803d;" id="totalCleared">0</div>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-6 col-12">
-                    <div style="background: #fef2f2; border-radius: 12px; padding: 16px;">
-                        <div style="font-size: 12px; color: #dc2626; font-weight: 600;">PENDING</div>
-                        <div style="font-size: 24px; font-weight: 700; color: #b91c1c;" id="totalPending">0</div>
+                    <div style="background: #fef2f2; border-radius: 8px; padding: 10px 12px;">
+                        <div style="font-size: 11px; color: #dc2626; font-weight: 600;">PENDING</div>
+                        <div style="font-size: 18px; font-weight: 700; color: #b91c1c;" id="totalPending">0</div>
                     </div>
                 </div>
             </div>
 
             <!-- Client Side Search + Status + Record Count -->
-            <div class="d-flex justify-content-between align-items-center mb-3 gap-2 flex-wrap">
-                <h6 style="font-weight: 600; color: #475569; margin: 0;">
-                    <i class="bi bi-list-ul me-2"></i>PAYMENT RECORDS
-                    <span id="recordCount" class="text-muted ms-2" style="font-size: 13px; font-weight: 400;"></span>
+            <div class="d-flex justify-content-between align-items-center mb-2 gap-2 flex-wrap">
+                <h6 style="font-weight: 600; color: #475569; margin: 0; font-size: 13px;">
+                    <i class="bi bi-list-ul me-1"></i>PAYMENT RECORDS
+                    <span id="recordCount" class="text-muted ms-1" style="font-size: 12px; font-weight: 400;"></span>
                 </h6>
                 <div class="d-flex gap-2 align-items-center">
-                    <select class="form-select form-select-sm" id="clientStatus" style="width: 180px;" onchange="applyClientFilters()">
+                    <select class="form-select form-select-sm" id="clientStatus" style="width: 150px;" onchange="applyClientFilters()">
                         <option value="">-- All Status --</option>
                         <option value="true">Cleared</option>
                         <option value="false">Pending</option>
                     </select>
-                    <div class="input-group input-group-sm" style="width: 550px;">
+                    <div class="input-group input-group-sm" style="max-width: 350px;">
                         <span class="input-group-text"><i class="bi bi-search"></i></span>
                         <input type="text" class="form-control" id="clientSearch"
                                placeholder="Student, Fee Type..."
                                oninput="applyClientFilters()" />
-                        @* <button class="btn btn-outline-secondary" type="button" onclick="clearClientSearch()" title="Clear search">
-                            <i class="bi bi-x"></i>
-                        </button> *@
                     </div>
                 </div>
             </div>
@@ -227,31 +227,27 @@
         .badge-cleared {
             background-color: #d1fae5;
             color: #065f46;
-            padding: 3px 10px;
+            padding: 2px 8px;
             border-radius: 20px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 500;
         }
 
         .badge-pending {
             background-color: #fef2f2;
             color: #b91c1c;
-            padding: 3px 10px;
+            padding: 2px 8px;
             border-radius: 20px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 500;
         }
 
-        .table th {
-            font-size: 13px;
-            font-weight: 600;
-            color: #475569;
-            white-space: nowrap;
+        .form-label-sm {
+            font-size: 12px;
         }
 
-        .table td {
-            font-size: 13px;
-            vertical-align: middle;
+        .form-check-sm .form-check-label {
+            font-size: 12px;
         }
     </style>
 }
@@ -259,6 +255,7 @@
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/index.js"></script>
+    <script src="~/js/applyFeeReport.js"></script>
     <script>
         let allData     = [];
         let deleteVID   = null;
@@ -276,7 +273,6 @@
                 altFormat: 'M Y'
             });
 
-            // Flatpickr ready hone ke baad default date set karo aur data load karo
             setTimeout(() => {
                 monthPicker.setDate([now, now], false);
                 loadList();
@@ -385,7 +381,6 @@
 
         // ── Server Side Load ──────────────────────────────────────────
         async function loadList() {
-            // Dates
             const selectedDates = monthPicker ? monthPicker.selectedDates : [];
             let dateFrom, dateTo;
 
@@ -400,16 +395,20 @@
                 dateTo   = formatDate(new Date(last.getFullYear(),  last.getMonth() + 1, 0));
             }
 
+            const classId   = parseInt($('#filterClass').val())   || 0;
             const sectionId = parseInt($('#filterSection').val()) || 0;
             const studentId = parseInt($('#filterStudent').val())  || 0;
-            const gradeId   = parseInt($('#filterGrade').val())    || 0;
-            const feeTypeId = parseInt($('#filterFeeType').val())  || 0;
+            const gradeName   = $('#filterGrade option:selected').text().trim();
+            const feeTypeName = $('#filterFeeType option:selected').text().trim();
+            const className   = $('#filterClass option:selected').text().trim();
 
             $('#feeListBody').html('<tr><td colspan="13" class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm me-2"></span>Loading...</td></tr>');
+            $('#btnPrint').hide();
 
             try {
                 let url = `${API_BASE}/ApplyFee?dateFrom=${dateFrom}&dateTo=${dateTo}`;
                 if (sectionId) url += `&sectionId=${sectionId}`;
+                if (studentId) url += `&studentId=${studentId}`;
 
                 const response = await fetch(url);
 
@@ -421,10 +420,9 @@
 
                 let data = await response.json();
 
-                // Client side filters
-                if (studentId) data = data.filter(d => d.studentID === studentId);
-                if (gradeId)   data = data.filter(d => d.gradeID   === gradeId);
-                if (feeTypeId) data = data.filter(d => d.feeTypeID === feeTypeId);
+                if (classId   && className)   data = data.filter(d => d.className   === className);
+                if ($('#filterGrade').val())   data = data.filter(d => d.gradeName   === gradeName);
+                if ($('#filterFeeType').val()) data = data.filter(d => d.feeTypeName === feeTypeName);
 
                 allData = data;
 
@@ -432,6 +430,8 @@
                 $('#clientStatus').val('');
 
                 applyClientFilters();
+
+                if (allData.length > 0) $('#btnPrint').show();
 
             } catch (err) {
                 console.error('Error loading list:', err);
@@ -470,7 +470,7 @@
         }
 
         // ── Render List ───────────────────────────────────────────────
-                function renderList(data) {
+        function renderList(data) {
             const tbody = $('#feeListBody');
 
             if (data.length === 0) {
@@ -479,7 +479,6 @@
                 return;
             }
 
-            // Saari rows ek string mein banao — ek baar DOM update
             let rows = '';
             data.forEach((row, index) => {
                 const statusBadge = row.isClear
@@ -516,11 +515,11 @@
                     </tr>`;
             });
 
-            tbody.html(rows);  // ← sirf ek baar DOM touch hoga
-
+            tbody.html(rows);
             updateSummary(data);
             $('#recordCount').text(`(${data.length} records)`);
         }
+
         // ── Delete ────────────────────────────────────────────────────
         function openDeleteModal(vid, studentName, feeTypeName) {
             deleteVID = vid;
@@ -582,6 +581,7 @@
             toggleChoiceFields();
             allData = [];
             renderList([]);
+            $('#btnPrint').hide();
         }
 
         // ── Helpers ───────────────────────────────────────────────────
@@ -595,5 +595,6 @@
         function formatAmount(val) {
             return (val || 0).toLocaleString('en-PK', { minimumFractionDigits: 0 });
         }
+
     </script>
 }

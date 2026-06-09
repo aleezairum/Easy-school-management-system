@@ -1,4 +1,9 @@
-using School.API.DTOs;
+using School.API.Data.DBModels.Academic;
+using School.API.Data.DBModels.Accounts;
+using School.API.DTOs.Academic;
+using School.API.DTOs.Common;
+using School.API.DTOs.FeeManagement;
+using School.API.Repositories.Interfaces.Academic;
 using School.API.Repositories.Interfaces.Accounts;
 using School.API.Services.Interfaces.Accounts;
 
@@ -6,70 +11,26 @@ namespace School.API.Services.Implementations.Accounts
 {
     public class PaymentMethodService : IPaymentMethodService
     {
-        private readonly IPaymentMethodRepository _repository;
+        private readonly IPaymentMethodRepository _repo;
 
-        public PaymentMethodService(IPaymentMethodRepository repository)
+        public PaymentMethodService(IPaymentMethodRepository repo)
         {
-            _repository = repository;
+            _repo = repo;
         }
 
-        public async Task<IEnumerable<PaymentMethodListDto>> GetAllAsync()
-        {
-            return await _repository.GetAllAsync();
-        }
+        public Task<ResponseDto> SaveAsync(
+            PaymentMethodDto dto,
+            int userId,
+            string userIp)
+            => _repo.SaveAsync(dto, userId, userIp);
 
-        public async Task<PaymentMethodDto?> GetByIdAsync(int id)
-        {
-            return await _repository.GetByIdAsync(id);
-        }
+        public Task<List<PaymentMethod>> GetAllAsync()
+            => _repo.GetAllAsync();
 
-        public async Task<PaymentMethodDto> CreateAsync(CreatePaymentMethodDto dto)
-        {
-            var entity = await _repository.CreateAsync(dto);
-            return new PaymentMethodDto
-            {
-                Id = entity.Id,
-                Code = entity.Code,
-                Name = entity.Name,
-                Description = entity.Description,
-                BankName = entity.BankName,
-                AccountNumber = entity.AccountNumber,
-                BranchCode = entity.BranchCode,
-                IsActive = entity.IsActive,
-                CreatedAt = entity.CreatedAt,
-                UpdatedAt = entity.UpdatedAt
-            };
-        }
+        public Task<PaymentMethod?> GetByIdAsync(int id)
+            => _repo.GetByIdAsync(id);
 
-        public async Task<PaymentMethodDto?> UpdateAsync(int id, UpdatePaymentMethodDto dto)
-        {
-            var entity = await _repository.UpdateAsync(id, dto);
-            if (entity == null)
-                return null;
-
-            return new PaymentMethodDto
-            {
-                Id = entity.Id,
-                Code = entity.Code,
-                Name = entity.Name,
-                Description = entity.Description,
-                BankName = entity.BankName,
-                AccountNumber = entity.AccountNumber,
-                BranchCode = entity.BranchCode,
-                IsActive = entity.IsActive,
-                CreatedAt = entity.CreatedAt,
-                UpdatedAt = entity.UpdatedAt
-            };
-        }
-
-        public async Task<bool> DeleteAsync(int id)
-        {
-            return await _repository.DeleteAsync(id);
-        }
-
-        public async Task<IEnumerable<PaymentMethodDropdownDto>> GetDropdownAsync()
-        {
-            return await _repository.GetDropdownAsync();
-        }
+        public Task<ResponseDto?> DeleteByIdAsync(int id)
+           => _repo.DeleteByIdAsync(id);
     }
 }

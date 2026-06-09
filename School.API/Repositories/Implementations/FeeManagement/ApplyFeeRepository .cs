@@ -72,6 +72,35 @@ namespace School.API.Repositories.Implementations.Accounts
                 .AsNoTracking()
                 .ToListAsync();
         }
+        public async Task<List<StudentFeeReportDto>> GetReportAsync(GetStudentFeeReportRequestDto dto)
+        {
+            return await _context
+                .Set<StudentFeeReportDto>()
+                .FromSqlRaw(
+                    "EXEC SpRPT_SMSStudentFee @VID={0}, @StudentID={1}, @SessionID={2}, @SectionIDs={3}, @ClassIDs={4}, @DateFrom={5}, @DateTo={6}, @ReportType={7}, @FeeTypeIDs={8}",
+                    dto.VID ?? (object)DBNull.Value,
+                    dto.StudentID ?? (object)DBNull.Value,
+                    dto.SessionID ?? (object)DBNull.Value,
+                    string.IsNullOrWhiteSpace(dto.SectionIDs) ? (object)DBNull.Value : dto.SectionIDs,
+                    string.IsNullOrWhiteSpace(dto.ClassIDs)   ? (object)DBNull.Value : dto.ClassIDs,
+                    dto.DateFrom,
+                    dto.DateTo,
+                    dto.ReportType,
+                    string.IsNullOrWhiteSpace(dto.FeeTypeIDs) ? (object)DBNull.Value : dto.FeeTypeIDs)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+        public async Task<List<StudentFeeListDto>> GetPendingsAsync(int studentId)
+        {
+            return await _context
+                .Set<StudentFeeListDto>()
+                .FromSqlRaw(
+                    "EXEC SpGetPending_SMSStudentFee @StudentID={0}",
+                    studentId
+                    )
+                .AsNoTracking()
+                .ToListAsync();
+        }
         public async Task<ResponseDto> DeleteAsync(int vid, int userId, string userIp)
         {
             var parameters = new[]

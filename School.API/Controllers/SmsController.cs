@@ -15,24 +15,57 @@ namespace School.API.Controllers
             _smsService = smsService;
         }
 
+        // ── DB-BACKED PROGRESS — survives server restart ──────────────
+        [HttpGet("progress/{jobId}")]
+        public async Task<ActionResult<SmsQueueStatusDto>> GetProgress(string jobId)
+        {
+            var status = await _smsService.GetJobStatusAsync(jobId);
+            if (status.Total == 0)
+                return NotFound(new { message = "Job not found" });
+            return Ok(status);
+        }
+
+        // Lightweight endpoint for a global queue widget.
+        [HttpGet("queue-status")]
+        public async Task<ActionResult> GetQueueStatus()
+        {
+            var pending = await _smsService.GetOverallPendingCountAsync();
+            return Ok(new { pending });
+        }
+
+        // ── ENQUEUE BULK SEND ─────────────────────────────────────────
+        // Saves all recipients to the SmsMessages queue with Status=Pending.
+        // SmsQueueProcessor (BackgroundService) picks them up and sends
+        // them with a throttle. Returns 202 with the jobId so the client
+        // can poll /progress/{jobId}.
         [HttpPost("send")]
-        public async Task<ActionResult<SmsSendResponseDto>> Send([FromBody] SmsSendDto dto)
+        public async Task<ActionResult> Send([FromBody] SmsSendDto dto)
         {
             if (dto.Recipients == null || dto.Recipients.Count == 0)
                 return BadRequest(new { message = "No recipients specified" });
 
-            // Allow empty global message if each recipient has their own message
-            // (Used by Excel SMS where each row has its own message)
             bool hasGlobalMessage = !string.IsNullOrWhiteSpace(dto.Message);
             bool allHaveOwnMessages = dto.Recipients.All(r => !string.IsNullOrWhiteSpace(r.Message));
 
             if (!hasGlobalMessage && !allHaveOwnMessages)
-                return BadRequest(new { message = "Message is required (either global message or per-recipient message)" });
+                return BadRequest(new { message = "Message is required" });
 
-            var result = await _smsService.SendBulkAsync(dto);
-            return Ok(result);
+            var status = await _smsService.EnqueueBulkAsync(dto);
+            return Accepted(status);
         }
 
+        // ── ENQUEUE FEE REMINDER ─────────────────────────────────────
+        [HttpPost("fee-reminder")]
+        public async Task<ActionResult> SendFeeReminder([FromBody] FeeSmsSendDto dto)
+        {
+            if (dto.DueDate == default)
+                return BadRequest(new { message = "Due date is required" });
+
+            var status = await _smsService.EnqueueFeeReminderAsync(dto);
+            return Accepted(status);
+        }
+
+        // ── HISTORY ──────────────────────────────────────────────────
         [HttpGet("history")]
         public async Task<ActionResult> GetHistory([FromQuery] SmsHistoryFilterDto filter)
         {
@@ -47,22 +80,27 @@ namespace School.API.Controllers
             });
         }
 
+        // ── ABSENT STUDENTS ───────────────────────────────────────────
         [HttpGet("absent-students")]
-        public async Task<ActionResult<List<SmsRecipientDto>>> GetAbsentStudents([FromQuery] DateTime? date)
+        public async Task<ActionResult<List<SmsRecipientDto>>> GetAbsentStudents(
+            [FromQuery] DateTime? date)
         {
             var targetDate = date ?? DateTime.Today;
             var students = await _smsService.GetAbsentStudentsAsync(targetDate);
             return Ok(students);
         }
 
+        // ── LATE STUDENTS ─────────────────────────────────────────────
         [HttpGet("late-students")]
-        public async Task<ActionResult<List<SmsRecipientDto>>> GetLateStudents([FromQuery] DateTime? date)
+        public async Task<ActionResult<List<SmsRecipientDto>>> GetLateStudents(
+            [FromQuery] DateTime? date)
         {
             var targetDate = date ?? DateTime.Today;
             var students = await _smsService.GetLateStudentsAsync(targetDate);
             return Ok(students);
         }
 
+        // ── FEE DEFAULTERS (old endpoint — kept for compatibility) ─────
         [HttpGet("fee-defaulters")]
         public async Task<ActionResult<List<SmsRecipientDto>>> GetFeeDefaulters()
         {

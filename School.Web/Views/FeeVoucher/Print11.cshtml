@@ -1,0 +1,701 @@
+﻿@{
+    Layout = null;
+    var voucherId = ViewData["VoucherId"];
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>Fee Receipt Voucher</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-weight: 700;
+        }
+
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            gap: 12px;
+        }
+
+        .btn-bar {
+            display: flex;
+            gap: 6px;
+            width: 76mm;
+        }
+
+            .btn-bar button {
+                flex: 1;
+                padding: 9px;
+                border: none;
+                border-radius: 6px;
+                font-size: 13px;
+                font-weight: 700;
+                cursor: pointer;
+            }
+
+        .btn-thermal {
+            background: #008649;
+            color: white;
+        }
+
+        .btn-a4 {
+            background: #1d4ed8;
+            color: white;
+        }
+
+        .btn-close {
+            background: #64748b;
+            color: white;
+        }
+
+        /* ══════════════════════════════
+                           THERMAL — 80mm roll, usable ~72mm
+                        ══════════════════════════════ */
+        #thermalWrap {
+            width: 76mm;
+            background: white;
+        }
+
+        /* receipt content width 72mm — 4mm margin each side */
+        .receipt {
+            width: 76mm;
+            background: white;
+            /* 4mm left/right padding so content stays inside printable area */
+            padding: 3mm 4mm 3mm 4mm;
+            font-size: 11px;
+            line-height: 1.3;
+            display: inline-block;
+        }
+
+        .school-name {
+            text-align: center;
+            font-size: 14px;
+            font-weight: 900;
+            text-transform: uppercase;
+            line-height: 1.2;
+            margin-bottom: 1px;
+        }
+
+        .school-address {
+            text-align: center;
+            font-size: 9.5px;
+            line-height: 1.3;
+        }
+
+        .receipt-title {
+            text-align: center;
+            font-size: 12px;
+            font-weight: 700;
+            text-decoration: underline;
+            margin: 3px 0 2px;
+        }
+
+        .divider-dash {
+            border: none;
+            border-top: 1px dashed #000;
+            margin: 2px 0;
+        }
+
+        .divider-solid {
+            border: none;
+            border-top: 2px solid #000;
+            margin: 2px 0;
+        }
+
+        .info-row {
+            display: flex;
+            font-size: 10.5px;
+            margin: 1px 0;
+            gap: 3px;
+        }
+
+            .info-row .lbl {
+                font-weight: 700;
+                min-width: 82px;
+                flex-shrink: 0;
+            }
+
+            .info-row .val {
+                flex: 1;
+                font-weight: 700;
+            }
+
+        .fee-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2px 0;
+            font-size: 10px;
+        }
+
+            .fee-table thead th {
+                background: #000;
+                color: white;
+                padding: 2px 3px;
+                font-weight: 700;
+                border: 1px solid #000;
+                text-align: center;
+            }
+
+            .fee-table tbody td {
+                padding: 2px 3px;
+                border: 1px solid #000;
+                vertical-align: top;
+                line-height: 1.25;
+                color: #000;
+                font-weight: 700;
+            }
+
+                .fee-table tbody td:last-child {
+                    text-align: right;
+                    white-space: nowrap;
+                    font-weight: 700;
+                }
+
+                .fee-table tbody td span {
+                    font-weight: 700;
+                    color: #000;
+                }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+            font-size: 11.5px;
+            margin: 2px 0 1px;
+            color: #000;
+        }
+
+        .total-amount {
+            border: 2px solid #000;
+            padding: 1px 5px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 700;
+            font-size: 11px;
+            margin: 1px 0;
+            color: #000;
+        }
+
+        .footer-brand {
+            text-align: center;
+            font-size: 9px;
+            color: #000;
+            font-weight: 700;
+            margin-top: 4px;
+            padding-top: 2px;
+            border-top: 1px solid #000;
+        }
+
+        .msg {
+            text-align: center;
+            padding: 30px 10px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* ══════════════════════════════
+                           A4
+                        ══════════════════════════════ */
+        #a4Wrap {
+            display: none;
+        }
+
+        .a4-page {
+            width: 210mm;
+            background: white;
+            padding: 5mm 0 5mm;
+        }
+
+        .a4-receipt {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #000;
+            font-weight: 700;
+        }
+
+        .a4-school-name {
+            text-align: center;
+            font-size: 20px;
+            font-weight: 900;
+            text-transform: uppercase;
+            line-height: 1.25;
+            margin-bottom: 3px;
+            color: #000;
+        }
+
+        .a4-school-address {
+            text-align: center;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #000;
+            font-weight: 700;
+        }
+
+        .a4-title {
+            text-align: center;
+            font-size: 15px;
+            font-weight: 700;
+            text-decoration: underline;
+            margin: 7px 0 5px;
+            color: #000;
+        }
+
+        .a4-divider-dash {
+            border: none;
+            border-top: 1px dashed #000;
+            margin: 5px 0;
+        }
+
+        .a4-divider-solid {
+            border: none;
+            border-top: 2.5px solid #000;
+            margin: 5px 0;
+        }
+
+        .a4-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0 10mm;
+            margin: 3px 0;
+        }
+
+        .a4-info {
+            display: flex;
+            font-size: 12.5px;
+            margin: 2px 0;
+            gap: 4px;
+            color: #000;
+            font-weight: 700;
+        }
+
+            .a4-info .lbl {
+                font-weight: 700;
+                min-width: 100px;
+                flex-shrink: 0;
+            }
+
+            .a4-info .val {
+                flex: 1;
+                font-weight: 700;
+            }
+
+        .a4-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 5px 0;
+            font-size: 12px;
+        }
+
+            .a4-table thead th {
+                background: #000;
+                color: white;
+                padding: 5px 8px;
+                font-weight: 700;
+                border: 1.5px solid #000;
+                text-align: center;
+                font-size: 12.5px;
+            }
+
+            .a4-table tbody td {
+                padding: 5px 8px;
+                border: 1px solid #000;
+                vertical-align: top;
+                line-height: 1.4;
+                color: #000;
+                font-weight: 700;
+            }
+
+                .a4-table tbody td span {
+                    font-weight: 700;
+                    color: #000;
+                }
+
+                .a4-table tbody td:last-child {
+                    text-align: right;
+                    white-space: nowrap;
+                    font-weight: 700;
+                }
+
+        .a4-total-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+            font-size: 14px;
+            margin: 5px 0 3px;
+            color: #000;
+        }
+
+        .a4-total-amount {
+            border: 2.5px solid #000;
+            padding: 2px 10px;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .a4-summary {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 700;
+            font-size: 13px;
+            margin: 3px 0;
+            color: #000;
+        }
+
+        .a4-footer {
+            text-align: center;
+            font-size: 11px;
+            color: #000;
+            font-weight: 700;
+            margin-top: 8px;
+            padding-top: 4px;
+            border-top: 1.5px solid #000;
+        }
+
+        .cut-line {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin: 6mm 0 0;
+            color: #000;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+            .cut-line hr {
+                flex: 1;
+                border: none;
+                border-top: 1px dashed #000;
+                margin: 0;
+            }
+
+        /* ══════════════════════════════
+                           PRINT
+                        ══════════════════════════════ */
+        @@media print {
+            @@page {
+                margin: 0 0 0 2mm;
+            }
+
+            html, body {
+                background: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                gap: 0 !important;
+            }
+
+            .btn-bar {
+                display: none !important;
+            }
+
+            * {
+                font-weight: 700 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .a4-table thead th, .fee-table thead th {
+                background: #000 !important;
+                color: white !important;
+                border-color: #000 !important;
+                font-weight: 700 !important;
+            }
+
+            .a4-table tbody td, .a4-table tbody td *,
+            .fee-table tbody td, .fee-table tbody td * {
+                color: #000 !important;
+                background: white !important;
+                border-color: #000 !important;
+                font-weight: 700 !important;
+            }
+
+            .a4-receipt, .a4-receipt *, .receipt, .receipt * {
+                color: #000 !important;
+                font-weight: 700 !important;
+            }
+
+            .a4-divider-dash, .a4-divider-solid,
+            .divider-dash, .divider-solid, .cut-line hr {
+                border-color: #000 !important;
+            }
+
+            .total-amount, .a4-total-amount {
+                border-color: #000 !important;
+            }
+            /* ── THERMAL MODE ── */
+            body.mode-thermal {
+                display: block !important;
+                width: 80mm !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+                body.mode-thermal #a4Wrap {
+                    display: none !important;
+                }
+
+                body.mode-thermal #thermalWrap {
+                    display: block !important;
+                    width: 80mm !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                }
+
+                body.mode-thermal .receipt {
+                    /* 80mm total, extra left padding to prevent thermal cut-off */
+                    width: 80mm !important;
+                    padding: 2mm 2mm 2mm 6mm !important;
+                    display: block !important;
+                    height: auto !important;
+                    overflow: visible !important;
+                }
+
+                body.mode-thermal .btn-bar {
+                    display: none !important;
+                }
+            /* ── A4 MODE ── */
+            body.mode-a4 #thermalWrap {
+                display: none !important;
+            }
+
+            body.mode-a4 #a4Wrap {
+                display: block !important;
+            }
+
+            body.mode-a4 .a4-page {
+                width: 100% !important;
+                padding: 0 !important;
+            }
+        }
+    </style>
+</head>
+<body id="mainBody">
+
+    <div id="thermalWrap">
+        <div class="receipt" id="receiptBody">
+            <div class="msg">Loading…</div>
+        </div>
+    </div>
+
+    <div id="a4Wrap">
+        <div class="a4-page" id="a4Page"></div>
+    </div>
+
+    <div class="btn-bar" id="btnBar">
+        <button class="btn-thermal" onclick="printThermal()">🖨 Thermal</button>
+        <button class="btn-a4" onclick="printA4()">📄 A4 Print</button>
+        <button style="background:#9333ea;color:white;" onclick="downloadPdf()">📥 RDLC PDF</button>
+        <button class="btn-close" onclick="window.close()">✕ Close</button>
+    </div>
+
+    <script src="~/js/common.js"></script>
+    <script>
+        const pathParts = window.location.pathname.split('/').filter(Boolean);
+        const voucherId = parseInt(pathParts[pathParts.length - 1]) || @(voucherId ?? 0);
+        let receiptData = null;
+
+        const urlParams  = new URLSearchParams(window.location.search);
+        const printerArg = urlParams.get('printer');
+
+        document.addEventListener('DOMContentLoaded', function () {
+            if (voucherId > 0) loadReceipt();
+            else showError('Invalid voucher ID.');
+        });
+
+        async function loadReceipt() {
+            try {
+                const res = await fetch(`${API_BASE}/FeeVoucher/Receipt/${voucherId}`);
+                if (!res.ok) { showError('Failed to load receipt. Status: ' + res.status); return; }
+                receiptData = await res.json();
+                renderThermal(receiptData);
+
+                if (printerArg === 'thermal') {
+                    document.getElementById('btnBar').style.display = 'none';
+                    document.getElementById('mainBody').style.background = 'white';
+                    document.getElementById('mainBody').style.padding = '0';
+                    injectThermalPageSize();
+                    setTimeout(printThermal, 500);
+                } else if (printerArg === 'normal') {
+                    document.getElementById('btnBar').style.display = 'none';
+                    setTimeout(printA4, 500);
+                }
+            } catch (e) {
+                console.error('Receipt load error:', e);
+                showError('Error loading receipt: ' + e.message);
+            }
+        }
+
+        function injectThermalPageSize() {
+            const style = document.createElement('style');
+            style.innerHTML = `@@media print { @@page { size: 80mm auto; margin: 0 0 0 2mm; } }`;
+            document.head.appendChild(style);
+        }
+
+        /* ══════════════════════════════
+           THERMAL
+        ══════════════════════════════ */
+        function renderThermal(d) {
+            const details   = d.details || [];
+            const totalPaid = details.reduce((s, r) => s + (r.paidAmount || 0), 0);
+            const remaining = Math.max(0, (d.balanceAmount || 0) - totalPaid);
+
+            let rows = '';
+            details.forEach(r => {
+                rows += `<tr>
+                    <td>${r.studentName||'-'}<br>
+                        ${r.sectionName||'-'}<br>
+                        <span style="font-size:9px;">${r.feeTypeName||''} ${fmtMonth(r.feeMonth)}</span>
+                    </td>
+                    <td>Rs.${fmt(r.paidAmount)}</td>
+                </tr>`;
+            });
+
+            document.getElementById('receiptBody').innerHTML = `
+                <div class="school-name">SIR SYED MODEL HIGH SCHOOL<br>(Boys &amp; Girls)</div>
+                <div class="school-address">Chhonawala Road, Hasilpur<br>0333-6335634 | 0301-7330101</div>
+                <div class="receipt-title">Fee Receipt Voucher</div>
+                <hr class="divider-dash">
+                <div class="info-row"><span class="lbl">Voucher No :</span><span class="val">${d.vNo||'-'}</span></div>
+                <div class="info-row"><span class="lbl">Date :</span><span class="val">${fmtDate(d.vDate)}</span></div>
+                <div class="info-row"><span class="lbl">Pay. Method :</span><span class="val">${d.paymentMethod||'-'}</span></div>
+                <div class="info-row"><span class="lbl">Father Name :</span><span class="val">${d.parentName||'-'}</span></div>
+                <hr class="divider-dash">
+                <table class="fee-table">
+                    <thead><tr><th>Detail of Dues</th><th>Fee</th></tr></thead>
+                    <tbody>${rows||'<tr><td colspan="2" style="text-align:center;">No details</td></tr>'}</tbody>
+                </table>
+                <hr class="divider-solid">
+                <div class="total-row">
+                    <span>Total :</span>
+                    <span class="total-amount">Rs.${fmt(totalPaid)}</span>
+                </div>
+                <hr class="divider-dash">
+                <div class="summary-row"><span>Remaining Dues :</span><span>${fmt(remaining)}</span></div>
+                <div class="summary-row"><span>Received By :</span><span>${d.userFullName||'-'}</span></div>
+                <hr class="divider-solid">
+                <div class="footer-brand">EasySchool.:- 0304-1003238</div>`;
+        }
+
+        /* ══════════════════════════════
+           A4
+        ══════════════════════════════ */
+        function renderA4(d) {
+            const details   = d.details || [];
+            const totalPaid = details.reduce((s, r) => s + (r.paidAmount || 0), 0);
+            const remaining = Math.max(0, (d.balanceAmount || 0) - totalPaid);
+
+            let rows = '';
+            details.forEach(r => {
+                rows += `<tr>
+                    <td>
+                        ${r.studentName||'-'} &nbsp;&nbsp;
+                        ${r.sectionName||'-'} &nbsp;&nbsp;
+                        <span style="font-size:11px;">${r.feeTypeName||''} ${fmtMonth(r.feeMonth)}</span>
+                    </td>
+                    <td>Rs.${fmt(r.paidAmount)}</td>
+                </tr>`;
+            });
+
+            document.getElementById('a4Page').innerHTML = `
+                <div class="a4-receipt">
+                    <div class="a4-school-name">SIR SYED MODEL HIGH SCHOOL (Boys &amp; Girls)</div>
+                    <div class="a4-school-address">
+                        Chhonawala Road, Hasilpur &nbsp;|&nbsp; 0333-6335634 &nbsp;|&nbsp; 0301-7330101
+                    </div>
+                    <div class="a4-title">Fee Receipt Voucher</div>
+                    <hr class="a4-divider-dash">
+                    <div class="a4-info-grid">
+                        <div>
+                            <div class="a4-info"><span class="lbl">Voucher No :</span><span class="val">${d.vNo||'-'}</span></div>
+                            <div class="a4-info"><span class="lbl">Date :</span><span class="val">${fmtDate(d.vDate)}</span></div>
+                        </div>
+                        <div>
+                            <div class="a4-info"><span class="lbl">Pay. Method :</span><span class="val">${d.paymentMethod||'-'}</span></div>
+                            <div class="a4-info"><span class="lbl">Father Name :</span><span class="val">${d.parentName||'-'}</span></div>
+                        </div>
+                    </div>
+                    <hr class="a4-divider-dash">
+                    <table class="a4-table">
+                        <thead><tr><th>Detail of Dues</th><th>Fee</th></tr></thead>
+                        <tbody>${rows||'<tr><td colspan="2" style="text-align:center;">No details</td></tr>'}</tbody>
+                    </table>
+                    <hr class="a4-divider-solid">
+                    <div class="a4-total-row">
+                        <span>Total Paid :</span>
+                        <span class="a4-total-amount">Rs.${fmt(totalPaid)}</span>
+                    </div>
+                    <hr class="a4-divider-dash">
+                    <div class="a4-summary"><span>Remaining Dues :</span><span>${fmt(remaining)}</span></div>
+                    <div class="a4-summary" style="margin-top:5px;"><span>Received By :</span><span>${d.userFullName||'-'}</span></div>
+                    <hr class="a4-divider-solid">
+                    <div class="a4-footer">EasySchool.:- 0304-1003238</div>
+                </div>
+                <div class="cut-line"><hr><span>✂ &nbsp; Cut Here — Next Voucher</span><hr></div>`;
+        }
+
+        /* ══════════════════════════════
+           PRINT ACTIONS
+        ══════════════════════════════ */
+        function printThermal() {
+            document.getElementById('mainBody').className = 'mode-thermal';
+            document.getElementById('thermalWrap').style.display = 'block';
+            document.getElementById('a4Wrap').style.display      = 'none';
+            window.print();
+        }
+
+        function printA4() {
+            if (!receiptData) return;
+            renderA4(receiptData);
+            document.getElementById('mainBody').className = 'mode-a4';
+            document.getElementById('thermalWrap').style.display = 'none';
+            document.getElementById('a4Wrap').style.display      = 'block';
+            window.print();
+            setTimeout(() => {
+                document.getElementById('mainBody').className = '';
+                document.getElementById('thermalWrap').style.display = 'block';
+                document.getElementById('a4Wrap').style.display      = 'none';
+            }, 800);
+        }
+
+        /* ══════════════════════════════
+           HELPERS
+        ══════════════════════════════ */
+        function fmt(val) {
+            return (val||0).toLocaleString('en-PK', { minimumFractionDigits:2, maximumFractionDigits:2 });
+        }
+        function fmtDate(s) {
+            if (!s) return '-';
+            const d = new Date(s);
+            return d.getDate().toString().padStart(2,'0') + '-' +
+                   (d.getMonth()+1).toString().padStart(2,'0') + '-' + d.getFullYear();
+        }
+        function fmtMonth(s) {
+            if (!s) return '';
+            return new Date(s).toLocaleDateString('en-GB', { month:'short', year:'numeric' });
+        }
+        function showError(msg) {
+            document.getElementById('receiptBody').innerHTML =
+                `<div class="msg" style="color:red;">${msg}</div>`;
+        }
+        function downloadPdf() {
+            window.open(`${API_BASE}/FeeVoucher/ReceiptPdf/${voucherId}`, '_blank');
+        }
+    </script>
+</body>
+</html>

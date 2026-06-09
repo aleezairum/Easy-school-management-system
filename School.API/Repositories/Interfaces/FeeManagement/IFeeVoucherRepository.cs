@@ -1,18 +1,17 @@
-using School.API.Data.DBModels.Accounts;
-using School.API.DTOs;
+﻿using School.API.Data.DBModels.Accounts;
+using School.API.DTOs.Common;
+using School.API.DTOs.FeeManagement;
 
 namespace School.API.Repositories.Interfaces.Accounts
 {
     public interface IFeeVoucherRepository
     {
-        Task<IEnumerable<FeeVoucherListDto>> GetAllAsync();
-        Task<FeeVoucherDto?> GetByIdAsync(int id);
-        Task<IEnumerable<FeeVoucherListDto>> GetByChallanAsync(int challanVoucherId);
-        Task<IEnumerable<FeeVoucherListDto>> GetByDateRangeAsync(DateTime fromDate, DateTime toDate);
-        Task<FeeVoucher> CreateAsync(CreateFeeVoucherDto dto);
-        Task<FeeVoucher?> UpdateAsync(int id, UpdateFeeVoucherDto dto);
-        Task<bool> DeleteAsync(int id);
-        Task<bool> ExistsAsync(int id);
-        Task<string> GenerateVoucherNumberAsync();
+        Task<FeeVoucherMain?> GetByIdAsync(int id);
+        Task<ResponseDto> SaveAsync(FeeVoucherSaveDto dto, int userId, string userIp);
+        Task<string> GetNextVNoAsync();
+        Task<FeeVoucherReceiptDto?> GetReceiptAsync(decimal id);
+        Task<List<FeeVoucherListDto>> GetAllAsync(int? classId, int? sectionId, int? studentId, DateTime dateFrom, DateTime dateTo);
+        Task<ResponseDto> DeleteByIdAsync(int id, int userId, string userIp);
+
     }
 }

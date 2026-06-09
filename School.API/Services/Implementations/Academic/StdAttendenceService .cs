@@ -26,5 +26,8 @@ namespace School.API.Services.Implementations.Student
 
         public Task<ResponseDto?> DeleteByIdAsync(int id, int userId, string userIp)
             => _repo.DeleteByIdAsync(id, userId, userIp);
+
+        public Task<ResponseDto?> DeleteByFilterAsync(StdAttendenceFilterDto filter, int userId, string userIp)
+            => _repo.DeleteByFilterAsync(filter, userId, userIp);
     }
 }

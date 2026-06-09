@@ -1,4 +1,5 @@
 using School.API.Data.DBModels.SMS;
+using School.API.DTOs;
 using School.API.DTOs.Common;
 
 namespace School.API.Repositories.Interfaces
@@ -19,5 +20,12 @@ namespace School.API.Repositories.Interfaces
             SmsStatus? status = null,
             DateTime? fromDate = null,
             DateTime? toDate = null);
+
+        // ── Queue methods (used by SmsQueueProcessor) ────────────────
+        Task EnqueueAsync(IEnumerable<SmsMessage> messages, int userId, string userIp);
+        Task<List<SmsMessage>> GetPendingBatchAsync(int take);
+        Task UpdateStatusAsync(int vid, SmsStatus status, string? errorMessage);
+        Task<SmsQueueStatusDto> GetJobStatusAsync(string jobId);
+        Task<int> GetOverallPendingCountAsync();
     }
 }

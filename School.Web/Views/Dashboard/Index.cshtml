@@ -109,16 +109,16 @@
         overflow: hidden;
     }
 
-    .card-header {
-        padding: 20px 24px;
+    .dashboard-card .card-header {
+        padding: 12px 16px;
         border-bottom: 1px solid var(--border-color);
         display: flex;
         justify-content: space-between;
         align-items: center;
     }
 
-    .card-header h5 {
-        font-size: 16px;
+    .dashboard-card .card-header h5 {
+        font-size: 14px;
         font-weight: 600;
         color: var(--text-primary);
         margin: 0;
@@ -127,23 +127,23 @@
         gap: 10px;
     }
 
-    .card-header h5 i {
+    .dashboard-card .card-header h5 i {
         color: var(--primary-color);
     }
 
-    .card-header .view-all {
+    .dashboard-card .card-header .view-all {
         color: var(--primary-color);
-        font-size: 13px;
+        font-size: 12.5px;
         font-weight: 500;
         text-decoration: none;
     }
 
-    .card-header .view-all:hover {
+    .dashboard-card .card-header .view-all:hover {
         text-decoration: underline;
     }
 
-    .card-body {
-        padding: 24px;
+    .dashboard-card .card-body {
+        padding: 16px;
     }
 
     /* Table Styles */
@@ -456,51 +456,109 @@
 
 <!-- Stats Grid -->
 <div class="stats-grid">
+    <!-- 1) Students -->
     <div class="stat-card">
         <div class="stat-icon blue">
             <i class="bi bi-people-fill"></i>
         </div>
         <div class="stat-content">
-            <h3>@ViewBag.TotalStudents</h3>
-            <p>Total Students</p>
+            <h3 id="statActiveStudents">—</h3>
+            <p>Active Students</p>
             <div class="stat-trend up">
-                <i class="bi bi-arrow-up"></i> 12% from last month
+                <i class="bi bi-people"></i> <span id="statEnrolledStudents">—</span> enrolled
             </div>
         </div>
     </div>
+    <!-- 2) New Admissions -->
     <div class="stat-card">
         <div class="stat-icon green">
-            <i class="bi bi-person-badge-fill"></i>
+            <i class="bi bi-person-plus-fill"></i>
         </div>
         <div class="stat-content">
-            <h3>@ViewBag.TotalTeachers</h3>
-            <p>Total Teachers</p>
+            <h3 id="statNewAdmissions">—</h3>
+            <p>New Admissions</p>
             <div class="stat-trend up">
-                <i class="bi bi-arrow-up"></i> 3 new this month
+                <i class="bi bi-calendar-plus"></i> This session
             </div>
         </div>
     </div>
+    <!-- 3) Dropouts -->
     <div class="stat-card">
-        <div class="stat-icon orange">
-            <i class="bi bi-building"></i>
+        <div class="stat-icon pink">
+            <i class="bi bi-person-dash-fill"></i>
         </div>
         <div class="stat-content">
-            <h3>@ViewBag.TotalClasses</h3>
-            <p>Active Classes</p>
-            <div class="stat-trend up">
-                <i class="bi bi-check-circle"></i> All running
+            <h3 id="statDropoutStudents">—</h3>
+            <p>Dropout Students</p>
+            <div class="stat-trend down">
+                <i class="bi bi-box-arrow-right"></i> This session
             </div>
         </div>
     </div>
+    <!-- 4) Attendance -->
     <div class="stat-card">
         <div class="stat-icon purple">
             <i class="bi bi-graph-up-arrow"></i>
         </div>
         <div class="stat-content">
-            <h3>@ViewBag.AttendanceRate%</h3>
-            <p>Attendance Rate</p>
+            <h3><span id="statAttendancePercent">—</span>%</h3>
+            <p>Today's Attendance</p>
             <div class="stat-trend up">
-                <i class="bi bi-arrow-up"></i> 2.5% increase
+                <i class="bi bi-calendar-check"></i> <span id="statAttendanceLabel">live</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="stats-grid">
+    <!-- 5) Class rooms -->
+    <div class="stat-card">
+        <div class="stat-icon orange">
+            <i class="bi bi-building"></i>
+        </div>
+        <div class="stat-content">
+            <h3 id="statTotalClasses">—</h3>
+            <p>Classes &amp; Sections</p>
+            <div class="stat-trend up">
+                <i class="bi bi-diagram-3"></i> <span id="statTotalSections">—</span> sections
+            </div>
+        </div>
+    </div>
+    <!-- 6) Employees -->
+    <div class="stat-card">
+        <div class="stat-icon green">
+            <i class="bi bi-person-badge-fill"></i>
+        </div>
+        <div class="stat-content">
+            <h3 id="statTotalEmployees">—</h3>
+            <p>Total Employees</p>
+            <div class="stat-trend up">
+                <i class="bi bi-buildings"></i> <span id="statTotalCampuses">—</span> campus(es)
+            </div>
+        </div>
+    </div>
+    <!-- 7) Rest — fee collections -->
+    <div class="stat-card">
+        <div class="stat-icon cyan">
+            <i class="bi bi-cash-stack"></i>
+        </div>
+        <div class="stat-content">
+            <h3 id="statTodayCollection">—</h3>
+            <p>Today's Collection</p>
+            <div class="stat-trend up">
+                <i class="bi bi-receipt"></i> <span id="statTodayVouchers">—</span> vouchers
+            </div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon green">
+            <i class="bi bi-wallet2"></i>
+        </div>
+        <div class="stat-content">
+            <h3 id="statMonthCollection">—</h3>
+            <p>This Month Collection</p>
+            <div class="stat-trend up">
+                <i class="bi bi-receipt"></i> <span id="statMonthVouchers">—</span> vouchers
             </div>
         </div>
     </div>
@@ -512,149 +570,37 @@
         <div class="dashboard-card">
             <div class="card-header">
                 <h5><i class="bi bi-people"></i> Recent Students</h5>
-                <a href="#" class="view-all">View All <i class="bi bi-arrow-right"></i></a>
+                <a href="/Student" class="view-all">View All <i class="bi bi-arrow-right"></i></a>
             </div>
             <div class="card-body p-0">
                 <table class="modern-table">
                     <thead>
                         <tr>
                             <th>Student</th>
-                            <th>ID</th>
+                            <th>Roll No</th>
                             <th>Class</th>
                             <th>Status</th>
-                            <th>Joined</th>
+                            <th>Admission Date</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>
-                                <div class="student-info">
-                                    <div class="student-avatar" style="background: linear-gradient(135deg, #2563eb, #1d4ed8);">JS</div>
-                                    <div>
-                                        <div class="student-name">John Smith</div>
-                                        <div class="student-email">john.smith@school.com</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>STU001</td>
-                            <td>Grade 10-A</td>
-                            <td><span class="status-badge active">Active</span></td>
-                            <td>Dec 1, 2024</td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="student-info">
-                                    <div class="student-avatar" style="background: linear-gradient(135deg, #16a34a, #15803d);">EJ</div>
-                                    <div>
-                                        <div class="student-name">Emily Johnson</div>
-                                        <div class="student-email">emily.j@school.com</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>STU002</td>
-                            <td>Grade 9-B</td>
-                            <td><span class="status-badge active">Active</span></td>
-                            <td>Nov 28, 2024</td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="student-info">
-                                    <div class="student-avatar" style="background: linear-gradient(135deg, #ea580c, #c2410c);">MB</div>
-                                    <div>
-                                        <div class="student-name">Michael Brown</div>
-                                        <div class="student-email">m.brown@school.com</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>STU003</td>
-                            <td>Grade 11-A</td>
-                            <td><span class="status-badge pending">Pending</span></td>
-                            <td>Nov 25, 2024</td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="student-info">
-                                    <div class="student-avatar" style="background: linear-gradient(135deg, #9333ea, #7e22ce);">SD</div>
-                                    <div>
-                                        <div class="student-name">Sarah Davis</div>
-                                        <div class="student-email">sarah.d@school.com</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>STU004</td>
-                            <td>Grade 10-B</td>
-                            <td><span class="status-badge active">Active</span></td>
-                            <td>Nov 20, 2024</td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="student-info">
-                                    <div class="student-avatar" style="background: linear-gradient(135deg, #dc2626, #b91c1c);">JW</div>
-                                    <div>
-                                        <div class="student-name">James Wilson</div>
-                                        <div class="student-email">j.wilson@school.com</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>STU005</td>
-                            <td>Grade 12-A</td>
-                            <td><span class="status-badge inactive">Inactive</span></td>
-                            <td>Nov 15, 2024</td>
-                        </tr>
+                    <tbody id="recentStudentsBody">
+                        <tr><td colspan="5" class="text-center text-muted py-4">Loading…</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <!-- Upcoming Events -->
+    <!-- Recent Fee Vouchers -->
     <div class="col-lg-4">
         <div class="dashboard-card h-100">
             <div class="card-header">
-                <h5><i class="bi bi-calendar-event"></i> Upcoming Events</h5>
+                <h5><i class="bi bi-receipt"></i> Recent Fee Vouchers</h5>
+                <a href="/FeeVoucher" class="view-all">View All <i class="bi bi-arrow-right"></i></a>
             </div>
             <div class="card-body">
-                <div class="event-list">
-                    <div class="event-item">
-                        <div class="event-date">
-                            <span class="day">15</span>
-                            <span class="month">Dec</span>
-                        </div>
-                        <div class="event-details">
-                            <h6>Annual Sports Day</h6>
-                            <p><i class="bi bi-clock"></i> 9:00 AM - Main Ground</p>
-                        </div>
-                    </div>
-                    <div class="event-item">
-                        <div class="event-date">
-                            <span class="day">20</span>
-                            <span class="month">Dec</span>
-                        </div>
-                        <div class="event-details">
-                            <h6>Parent-Teacher Meeting</h6>
-                            <p><i class="bi bi-geo-alt"></i> Auditorium</p>
-                        </div>
-                    </div>
-                    <div class="event-item">
-                        <div class="event-date">
-                            <span class="day">25</span>
-                            <span class="month">Dec</span>
-                        </div>
-                        <div class="event-details">
-                            <h6>Christmas Holiday</h6>
-                            <p><i class="bi bi-info-circle"></i> School Closed</p>
-                        </div>
-                    </div>
-                    <div class="event-item">
-                        <div class="event-date">
-                            <span class="day">02</span>
-                            <span class="month">Jan</span>
-                        </div>
-                        <div class="event-details">
-                            <h6>Final Exams Begin</h6>
-                            <p><i class="bi bi-people"></i> All Grades</p>
-                        </div>
-                    </div>
+                <div class="event-list" id="recentVouchersList">
+                    <div class="text-center text-muted py-3">Loading…</div>
                 </div>
             </div>
         </div>
@@ -662,86 +608,178 @@
 </div>
 
 <div class="row g-4">
-    <!-- Recent Activity -->
-    <div class="col-lg-8">
-        <div class="dashboard-card">
-            <div class="card-header">
-                <h5><i class="bi bi-activity"></i> Recent Activity</h5>
-                <a href="#" class="view-all">View All <i class="bi bi-arrow-right"></i></a>
-            </div>
-            <div class="card-body">
-                <div class="activity-list">
-                    <div class="activity-item">
-                        <div class="activity-icon success">
-                            <i class="bi bi-check-lg"></i>
-                        </div>
-                        <div class="activity-content">
-                            <h6>Fee payment received</h6>
-                            <p>John Smith - Grade 10-A paid $500</p>
-                        </div>
-                        <div class="activity-time">2 hours ago</div>
-                    </div>
-                    <div class="activity-item">
-                        <div class="activity-icon info">
-                            <i class="bi bi-person-plus"></i>
-                        </div>
-                        <div class="activity-content">
-                            <h6>New student enrolled</h6>
-                            <p>Alice Cooper joined Grade 9-A</p>
-                        </div>
-                        <div class="activity-time">5 hours ago</div>
-                    </div>
-                    <div class="activity-item">
-                        <div class="activity-icon warning">
-                            <i class="bi bi-exclamation-triangle"></i>
-                        </div>
-                        <div class="activity-content">
-                            <h6>Low attendance alert</h6>
-                            <p>Grade 11-B has 75% attendance this week</p>
-                        </div>
-                        <div class="activity-time">1 day ago</div>
-                    </div>
-                    <div class="activity-item">
-                        <div class="activity-icon info">
-                            <i class="bi bi-file-earmark-check"></i>
-                        </div>
-                        <div class="activity-content">
-                            <h6>Exam results published</h6>
-                            <p>Mid-term examination results are now available</p>
-                        </div>
-                        <div class="activity-time">2 days ago</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Quick Actions -->
-    <div class="col-lg-4">
+    <div class="col-lg-12">
         <div class="dashboard-card h-100">
             <div class="card-header">
                 <h5><i class="bi bi-lightning"></i> Quick Actions</h5>
             </div>
             <div class="card-body">
                 <div class="quick-actions">
-                    <a href="#" class="quick-action-btn">
+                    <a href="/admission/form" class="quick-action-btn">
                         <i class="bi bi-person-plus-fill"></i>
-                        <span>Add Student</span>
+                        <span>New Admission</span>
                     </a>
-                    <a href="#" class="quick-action-btn">
+                    <a href="/Employee/form" class="quick-action-btn">
                         <i class="bi bi-person-badge-fill"></i>
-                        <span>Add Teacher</span>
+                        <span>Add Employee</span>
                     </a>
-                    <a href="#" class="quick-action-btn">
-                        <i class="bi bi-calendar-plus"></i>
-                        <span>New Event</span>
+                    <a href="/FeeVoucher/form" class="quick-action-btn">
+                        <i class="bi bi-receipt"></i>
+                        <span>Receive Payment</span>
                     </a>
-                    <a href="#" class="quick-action-btn">
-                        <i class="bi bi-file-earmark-plus"></i>
-                        <span>Create Report</span>
+                    <a href="/attendance/form" class="quick-action-btn">
+                        <i class="bi bi-check2-square"></i>
+                        <span>Mark Attendance</span>
+                    </a>
+                    <a href="/fee-report" class="quick-action-btn">
+                        <i class="bi bi-file-earmark-bar-graph"></i>
+                        <span>Fee Report</span>
+                    </a>
+                    <a href="/sms" class="quick-action-btn">
+                        <i class="bi bi-chat-dots-fill"></i>
+                        <span>Send SMS</span>
                     </a>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const fmtNumber = n => (n == null ? '—' : Number(n).toLocaleString('en-US'));
+            const fmtMoney  = n => (n == null ? 'PKR 0' : 'PKR ' + Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 }));
+            const fmtDate   = s => {
+                if (!s) return '—';
+                const d = new Date(s);
+                if (isNaN(d.getTime())) return '—';
+                return d.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
+            };
+            const initials = name => {
+                if (!name) return '?';
+                const parts = String(name).trim().split(/\s+/);
+                return ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase() || '?';
+            };
+            const palette = ['#2563eb,#1d4ed8','#16a34a,#15803d','#ea580c,#c2410c','#9333ea,#7e22ce','#db2777,#9d174d','#0891b2,#0e7490'];
+            const escapeHtml = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+            function setText(id, value) {
+                const el = document.getElementById(id);
+                if (el) el.textContent = value;
+            }
+
+            function renderStudents(rows) {
+                const tbody = document.getElementById('recentStudentsBody');
+                if (!tbody) return;
+                if (!rows || rows.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No students found.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = rows.map((s, i) => {
+                    const grad = palette[i % palette.length];
+                    const cls = (s.className || '') + (s.sectionName ? ' - ' + s.sectionName : '');
+                    const statusCls = s.isActive ? 'active' : 'inactive';
+                    const statusLbl = s.isActive ? 'Active' : 'Inactive';
+                    return `
+                        <tr>
+                            <td>
+                                <div class="student-info">
+                                    <div class="student-avatar" style="background: linear-gradient(135deg, ${grad});">${escapeHtml(initials(s.name))}</div>
+                                    <div>
+                                        <div class="student-name">${escapeHtml(s.name || '—')}</div>
+                                        <div class="student-email">${escapeHtml(s.fatherName || '')}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>${escapeHtml(s.rollNo || '—')}</td>
+                            <td>${escapeHtml(cls || '—')}</td>
+                            <td><span class="status-badge ${statusCls}">${statusLbl}</span></td>
+                            <td>${fmtDate(s.admissionDate)}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            function renderVouchers(rows) {
+                const list = document.getElementById('recentVouchersList');
+                if (!list) return;
+                if (!rows || rows.length === 0) {
+                    list.innerHTML = '<div class="text-center text-muted py-3">No vouchers yet.</div>';
+                    return;
+                }
+                list.innerHTML = rows.map(v => {
+                    const d = v.paymentDate ? new Date(v.paymentDate) : null;
+                    const day = d && !isNaN(d) ? String(d.getDate()).padStart(2, '0') : '--';
+                    const mon = d && !isNaN(d) ? d.toLocaleDateString('en-US', { month: 'short' }) : '---';
+                    return `
+                        <div class="event-item">
+                            <div class="event-date">
+                                <span class="day">${day}</span>
+                                <span class="month">${mon}</span>
+                            </div>
+                            <div class="event-details">
+                                <h6>${fmtMoney(v.amount)}</h6>
+                                <p><i class="bi bi-hash"></i> ${escapeHtml(v.voucherNumber || '—')} <span class="ms-2"><i class="bi bi-credit-card"></i> ${escapeHtml(v.paymentMethod || '—')}</span></p>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            function loadDashboard() {
+                const sid = (typeof SESSION_ID !== 'undefined' && SESSION_ID) ? SESSION_ID : 0;
+                const url = `${API_BASE}/dashboard?sessionId=${sid}`;
+                console.log('[Dashboard] Fetching:', url);
+                fetch(url)
+                    .then(r => {
+                        console.log('[Dashboard] HTTP', r.status, r.statusText);
+                        if (!r.ok) {
+                            return r.text().then(body => {
+                                throw new Error('HTTP ' + r.status + ': ' + body.slice(0, 300));
+                            });
+                        }
+                        return r.json();
+                    })
+                    .then(data => {
+                        console.log('[Dashboard] Response:', data);
+                        const t = data.totals || {};
+                        setText('statActiveStudents',   fmtNumber(t.activeStudents));
+                        setText('statEnrolledStudents', fmtNumber(t.students));
+                        setText('statTotalEmployees',   fmtNumber(t.employees));
+                        setText('statTotalCampuses',    fmtNumber(t.campuses));
+                        setText('statTotalClasses',     fmtNumber(t.classes));
+                        setText('statTotalSections',    fmtNumber(t.sections));
+                        setText('statNewAdmissions',    fmtNumber(t.newAdmissions));
+                        setText('statDropoutStudents',  fmtNumber(t.dropoutStudents));
+
+                        const a = data.attendance || {};
+                        setText('statAttendancePercent', a.todayPercent ?? 0);
+                        if ((a.todayPercent ?? 0) === 0) {
+                            setText('statAttendanceLabel', 'no marks yet');
+                        }
+
+                        const f = data.fees || {};
+                        setText('statTodayCollection', fmtMoney(f.todayCollection));
+                        setText('statTodayVouchers',   fmtNumber(f.todayVoucherCount));
+                        setText('statMonthCollection', fmtMoney(f.monthCollection));
+                        setText('statMonthVouchers',   fmtNumber(f.monthVoucherCount));
+
+                        renderStudents(data.recentStudents);
+                        renderVouchers(data.recentVouchers);
+                    })
+                    .catch(err => {
+                        console.error('[Dashboard] Load failed:', err);
+                        const msg = (err && err.message) ? err.message : String(err);
+                        const tbody = document.getElementById('recentStudentsBody');
+                        if (tbody) tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-4">Failed to load: ${msg}</td></tr>`;
+                        const list = document.getElementById('recentVouchersList');
+                        if (list) list.innerHTML = `<div class="text-center text-danger py-3">Failed to load: ${msg}</div>`;
+                    });
+            }
+
+            document.addEventListener('DOMContentLoaded', loadDashboard);
+        })();
+    </script>
+}

@@ -9,6 +9,8 @@ namespace School.API.Repositories.Interfaces.Accounts
         Task<List<StudentFeePreviewResultDto>> GetPreviewAsync(ApplyFeePreviewRequestDto dto);
         Task<ResponseDto?> SaveStudentFeeAsync(SaveStudentFeeRequestDto dto, int userId, string userIp);
         Task<List<StudentFeeListDto>> GetListAsync(GetStudentFeeRequestDto dto);
+        Task<List<StudentFeeReportDto>> GetReportAsync(GetStudentFeeReportRequestDto dto);
+        Task<List<StudentFeeListDto>> GetPendingsAsync(int studentId);
         Task<ResponseDto> DeleteAsync(int vid, int userId, string userIp);
     }
 }

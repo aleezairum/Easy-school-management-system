@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using School.API.DTOs;
 using School.API.DTOs.Academic;
+using School.API.Extensions;
 using School.API.Services.Interfaces.Academic;
 
 
@@ -39,7 +40,7 @@ public class AcademicGradeController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Save(AcademicGradeSaveDto dto)
     {
-        int userId = 1; // later from JWT
+        int userId = Request.GetUserId();
         string userIp = HttpContext.Connection.RemoteIpAddress?.ToString();
 
         var result = await _service.SaveAsync(dto, userId, userIp);

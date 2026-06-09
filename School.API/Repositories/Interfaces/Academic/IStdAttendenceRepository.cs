@@ -10,5 +10,6 @@ namespace School.API.Repositories.Interfaces.Student
         Task<List<StdAttendence>> GetAllAsync(StdAttendenceFilterDto filter);
         Task<StdAttendence?> GetByIdAsync(int id);
         Task<ResponseDto?> DeleteByIdAsync(int id, int userId, string userIp);
+        Task<ResponseDto?> DeleteByFilterAsync(StdAttendenceFilterDto filter, int userId, string userIp);
     }
 }

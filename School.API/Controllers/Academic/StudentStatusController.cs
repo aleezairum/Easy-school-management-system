@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using School.API.DTOs.Academic;
+using School.API.Extensions;
 using School.API.Services.Interfaces.Academic;
 
 [ApiController]
@@ -34,7 +35,7 @@ public class StudentStatusController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Save(StudentStatusSaveDto dto)
     {
-        int userId = 1;
+        int userId = Request.GetUserId();
         string userIp = HttpContext.Connection.RemoteIpAddress?.ToString();
         var result = await _service.SaveAsync(dto, userId, userIp);
         return Ok(result);

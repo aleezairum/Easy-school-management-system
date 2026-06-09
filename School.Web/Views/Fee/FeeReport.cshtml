@@ -1,0 +1,464 @@
+@{
+    ViewData["Title"] = "Fee Reports";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<div class="container-fluid">
+    <div id="alertContainer"></div>
+
+    <div class="card" style="border-radius: 10px; border: none; box-shadow: 0 2px 12px rgba(0,0,0,0.08);">
+        <div class="card-body p-3">
+
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 style="font-weight: 600; color: #475569; margin: 0; font-size: 14px;">
+                    <i class="bi bi-bar-chart-line-fill me-1"></i> Fee Reports
+                </h6>
+            </div>
+
+            <!-- Filter Row 1: Month Range + Choose -->
+            <div class="filter-section" style="background: #f8fafc; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px;">
+                <div class="row g-2 align-items-end">
+                    <div class="col-lg-2 col-md-3 col-sm-6 col-12">
+                        <label for="dateFrom" class="form-label form-label-sm mb-1">Date From</label>
+                        <input type="text" class="form-control form-control-sm" id="dateFrom"
+                               placeholder="Select date" readonly
+                               style="background: white; cursor: pointer;" />
+                    </div>
+                    <div class="col-lg-2 col-md-3 col-sm-6 col-12">
+                        <label for="dateTo" class="form-label form-label-sm mb-1">Date To</label>
+                        <input type="text" class="form-control form-control-sm" id="dateTo"
+                               placeholder="Select date" readonly
+                               style="background: white; cursor: pointer;" />
+                    </div>
+                    <div class="col-lg-5 col-md-6 col-12">
+                        <label class="form-label form-label-sm mb-1">Choose</label>
+                        <div class="d-flex gap-3">
+                            <div class="form-check form-check-sm">
+                                <input class="form-check-input" type="radio" name="listChoice" id="choiceStudent" value="student" checked onchange="toggleChoiceFields()">
+                                <label class="form-check-label" for="choiceStudent">Student</label>
+                            </div>
+                            <div class="form-check form-check-sm">
+                                <input class="form-check-input" type="radio" name="listChoice" id="choiceSection" value="section" onchange="toggleChoiceFields()">
+                                <label class="form-check-label" for="choiceSection">Section</label>
+                            </div>
+                            <div class="form-check form-check-sm">
+                                <input class="form-check-input" type="radio" name="listChoice" id="choiceClass" value="class" onchange="toggleChoiceFields()">
+                                <label class="form-check-label" for="choiceClass">Class</label>
+                            </div>
+                            <div class="form-check form-check-sm">
+                                <input class="form-check-input" type="radio" name="listChoice" id="choiceAll" value="all" onchange="toggleChoiceFields()">
+                                <label class="form-check-label" for="choiceAll">All</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Row 2 -->
+            <div class="filter-section" style="background: #f8fafc; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px;">
+                <div class="row g-2 align-items-end">
+                    <div class="col-lg-3 col-md-6 col-sm-6 col-12" id="classField">
+                        <label for="filterClass" class="form-label form-label-sm mb-1">Class</label>
+                        <select class="form-select form-select-sm" id="filterClass" multiple onchange="loadFilterSections()">
+                            <option value="">-- Select Class --</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-sm-6 col-12" id="sectionField">
+                        <label for="filterSection" class="form-label form-label-sm mb-1">Section</label>
+                        <select class="form-select form-select-sm" id="filterSection" multiple disabled onchange="loadStudents()">
+                            <option value="">-- Select Section --</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6 col-12" id="rollNoField">
+                        <label for="filterRollNo" class="form-label form-label-sm mb-1">Roll No</label>
+                        <select class="form-select form-select-sm" id="filterRollNo" onchange="selectStudentByRoll()">
+                            <option value="">-- Select Roll --</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6 col-12" id="studentField">
+                        <label for="filterStudent" class="form-label form-label-sm mb-1">Student</label>
+                        <select class="form-select form-select-sm" id="filterStudent" onchange="selectRollByStudent()">
+                            <option value="">-- Select Student --</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                        <label for="filterGrade" class="form-label form-label-sm mb-1">Grade</label>
+                        <select class="form-select form-select-sm" id="filterGrade">
+                            <option value="">-- All Grades --</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                        <label for="filterFeeType" class="form-label form-label-sm mb-1">Fee Type</label>
+                        <select class="form-select form-select-sm" id="filterFeeType" multiple>
+                            <option value="">-- Select Fee Type --</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Report Type + Print -->
+            <div class="filter-section" style="background: #f8fafc; border-radius: 8px; padding: 12px 14px;">
+                <div class="row g-2 align-items-end">
+                    <div class="col-lg-6 col-md-6 col-12">
+                        <label class="form-label form-label-sm mb-1">Report Type</label>
+                        <div class="d-flex gap-3">
+                            <div class="form-check form-check-sm">
+                                <input class="form-check-input" type="radio" name="reportType" id="reportPaid" value="0">
+                                <label class="form-check-label" for="reportPaid">Paid Report</label>
+                            </div>
+                            <div class="form-check form-check-sm">
+                                <input class="form-check-input" type="radio" name="reportType" id="reportUnpaid" value="1" checked>
+                                <label class="form-check-label" for="reportUnpaid">Unpaid Report</label>
+                            </div>
+                            <div class="form-check form-check-sm">
+                                <input class="form-check-input" type="radio" name="reportType" id="reportAll" value="2">
+                                <label class="form-check-label" for="reportAll">All</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 col-md-6 col-12 d-flex gap-2 align-items-end justify-content-end">
+                        <button type="button" class="btn btn-success btn-sm" onclick="generateReport()" id="btnPrint">
+                            <i class="bi bi-printer me-1"></i> Print Report
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearFilters()" title="Clear">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <style>
+        .flatpickr-day.selected,
+        .flatpickr-day.startRange,
+        .flatpickr-day.endRange {
+            background: #008649 !important;
+            border-color: #008649 !important;
+        }
+
+        .form-label-sm {
+            font-size: 12px;
+        }
+
+        .form-check-sm .form-check-label {
+            font-size: 12px;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="~/js/applyFeeReport.js"></script>
+    <script src="~/js/feeReportOverride.js"></script>
+    <script>
+        let allData      = [];
+        let fromPicker   = null;
+        let toPicker     = null;
+        let isSyncing    = false;
+
+        $(document).ready(function () {
+                    const now        = new Date();
+                    const firstOfMon = new Date(now.getFullYear(), now.getMonth(), 1);
+                    const lastOfMon  = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+                    // Two separate date pickers — Date From keeps Date To's minimum in sync
+                    fromPicker = flatpickr('#dateFrom', {
+                        dateFormat: 'Y-m-d',
+                        defaultDate: firstOfMon,
+                        onChange: function (selectedDates) {
+                            if (selectedDates[0]) toPicker.set('minDate', selectedDates[0]);
+                        }
+                    });
+
+                    toPicker = flatpickr('#dateTo', {
+                        dateFormat: 'Y-m-d',
+                        defaultDate: lastOfMon,
+                        minDate: firstOfMon
+                    });
+
+                    loadDropdowns();
+                    toggleChoiceFields();
+                });
+
+                // ── Toggle Choice Fields ──────────────────────────────────────
+                function toggleChoiceFields() {
+                    const choice = $('input[name="listChoice"]:checked').val();
+
+                    $('#classField').toggle(choice !== 'all');
+                    $('#sectionField').toggle(choice === 'section' || choice === 'student');
+                    $('#rollNoField').toggle(choice === 'student');
+                    $('#studentField').toggle(choice === 'student');
+
+                    if (choice === 'all') $('#filterClass').val(null).trigger('change');
+                    if (choice === 'class' || choice === 'all') {
+                        $('#filterSection').val(null).trigger('change').prop('disabled', true);
+                    }
+                    if (choice !== 'student') { $('#filterRollNo').val(''); $('#filterStudent').val(''); }
+                }
+
+                // ── Load Dropdowns ────────────────────────────────────────────
+                async function loadDropdowns() {
+                    try {
+                        const [classes, feeTypes, grades] = await Promise.all([
+                            fetch(`${API_BASE}/class`).then(r => r.ok ? r.json() : []),
+                            fetch(`${API_BASE}/feetype`).then(r => r.ok ? r.json() : []),
+                            fetch(`${API_BASE}/AcademicGrade`).then(r => r.ok ? r.json() : [])
+                        ]);
+
+                        classes.forEach(c  => $('#filterClass').append(`<option value="${c.vid}">${c.vName}</option>`));
+                        feeTypes.forEach(f => $('#filterFeeType').append(`<option value="${f.vid}">${f.vName}</option>`));
+                        grades.forEach(g   => $('#filterGrade').append(`<option value="${g.vid}">${g.vName}</option>`));
+
+                    } catch (err) {
+                        console.error('Error loading dropdowns:', err);
+                    }
+                }
+
+                // ── Load Sections (multi-class) ───────────────────────────────
+                async function loadFilterSections() {
+                    const classIds      = $('#filterClass').val() || [];
+                    const sectionSelect = $('#filterSection');
+                    sectionSelect.find('option:not(:first)').remove();
+                    sectionSelect.val(null).prop('disabled', true).trigger('change');
+                    $('#filterRollNo').find('option:not(:first)').remove();
+                    $('#filterStudent').find('option:not(:first)').remove();
+
+                    if (classIds.length === 0) return;
+
+                    // Build classId → className lookup from the class dropdown
+                    const classNameMap = {};
+                    $('#filterClass option').each(function () {
+                        const v = $(this).val();
+                        if (v) classNameMap[v] = $(this).text().trim();
+                    });
+
+                    try {
+                        // Fetch each class's sections, preserving the source class
+                        const results = await Promise.all(
+                            classIds.map(cid =>
+                                fetch(`${API_BASE}/section/byClass/${cid}`)
+                                    .then(r => r.ok ? r.json() : [])
+                                    .then(arr => arr.map(s => ({ ...s, _classId: cid, _className: classNameMap[cid] || '' })))
+                            )
+                        );
+
+                        const multiClass = classIds.length > 1;
+                        results.flat().forEach(s => {
+                            // Prefix with class name when multiple classes are selected so user knows which class each section belongs to
+                            const label = multiClass
+                                ? `${s._className} — ${s.vName}`
+                                : s.vName;
+                            sectionSelect.append(
+                                `<option value="${s.vid}" data-class-id="${s._classId}">${label}</option>`
+                            );
+                        });
+                        sectionSelect.prop('disabled', false).trigger('change');
+                    } catch (err) {
+                        console.error('Error loading sections:', err);
+                    }
+
+                    await loadStudents();
+                }
+
+                // ── Load Students (first class/section for student mode) ──────
+                async function loadStudents() {
+                    const classArr   = $('#filterClass').val()   || [];
+                    const sectionArr = $('#filterSection').val() || [];
+                    const classId    = classArr[0]   || 0;
+                    const sectionId  = sectionArr[0] || 0;
+
+                    $('#filterRollNo').find('option:not(:first)').remove();
+                    $('#filterStudent').find('option:not(:first)').remove();
+
+                    try {
+                        const response = await fetch(`${API_BASE}/Student/students?classId=${classId}&sectionId=${sectionId}`);
+                        if (response.ok) {
+                            const students = await response.json();
+                            students.forEach(s => {
+                                const roll = s.classRollNo || s.rollNo || '-';
+                                $('#filterRollNo').append(`<option value="${s.vid}">${roll}</option>`);
+                                $('#filterStudent').append(`<option value="${s.vid}">${s.name || '-'}</option>`);
+                            });
+                        }
+                    } catch (err) {
+                        console.error('Error loading students:', err);
+                    }
+                }
+
+                // ── Sync Roll / Student ───────────────────────────────────────
+                function selectStudentByRoll() {
+                    if (isSyncing) return;
+                    isSyncing = true;
+                    const val = $('#filterRollNo').val();
+                    if (val) $('#filterStudent').val(val);
+                    isSyncing = false;
+                }
+
+                function selectRollByStudent() {
+                    if (isSyncing) return;
+                    isSyncing = true;
+                    const val = $('#filterStudent').val();
+                    if (val) $('#filterRollNo').val(val);
+                    isSyncing = false;
+                }
+
+                // ── Generate Report ───────────────────────────────────────────
+                async function generateReport() {
+                    const fromDate = fromPicker && fromPicker.selectedDates[0];
+                    const toDate   = toPicker   && toPicker.selectedDates[0];
+                    const now      = new Date();
+
+                    const dateFrom = fromDate
+                        ? formatDate(fromDate)
+                        : formatDate(new Date(now.getFullYear(), now.getMonth(), 1));
+                    const dateTo = toDate
+                        ? formatDate(toDate)
+                        : formatDate(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+
+                    const classArr    = ($('#filterClass').val()   || []).filter(Boolean);
+                    const sectionArr  = ($('#filterSection').val() || []).filter(Boolean);
+                    const feeTypeArr  = ($('#filterFeeType').val() || []).filter(Boolean);
+                    const studentId   = parseInt($('#filterStudent').val()) || 0;
+                    const gradeName   = $('#filterGrade option:selected').text().trim();
+                    const reportType  = parseInt($('input[name="reportType"]:checked').val(), 10); // 0=Paid, 1=Unpaid, 2=All
+
+                    $('#btnPrint').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Loading...');
+
+                    try {
+                        let url = `${API_BASE}/ApplyFee/Report?dateFrom=${dateFrom}&dateTo=${dateTo}&reportType=${reportType}`;
+                        // SP accepts comma-separated SectionIDs, ClassIDs, FeeTypeIDs — server-side filtering
+                        if (classArr.length)   url += `&classIds=${encodeURIComponent(classArr.join(','))}`;
+                        if (sectionArr.length) url += `&sectionIds=${encodeURIComponent(sectionArr.join(','))}`;
+                        if (feeTypeArr.length) url += `&feeTypeIds=${encodeURIComponent(feeTypeArr.join(','))}`;
+                        if (studentId)         url += `&studentId=${studentId}`;
+
+                        const response = await fetch(url);
+
+                        if (!response.ok) {
+                            toastError('Failed to load records');
+                            return;
+                        }
+
+                        let data = await response.json();
+
+                        // Class, Section & FeeType now filtered server-side; only Grade remains client-side
+                        if ($('#filterGrade').val())   data = data.filter(d => d.gradeName === gradeName);
+
+                        if (data.length === 0) {
+                            toastError('No records found for the selected filters.');
+                            return;
+                        }
+
+                        // ── Sort: ClassID then SectionID (use IDs if SP returns them, else natural-sort by names) ──
+                        const naturalKey = s => {
+                            // Splits "Class 10-A" → ["Class ", 10, "-A"] for numeric-aware compare
+                            return String(s || '').toLowerCase().split(/(\d+)/).map(p => /^\d+$/.test(p) ? parseInt(p, 10) : p);
+                        };
+                        const cmpKeys = (a, b) => {
+                            const len = Math.min(a.length, b.length);
+                            for (let i = 0; i < len; i++) {
+                                if (a[i] === b[i]) continue;
+                                if (typeof a[i] === 'number' && typeof b[i] === 'number') return a[i] - b[i];
+                                return String(a[i]).localeCompare(String(b[i]));
+                            }
+                            return a.length - b.length;
+                        };
+                        data.sort((a, b) => {
+                            // Prefer numeric IDs when available
+                            const ca = a.classID ?? a.classId, cb = b.classID ?? b.classId;
+                            if (ca != null && cb != null && ca !== cb) return ca - cb;
+                            const ka = naturalKey(a.className), kb = naturalKey(b.className);
+                            const cn = cmpKeys(ka, kb);
+                            if (cn !== 0) return cn;
+
+                            const sa = a.sectionID ?? a.sectionId, sb = b.sectionID ?? b.sectionId;
+                            if (sa != null && sb != null && sa !== sb) return sa - sb;
+                            const sk = cmpKeys(naturalKey(a.sectionName), naturalKey(b.sectionName));
+                            if (sk !== 0) return sk;
+
+                            // Stable tie-breaker within same class+section
+                            return cmpKeys(naturalKey(a.rollNo), naturalKey(b.rollNo))
+                                || (a.studentName || '').localeCompare(b.studentName || '');
+                        });
+
+                        // Build sections based on report type (SP already filters server-side)
+                        let sections = [];
+                        if (reportType === 0) {
+                            sections.push({ type: 'paid', label: 'Paid Fee Report', data: data });
+                        } else if (reportType === 1) {
+                            sections.push({ type: 'unpaid', label: 'Unpaid Fee Report', data: data });
+                        } else {
+                            // For "All" (ReportType=2) the SP returns two UNION-ALL halves:
+                            //   Paid rows    -> ClearedAmount = PaidAmount, PendingAmount = 0   (from FeeVoucher)
+                            //   Pending rows -> ClearedAmount = 0,          PendingAmount > 0   (from SMSStudentFee)
+                            // Split on the AMOUNTS (matching the SP halves), NOT on isClear — a
+                            // partially-paid fee has IsClear = 0 yet still has a paid voucher row,
+                            // so an isClear filter dropped those paid rows entirely.
+                            const pendingOf = d => (d.pendingAmount != null)
+                                ? d.pendingAmount
+                                : ((d.feeAmount || 0) - (d.clearedAmount || 0));
+                            const paid   = data.filter(d => (d.clearedAmount || 0) > 0);
+                            const unpaid = data.filter(d => pendingOf(d) > 0);
+                            if (paid.length)   sections.push({ type: 'paid',   label: 'Paid Fee Report',   data: paid });
+                            if (unpaid.length) sections.push({ type: 'unpaid', label: 'Unpaid Fee Report', data: unpaid });
+                        }
+
+                        if (sections.length === 0) {
+                            toastError('No records found.');
+                            return;
+                        }
+
+                        const html = buildReportHTML(sections, dateFrom, dateTo);
+                        const win  = window.open('', '_blank', 'width=1200,height=800');
+                        win.document.write(html);
+                        win.document.close();
+                        win.focus();
+
+                    } catch (err) {
+                        console.error('Error generating report:', err);
+                        toastError('Error generating report');
+                    } finally {
+                        $('#btnPrint').prop('disabled', false).html('<i class="bi bi-printer me-1"></i> Print Report');
+                    }
+                }
+
+                // ── Helpers ───────────────────────────────────────────────────
+                function formatDate(d) {
+                    const yyyy = d.getFullYear();
+                    const mm   = String(d.getMonth() + 1).padStart(2, '0');
+                    const dd   = String(d.getDate()).padStart(2, '0');
+                    return `${yyyy}-${mm}-${dd}`;
+                }
+
+                function formatAmount(val) {
+                    return (val || 0).toLocaleString('en-PK', { minimumFractionDigits: 0 });
+                }
+
+                // ── Clear Filters ─────────────────────────────────────────────
+                function clearFilters() {
+                    const now        = new Date();
+                    const firstOfMon = new Date(now.getFullYear(), now.getMonth(), 1);
+                    const lastOfMon  = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+                    fromPicker.setDate(firstOfMon, true);
+                    toPicker.set('minDate', firstOfMon);
+                    toPicker.setDate(lastOfMon, true);
+
+                    $('#filterClass').val(null).trigger('change');
+                    $('#filterSection').val(null).prop('disabled', true).trigger('change');
+                    $('#filterRollNo').find('option:not(:first)').remove();
+                    $('#filterStudent').find('option:not(:first)').remove();
+                    $('#filterGrade').val('').trigger('change');
+                    $('#filterFeeType').val(null).trigger('change');
+                    $('input[name="listChoice"][value="student"]').prop('checked', true);
+                    $('input[name="reportType"][value="1"]').prop('checked', true);
+                    toggleChoiceFields();
+                }
+    </script>
+}

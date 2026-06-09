@@ -1,0 +1,283 @@
+@model List<School.Web.Controllers.ExamController.PositionRow>
+@{
+    Layout = null;
+    ViewBag.Title = "Students Percentage Wise Report";
+
+    var className = ViewData["ClassName"] as string;
+    var examName  = ViewData["ExamName"] as string;
+    var students  = Model ?? new List<School.Web.Controllers.ExamController.PositionRow>();
+
+    string Marks(decimal? v) => v.HasValue ? (v.Value == Math.Floor(v.Value) ? ((long)v.Value).ToString() : v.Value.ToString("0.##")) : "-";
+    string Pct(decimal? v)   => v.HasValue ? v.Value.ToString("0.00") + "%" : "-";
+
+    // Summary counts
+    var totalStudents = students.Count;
+    var passStudents  = students.Count(x => string.Equals(x.Status, "Pass", StringComparison.OrdinalIgnoreCase));
+    var failStudents  = totalStudents - passStudents;
+    var passPct = totalStudents > 0 ? (decimal)passStudents * 100m / totalStudents : 0m;
+    var failPct = totalStudents > 0 ? (decimal)failStudents * 100m / totalStudents : 0m;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Students Percentage Wise Report</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        /* Force background colors / shading to render when printing */
+        html, body, table, th, td, tr {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            background: #fff;
+            color: #000;
+            padding: 12px;
+        }
+
+        .page-wrapper {
+            border: 2px solid #555;
+            max-width: 820px;
+            margin: 0 auto;
+        }
+
+        /* ── School Header ── */
+        .school-header {
+            text-align: center;
+            border-bottom: 2px solid #555;
+            padding: 10px 4px 8px;
+        }
+
+        .school-name {
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .school-address {
+            font-size: 14.5px;
+            font-weight: bold;
+            margin-top: 3px;
+        }
+
+        /* ── Report Title ── */
+        .report-title {
+            background-color: #d6d6d6;
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            padding: 6px 4px;
+            border-bottom: 1px solid #555;
+        }
+
+        /* ── Class / Exam row ── */
+        .class-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 10px;
+            font-size: 12.5px;
+            font-weight: 600;
+            border-bottom: 1px solid #555;
+        }
+
+        /* ── Table ── */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+            table-layout: fixed;   /* honour the colgroup widths below */
+        }
+
+        table th, table td {
+            border: 1px solid #555;
+            padding: 2px 4px;
+            vertical-align: middle;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+        }
+
+        /* Name / Father Name get the most room and may wrap to 2 lines */
+        td.col-name, th.col-name { line-height: 1.15; }
+
+        /* Black header */
+        thead tr th {
+            background-color: #1a1a1a;
+            color: #fff;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        thead tr th.col-name { text-align: left; }
+
+        td { text-align: center; }
+        td.col-name { text-align: left; }
+
+        /* Alternate rows */
+        tbody tr:nth-child(even) { background-color: #f0f4f8; }
+        tbody tr:nth-child(odd)  { background-color: #fff; }
+
+        td.pass { color: #1a6b1a; font-weight: bold; }
+        td.fail { color: #c00000; font-weight: bold; }
+
+        /* ── Summary row ── */
+        .summary-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 8px 12px;
+            font-size: 12.5px;
+            border-top: 2px solid #555;
+            background-color: #efefef;
+        }
+
+        .summary-item { white-space: nowrap; }
+
+        /* Print toolbar (hidden when printing) */
+        .print-toolbar {
+            max-width: 820px;
+            margin: 0 auto 8px;
+            text-align: right;
+        }
+
+        .print-toolbar .btn-print {
+            background: #1a7a3e;
+            color: #fff;
+            border: none;
+            padding: 8px 22px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .print-toolbar .btn-close-win {
+            background: #555;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+
+        /* ── Print ── */
+        /* margin:0 removes the browser's auto date/title (top) and URL (bottom) */
+        @@page {
+            size: A4 portrait;
+            margin: 0;
+        }
+
+        @@media print {
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+            body { padding: 6mm 8mm; }
+            .no-print { display: none !important; }
+            .page-wrapper { border: 2px solid #555; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="print-toolbar no-print">
+    <button type="button" class="btn-print" onclick="window.print()">Print</button>
+    <button type="button" class="btn-close-win" onclick="window.close()">Close</button>
+</div>
+
+<div class="page-wrapper">
+
+    <!-- School Header -->
+    <div class="school-header">
+        <div class="school-name">SIR SYED MODEL HIGH SCHOOL (Boys&amp;Girls)</div>
+        <div class="school-address">Chhonawala Road, Hasilpur &nbsp; 0333-6335634 , 0301-7330101</div>
+    </div>
+
+    <!-- Report Title -->
+    <div class="report-title">Students Percentage Wise Report</div>
+
+    <!-- Class / Exam Row -->
+    <div class="class-row">
+        <span><strong>Class :</strong> @(string.IsNullOrWhiteSpace(className) ? "-" : className)</span>
+        <span><strong>Exam :</strong> @(string.IsNullOrWhiteSpace(examName) ? "-" : examName)</span>
+    </div>
+
+    <!-- Table -->
+    <table>
+        <colgroup>
+            <col style="width:4%;" />   <!-- Sr#       -->
+            <col style="width:7%;" />   <!-- Roll#     -->
+            <col style="width:24%;" />  <!-- Name      -->
+            <col style="width:24%;" />  <!-- Father    -->
+            <col style="width:6%;" />   <!-- Section   -->
+            <col style="width:7%;" />   <!-- T.Marks   -->
+            <col style="width:7%;" />   <!-- Obt.Marks -->
+            <col style="width:7%;" />   <!-- %age      -->
+            <col style="width:7%;" />   <!-- Position  -->
+            <col style="width:7%;" />   <!-- Status    -->
+        </colgroup>
+        <thead>
+            <tr>
+                <th>Sr. #</th>
+                <th>Roll #</th>
+                <th class="col-name">Name</th>
+                <th class="col-name">Father Name</th>
+                <th>Section</th>
+                <th>T.Marks</th>
+                <th>Obt. Marks</th>
+                <th>%age</th>
+                <th>Position</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (students.Count == 0)
+            {
+                <tr><td colspan="10" style="padding:20px; color:#777; font-style:italic;">No results found for the selected Class and Exam.</td></tr>
+            }
+            else
+            {
+                @foreach (var s in students)
+                {
+                    var isPass = string.Equals(s.Status, "Pass", StringComparison.OrdinalIgnoreCase);
+                    <tr>
+                        <td>@s.Sr</td>
+                        <td>@s.RollNo</td>
+                        <td class="col-name">@s.StudentName</td>
+                        <td class="col-name">@s.FatherName</td>
+                        <td>@s.SectionName</td>
+                        <td>@Marks(s.TotalMarks)</td>
+                        <td>@Marks(s.ObtainedMarks)</td>
+                        <td>@Pct(s.Percent)</td>
+                        <td>@(s.Position.HasValue ? s.Position.Value.ToString() : "-")</td>
+                        <td class="@(isPass ? "pass" : "fail")">@s.Status</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+
+    @if (students.Count > 0)
+    {
+        <!-- Summary -->
+        <div class="summary-row">
+            <div class="summary-item"><strong>Total Students:</strong> @totalStudents</div>
+            <div class="summary-item"><strong>Pass:</strong> @passStudents</div>
+            <div class="summary-item"><strong>Fail:</strong> @failStudents</div>
+            <div class="summary-item"><strong>Pass %:</strong> @passPct.ToString("0.00")%</div>
+            <div class="summary-item"><strong>Fail %:</strong> @failPct.ToString("0.00")%</div>
+        </div>
+    }
+
+</div>
+</body>
+</html>

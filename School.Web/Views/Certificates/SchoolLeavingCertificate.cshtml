@@ -1,0 +1,257 @@
+@model dynamic
+@{
+    Layout = null;
+
+    // ---------- helpers ----------
+    string FmtDate(object d)
+    {
+        if (d == null || d == DBNull.Value) return "";
+        DateTime dt;
+        return DateTime.TryParse(d.ToString(), out dt) ? dt.ToString("dd-MM-yyyy") : "";
+    }
+
+    string NumberToWords(int n)
+    {
+        string[] units = { "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
+                           "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen",
+                           "Sixteen", "Seventeen", "Eighteen", "Nineteen" };
+        string[] tens  = { "", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety" };
+
+        if (n == 0)        return "Zero";
+        if (n < 20)        return units[n];
+        if (n < 100)       return tens[n / 10] + (n % 10 > 0 ? " " + units[n % 10] : "");
+        if (n < 1000)      return units[n / 100] + " Hundred" + (n % 100 > 0 ? " " + NumberToWords(n % 100) : "");
+        if (n < 1000000)   return NumberToWords(n / 1000) + " Thousand" + (n % 1000 > 0 ? " " + NumberToWords(n % 1000) : "");
+        return n.ToString();
+    }
+
+    string DateToWords(object d)
+    {
+        if (d == null || d == DBNull.Value) return "";
+        DateTime dt;
+        if (!DateTime.TryParse(d.ToString(), out dt)) return "";
+        string[] months = { "", "January", "February", "March", "April", "May", "June",
+                            "July", "August", "September", "October", "November", "December" };
+        return string.Format("{0} {1} {2}",
+            NumberToWords(dt.Day), months[dt.Month], NumberToWords(dt.Year));
+    }
+
+    // ---------- safe field access (works for dynamic / DataRow / dictionary) ----------
+    Func<string, object> F = key =>
+    {
+        try { return ((IDictionary<string, object>)Model)[key]; }
+        catch
+        {
+            try { return Model[key]; }
+            catch { return ""; }
+        }
+    };
+
+    var studentName   = F("StudentName");
+    var fatherName    = F("FatherName");
+    var dob           = F("DOB");
+    var admissionNo   = F("AdmissionNo");
+    var admissionDate = F("AdmissionDate");
+    var classAdmitted = F("ClassAdmitted");
+    var leavingDate   = F("LeavingDate");
+    var classStudying = F("ClassStudying");
+    var examination   = F("Examination");
+    var rollNo        = F("RollNo");
+    var marksObtained = F("MarksObtained");
+    var totalMarks    = F("TotalMarks");
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>School Leaving Certificate</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 14px;
+            color: #000;
+            background: #fff;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .certificate {
+            width: 820px;
+            margin: 2.5in auto 20px auto;
+            padding: 35px 50px 25px 50px;
+            position: relative;
+            min-height: 720px;
+        }
+
+        .title {
+            text-align: center;
+            font-size: 22px;
+            font-weight: bold;
+            text-decoration: underline;
+            letter-spacing: 1px;
+            margin: 10px 0 35px 0;
+        }
+
+        .row {
+            display: flex;
+            align-items: flex-end;
+            margin-bottom: 16px;
+        }
+
+        .lbl {
+            white-space: nowrap;
+            padding-right: 6px;
+        }
+
+        .val {
+            flex: 1;
+            border-bottom: 1px dotted #000;
+            text-align: center;
+            font-weight: bold;
+            padding: 0 6px 2px 6px;
+            min-height: 20px;
+        }
+
+        .val-sm {
+            width: 110px;
+            border-bottom: 1px dotted #000;
+            text-align: center;
+            font-weight: bold;
+            padding: 0 6px 2px 6px;
+            min-height: 20px;
+        }
+
+        .val-md {
+            flex: 1;
+            border-bottom: 1px dotted #000;
+            text-align: center;
+            font-weight: bold;
+            padding: 0 6px 2px 6px;
+            min-height: 20px;
+        }
+
+        .gap { width: 12px; }
+
+        .certified {
+            text-align: center;
+            font-style: italic;
+            margin-top: 35px;
+            line-height: 1.6;
+        }
+
+        .signatures {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 60px;
+            padding: 0 10px;
+        }
+
+        .sig-block {
+            text-align: center;
+            min-width: 200px;
+        }
+        .sig-line {
+            border-top: 1px solid #000;
+            width: 200px;
+        }
+        .sig-label {
+            font-style: italic;
+            padding-top: 4px;
+            font-size: 13px;
+        }
+        .sig-label.bold { font-style: normal; font-weight: bold; }
+
+        @@media print {
+            body { padding: 0; background: #fff; }
+            .certificate { box-shadow: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="certificate">
+
+        <div class="title">SCHOOL LEAVING CERTIFICATE</div>
+
+        <div class="row">
+            <span class="lbl">Name of Student</span>
+            <span class="val">@studentName</span>
+        </div>
+
+        <div class="row">
+            <span class="lbl">Father's Name</span>
+            <span class="val">@fatherName</span>
+        </div>
+
+        <div class="row">
+            <span class="lbl">Date of Birth (In Figures )</span>
+            <span class="val">@FmtDate(dob)</span>
+        </div>
+
+        <div class="row">
+            <span class="lbl">Date of Birth (In Words )</span>
+            <span class="val">@DateToWords(dob)</span>
+        </div>
+
+        <div class="row">
+            <span class="lbl">Admission No</span>
+            <span class="val-sm">@admissionNo</span>
+            <span class="gap"></span>
+            <span class="lbl">Date of Admission</span>
+            <span class="val-md">@FmtDate(admissionDate)</span>
+        </div>
+
+        <div class="row">
+            <span class="lbl">Class in which admitted</span>
+            <span class="val">@classAdmitted</span>
+        </div>
+
+        <div class="row">
+            <span class="lbl">Date of leaving the school</span>
+            <span class="val">@FmtDate(leavingDate)</span>
+        </div>
+
+        <div class="row">
+            <span class="lbl">Class in which studying / Passed / Failed</span>
+            <span class="val">@classStudying</span>
+        </div>
+
+        <div class="row">
+            <span class="lbl">Examination</span>
+            <span class="val">@examination</span>
+        </div>
+
+        <div class="row">
+            <span class="lbl">Roll No</span>
+            <span class="val-sm">@rollNo</span>
+            <span class="gap"></span>
+            <span class="lbl">Marks Obtained</span>
+            <span class="val-md">@marksObtained</span>
+        </div>
+
+        <div class="row">
+            <span class="lbl">Total Marks</span>
+            <span class="val-sm">@totalMarks</span>
+            <span style="flex:1"></span>
+        </div>
+
+        <div class="certified">
+            Certified that above mentioned particulars are in<br />
+            accordance with the school record .
+        </div>
+
+        <div class="signatures">
+            <div class="sig-block">
+                <div class="sig-line"></div>
+                <div class="sig-label">Signature of Incharge</div>
+            </div>
+            <div class="sig-block">
+                <div class="sig-line"></div>
+                <div class="sig-label bold">Principal</div>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>

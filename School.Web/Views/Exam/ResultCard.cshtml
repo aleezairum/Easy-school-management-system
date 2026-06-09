@@ -1,0 +1,365 @@
+@model School.Web.Controllers.ExamController.ExamResultCardPayload
+@{
+    Layout = null;
+    ViewBag.Title = "Result Card";
+
+    var className   = ViewData["ClassName"] as string;
+    var sectionName = ViewData["SectionName"] as string;
+    var examName    = ViewData["ExamName"] as string;
+
+    var students = Model?.Students ?? new();
+    var issueDate = DateTime.Now.ToString("dd-MM-yyyy");
+
+    string Marks(decimal? v) => v.HasValue ? (v.Value == Math.Floor(v.Value) ? ((long)v.Value).ToString() : v.Value.ToString("0.##")) : "-";
+    string Pct(decimal? v)   => v.HasValue ? v.Value.ToString("0.00") + "%" : "-";
+    // Percentage of one value against a max (e.g. pass marks % of total, obtained % of total)
+    string PctOf(decimal? part, decimal? whole)
+        => (part.HasValue && whole.HasValue && whole.Value != 0)
+            ? (part.Value * 100m / whole.Value).ToString("0.##") + "%"
+            : "-";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Result Card – Sir Syed Model High School</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        /* Force background colors / shading to render when printing */
+        html, body, table, th, td, tr {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            background: #fff;
+            color: #000;
+            padding: 12px;
+        }
+
+        /* ── One card per student (2 per page when printed) ── */
+        .card-wrapper {
+            border: 2px solid #555;
+            padding: 0;
+            max-width: 780px;
+            margin: 0 auto 14px;
+            page-break-inside: avoid;
+        }
+
+        /* ── School Header ── */
+        .school-header {
+            text-align: center;
+            border-bottom: 2px solid #555;
+            padding: 8px 4px 6px;
+        }
+
+        .school-name {
+            font-size: 19px;
+            font-weight: bold;
+        }
+
+        .school-address {
+            font-size: 15px;
+            font-weight: bold;
+            margin-top: 2px;
+        }
+
+        /* ── "Result Card" title ── */
+        .card-title {
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            text-decoration: underline;
+            padding: 5px 0 4px;
+            border-bottom: 1px solid #555;
+        }
+
+        /* ── Student Info Block ── */
+        .info-section {
+            display: flex;
+            border-bottom: 1px solid #555;
+        }
+
+        .info-left {
+            flex: 1;
+            padding: 6px 8px;
+            border-right: 1px solid #555;
+        }
+
+        .info-right {
+            flex: 1;
+            padding: 6px 8px;
+        }
+
+        .info-photo {
+            width: 90px;
+            border-left: 1px solid #555;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+        }
+
+        .info-photo img {
+            width: 80px;
+            height: 90px;
+            object-fit: cover;
+            border: 1px solid #aaa;
+        }
+
+        .photo-placeholder {
+            width: 80px;
+            height: 90px;
+            border: 1px solid #aaa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #e8e8e8;
+            color: #888;
+            font-size: 10px;
+            text-align: center;
+        }
+
+        .info-row {
+            margin-bottom: 4px;
+            line-height: 1.5;
+        }
+
+        .info-row strong {
+            font-weight: bold;
+        }
+
+        /* ── Marks Table ── */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11.5px;
+        }
+
+        table th, table td {
+            border: 1px solid #555;
+            padding: 4px 6px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        table th {
+            background-color: #d6d6d6;
+            font-weight: bold;
+        }
+
+        td.subject-name {
+            text-align: left;
+            padding-left: 8px;
+        }
+
+        tr.total-row td {
+            font-weight: bold;
+            background-color: #efefef;
+        }
+
+        .pass  { color: #1a6b1a; font-weight: bold; }
+        .fail  { color: #c00000; font-weight: bold; }
+
+        /* ── Signature Row ── */
+        .signature-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 16px 24px 10px;
+            border-top: 1px solid #555;
+        }
+
+        .sig-block {
+            text-align: center;
+            flex: 1;
+        }
+
+        .sig-line {
+            border-top: 1.5px solid #000;
+            margin: 0 auto 4px;
+            width: 140px;
+        }
+
+        .sig-label {
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .empty-msg {
+            text-align: center;
+            padding: 24px;
+            color: #777;
+            font-style: italic;
+        }
+
+        /* Print toolbar (hidden when printing) */
+        .print-toolbar {
+            max-width: 780px;
+            margin: 0 auto 8px;
+            text-align: right;
+        }
+
+        .print-toolbar .btn-print {
+            background: #1a7a3e;
+            color: #fff;
+            border: none;
+            padding: 8px 22px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .print-toolbar .btn-close-win {
+            background: #555;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+
+        @@page {
+            size: A4 portrait;
+            margin: 0;
+        }
+
+        /* ── Print ── */
+        @@media print {
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+            body { padding: 6mm 8mm; }
+            .no-print { display: none !important; }
+            .card-wrapper {
+                border: 2px solid #555;
+                margin: 0 auto;
+                page-break-inside: avoid;
+            }
+            /* Cutting margin between the two cards on a page */
+            .card-wrapper.cut-gap { margin-bottom: 16mm; }
+            /* 2 cards per page: break after every 2nd card */
+            .card-wrapper.break-after { page-break-after: always; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="print-toolbar no-print">
+    <button type="button" class="btn-print" onclick="window.print()">Print</button>
+    <button type="button" class="btn-close-win" onclick="window.close()">Close</button>
+</div>
+
+@if (students.Count == 0)
+{
+    <div class="empty-msg">No results found for the selected Class, Section and Exam.</div>
+}
+
+@for (int i = 0; i < students.Count; i++)
+{
+    var s = students[i];
+    // Two cards per page: force a page break after every 2nd card (but not the last)
+    var breakAfter = (i % 2 == 1) && (i < students.Count - 1);
+    // Top card of a pair gets a cutting gap before the bottom card
+    var cutGap = (i % 2 == 0) && (i < students.Count - 1);
+    <div class="card-wrapper@(cutGap ? " cut-gap" : "")@(breakAfter ? " break-after" : "")">
+
+        <!-- School Header -->
+        <div class="school-header">
+            <div class="school-name">SIR SYED MODEL HIGH SCHOOL (Boys&amp;Girls)</div>
+            <div class="school-address">Chhonawala Road, Hasilpur &nbsp; 0333-6335634 , 0301-7330101</div>
+        </div>
+
+        <!-- Result Card Title -->
+        <div class="card-title">Result Card</div>
+
+        <!-- Student Info -->
+        <div class="info-section">
+            <div class="info-left">
+                <div class="info-row"><strong>Roll No.&nbsp;&nbsp;:</strong> @s.RollNo &nbsp;&nbsp;&nbsp;&nbsp; <strong>Issue Date :</strong> @issueDate</div>
+                <div class="info-row"><strong>Student's Name :</strong> @s.StudentName</div>
+                <div class="info-row"><strong>Father's Name :</strong> @s.FatherName</div>
+                <div class="info-row"><strong>Class &nbsp;&nbsp;&nbsp;&nbsp; :</strong> @(string.IsNullOrWhiteSpace(s.ClassName) ? "-" : s.ClassName)@(string.IsNullOrWhiteSpace(s.SectionName) ? "" : " (" + s.SectionName + ")")</div>
+                <div class="info-row"><strong>Exam &nbsp;&nbsp;&nbsp;&nbsp; :</strong> @(string.IsNullOrWhiteSpace(examName) ? "-" : examName)</div>
+            </div>
+            <div class="info-right">
+                <div class="info-row"><strong>Highest Obtained Marks in Class :</strong> @Marks(s.HighestMarks)</div>
+                <div class="info-row"><strong>Total Students:</strong> @s.TotalStudents</div>
+                <div class="info-row"><strong>Position in Class :</strong> @(s.Position.HasValue ? s.Position.Value.ToString() : "-")</div>
+                <div class="info-row"><strong>Previous Percentage :</strong> @Pct(s.PrevPct)</div>
+                <div class="info-row"><strong>Attendance :</strong> @s.PresentDays/@s.SchoolDays (@Pct(s.AttendancePct))</div>
+            </div>
+            <div class="info-photo">
+                <div class="photo-placeholder">Photo</div>
+            </div>
+        </div>
+
+        <!-- Marks Table -->
+        <table>
+            <thead>
+                <tr>
+                    <th style="text-align:left; padding-left:8px;">Subject</th>
+                    <th>Date</th>
+                    <th>Total Marks</th>
+                    <th colspan="2">Pass M &amp; %</th>
+                    <th>Obt. Marks</th>
+                    <th>Obt. %</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var sub in s.Subjects)
+                {
+                    <tr>
+                        <td class="subject-name">@sub.SubjectName</td>
+                        <td>@(sub.VDate.HasValue ? sub.VDate.Value.ToString("dd-MM-yyyy") : "-")</td>
+                        <td>@Marks(sub.TotalMarks)</td>
+                        <td>@Marks(sub.PassMarks)</td>
+                        <td>@PctOf(sub.PassMarks, sub.TotalMarks)</td>
+                        <td>@Marks(sub.MarksObtained)</td>
+                        <td>@PctOf(sub.MarksObtained, sub.TotalMarks)</td>
+                        <td class="@(sub.Status == "Pass" ? "pass" : "fail")">@sub.Status</td>
+                    </tr>
+                }
+                <tr class="total-row">
+                    <td class="subject-name" colspan="2"><strong>Total:</strong></td>
+                    <td>@Marks(s.GrandTotal)</td>
+                    <td colspan="2">@Marks(s.GrandPass)</td>
+                    <td>@Marks(s.GrandObt)</td>
+                    <td>@Pct(s.CurrentPct)</td>
+                    <td class="@(s.GrandStatus == "Pass" ? "pass" : "fail")">@s.GrandStatus</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Signatures -->
+        <div class="signature-row">
+            <div class="sig-block">
+                <div class="sig-line"></div>
+                <div class="sig-label">Parent's Signature</div>
+            </div>
+            <div class="sig-block">
+                <div class="sig-line"></div>
+                <div class="sig-label">Exam Controller</div>
+            </div>
+            <div class="sig-block">
+                <div class="sig-line"></div>
+                <div class="sig-label">Principal</div>
+            </div>
+        </div>
+
+    </div>
+}
+
+</body>
+</html>

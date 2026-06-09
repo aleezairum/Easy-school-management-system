@@ -114,4 +114,39 @@ namespace School.API.DTOs.FeeManagement
         public string? Remarks { get; set; }
         public bool IsClear { get; set; }
     }
+
+    // ─── Report Request (for SpRPT_SMSStudentFee) ──────────────────
+    public class GetStudentFeeReportRequestDto
+    {
+        public int? VID { get; set; }
+        public int? StudentID { get; set; }
+        public int? SessionID { get; set; }
+        public string? SectionIDs { get; set; }   // comma separated
+        public string? ClassIDs { get; set; }     // comma separated
+        public string? FeeTypeIDs { get; set; }   // comma separated
+        public DateTime DateFrom { get; set; }
+        public DateTime DateTo { get; set; }
+        public int ReportType { get; set; }   // 0 = Paid, 1 = UnPaid, 2 = All
+    }
+
+    // ─── Report Result (mapped from SpRPT_SMSStudentFee) ───────────
+    public class StudentFeeReportDto
+    {
+        public long VID { get; set; }
+        public DateTime VDate { get; set; }
+        public string? RollNo { get; set; }
+        public string StudentName { get; set; } = string.Empty;
+        public string? FatherName { get; set; }
+        public string? ContactNo { get; set; }
+        public string ClassName { get; set; } = string.Empty;
+        public string SessionName { get; set; } = string.Empty;
+        public string SectionName { get; set; } = string.Empty;
+        public string GradeName { get; set; } = string.Empty;
+        public string FeeTypeName { get; set; } = string.Empty;
+        public decimal FeeAmount { get; set; }
+        public decimal ClearedAmount { get; set; }
+        public decimal PendingAmount { get; set; }
+        public string? Remarks { get; set; }
+        public bool IsClear { get; set; }
+    }
 }

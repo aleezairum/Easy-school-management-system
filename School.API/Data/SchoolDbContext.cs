@@ -1,15 +1,19 @@
 using Microsoft.EntityFrameworkCore;
 using School.API.Data.DBModels.Academic;
 using School.API.Data.DBModels.Accounts;
+using School.API.Data.DBModels.FeeManagement;
 using School.API.Data.DBModels.HR;
 using School.API.Data.DBModels.SMS;
 using School.API.Data.DBModels.Student;
+using School.API.Data.DBModels.UserManagement;
 using School.API.DTOs;
 using School.API.DTOs.Academic;
 using School.API.DTOs.Common;
 using School.API.DTOs.FeeManagement;
 using School.API.DTOs.SMS;
+using School.API.DTOs.UserManagement;
 using School.API.Models;
+using FeeVoucherListDto = School.API.DTOs.FeeManagement.FeeVoucherListDto;
 
 namespace School.API.Data
 {
@@ -36,8 +40,6 @@ namespace School.API.Data
         public DbSet<StdAttendence> StdAttendences { get; set; }
         public DbSet<Student> Students { get; set; }
         public DbSet<TimeTable> TimeTables { get; set; }
-        public DbSet<Exam> Exams { get; set; }
-        public DbSet<ExamResult> ExamResults { get; set; }
 
         // HR entities
         public DbSet<Designation> Designations { get; set; }
@@ -59,25 +61,47 @@ namespace School.API.Data
         // Keyless entities ï¿½ for SP results
         public DbSet<ResponseDto> AcademicSessionYearResponses { get; set; }
 
+        // 1. Add to DbSets (with the rest of your DbSet properties)
+        public DbSet<SecUser> SecUsers { get; set; }
+
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
 
+        
+            // 2. Add inside OnModelCreating method (with your other modelBuilder configs)
+            modelBuilder.Entity<SecUser>().HasNoKey().ToView(null);
+            modelBuilder.Entity<UserLoginResponseDto>().HasNoKey().ToView(null);
+
             modelBuilder.Entity<StudentFeePreviewResultDto>().HasNoKey();
             modelBuilder.Entity<ResponseDto>().HasNoKey();
 
-            // SchoolDbContext.cs — OnModelCreating
+            // SchoolDbContext.cs ï¿½ OnModelCreating
             modelBuilder.Entity<StudentComboDto>().HasNoKey();
 
-            // SchoolDbContext.cs — OnModelCreating
+            // SchoolDbContext.cs ï¿½ OnModelCreating
             modelBuilder.Entity<StudentFeeListDto>().HasNoKey();
+            modelBuilder.Entity<StudentFeeReportDto>().HasNoKey();
+            modelBuilder.Entity<VNoDto>().HasNoKey().ToView(null);
+            // OnModelCreating mein
+            modelBuilder.Entity<FeeVoucherRptRow>().HasNoKey().ToView(null);
+            modelBuilder.Entity<FeeVoucherMainRow>().HasNoKey().ToView(null);
+
+            // In SchoolDbContext.cs OnModelCreating()
+            modelBuilder.Entity<FeeVoucherListDto>().HasNoKey().ToView(null);
+            modelBuilder.Entity<FeeVoucherMain>().HasNoKey().ToView(null);
+            modelBuilder.Entity<FeeVoucherDetail>().HasNoKey().ToView(null);
 
             //  Keyless entities (SP result DTOs) 
             modelBuilder.Entity<ResponseDto>().HasNoKey();
             modelBuilder.Entity<AcademicSessionYearSaveDto>().HasNoKey();
             modelBuilder.Entity<SMSClassSaveDto>().HasNoKey();
             modelBuilder.Entity<SMSSectionSaveDto>().HasNoKey();
+            modelBuilder.Entity<SMSSubjectSaveDto>().HasNoKey();
+            modelBuilder.Entity<SMSExamSaveDto>().HasNoKey();
+            modelBuilder.Entity<SMSExamResultSaveDto>().HasNoKey();
             modelBuilder.Entity<AcademicGradeSaveDto>().HasNoKey();
             modelBuilder.Entity<FeeTypeSaveDto>().HasNoKey();
             modelBuilder.Entity<StudentSaveDto>().HasNoKey();

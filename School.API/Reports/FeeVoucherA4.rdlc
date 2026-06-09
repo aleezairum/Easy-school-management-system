@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Report xmlns="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition" xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner">
+  <AutoRefresh>0</AutoRefresh>
+  <ReportParameters>
+    <ReportParameter Name="VNo"><DataType>String</DataType><Nullable>true</Nullable><AllowBlank>true</AllowBlank><Prompt> </Prompt></ReportParameter>
+    <ReportParameter Name="VDate"><DataType>String</DataType><Nullable>true</Nullable><AllowBlank>true</AllowBlank><Prompt> </Prompt></ReportParameter>
+    <ReportParameter Name="PaymentMethod"><DataType>String</DataType><Nullable>true</Nullable><AllowBlank>true</AllowBlank><Prompt> </Prompt></ReportParameter>
+    <ReportParameter Name="ParentName"><DataType>String</DataType><Nullable>true</Nullable><AllowBlank>true</AllowBlank><Prompt> </Prompt></ReportParameter>
+    <ReportParameter Name="TotalPaid"><DataType>String</DataType><Nullable>true</Nullable><AllowBlank>true</AllowBlank><Prompt> </Prompt></ReportParameter>
+    <ReportParameter Name="RemainingDues"><DataType>String</DataType><Nullable>true</Nullable><AllowBlank>true</AllowBlank><Prompt> </Prompt></ReportParameter>
+    <ReportParameter Name="ReceivedBy"><DataType>String</DataType><Nullable>true</Nullable><AllowBlank>true</AllowBlank><Prompt> </Prompt></ReportParameter>
+  </ReportParameters>
+  <DataSources>
+    <DataSource Name="DummyDS">
+      <ConnectionProperties>
+        <DataProvider>System.Data.DataSet</DataProvider>
+        <ConnectString>/* Not used */</ConnectString>
+      </ConnectionProperties>
+      <rd:DataSourceID>a1b2c3d4</rd:DataSourceID>
+    </DataSource>
+  </DataSources>
+  <DataSets>
+    <DataSet Name="FeeDetails">
+      <Query>
+        <DataSourceName>DummyDS</DataSourceName>
+        <CommandText>/* Not used */</CommandText>
+      </Query>
+      <Fields>
+        <Field Name="StudentName"><DataField>StudentName</DataField><rd:TypeName>System.String</rd:TypeName></Field>
+        <Field Name="SectionName"><DataField>SectionName</DataField><rd:TypeName>System.String</rd:TypeName></Field>
+        <Field Name="FeeTypeName"><DataField>FeeTypeName</DataField><rd:TypeName>System.String</rd:TypeName></Field>
+        <Field Name="FeeMonth"><DataField>FeeMonth</DataField><rd:TypeName>System.DateTime</rd:TypeName></Field>
+        <Field Name="FeeAmount"><DataField>FeeAmount</DataField><rd:TypeName>System.Decimal</rd:TypeName></Field>
+        <Field Name="PaidAmount"><DataField>PaidAmount</DataField><rd:TypeName>System.Decimal</rd:TypeName></Field>
+        <Field Name="PendingBalance"><DataField>PendingBalance</DataField><rd:TypeName>System.Decimal</rd:TypeName></Field>
+      </Fields>
+    </DataSet>
+  </DataSets>
+  <ReportSections>
+    <ReportSection>
+      <Body>
+        <ReportItems>
+
+          <!-- School Name -->
+          <Textbox Name="SchoolName">
+            <CanGrow>true</CanGrow>
+            <KeepTogether>true</KeepTogether>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>SIR SYED MODEL HIGH SCHOOL (Boys &amp; Girls)</Value>
+                    <Style><FontFamily>Calibri</FontFamily><FontSize>17pt</FontSize><FontWeight>Bold</FontWeight></Style>
+                  </TextRun>
+                </TextRuns>
+                <Style><TextAlign>Center</TextAlign></Style>
+              </Paragraph>
+            </Paragraphs>
+            <rd:DefaultName>SchoolName</rd:DefaultName>
+            <Top>0cm</Top><Left>0cm</Left><Height>0.9cm</Height><Width>19cm</Width>
+            <ZIndex>0</ZIndex>
+            <Style><Border><Style>None</Style></Border><PaddingLeft>2pt</PaddingLeft><PaddingRight>2pt</PaddingRight><PaddingTop>2pt</PaddingTop><PaddingBottom>2pt</PaddingBottom></Style>
+          </Textbox>
+
+          <!-- Address -->
+          <Textbox Name="SchoolAddress">
+            <CanGrow>true</CanGrow>
+            <KeepTogether>true</KeepTogether>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>Chhonawala Road, Hasilpur  |  0333-6335634  |  0301-7330101</Value>
+                    <Style><FontFamily>Calibri</FontFamily><FontSize>10pt</FontSize><FontWeight>Bold</FontWeight></Style>
+                  </TextRun>
+                </TextRuns>
+                <Style><TextAlign>Center</TextAlign></Style>
+              </Paragraph>
+            </Paragraphs>
+            <rd:DefaultName>SchoolAddress</rd:DefaultName>
+            <Top>0.9cm</Top><Left>0cm</Left><Height>0.55cm</Height><Width>19cm</Width>
+            <ZIndex>1</ZIndex>
+            <Style><Border><Style>None</Style></Border></Style>
+          </Textbox>
+
+          <!-- Title -->
+          <Textbox Name="Title">
+            <CanGrow>true</CanGrow>
+            <KeepTogether>true</KeepTogether>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>Fee Receipt Voucher</Value>
+                    <Style><FontFamily>Calibri</FontFamily><FontSize>13pt</FontSize><FontWeight>Bold</FontWeight><TextDecoration>Underline</TextDecoration></Style>
+                  </TextRun>
+                </TextRuns>
+                <Style><TextAlign>Center</TextAlign></Style>
+              </Paragraph>
+            </Paragraphs>
+            <rd:DefaultName>Title</rd:DefaultName>
+            <Top>1.5cm</Top><Left>0cm</Left><Height>0.75cm</Height><Width>19cm</Width>
+            <ZIndex>2</ZIndex>
+            <Style><Border><Style>None</Style></Border></Style>
+          </Textbox>
+
+          <!-- Voucher No label + value -->
+          <Textbox Name="LblVNo">
+            <CanGrow>true</CanGrow><KeepTogether>true</KeepTogether>
+            <Paragraphs><Paragraph><TextRuns><TextRun><Value>Voucher No :</Value><Style><FontFamily>Calibri</FontFamily><FontSize>11pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+            <rd:DefaultName>LblVNo</rd:DefaultName>
+            <Top>2.5cm</Top><Left>0cm</Left><Height>0.55cm</Height><Width>3.5cm</Width><ZIndex>3</ZIndex>
+            <Style><Border><Style>None</Style></Border><PaddingLeft>4pt</PaddingLeft></Style>
+          </Textbox>
+          <Textbox Name="ValVNo">
+            <CanGrow>true</CanGrow><KeepTogether>true</KeepTogether>
+            <Paragraphs><Paragraph><TextRuns><TextRun><Value>=Parameters!VNo.Value</Value><Style><FontFamily>Calibri</FontFamily><FontSize>11pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+            <rd:DefaultName>ValVNo</rd:DefaultName>
+            <Top>2.5cm</Top><Left>3.5cm</Left><Height>0.55cm</Height><Width>5.5cm</Width><ZIndex>4</ZIndex>
+            <Style><Border><Style>None</Style></Border></Style>
+          </Textbox>
+
+          <!-- Pay Method label + value -->
+          <Textbox Name="LblPayMethod">
+            <CanGrow>true</CanGrow><KeepTogether>true</KeepTogether>
+            <Paragraphs><Paragraph><TextRuns><TextRun><Value>Pay. Method :</Value><Style><FontFamily>Calibri</FontFamily><FontSize>11pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+            <rd:DefaultName>LblPayMethod</rd:DefaultName>
+            <Top>2.5cm</Top><Left>10cm</Left><Height>0.55cm</Height><Width>3.5cm</Width><ZIndex>5</ZIndex>
+            <Style><Border><Style>None</Style></Border></Style>
+          </Textbox>
+          <Textbox Name="ValPayMethod">
+            <CanGrow>true</CanGrow><KeepTogether>true</KeepTogether>
+            <Paragraphs><Paragraph><TextRuns><TextRun><Value>=Parameters!PaymentMethod.Value</Value><Style><FontFamily>Calibri</FontFamily><FontSize>11pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+            <rd:DefaultName>ValPayMethod</rd:DefaultName>
+            <Top>2.5cm</Top><Left>13.5cm</Left><Height>0.55cm</Height><Width>5.5cm</Width><ZIndex>6</ZIndex>
+            <Style><Border><Style>None</Style></Border></Style>
+          </Textbox>
+
+          <!-- Date label + value -->
+          <Textbox Name="LblDate">
+            <CanGrow>true</CanGrow><KeepTogether>true</KeepTogether>
+            <Paragraphs><Paragraph><TextRuns><TextRun><Value>Date :</Value><Style><FontFamily>Calibri</FontFamily><FontSize>11pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+            <rd:DefaultName>LblDate</rd:DefaultName>
+            <Top>3.1cm</Top><Left>0cm</Left><Height>0.55cm</Height><Width>3.5cm</Width><ZIndex>7</ZIndex>
+            <Style><Border><Style>None</Style></Border><PaddingLeft>4pt</PaddingLeft></Style>
+          </Textbox>
+          <Textbox Name="ValDate">
+            <CanGrow>true</CanGrow><KeepTogether>true</KeepTogether>
+            <Paragraphs><Paragraph><TextRuns><TextRun><Value>=Parameters!VDate.Value</Value><Style><FontFamily>Calibri</FontFamily><FontSize>11pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+            <rd:DefaultName>ValDate</rd:DefaultName>
+            <Top>3.1cm</Top><Left>3.5cm</Left><Height>0.55cm</Height><Width>5.5cm</Width><ZIndex>8</ZIndex>
+            <Style><Border><Style>None</Style></Border></Style>
+          </Textbox>
+
+          <!-- Father Name label + value -->
+          <Textbox Name="LblFather">
+            <CanGrow>true</CanGrow><KeepTogether>true</KeepTogether>
+            <Paragraphs><Paragraph><TextRuns><TextRun><Value>Father Name :</Value><Style><FontFamily>Calibri</FontFamily><FontSize>11pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+            <rd:DefaultName>LblFather</rd:DefaultName>
+            <Top>3.1cm</Top><Left>10cm</Left><Height>0.55cm</Height><Width>3.5cm</Width><ZIndex>9</ZIndex>
+            <Style><Border><Style>None</Style></Border></Style>
+          </Textbox>
+          <Textbox Name="ValFather">
+            <CanGrow>true</CanGrow><KeepTogether>true</KeepTogether>
+            <Paragraphs><Paragraph><TextRuns><TextRun><Value>=Parameters!ParentName.Value</Value><Style><FontFamily>Calibri</FontFamily><FontSize>11pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+            <rd:DefaultName>ValFather</rd:DefaultName>
+            <Top>3.1cm</Top><Left>13.5cm</Left><Height>0.55cm</Height><Width>5.5cm</Width><ZIndex>10</ZIndex>
+            <Style><Border><Style>None</Style></Border></Style>
+          </Textbox>
+
+          <!-- Fee Details Table -->
+          <Tablix Name="FeeTable">
+            <TablixBody>
+              <TablixColumns>
+                <TablixColumn><Width>5cm</Width></TablixColumn>
+                <TablixColumn><Width>3.5cm</Width></TablixColumn>
+                <TablixColumn><Width>4cm</Width></TablixColumn>
+                <TablixColumn><Width>3cm</Width></TablixColumn>
+                <TablixColumn><Width>3.5cm</Width></TablixColumn>
+              </TablixColumns>
+              <TablixRows>
+                <TablixRow>
+                  <Height>0.75cm</Height>
+                  <TablixCells>
+                    <TablixCell><CellContents><Textbox Name="HdrStudent"><CanGrow>true</CanGrow><KeepTogether>true</KeepTogether><Paragraphs><Paragraph><TextRuns><TextRun><Value>Student</Value><Style><FontFamily>Calibri</FontFamily><FontSize>11pt</FontSize><FontWeight>Bold</FontWeight><Color>White</Color></Style></TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs><rd:DefaultName>HdrStudent</rd:DefaultName><Style><BackgroundColor>Black</BackgroundColor><Border><Style>Solid</Style><Width>1pt</Width></Border><PaddingLeft>4pt</PaddingLeft><PaddingRight>4pt</PaddingRight><PaddingTop>2pt</PaddingTop><PaddingBottom>2pt</PaddingBottom><VerticalAlign>Middle</VerticalAlign></Style></Textbox></CellContents></TablixCell>
+                    <TablixCell><CellContents><Textbox Name="HdrSection"><CanGrow>true</CanGrow><KeepTogether>true</KeepTogether><Paragraphs><Paragraph><TextRuns><TextRun><Value>Section</Value><Style><FontFamily>Calibri</FontFamily><FontSize>11pt</FontSize><FontWeight>Bold</FontWeight><Color>White</Color></Style></TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs><rd:DefaultName>HdrSection</rd:DefaultName><Style><BackgroundColor>Black</BackgroundColor><Border><Style>Solid</Style><Width>1pt</Width></Border><PaddingLeft>4pt</PaddingLeft><PaddingRight>4pt</PaddingRight><PaddingTop>2pt</PaddingTop><PaddingBottom>2pt</PaddingBottom><VerticalAlign>Middle</VerticalAlign></Style></Textbox></CellContents></TablixCell>
+                    <TablixCell><CellContents><Textbox Name="HdrFeeType"><CanGrow>true</CanGrow><KeepTogether>true</KeepTogether><Paragraphs><Paragraph><TextRuns><TextRun><Value>Fee Type / Month</Value><Style><FontFamily>Calibri</FontFamily><FontSize>11pt</FontSize><FontWeight>Bold</FontWeight><Color>White</Color></Style></TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs><rd:DefaultName>HdrFeeType</rd:DefaultName><Style><BackgroundColor>Black</BackgroundColor><Border><Style>Solid</Style><Width>1pt</Width></Border><PaddingLeft>4pt</PaddingLeft><PaddingRight>4pt</PaddingRight><PaddingTop>2pt</PaddingTop><PaddingBottom>2pt</PaddingBottom><VerticalAlign>Middle</VerticalAlign></Style></Textbox></CellContents></TablixCell>
+                    <TablixCell><CellContents><Textbox Name="HdrFeeAmt"><CanGrow>true</CanGrow><KeepTogether>true</KeepTogether><Paragraphs><Paragraph><TextRuns><TextRun><Value>Fee Amount</Value><Style><FontFamily>Calibri</FontFamily><FontSize>11pt</FontSize><FontWeight>Bold</FontWeight><Color>White</Color></Style></TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs><rd:DefaultName>HdrFeeAmt</rd:DefaultName><Style><BackgroundColor>Black</BackgroundColor><Border><Style>Solid</Style><Width>1pt</Width></Border><PaddingLeft>4pt</PaddingLeft><PaddingRight>4pt</PaddingRight><PaddingTop>2pt</PaddingTop><PaddingBottom>2pt</PaddingBottom><VerticalAlign>Middle</VerticalAlign></Style></Textbox></CellContents></TablixCell>
+                    <TablixCell><CellContents><Textbox Name="HdrPaid"><CanGrow>true</CanGrow><KeepTogether>true</KeepTogether><Paragraphs><Paragraph><TextRuns><TextRun><Value>Paid Amount</Value><Style><FontFamily>Calibri</FontFamily><FontSize>11pt</FontSize><FontWeight>Bold</FontWeight><Color>White</Color></Style></TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs><rd:DefaultName>HdrPaid</rd:DefaultName><Style><BackgroundColor>Black</BackgroundColor><Border><Style>Solid</Style><Width>1pt</Width></Border><PaddingLeft>4pt</PaddingLeft><PaddingRight>4pt</PaddingRight><PaddingTop>2pt</PaddingTop><PaddingBottom>2pt</PaddingBottom><VerticalAlign>Middle</VerticalAlign></Style></Textbox></CellContents></TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.75cm</Height>
+                  <TablixCells>
+                    <TablixCell><CellContents><Textbox Name="ColStudent"><CanGrow>true</CanGrow><KeepTogether>true</KeepTogether><Paragraphs><Paragraph><TextRuns><TextRun><Value>=Fields!StudentName.Value</Value><Style><FontFamily>Calibri</FontFamily><FontSize>10pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs><rd:DefaultName>ColStudent</rd:DefaultName><Style><Border><Style>Solid</Style><Width>0.5pt</Width></Border><PaddingLeft>4pt</PaddingLeft><PaddingRight>4pt</PaddingRight><PaddingTop>2pt</PaddingTop><PaddingBottom>2pt</PaddingBottom><VerticalAlign>Middle</VerticalAlign></Style></Textbox></CellContents></TablixCell>
+                    <TablixCell><CellContents><Textbox Name="ColSection"><CanGrow>true</CanGrow><KeepTogether>true</KeepTogether><Paragraphs><Paragraph><TextRuns><TextRun><Value>=Fields!SectionName.Value</Value><Style><FontFamily>Calibri</FontFamily><FontSize>10pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs><rd:DefaultName>ColSection</rd:DefaultName><Style><Border><Style>Solid</Style><Width>0.5pt</Width></Border><PaddingLeft>4pt</PaddingLeft><PaddingRight>4pt</PaddingRight><PaddingTop>2pt</PaddingTop><PaddingBottom>2pt</PaddingBottom><VerticalAlign>Middle</VerticalAlign></Style></Textbox></CellContents></TablixCell>
+                    <TablixCell><CellContents><Textbox Name="ColFeeType"><CanGrow>true</CanGrow><KeepTogether>true</KeepTogether><Paragraphs><Paragraph><TextRuns><TextRun><Value>=Fields!FeeTypeName.Value &amp; " " &amp; Format(Fields!FeeMonth.Value, "MMMM yyyy")</Value><Style><FontFamily>Calibri</FontFamily><FontSize>10pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs><rd:DefaultName>ColFeeType</rd:DefaultName><Style><Border><Style>Solid</Style><Width>0.5pt</Width></Border><PaddingLeft>4pt</PaddingLeft><PaddingRight>4pt</PaddingRight><PaddingTop>2pt</PaddingTop><PaddingBottom>2pt</PaddingBottom><VerticalAlign>Middle</VerticalAlign></Style></Textbox></CellContents></TablixCell>
+                    <TablixCell><CellContents><Textbox Name="ColFeeAmt"><CanGrow>true</CanGrow><KeepTogether>true</KeepTogether><Paragraphs><Paragraph><TextRuns><TextRun><Value>=Format(Fields!FeeAmount.Value, "N2")</Value><Style><FontFamily>Calibri</FontFamily><FontSize>10pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style><TextAlign>Right</TextAlign></Style></Paragraph></Paragraphs><rd:DefaultName>ColFeeAmt</rd:DefaultName><Style><Border><Style>Solid</Style><Width>0.5pt</Width></Border><PaddingLeft>4pt</PaddingLeft><PaddingRight>4pt</PaddingRight><PaddingTop>2pt</PaddingTop><PaddingBottom>2pt</PaddingBottom><VerticalAlign>Middle</VerticalAlign></Style></Textbox></CellContents></TablixCell>
+                    <TablixCell><CellContents><Textbox Name="ColPaid"><CanGrow>true</CanGrow><KeepTogether>true</KeepTogether><Paragraphs><Paragraph><TextRuns><TextRun><Value>=Format(Fields!PaidAmount.Value, "N2")</Value><Style><FontFamily>Calibri</FontFamily><FontSize>10pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style><TextAlign>Right</TextAlign></Style></Paragraph></Paragraphs><rd:DefaultName>ColPaid</rd:DefaultName><Style><Border><Style>Solid</Style><Width>0.5pt</Width></Border><PaddingLeft>4pt</PaddingLeft><PaddingRight>4pt</PaddingRight><PaddingTop>2pt</PaddingTop><PaddingBottom>2pt</PaddingBottom><VerticalAlign>Middle</VerticalAlign></Style></Textbox></CellContents></TablixCell>
+                  </TablixCells>
+                </TablixRow>
+              </TablixRows>
+            </TablixBody>
+            <TablixColumnHierarchy><TablixMembers><TablixMember /><TablixMember /><TablixMember /><TablixMember /><TablixMember /></TablixMembers></TablixColumnHierarchy>
+            <TablixRowHierarchy><TablixMembers><TablixMember><KeepWithGroup>After</KeepWithGroup></TablixMember><TablixMember><Group Name="DetailGroup" /></TablixMember></TablixMembers></TablixRowHierarchy>
+            <DataSetName>FeeDetails</DataSetName>
+            <Top>3.75cm</Top><Left>0cm</Left><Height>1.5cm</Height><Width>19cm</Width>
+            <ZIndex>11</ZIndex>
+          </Tablix>
+
+          <!-- Total Paid -->
+          <Textbox Name="LblTotal">
+            <CanGrow>true</CanGrow><KeepTogether>true</KeepTogether>
+            <Paragraphs><Paragraph><TextRuns><TextRun><Value>Total Paid :</Value><Style><FontFamily>Calibri</FontFamily><FontSize>13pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+            <rd:DefaultName>LblTotal</rd:DefaultName>
+            <Top>5.4cm</Top><Left>0cm</Left><Height>0.7cm</Height><Width>5cm</Width><ZIndex>12</ZIndex>
+            <Style><Border><Style>None</Style></Border><PaddingLeft>4pt</PaddingLeft></Style>
+          </Textbox>
+          <Textbox Name="ValTotal">
+            <CanGrow>true</CanGrow><KeepTogether>true</KeepTogether>
+            <Paragraphs><Paragraph><TextRuns><TextRun><Value>="Rs." &amp; Parameters!TotalPaid.Value</Value><Style><FontFamily>Calibri</FontFamily><FontSize>14pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style><TextAlign>Right</TextAlign></Style></Paragraph></Paragraphs>
+            <rd:DefaultName>ValTotal</rd:DefaultName>
+            <Top>5.4cm</Top><Left>12cm</Left><Height>0.75cm</Height><Width>7cm</Width><ZIndex>13</ZIndex>
+            <Style><Border><Style>Solid</Style><Width>2pt</Width></Border><PaddingLeft>4pt</PaddingLeft><PaddingRight>4pt</PaddingRight><VerticalAlign>Middle</VerticalAlign></Style>
+          </Textbox>
+
+          <!-- Remaining Dues -->
+          <Textbox Name="LblRemaining">
+            <CanGrow>true</CanGrow><KeepTogether>true</KeepTogether>
+            <Paragraphs><Paragraph><TextRuns><TextRun><Value>Remaining Dues :</Value><Style><FontFamily>Calibri</FontFamily><FontSize>11pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+            <rd:DefaultName>LblRemaining</rd:DefaultName>
+            <Top>6.25cm</Top><Left>0cm</Left><Height>0.55cm</Height><Width>5cm</Width><ZIndex>14</ZIndex>
+            <Style><Border><Style>None</Style></Border><PaddingLeft>4pt</PaddingLeft></Style>
+          </Textbox>
+          <Textbox Name="ValRemaining">
+            <CanGrow>true</CanGrow><KeepTogether>true</KeepTogether>
+            <Paragraphs><Paragraph><TextRuns><TextRun><Value>=Parameters!RemainingDues.Value</Value><Style><FontFamily>Calibri</FontFamily><FontSize>11pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style><TextAlign>Right</TextAlign></Style></Paragraph></Paragraphs>
+            <rd:DefaultName>ValRemaining</rd:DefaultName>
+            <Top>6.25cm</Top><Left>12cm</Left><Height>0.55cm</Height><Width>7cm</Width><ZIndex>15</ZIndex>
+            <Style><Border><Style>None</Style></Border><PaddingRight>4pt</PaddingRight></Style>
+          </Textbox>
+
+          <!-- Received By -->
+          <Textbox Name="LblReceivedBy">
+            <CanGrow>true</CanGrow><KeepTogether>true</KeepTogether>
+            <Paragraphs><Paragraph><TextRuns><TextRun><Value>Received By :</Value><Style><FontFamily>Calibri</FontFamily><FontSize>11pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style /></Paragraph></Paragraphs>
+            <rd:DefaultName>LblReceivedBy</rd:DefaultName>
+            <Top>6.85cm</Top><Left>0cm</Left><Height>0.55cm</Height><Width>5cm</Width><ZIndex>16</ZIndex>
+            <Style><Border><Style>None</Style></Border><PaddingLeft>4pt</PaddingLeft></Style>
+          </Textbox>
+          <Textbox Name="ValReceivedBy">
+            <CanGrow>true</CanGrow><KeepTogether>true</KeepTogether>
+            <Paragraphs><Paragraph><TextRuns><TextRun><Value>=Parameters!ReceivedBy.Value</Value><Style><FontFamily>Calibri</FontFamily><FontSize>11pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style><TextAlign>Right</TextAlign></Style></Paragraph></Paragraphs>
+            <rd:DefaultName>ValReceivedBy</rd:DefaultName>
+            <Top>6.85cm</Top><Left>12cm</Left><Height>0.55cm</Height><Width>7cm</Width><ZIndex>17</ZIndex>
+            <Style><Border><Style>None</Style></Border><PaddingRight>4pt</PaddingRight></Style>
+          </Textbox>
+
+          <!-- Footer -->
+          <Textbox Name="Footer">
+            <CanGrow>true</CanGrow><KeepTogether>true</KeepTogether>
+            <Paragraphs><Paragraph><TextRuns><TextRun><Value>EasySchool.:- 0304-1003238</Value><Style><FontFamily>Calibri</FontFamily><FontSize>9pt</FontSize><FontWeight>Bold</FontWeight></Style></TextRun></TextRuns><Style><TextAlign>Center</TextAlign></Style></Paragraph></Paragraphs>
+            <rd:DefaultName>Footer</rd:DefaultName>
+            <Top>7.5cm</Top><Left>0cm</Left><Height>0.5cm</Height><Width>19cm</Width><ZIndex>18</ZIndex>
+            <Style><TopBorder><Style>Solid</Style><Width>2pt</Width><Color>Black</Color></TopBorder><Border><Style>None</Style></Border></Style>
+          </Textbox>
+
+        </ReportItems>
+        <Height>8.1cm</Height>
+        <Style />
+      </Body>
+      <Width>19cm</Width>
+      <Page>
+        <PageHeight>29.7cm</PageHeight>
+        <PageWidth>21cm</PageWidth>
+        <LeftMargin>1cm</LeftMargin>
+        <RightMargin>1cm</RightMargin>
+        <TopMargin>0cm</TopMargin>
+        <BottomMargin>0cm</BottomMargin>
+        <Style />
+      </Page>
+    </ReportSection>
+  </ReportSections>
+  <rd:ReportUnitType>Cm</rd:ReportUnitType>
+  <rd:ReportID>fee-voucher-a4</rd:ReportID>
+</Report>

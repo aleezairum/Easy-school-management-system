@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using School.API.DTOs.Academic;
+using School.API.Extensions;
 using School.API.Services.Interfaces.Academic;
 
 
@@ -38,7 +39,7 @@ public class CampusController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Save(SMSCampusSaveDto dto)
     {
-        int userId = 1; // later from JWT
+        int userId = Request.GetUserId();
         string userIp = HttpContext.Connection.RemoteIpAddress?.ToString();
 
         var result = await _service.SaveAsync(dto, userId, userIp);

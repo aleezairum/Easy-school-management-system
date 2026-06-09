@@ -109,5 +109,8 @@ namespace School.API.DTOs.Academic
         public string Name { get; set; } = string.Empty;
         public string? Name_Urdu { get; set; }
         public string? ClassRollNo { get; set; }
+        public string? FatherName { get; set; }
+        public string? FatherCNIC { get; set; }
+
     }
 }

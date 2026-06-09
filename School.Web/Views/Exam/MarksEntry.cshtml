@@ -13,57 +13,44 @@
                     <i class="bi bi-arrow-left me-1"></i> Back to Exams
                 </a>
             </div>
-            <!-- Filter Section - Two Column Layout -->
+            <!-- Filter Section -->
             <div class="filter-section" style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
                 <div class="row g-3">
-                    <!-- Left Column -->
-                    <div class="col-lg-6 col-12">
-                        <div class="row g-3">
-                            <div class="col-lg-4 col-md-6 col-12">
-                                <label for="classId" class="form-label">Class <span class="text-danger">*</span></label>
-                                <select class="form-select" id="classId" required onchange="loadSections()">
-                                    <option value="">-- Select Class --</option>
-                                </select>
-                            </div>
-                            <div class="col-lg-4 col-md-6 col-12">
-                                <label for="sectionId" class="form-label">Section <span class="text-danger">*</span></label>
-                                <select class="form-select" id="sectionId" required disabled onchange="loadStudents()">
-                                    <option value="">-- Select Section --</option>
-                                </select>
-                            </div>
-                            <div class="col-lg-4 col-md-6 col-12">
-                                <label for="examDate" class="form-label">Date <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" id="examDate" required />
-                            </div>
-                        </div>
+                    <div class="col-xl col-lg-3 col-md-4 col-sm-6 col-12">
+                        <label for="examId" class="form-label">Exam <span class="text-danger">*</span></label>
+                        <select class="form-select" id="examId" required>
+                            <option value="">-- Select Exam --</option>
+                        </select>
                     </div>
-                    <!-- Right Column -->
-                    <div class="col-lg-6 col-12">
-                        <div class="row g-3">
-                            <div class="col-lg-3 col-md-4 col-sm-6 col-12">
-                                <label for="examId" class="form-label">Exam <span class="text-danger">*</span></label>
-                                <select class="form-select" id="examId" required>
-                                    <option value="">-- Select Exam --</option>
-                                </select>
-                            </div>
-                            <div class="col-lg-3 col-md-4 col-sm-6 col-12">
-                                <label for="subjectId" class="form-label">Subject <span class="text-danger">*</span></label>
-                                <select class="form-select" id="subjectId" required>
-                                    <option value="">-- Select Subject --</option>
-                                </select>
-                            </div>
-                            <div class="col-lg-3 col-md-4 col-sm-6 col-12">
-                                <label for="totalMarks" class="form-label">Total Marks <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="totalMarks" value="100" min="1" required />
-                            </div>
-                            <div class="col-lg-3 col-md-4 col-sm-6 col-12">
-                                <label for="passPercentage" class="form-label">Pass %</label>
-                                <div class="input-group">
-                                    <input type="number" class="form-control" id="passPercentage" value="40" min="0" max="100" />
-                                    <span class="input-group-text">%</span>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="col-xl col-lg-3 col-md-4 col-sm-6 col-12">
+                        <label for="examDate" class="form-label">Date <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="examDate" required />
+                    </div>
+                    <div class="col-xl col-lg-3 col-md-4 col-sm-6 col-12">
+                        <label for="classId" class="form-label">Class <span class="text-danger">*</span></label>
+                        <select class="form-select" id="classId" required>
+                            <option value="">-- Select Class --</option>
+                        </select>
+                    </div>
+                    <div class="col-xl col-lg-3 col-md-4 col-sm-6 col-12">
+                        <label for="sectionId" class="form-label">Section <span class="text-danger">*</span></label>
+                        <select class="form-select" id="sectionId" required disabled>
+                            <option value="">-- Select Section --</option>
+                        </select>
+                    </div>
+                    <div class="col-xl col-lg-3 col-md-4 col-sm-6 col-12">
+                        <label for="subjectId" class="form-label">Subject <span class="text-danger">*</span></label>
+                        <select class="form-select" id="subjectId" required disabled>
+                            <option value="">-- Select Subject --</option>
+                        </select>
+                    </div>
+                    <div class="col-xl col-lg-3 col-md-4 col-sm-6 col-12">
+                        <label for="totalMarks" class="form-label">Total Marks <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="totalMarks" value="100" min="1" required />
+                    </div>
+                    <div class="col-xl col-lg-3 col-md-4 col-sm-6 col-12">
+                        <label for="passMarks" class="form-label">Pass Marks</label>
+                        <input type="number" class="form-control" id="passMarks" value="40" min="0" step="0.01" />
                     </div>
                 </div>
                 <div class="row mt-3">
@@ -117,42 +104,100 @@
 
 @section Scripts {
 <script>
-    ////const API_BASE = 'http://localhost:5266/api';
+
     let students = [];
+    let allExams = [];
+
+    // Attendance code map (matches StdAttendence.Attendence)
+    const ATT = { PRESENT: 1, ABSENT: 0, LEAVE: 2 };
 
     $(document).ready(function () {
         $('#examDate').val(new Date().toISOString().split('T')[0]);
         loadDropdowns();
+
+        // When class changes, reload sections and subjects for that class
+        $('#classId').on('change', function () {
+            loadSections();
+            loadSubjects();
+        });
+
+        // Re-render grid when total marks changes
+        $('#totalMarks').on('change', function () {
+            if (students.length > 0) renderMarksGrid(students);
+        });
+
+        // Keyboard navigation in marks grid:
+        //  Enter / ArrowDown -> focus next enabled marks input
+        //  ArrowUp           -> focus previous enabled marks input
+        $('#marksBody').on('keydown', '.marks-input', function (e) {
+            const key = e.key;
+            if (key !== 'Enter' && key !== 'ArrowDown' && key !== 'ArrowUp') return;
+            if (e.ctrlKey || e.altKey || e.metaKey) return;
+
+            e.preventDefault();
+
+            const inputs = $('#marksBody .marks-input:not(:disabled)').toArray();
+            const idx = inputs.indexOf(this);
+            if (idx === -1) return;
+
+            const nextIdx = (key === 'ArrowUp') ? idx - 1 : idx + 1;
+            if (nextIdx < 0 || nextIdx >= inputs.length) return;
+
+            const next = inputs[nextIdx];
+            next.focus();
+            if (typeof next.select === 'function') next.select();
+        });
     });
 
     async function loadDropdowns() {
         try {
-            const [classes, exams, subjects] = await Promise.all([
-                fetch(`${API_BASE}/SMSClass`).then(r => r.ok ? r.json() : []),
-                fetch(`${API_BASE}/Exam`).then(r => r.ok ? r.json() : []),
-                fetch(`${API_BASE}/Subject`).then(r => r.ok ? r.json() : [])
+            const [classes, exams] = await Promise.all([
+                fetch(`${API_BASE}/class`).then(r => r.ok ? r.json() : []).catch(() => []),
+                fetch(`${API_BASE}/exam`).then(r => r.ok ? r.json() : []).catch(() => [])
             ]);
+
+            allExams = exams || [];
 
             const classSelect = $('#classId');
             classSelect.find('option:not(:first)').remove();
-            classes.forEach(c => {
-                classSelect.append(`<option value="${c.viD}">${c.vName}</option>`);
+            (classes || []).forEach(c => {
+                classSelect.append(`<option value="${c.vid}">${c.vName}</option>`);
             });
 
-            const examSelect = $('#examId');
-            examSelect.find('option:not(:first)').remove();
-            exams.forEach(e => {
-                examSelect.append(`<option value="${e.id}" data-total="${e.totalMarks}">${e.examName} (${e.examType})</option>`);
-            });
-
-            const subjectSelect = $('#subjectId');
-            subjectSelect.find('option:not(:first)').remove();
-            subjects.forEach(s => {
-                subjectSelect.append(`<option value="${s.id}">${s.name}</option>`);
-            });
+            renderExamDropdown(allExams);
         } catch (error) {
             console.error('Error loading dropdowns:', error);
         }
+    }
+
+    async function loadSubjects() {
+        const classId = $('#classId').val();
+        const subjectSelect = $('#subjectId');
+        subjectSelect.find('option:not(:first)').remove();
+        subjectSelect.prop('disabled', true);
+
+        if (!classId) return;
+
+        try {
+            const response = await fetch(`${API_BASE}/subject/byClass/${classId}`);
+            if (response.ok) {
+                const subjects = await response.json();
+                (subjects || []).forEach(s => {
+                    subjectSelect.append(`<option value="${s.vid}">${s.vName}</option>`);
+                });
+                subjectSelect.prop('disabled', false);
+            }
+        } catch (error) {
+            console.error('Error loading subjects:', error);
+        }
+    }
+
+    function renderExamDropdown(exams) {
+        const examSelect = $('#examId');
+        examSelect.find('option:not(:first)').remove();
+        (exams || []).forEach(e => {
+            examSelect.append(`<option value="${e.vid}">${e.vName}</option>`);
+        });
     }
 
     async function loadSections() {
@@ -164,11 +209,11 @@
         if (!classId) return;
 
         try {
-            const response = await fetch(`${API_BASE}/SMSSection/byClass/${classId}`);
+            const response = await fetch(`${API_BASE}/section/byClass/${classId}`);
             if (response.ok) {
                 const sections = await response.json();
-                sections.forEach(s => {
-                    sectionSelect.append(`<option value="${s.viD}">${s.vName}</option>`);
+                (sections || []).forEach(s => {
+                    sectionSelect.append(`<option value="${s.vid}">${s.vName}</option>`);
                 });
                 sectionSelect.prop('disabled', false);
             }
@@ -178,38 +223,127 @@
     }
 
     async function loadStudents() {
-        const classId = $('#classId').val();
         const sectionId = $('#sectionId').val();
-        const examId = $('#examId').val();
+        const examId    = $('#examId').val();
         const subjectId = $('#subjectId').val();
+        const examDate  = $('#examDate').val();
+        const sessionId = SESSION_ID;
 
-        if (!classId || !sectionId) {
-            toastWarning('Please select Class and Section');
+        if (!sectionId)            { toastWarning('Please select a Section'); return; }
+        if (!examId || !subjectId) { toastWarning('Please select Exam and Subject'); return; }
+        if (!examDate)             { toastWarning('Please select a Date'); return; }
+        if (!sessionId) {
+            toastWarning('No active session. Please switch session first.');
             return;
         }
 
-        if (!examId || !subjectId) {
-            toastWarning('Please select Exam and Subject');
-            return;
-        }
+        const classId = $('#classId').val();
 
         try {
-            const response = await fetch(`${API_BASE}/Student/byClassSection?classId=${classId}&sectionId=${sectionId}`);
-            if (response.ok) {
-                students = await response.json();
-                renderMarksGrid(students);
-            } else {
-                // Mock data
-                students = [
-                    { id: 1, rollNo: '001', studentName: 'Ahmed Khan', marks: '', attendance: 'P' },
-                    { id: 2, rollNo: '002', studentName: 'Sara Ali', marks: '', attendance: 'P' },
-                    { id: 3, rollNo: '003', studentName: 'Muhammad Hassan', marks: '', attendance: 'P' }
-                ];
-                renderMarksGrid(students);
+            // 1. Students in this class+section
+            const studentsRes = await fetch(
+                `${API_BASE}/student/search?classId=${classId}&sectionId=${sectionId}`);
+            if (!studentsRes.ok) {
+                toastError('Failed to load students');
+                renderMarksGrid([]);
+                return;
             }
+            const rawStudentsAll = await studentsRes.json();
+
+            // Only active students (status 1) — exclude dropouts, sorted by RollNo
+            const rawStudents = (rawStudentsAll || [])
+                .filter(s => s.statusID === 1)
+                .sort((a, b) => {
+                    const ra = parseInt(a.rollNo, 10);
+                    const rb = parseInt(b.rollNo, 10);
+                    if (!isNaN(ra) && !isNaN(rb) && ra !== rb) return ra - rb;
+                    return (a.rollNo || '').toString().localeCompare((b.rollNo || '').toString(), undefined, { numeric: true });
+                });
+
+            // 2. Attendance for this section on the exam's date
+            const attParams = new URLSearchParams({
+                SessionID: sessionId,
+                SectionID: sectionId,
+                DateFrom:  examDate,
+                DateTo:    examDate
+            });
+            const attendance = await fetch(`${API_BASE}/stdattendence?${attParams.toString()}`)
+                .then(r => r.ok ? r.json() : [])
+                .catch(() => []);
+
+            const attByStudent = {};
+            (attendance || []).forEach(a => {
+                const sid = a.studentID ?? a.studentId;
+                attByStudent[sid] = a.attendence;   // 1=Present, 0=Absent, 2=Leave
+            });
+
+            // 3. Existing marks for this exam+subject+class+section (to pre-fill)
+            const prefillParams = new URLSearchParams({
+                subjectId: subjectId,
+                classId:   classId,
+                sectionId: sectionId
+            });
+            const existing = await fetch(`${API_BASE}/examresult/byExam/${examId}?${prefillParams.toString()}`)
+                .then(r => r.ok ? r.json() : [])
+                .catch(() => []);
+            const existingByStudent = {};
+            (existing || []).forEach(r => { existingByStudent[r.studentID] = r; });
+
+            // Prefill Total Marks / Pass Marks from the first existing result row
+            if (existing && existing.length > 0) {
+                const first = existing[0];
+                if (first.totalMarks !== null && first.totalMarks !== undefined) {
+                    $('#totalMarks').val(first.totalMarks);
+                }
+                if (first.passMarks !== null && first.passMarks !== undefined) {
+                    $('#passMarks').val(first.passMarks);
+                }
+            }
+
+            // 4. Merge
+            students = (rawStudents || []).map(s => {
+                const sid     = s.vid ?? s.id ?? s.studentID;
+                const prev    = existingByStudent[sid];
+                const attCode = attByStudent[sid];   // may be undefined
+
+                const attLabel =
+                    attCode === ATT.PRESENT ? 'Present' :
+                    attCode === ATT.ABSENT  ? 'Absent'  :
+                    attCode === ATT.LEAVE   ? 'Leave'   :
+                                              'Not Marked';
+
+                const canEnterMarks = attCode === ATT.PRESENT;
+
+                return {
+                    id:          sid,
+                    rollNo:      s.rollNo || s.vName || '',
+                    studentName: s.name || s.vName || s.studentName || '-',
+                    resultVid:   prev ? prev.vid : 0,
+                    marks:       canEnterMarks && prev && !prev.isAbsent ? prev.marksObtained : '',
+                    attCode:     attCode,
+                    attLabel:    attLabel,
+                    canEnter:    canEnterMarks
+                };
+            });
+
+            const missingCount = students.filter(s => s.attCode === undefined).length;
+            if (missingCount > 0) {
+                toastWarning(`${missingCount} student(s) have no attendance for ${examDate}. Mark attendance first.`);
+            }
+
+            renderMarksGrid(students);
         } catch (error) {
             console.error('Error loading students:', error);
             toastError('Error loading students');
+        }
+    }
+
+    function attendanceBadgeClass(attCode) {
+        switch (attCode) {
+            case ATT.PRESENT: return 'bg-success';
+            case ATT.ABSENT:  return 'bg-danger';
+            case ATT.LEAVE:   return 'bg-info';
+            default:          return 'bg-secondary';
         }
     }
 
@@ -217,7 +351,7 @@
         const tbody = $('#marksBody');
         tbody.empty();
 
-        if (studentList.length === 0) {
+        if (!studentList || studentList.length === 0) {
             tbody.html('<tr><td colspan="4" class="text-center text-muted py-4">No students found</td></tr>');
             return;
         }
@@ -225,21 +359,25 @@
         const totalMarks = parseInt($('#totalMarks').val()) || 100;
 
         studentList.forEach((student, index) => {
+            const disabled    = !student.canEnter ? 'disabled' : '';
+            const placeholder = student.canEnter ? `0-${totalMarks}` : '—';
+
             const row = `
                 <tr data-student-id="${student.id}">
                     <td><strong>${student.rollNo || index + 1}</strong></td>
-                    <td>${student.studentName || student.name || '-'}</td>
+                    <td>${student.studentName || '-'}</td>
                     <td class="text-center">
                         <input type="number" class="form-control form-control-sm marks-input"
                                data-student-id="${student.id}"
-                               value="${student.marks || ''}"
+                               value="${student.marks ?? ''}"
                                min="0" max="${totalMarks}"
-                               placeholder="0-${totalMarks}"
-                               onchange="validateMarks(this, ${totalMarks})" />
+                               placeholder="${placeholder}"
+                               ${disabled}
+                               onchange="updateMarks(this, ${totalMarks})" />
                     </td>
                     <td class="text-center">
-                        <span class="badge ${student.attendance === 'P' ? 'bg-success' : (student.attendance === 'A' ? 'bg-danger' : 'bg-info')}">
-                            ${student.attendance === 'P' ? 'Present' : (student.attendance === 'A' ? 'Absent' : 'Leave')}
+                        <span class="badge ${attendanceBadgeClass(student.attCode)}">
+                            ${student.attLabel}
                         </span>
                     </td>
                 </tr>
@@ -248,65 +386,99 @@
         });
     }
 
-    function validateMarks(input, maxMarks) {
-        const value = parseInt($(input).val());
-        if (value < 0) $(input).val(0);
-        if (value > maxMarks) $(input).val(maxMarks);
+    function updateMarks(input, maxMarks) {
+        let value = parseFloat($(input).val());
+        if (isNaN(value)) value = '';
+        else if (value < 0) value = 0;
+        else if (value > maxMarks) value = maxMarks;
+        $(input).val(value);
 
         const studentId = $(input).data('student-id');
         const student = students.find(s => s.id === studentId);
-        if (student) {
-            student.marks = $(input).val();
-        }
+        if (student) student.marks = value;
     }
 
     async function saveMarks() {
-        const classId = $('#classId').val();
-        const sectionId = $('#sectionId').val();
-        const examId = $('#examId').val();
-        const subjectId = $('#subjectId').val();
-        const examDate = $('#examDate').val();
-        const totalMarks = $('#totalMarks').val();
+        const classId        = $('#classId').val();
+        const sectionId      = $('#sectionId').val();
+        const examId         = $('#examId').val();
+        const subjectId      = $('#subjectId').val();
+        const examDate       = $('#examDate').val();
+        const totalMarks    = parseFloat($('#totalMarks').val()) || 100;
+        const passMarksRaw  = parseFloat($('#passMarks').val());
+        const passMarks     = isNaN(passMarksRaw) ? null : passMarksRaw;
 
         if (!classId || !sectionId || !examId || !subjectId || !examDate) {
             toastWarning('Please fill all required fields');
             return;
         }
 
-        // Collect marks from inputs
-        const marksData = [];
-        $('.marks-input').each(function () {
-            const studentId = $(this).data('student-id');
-            const marks = $(this).val();
-            if (marks !== '') {
-                marksData.push({
-                    studentId: studentId,
-                    examId: parseInt(examId),
-                    subjectId: parseInt(subjectId),
-                    marksObtained: parseFloat(marks),
-                    totalMarks: parseFloat(totalMarks),
-                    examDate: examDate
-                });
-            }
+        const rows = [];
+        students.forEach(s => {
+            // Send Present students with marks entered, AND all non-Present students
+            // so the SP records their absence/leave. Skip Not-Marked students entirely
+            // (the SP would reject them anyway).
+            if (s.attCode === undefined) return;
+
+            const hasMarks = s.marks !== '' && s.marks !== null && s.marks !== undefined;
+            if (s.canEnter && !hasMarks) return;   // present but no marks entered → skip
+
+            const isAbsent = s.attCode !== ATT.PRESENT;
+            const marks    = s.canEnter ? parseFloat(s.marks) : null;
+            const isPassed = !isAbsent && passMarks !== null && marks !== null
+                ? (marks >= passMarks)
+                : false;
+
+            rows.push({
+                VID:           s.resultVid || 0,
+                ExamID:        parseInt(examId),
+                ClassID:       parseInt(classId),
+                SectionID:     parseInt(sectionId),
+                SubjectID:     parseInt(subjectId),
+                StudentID:     s.id,
+                VDate:         examDate,
+                TotalMarks:    totalMarks,
+                PassMarks:     passMarks,
+                MarksObtained: marks,
+                IsAbsent:      isAbsent,
+                IsPassed:      isPassed,
+                IsActive:      true
+            });
         });
 
-        if (marksData.length === 0) {
-            toastWarning('Please enter marks for at least one student');
+        if (rows.length === 0) {
+            toastWarning('Please enter marks for at least one Present student');
             return;
         }
 
+        const payload = {
+            ExamID:     parseInt(examId),
+            ClassID:    parseInt(classId),
+            SectionID:  parseInt(sectionId),
+            SubjectID:  parseInt(subjectId),
+            TotalMarks: totalMarks,
+            PassMarks:  passMarks,
+            Results:    rows
+        };
+
         try {
-            const response = await fetch(`${API_BASE}/ExamResult/bulk`, {
+            const response = await fetch(`${API_BASE}/examresult/bulk`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(marksData)
+                body: JSON.stringify(payload)
             });
 
             if (response.ok) {
-                toastSuccess('Marks saved successfully!');
+                const responses = await response.json();
+                const failures = (responses || []).filter(r => r.returnCode !== 200);
+                if (failures.length === 0) {
+                    toastSuccess(`Marks saved successfully for ${rows.length} student(s)`);
+                    await loadStudents();   // refresh with persisted VIDs
+                } else {
+                    toastError(`${failures.length} row(s) failed: ${failures[0].returnMessage}`);
+                }
             } else {
-                const error = await response.text();
-                toastError(error || 'Failed to save marks');
+                toastError('Failed to save marks');
             }
         } catch (error) {
             console.error('Error saving marks:', error);
@@ -314,14 +486,12 @@
         }
     }
 
-    function printAwardList() {
-        window.print();
-    }
+    function printAwardList() { window.print(); }
 
     function printDetailedReport() {
-        const classId = $('#classId').val();
+        const classId   = $('#classId').val();
         const sectionId = $('#sectionId').val();
-        const examId = $('#examId').val();
+        const examId    = $('#examId').val();
         const subjectId = $('#subjectId').val();
 
         if (classId && sectionId && examId && subjectId) {
@@ -330,21 +500,5 @@
             toastWarning('Please select all filters first');
         }
     }
-
-    // Update total marks when exam changes
-    $('#examId').on('change', function () {
-        const selectedOption = $(this).find('option:selected');
-        const totalMarks = selectedOption.data('total');
-        if (totalMarks) {
-            $('#totalMarks').val(totalMarks);
-        }
-    });
-
-    // Re-render grid when total marks changes
-    $('#totalMarks').on('change', function () {
-        if (students.length > 0) {
-            renderMarksGrid(students);
-        }
-    });
 </script>
 }

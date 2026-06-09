@@ -1,0 +1,321 @@
+@model School.Web.Controllers.ExamController.ExecutivePayload
+@{
+    Layout = null;
+    ViewBag.Title = "Executive Report";
+
+    var className   = ViewData["ClassName"] as string;
+    var sectionName = ViewData["SectionName"] as string;
+    var examName    = ViewData["ExamName"] as string;
+
+    var overall  = Model?.Overall ?? new School.Web.Controllers.ExamController.ExecutiveOverall();
+    var subjects = Model?.Subjects ?? new List<School.Web.Controllers.ExamController.ExecutiveSubject>();
+
+    string Pct(decimal? v) => v.HasValue ? v.Value.ToString("0.00") + "%" : "-";
+
+    // Grand totals for the teacher-wise table
+    var grandObt   = subjects.Sum(s => s.Obtained ?? 0);
+    var grandTotal = subjects.Sum(s => s.Total ?? 0);
+    var grandPct   = grandTotal > 0 ? grandObt * 100m / grandTotal : 0m;
+
+    var classLine = (string.IsNullOrWhiteSpace(className) ? "-" : className)
+                  + (string.IsNullOrWhiteSpace(sectionName) ? "" : " (" + sectionName + ")");
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Executive Report – Sir Syed Model High School</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        /* Force background colors / shading to render when printing */
+        html, body, table, th, td, tr {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            background: #fff;
+            color: #000;
+            padding: 12px;
+        }
+
+        .page-wrapper {
+            border: 2px solid #555;
+            max-width: 820px;
+            margin: 0 auto;
+        }
+
+        /* ── School Header ── */
+        .school-header {
+            text-align: center;
+            border-bottom: 2px solid #555;
+            padding: 10px 4px 8px;
+        }
+        .school-name    { font-size: 21px; font-weight: bold; }
+        .school-address { font-size: 14.5px; font-weight: bold; margin-top: 3px; }
+
+        /* ── Executive Report Title ── */
+        .exec-title {
+            background-color: #d6d6d6;
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            padding: 7px 4px;
+            border-bottom: 1px solid #555;
+            letter-spacing: 0.5px;
+        }
+
+        /* ── Logo / blank area ── */
+        .logo-area {
+            height: 120px;
+            border-bottom: 1px solid #555;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #aaa;
+            font-size: 11px;
+        }
+
+        /* ── Black class/exam bar ── */
+        .class-bar {
+            background-color: #1a1a1a;
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 10px;
+            font-size: 12.5px;
+            font-weight: bold;
+            border-bottom: 1px solid #555;
+        }
+
+        /* ── Two-column body ── */
+        .body-columns {
+            display: flex;
+            align-items: flex-start;
+            border-bottom: 1px solid #555;
+        }
+
+        .left-col {
+            width: 42%;
+            border-right: 1px solid #555;
+            padding: 0;
+        }
+
+        .right-col {
+            flex: 1;
+            padding: 0;
+        }
+
+        /* ── Section heading ── */
+        .section-heading {
+            background-color: #d6d6d6;
+            text-align: center;
+            font-weight: bold;
+            font-size: 12.5px;
+            padding: 5px 4px;
+            border-bottom: 1px solid #555;
+        }
+
+        /* ── Generic inner table ── */
+        .inner-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11.5px;
+        }
+
+        .inner-table th,
+        .inner-table td {
+            border: 1px solid #555;
+            padding: 4px 6px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .inner-table th {
+            background-color: #efefef;
+            font-weight: bold;
+        }
+
+        .inner-table td.col-left { text-align: left; padding-left: 8px; }
+
+        /* subject-status: two-line cell for fail/pass counts */
+        .two-line { line-height: 1.6; }
+
+        /* Total row */
+        tr.total-row td { font-weight: bold; background-color: #efefef; }
+
+        .empty-msg { text-align: center; padding: 18px; color: #777; font-style: italic; }
+
+        /* Print toolbar (hidden when printing) */
+        .print-toolbar {
+            max-width: 820px;
+            margin: 0 auto 8px;
+            text-align: right;
+        }
+        .print-toolbar .btn-print {
+            background: #1a7a3e; color: #fff; border: none;
+            padding: 8px 22px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;
+        }
+        .print-toolbar .btn-close-win {
+            background: #555; color: #fff; border: none;
+            padding: 8px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; margin-left: 8px;
+        }
+
+        /* ── Print ── */
+        /* margin:0 removes the browser's auto date/title (top) and URL (bottom) */
+        @@page { size: A4 portrait; margin: 0; }
+
+        @@media print {
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+            body { padding: 6mm 8mm; }
+            .no-print { display: none !important; }
+            .page-wrapper { border: 2px solid #555; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="print-toolbar no-print">
+    <button type="button" class="btn-print" onclick="window.print()">Print</button>
+    <button type="button" class="btn-close-win" onclick="window.close()">Close</button>
+</div>
+
+<div class="page-wrapper">
+
+    <!-- School Header -->
+    <div class="school-header">
+        <div class="school-name">SIR SYED MODEL HIGH SCHOOL (Boys&amp;Girls)</div>
+        <div class="school-address">Chhonawala Road, Hasilpur &nbsp; 0333-6335634 , 0301-7330101</div>
+    </div>
+
+    <!-- Executive Report Title -->
+    <div class="exec-title">EXECUTIVE REPORT</div>
+
+    <!-- Logo / Blank Area -->
+    <div class="logo-area">
+        <!-- School logo or banner can be placed here -->
+    </div>
+
+    <!-- Class / Exam Black Bar -->
+    <div class="class-bar">
+        <span>Class : @classLine</span>
+        <span>Exam : @(string.IsNullOrWhiteSpace(examName) ? "-" : examName)</span>
+    </div>
+
+    <!-- Two Columns -->
+    <div class="body-columns">
+
+        <!-- ── LEFT COLUMN ── -->
+        <div class="left-col">
+
+            <!-- Over All Report -->
+            <div class="section-heading">Over All Report</div>
+            <table class="inner-table">
+                <thead>
+                    <tr>
+                        <th>Total</th>
+                        <th>Total Pass</th>
+                        <th>Total Fail</th>
+                        <th>Result %</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>@overall.TotalStudents</td>
+                        <td>@overall.TotalPass</td>
+                        <td>@overall.TotalFail</td>
+                        <td>@Pct(overall.ResultPct)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Subject Wise Status Report -->
+            <div class="section-heading" style="margin-top:1px;">Subject Wise Status Report</div>
+            <table class="inner-table">
+                <thead>
+                    <tr>
+                        <th class="col-left">Subject</th>
+                        <th>Fail</th>
+                        <th>Pass</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (subjects.Count == 0)
+                    {
+                        <tr><td colspan="3" class="empty-msg">No data.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var sub in subjects)
+                        {
+                            <tr>
+                                <td class="col-left">@sub.SubjectName</td>
+                                <td class="two-line">@sub.FailCount<br /><small>@Pct(sub.FailPct)</small></td>
+                                <td class="two-line">@sub.PassCount<br /><small>@Pct(sub.PassPct)</small></td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+
+        </div><!-- /left-col -->
+
+        <!-- ── RIGHT COLUMN ── -->
+        <div class="right-col">
+
+            <!-- Subject and Teacher wise -->
+            <div class="section-heading">Subject and Teacher wise Percentage Report</div>
+            <table class="inner-table">
+                <thead>
+                    <tr>
+                        <th class="col-left">Subject</th>
+                        <th>Name of Teacher</th>
+                        <th>Obtained</th>
+                        <th>Total</th>
+                        <th>Percent</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (subjects.Count == 0)
+                    {
+                        <tr><td colspan="5" class="empty-msg">No data.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var t in subjects)
+                        {
+                            <tr>
+                                <td class="col-left">@t.SubjectName</td>
+                                <td>@t.TeacherName</td>
+                                <td>@((t.Obtained ?? 0).ToString("N0"))</td>
+                                <td>@((t.Total ?? 0).ToString("N0"))</td>
+                                <td>@Pct(t.Percent)</td>
+                            </tr>
+                        }
+                        <tr class="total-row">
+                            <td class="col-left" colspan="2"><strong>Total</strong></td>
+                            <td>@grandObt.ToString("N0")</td>
+                            <td>@grandTotal.ToString("N0")</td>
+                            <td>@Pct(grandPct)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+        </div><!-- /right-col -->
+
+    </div><!-- /body-columns -->
+
+</div>
+</body>
+</html>

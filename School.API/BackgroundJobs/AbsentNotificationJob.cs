@@ -50,8 +50,10 @@ namespace School.API.BackgroundJobs
                 MessageType = SmsMessageType.Absent
             };
 
-            var result = await smsService.SendBulkAsync(dto);
-            logger.LogInformation("[AbsentNotification] Sent: {Sent}, Failed: {Failed}", result.TotalSent, result.TotalFailed);
+            var result = await smsService.EnqueueBulkAsync(dto);
+            logger.LogInformation(
+                "[AbsentNotification] Queued: {Total} (JobId={JobId})",
+                result.Total, result.JobId);
 
             _lastRunDate = DateTime.Today;
         }

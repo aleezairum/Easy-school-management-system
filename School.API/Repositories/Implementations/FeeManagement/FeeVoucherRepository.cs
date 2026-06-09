@@ -1,7 +1,9 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using School.API.Data;
 using School.API.Data.DBModels.Accounts;
-using School.API.DTOs;
+using School.API.Data.DBModels.FeeManagement;
+using School.API.DTOs.Common;
+using School.API.DTOs.FeeManagement;
 using School.API.Repositories.Interfaces.Accounts;
 
 namespace School.API.Repositories.Implementations.Accounts
@@ -9,222 +11,166 @@ namespace School.API.Repositories.Implementations.Accounts
     public class FeeVoucherRepository : IFeeVoucherRepository
     {
         private readonly SchoolDbContext _context;
-        private readonly IChallanVoucherRepository _challanRepository;
 
-        public FeeVoucherRepository(SchoolDbContext context, IChallanVoucherRepository challanRepository)
+        public FeeVoucherRepository(SchoolDbContext context)
         {
             _context = context;
-            _challanRepository = challanRepository;
         }
 
-        public async Task<IEnumerable<FeeVoucherListDto>> GetAllAsync()
+        public async Task<FeeVoucherMain?> GetByIdAsync(int id)
         {
-            return await _context.FeeVouchers
-                .Include(f => f.ChallanVoucher)
-                    .ThenInclude(c => c!.Student)
-                .Include(f => f.PaymentMethod)
-                .OrderByDescending(f => f.PaymentDate)
-                .Select(f => new FeeVoucherListDto
-                {
-                    Id = f.Id,
-                    VoucherNumber = f.VoucherNumber,
-                    ChallanNumber = f.ChallanVoucher != null ? f.ChallanVoucher.ChallanNumber : null,
-                    StudentName = f.ChallanVoucher != null && f.ChallanVoucher.Student != null
-                        ? f.ChallanVoucher.Student.NameOfStudent : null,
-                    RollNumber = f.ChallanVoucher != null && f.ChallanVoucher.Student != null
-                        ? f.ChallanVoucher.Student.RollNo : null,
-                    PaymentMethodName = f.PaymentMethod != null ? f.PaymentMethod.Name : null,
-                    PaymentDate = f.PaymentDate,
-                    AmountPaid = f.AmountPaid,
-                    TransactionReference = f.TransactionReference
-                })
+            var result = await _context
+                .Set<FeeVoucherMain>()
+                .FromSqlRaw("EXEC SpGet_FeeVoucherMain @VID={0}", id)
+                .AsNoTracking()
                 .ToListAsync();
+            return result.FirstOrDefault();
         }
 
-        public async Task<FeeVoucherDto?> GetByIdAsync(int id)
+        public async Task<ResponseDto> SaveAsync(FeeVoucherSaveDto dto, int userId, string userIp)
         {
-            return await _context.FeeVouchers
-                .Include(f => f.ChallanVoucher)
-                    .ThenInclude(c => c!.Student)
-                .Include(f => f.PaymentMethod)
-                .Where(f => f.Id == id)
-                .Select(f => new FeeVoucherDto
-                {
-                    Id = f.Id,
-                    VoucherNumber = f.VoucherNumber,
-                    ChallanVoucherId = f.ChallanVoucherId,
-                    ChallanNumber = f.ChallanVoucher != null ? f.ChallanVoucher.ChallanNumber : null,
-                    StudentName = f.ChallanVoucher != null && f.ChallanVoucher.Student != null
-                        ? f.ChallanVoucher.Student.NameOfStudent : null,
-                    RollNumber = f.ChallanVoucher != null && f.ChallanVoucher.Student != null
-                        ? f.ChallanVoucher.Student.RollNo : null,
-                    PaymentMethodId = f.PaymentMethodId,
-                    PaymentMethodName = f.PaymentMethod != null ? f.PaymentMethod.Name : null,
-                    PaymentDate = f.PaymentDate,
-                    AmountPaid = f.AmountPaid,
-                    ChequeNumber = f.ChequeNumber,
-                    ChequeDate = f.ChequeDate,
-                    BankName = f.BankName,
-                    TransactionReference = f.TransactionReference,
-                    Remarks = f.Remarks,
-                    ReceivedBy = f.ReceivedBy,
-                    CreatedAt = f.CreatedAt
-                })
-                .FirstOrDefaultAsync();
-        }
-
-        public async Task<IEnumerable<FeeVoucherListDto>> GetByChallanAsync(int challanVoucherId)
-        {
-            return await _context.FeeVouchers
-                .Include(f => f.ChallanVoucher)
-                    .ThenInclude(c => c!.Student)
-                .Include(f => f.PaymentMethod)
-                .Where(f => f.ChallanVoucherId == challanVoucherId)
-                .OrderByDescending(f => f.PaymentDate)
-                .Select(f => new FeeVoucherListDto
-                {
-                    Id = f.Id,
-                    VoucherNumber = f.VoucherNumber,
-                    ChallanNumber = f.ChallanVoucher != null ? f.ChallanVoucher.ChallanNumber : null,
-                    StudentName = f.ChallanVoucher != null && f.ChallanVoucher.Student != null
-                        ? f.ChallanVoucher.Student.NameOfStudent : null,
-                    RollNumber = f.ChallanVoucher != null && f.ChallanVoucher.Student != null
-                        ? f.ChallanVoucher.Student.RollNo : null,
-                    PaymentMethodName = f.PaymentMethod != null ? f.PaymentMethod.Name : null,
-                    PaymentDate = f.PaymentDate,
-                    AmountPaid = f.AmountPaid,
-                    TransactionReference = f.TransactionReference
-                })
+            // 1. Save Main Voucher
+            var mainResult = await _context
+                .Set<ResponseDto>()
+                .FromSqlRaw(
+                    "EXEC SpSave_FeeVoucherMain @VID={0}, @VNo={1}, @VDate={2}, @PaymentMethodID={3}, @ParentID={4}, @BalanceAmount={5}, @PaidAmount={6}, @Remarks={7}, @UserID={8}, @UserIP={9}",
+                    dto.VID,
+                    dto.VNo ?? "",
+                    dto.VDate,
+                    dto.PaymentMethodID,
+                    dto.ParentID,
+                    dto.BalanceAmount,
+                    dto.PaidAmount,
+                    dto.Remarks ?? "",
+                    userId,
+                    userIp)
+                .AsNoTracking()
                 .ToListAsync();
-        }
 
-        public async Task<IEnumerable<FeeVoucherListDto>> GetByDateRangeAsync(DateTime fromDate, DateTime toDate)
-        {
-            return await _context.FeeVouchers
-                .Include(f => f.ChallanVoucher)
-                    .ThenInclude(c => c!.Student)
-                .Include(f => f.PaymentMethod)
-                .Where(f => f.PaymentDate >= fromDate.Date && f.PaymentDate <= toDate.Date)
-                .OrderByDescending(f => f.PaymentDate)
-                .Select(f => new FeeVoucherListDto
-                {
-                    Id = f.Id,
-                    VoucherNumber = f.VoucherNumber,
-                    ChallanNumber = f.ChallanVoucher != null ? f.ChallanVoucher.ChallanNumber : null,
-                    StudentName = f.ChallanVoucher != null && f.ChallanVoucher.Student != null
-                        ? f.ChallanVoucher.Student.NameOfStudent : null,
-                    RollNumber = f.ChallanVoucher != null && f.ChallanVoucher.Student != null
-                        ? f.ChallanVoucher.Student.RollNo : null,
-                    PaymentMethodName = f.PaymentMethod != null ? f.PaymentMethod.Name : null,
-                    PaymentDate = f.PaymentDate,
-                    AmountPaid = f.AmountPaid,
-                    TransactionReference = f.TransactionReference
-                })
-                .ToListAsync();
-        }
+            var main = mainResult.FirstOrDefault();
+            if (main == null || main.ReturnCode != 200)
+                return main ?? new ResponseDto { ReturnCode = 500, ReturnMessage = "Failed to save voucher" };
 
-        public async Task<FeeVoucher> CreateAsync(CreateFeeVoucherDto dto)
-        {
-            var entity = new FeeVoucher
+            decimal mid = main.VID;
+
+            // 2. Save each detail line
+            foreach (var detail in dto.Details)
             {
-                VoucherNumber = await GenerateVoucherNumberAsync(),
-                ChallanVoucherId = dto.ChallanVoucherId,
-                PaymentMethodId = dto.PaymentMethodId,
-                PaymentDate = dto.PaymentDate.Date,
-                AmountPaid = dto.AmountPaid,
-                ChequeNumber = dto.ChequeNumber,
-                ChequeDate = dto.ChequeDate,
-                BankName = dto.BankName,
-                TransactionReference = dto.TransactionReference,
-                Remarks = dto.Remarks,
-                ReceivedBy = dto.ReceivedBy,
-                CreatedAt = DateTime.UtcNow
+                await _context
+                    .Set<ResponseDto>()
+                    .FromSqlRaw(
+                        "EXEC SpSave_FeeVoucherDetail @VID={0}, @MID={1}, @StudentFeeID={2}, @PendingBalance={3}, @PaidAmount={4}, @UserID={5}, @UserIP={6}",
+                        detail.VID,
+                        mid,
+                        detail.StudentFeeID,
+                        detail.PendingBalance,
+                        detail.PaidAmount,
+                        userId,
+                        userIp)
+                    .AsNoTracking()
+                    .ToListAsync();
+            }
+
+            return main;
+        }
+        public async Task<string> GetNextVNoAsync()
+        {
+            // SP returns single row with VNo column
+            var result = await _context
+                .Set<VNoDto>()
+                .FromSqlRaw("EXEC SpGetNextVNo_FeeVoucherMain")
+                .AsNoTracking()
+                .ToListAsync();
+
+            return result.FirstOrDefault()?.VNo ?? "";
+        }
+
+        public async Task<FeeVoucherReceiptDto?> GetReceiptAsync(decimal id)
+        {
+            var rows = await _context
+                .Set<FeeVoucherRptRow>()
+                .FromSqlRaw("EXEC SpRPT_FeeVoucher @VID={0}", id)
+                .AsNoTracking()
+                .ToListAsync();
+
+            if (!rows.Any()) return null;
+
+            var first = rows.First();
+
+            return new FeeVoucherReceiptDto
+            {
+                VID = first.VID,
+                VNo = first.VNo,
+                VDate = first.VDate,
+                PaymentMethod = first.PaymentMethod,
+                ParentName = first.ParentName,
+                BalanceAmount = first.BalanceAmount,
+                PaidAmount = first.PaidAmount,
+                Remarks = first.Remarks,
+                UserFullName = first.UserFullName,
+                Details = rows.Select(r => new FeeVoucherReceiptDetailDto
+                {
+                    StudentFeeID = r.StudentFeeID,
+                    StudentName = r.StudentName,
+                    SectionName = r.SectionName,
+                    FeeTypeName = r.FeeTypeName,
+                    FeeMonth = r.FeeMonth,
+                    FeeAmount = r.FeeAmount,
+                    PaidAmount = r.DetailPaidAmount,
+                    PendingBalance = r.PendingBalance
+                }).ToList()
             };
-
-            _context.FeeVouchers.Add(entity);
-            await _context.SaveChangesAsync();
-
-            // Update the challan's paid amount
-            await _challanRepository.UpdatePaidAmountAsync(dto.ChallanVoucherId, dto.AmountPaid);
-
-            return entity;
         }
-
-        public async Task<FeeVoucher?> UpdateAsync(int id, UpdateFeeVoucherDto dto)
+        public async Task<List<FeeVoucherListDto>> GetAllAsync(int? classId, int? sectionId, int? studentId, DateTime dateFrom, DateTime dateTo)
         {
-            var entity = await _context.FeeVouchers.FindAsync(id);
-            if (entity == null)
-                return null;
+            var rows = await _context.Set<FeeVoucherListDto>()
+                .FromSqlRaw(
+                    "EXEC SpGet_FeeVoucherMain @ClassID={0}, @SectionID={1}, @StudentID={2}, @DateFrom={3}, @DateTo={4}",
+                    classId.HasValue ? (object)classId.Value : DBNull.Value,
+                    sectionId.HasValue ? (object)sectionId.Value : DBNull.Value,
+                    studentId.HasValue ? (object)studentId.Value : DBNull.Value,
+                    dateFrom, dateTo)
+                .AsNoTracking()
+                .ToListAsync();
 
-            var oldAmount = entity.AmountPaid;
-            var oldChallanId = entity.ChallanVoucherId;
-
-            entity.ChallanVoucherId = dto.ChallanVoucherId;
-            entity.PaymentMethodId = dto.PaymentMethodId;
-            entity.PaymentDate = dto.PaymentDate.Date;
-            entity.AmountPaid = dto.AmountPaid;
-            entity.ChequeNumber = dto.ChequeNumber;
-            entity.ChequeDate = dto.ChequeDate;
-            entity.BankName = dto.BankName;
-            entity.TransactionReference = dto.TransactionReference;
-            entity.Remarks = dto.Remarks;
-            entity.ReceivedBy = dto.ReceivedBy;
-            entity.UpdatedAt = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync();
-
-            // If amount or challan changed, update the challan's paid amount
-            if (oldChallanId != dto.ChallanVoucherId || oldAmount != dto.AmountPaid)
+            // Group by VID — ek voucher ke multiple detail rows ho sakti hain
+            return rows.GroupBy(r => r.VID).Select(g =>
             {
-                // Revert old challan's paid amount
-                await _challanRepository.UpdatePaidAmountAsync(oldChallanId, -oldAmount);
-                // Update new challan's paid amount
-                await _challanRepository.UpdatePaidAmountAsync(dto.ChallanVoucherId, dto.AmountPaid);
-            }
-
-            return entity;
-        }
-
-        public async Task<bool> DeleteAsync(int id)
-        {
-            var entity = await _context.FeeVouchers.FindAsync(id);
-            if (entity == null)
-                return false;
-
-            // Revert the challan's paid amount
-            await _challanRepository.UpdatePaidAmountAsync(entity.ChallanVoucherId, -entity.AmountPaid);
-
-            _context.FeeVouchers.Remove(entity);
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
-        public async Task<bool> ExistsAsync(int id)
-        {
-            return await _context.FeeVouchers.AnyAsync(f => f.Id == id);
-        }
-
-        public async Task<string> GenerateVoucherNumberAsync()
-        {
-            var today = DateTime.UtcNow;
-            var prefix = $"FV-{today:yyyyMMdd}-";
-
-            var lastVoucher = await _context.FeeVouchers
-                .Where(f => f.VoucherNumber.StartsWith(prefix))
-                .OrderByDescending(f => f.VoucherNumber)
-                .FirstOrDefaultAsync();
-
-            int nextNumber = 1;
-            if (lastVoucher != null)
-            {
-                var lastNumberStr = lastVoucher.VoucherNumber.Replace(prefix, "");
-                if (int.TryParse(lastNumberStr, out int lastNumber))
+                var first = g.First();
+                return new FeeVoucherListDto
                 {
-                    nextNumber = lastNumber + 1;
-                }
-            }
-
-            return $"{prefix}{nextNumber:D4}";
+                    VID = first.VID,
+                    VNo = first.VNo,
+                    VDate = first.VDate,
+                    PaymentMethod = first.PaymentMethod,
+                    ParentID = first.ParentID,
+                    ParentName = first.ParentName,
+                    BalanceAmount = first.BalanceAmount,
+                    PaidAmount = first.PaidAmount,
+                    Remarks = first.Remarks,
+                    UserFullName = first.UserFullName,
+                    StudentID = first.StudentID,
+                    StudentName = first.StudentName,
+                    SectionName = first.SectionName,
+                };
+            }).ToList();
         }
+
+        public async Task<ResponseDto> DeleteByIdAsync(int id, int userId, string userIp)
+        {
+            var result = await _context.Set<ResponseDto>()
+                .FromSqlRaw(
+                    "EXEC SpDelete_FeeVoucherMain @VID={0}, @UserID={1}, @UserIP={2}",
+                    id, userId, userIp)
+                .AsNoTracking()
+                .ToListAsync();
+
+            return result.FirstOrDefault() ?? new ResponseDto
+            {
+                ReturnCode = 500,
+                ReturnMessage = "Unknown error"
+            };
+        }
+
     }
 }

@@ -1,6 +1,6 @@
-// Controllers/ApplyFeeController.cs
 using Microsoft.AspNetCore.Mvc;
 using School.API.DTOs.FeeManagement;
+using School.API.Extensions;
 using School.API.Services.Interfaces.Accounts;
 
 [ApiController]
@@ -25,11 +25,20 @@ public class ApplyFeeController : ControllerBase
     [HttpPost("apply")]
     public async Task<IActionResult> Apply([FromBody] ApplyFeeRequestDto dto)
     {
-        int userId = 1; // later from JWT
+        int userId = Request.GetUserId();
         string userIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "0.0.0.0";
         var result = await _service.ApplyFeeAsync(dto, userId, userIp);
         return Ok(result);
     }
+    [HttpGet("Pendings")]
+    public async Task<IActionResult> GetPendings(
+        [FromQuery] int studentId)
+    {
+        
+        var result = await _service.GetPendingsAsync(studentId);
+        return Ok(result);
+    }
+
 
     [HttpGet]
     public async Task<IActionResult> GetList(
@@ -52,10 +61,37 @@ public class ApplyFeeController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("Report")]
+    public async Task<IActionResult> GetReport(
+        [FromQuery] DateTime? dateFrom,
+        [FromQuery] DateTime? dateTo,
+        [FromQuery] int? studentId,
+        [FromQuery] int? sessionId,
+        [FromQuery] string? sectionIds,
+        [FromQuery] string? classIds,
+        [FromQuery] string? feeTypeIds,
+        [FromQuery] int reportType = 2)
+    {
+        var dto = new GetStudentFeeReportRequestDto
+        {
+            DateFrom   = dateFrom ?? DateTime.Now.AddMonths(-1),
+            DateTo     = dateTo   ?? DateTime.Now,
+            StudentID  = studentId,
+            SessionID  = sessionId,
+            SectionIDs = sectionIds,
+            ClassIDs   = classIds,
+            FeeTypeIDs = feeTypeIds,
+            ReportType = reportType
+        };
+
+        var result = await _service.GetReportAsync(dto);
+        return Ok(result);
+    }
+
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var userId = 1;   // TODO: JWT se lena
+        var userId = Request.GetUserId();
         var userIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
         var result = await _service.DeleteAsync(id, userId, userIp);

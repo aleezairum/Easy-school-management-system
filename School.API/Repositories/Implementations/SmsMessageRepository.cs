@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using School.API.Data;
 using School.API.Data.DBModels.SMS;
+using School.API.DTOs;
 using School.API.DTOs.Common;
 using School.API.DTOs.SMS;
 using School.API.Repositories.Interfaces;
@@ -104,6 +105,85 @@ namespace School.API.Repositories.Implementations
                 .ToListAsync();
 
             return result.FirstOrDefault()?.TotalCount ?? 0;
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // Queue methods — used by SmsQueueProcessor. These intentionally
+        // bypass SpSave_SmsMessage because the SP does not know about
+        // JobId; straight EF Core insert is simpler and transactional.
+        // ─────────────────────────────────────────────────────────────
+        public async Task EnqueueAsync(
+            IEnumerable<SmsMessage> messages, int userId, string userIp)
+        {
+            var now = DateTime.UtcNow;
+            var list = messages.ToList();
+            foreach (var m in list)
+            {
+                m.VID = 0;
+                m.Status = SmsStatus.Pending;
+                m.SentAt = null;
+                m.ErrorMessage = null;
+                m.InsertedBy = userId;
+                m.InsertedDate = now;
+                m.InsertedIp = userIp;
+            }
+            _context.SmsMessages.AddRange(list);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<List<SmsMessage>> GetPendingBatchAsync(int take)
+        {
+            return await _context.SmsMessages
+                .Where(m => m.Status == SmsStatus.Pending)
+                .OrderBy(m => m.InsertedDate)
+                .ThenBy(m => m.VID)
+                .Take(take)
+                .ToListAsync();
+        }
+
+        public async Task UpdateStatusAsync(
+            int vid, SmsStatus status, string? errorMessage)
+        {
+            var entity = await _context.SmsMessages.FindAsync(vid);
+            if (entity == null) return;
+
+            entity.Status = status;
+            entity.ErrorMessage = errorMessage;
+            if (status == SmsStatus.Sent)
+                entity.SentAt = DateTime.UtcNow;
+            entity.UpdatedDate = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<SmsQueueStatusDto> GetJobStatusAsync(string jobId)
+        {
+            var dto = new SmsQueueStatusDto { JobId = jobId };
+            if (string.IsNullOrWhiteSpace(jobId)) return dto;
+
+            var grouped = await _context.SmsMessages
+                .Where(m => m.JobId == jobId)
+                .GroupBy(m => m.Status)
+                .Select(g => new { Status = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+            foreach (var row in grouped)
+            {
+                switch (row.Status)
+                {
+                    case SmsStatus.Pending: dto.Pending = row.Count; break;
+                    case SmsStatus.Sent:    dto.Sent    = row.Count; break;
+                    case SmsStatus.Failed:  dto.Failed  = row.Count; break;
+                }
+            }
+            dto.Total = dto.Pending + dto.Sent + dto.Failed;
+            return dto;
+        }
+
+        public async Task<int> GetOverallPendingCountAsync()
+        {
+            return await _context.SmsMessages
+                .CountAsync(m => m.Status == SmsStatus.Pending);
         }
     }
 }

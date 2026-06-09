@@ -1,0 +1,319 @@
+@{
+    ViewData["Title"] = "Certificates";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<div class="container-fluid">
+    <div id="alertContainer"></div>
+
+    <div class="card" style="border-radius: 10px; border: none; box-shadow: 0 2px 12px rgba(0,0,0,0.08);">
+        <div class="card-body p-3">
+
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 style="font-weight: 600; color: #475569; margin: 0; font-size: 14px;">
+                    <i class="bi bi-award-fill me-1"></i> Print Certificate
+                </h6>
+            </div>
+
+            <!-- Certificate Type -->
+            <div class="filter-section" style="background: #f8fafc; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px;">
+                <div class="row g-2 align-items-end">
+                    <div class="col-12">
+                        <label class="form-label form-label-sm mb-1">Certificate Type</label>
+                        <div class="d-flex gap-3">
+                            <div class="form-check form-check-sm">
+                                <input class="form-check-input" type="radio" name="certType" id="certLeaving" value="leaving" checked onchange="toggleCertFields()">
+                                <label class="form-check-label" for="certLeaving">School Leaving Certificate</label>
+                            </div>
+                            <div class="form-check form-check-sm">
+                                <input class="form-check-input" type="radio" name="certType" id="certCharacter" value="character" onchange="toggleCertFields()">
+                                <label class="form-check-label" for="certCharacter">Provisional &amp; Character Certificate</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Student Filters: Class / Section / Roll No / Student -->
+            <div class="filter-section" style="background: #f8fafc; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px;">
+                <div class="row g-2 align-items-end">
+                    <div class="col-lg-3 col-md-6 col-sm-6 col-12">
+                        <label for="filterClass" class="form-label form-label-sm mb-1">Class</label>
+                        <select class="form-select form-select-sm" id="filterClass" onchange="loadFilterSections()">
+                            <option value="">-- Select Class --</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-sm-6 col-12">
+                        <label for="filterSection" class="form-label form-label-sm mb-1">Section</label>
+                        <select class="form-select form-select-sm" id="filterSection" disabled onchange="loadStudents()">
+                            <option value="">-- Select Section --</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                        <label for="filterRollNo" class="form-label form-label-sm mb-1">Roll No</label>
+                        <select class="form-select form-select-sm" id="filterRollNo" onchange="selectStudentByRoll()">
+                            <option value="">-- Select Roll --</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-4 col-md-8 col-sm-12 col-12">
+                        <label for="filterStudent" class="form-label form-label-sm mb-1">Student</label>
+                        <select class="form-select form-select-sm" id="filterStudent" onchange="selectRollByStudent()">
+                            <option value="">-- Select Student --</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Optional Override Fields: Leaving Certificate -->
+            <div class="filter-section optional-section" id="leavingFields"
+                 style="background: #f8fafc; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px;">
+                <div class="row g-2 align-items-end">
+                    <div class="col-12 mb-1">
+                        <small class="text-muted">Optional fields (leave blank to use defaults from school record)</small>
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-12">
+                        <label for="leavingDate" class="form-label form-label-sm mb-1">Leaving Date</label>
+                        <input type="date" class="form-control form-control-sm" id="leavingDate" />
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-12">
+                        <label for="leavingExamination" class="form-label form-label-sm mb-1">Examination</label>
+                        <input type="text" class="form-control form-control-sm" id="leavingExamination" placeholder="e.g. Annual 2025" />
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-12">
+                        <label for="leavingMarks" class="form-label form-label-sm mb-1">Marks Obtained</label>
+                        <input type="text" class="form-control form-control-sm" id="leavingMarks" />
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-12">
+                        <label for="leavingTotal" class="form-label form-label-sm mb-1">Total Marks</label>
+                        <input type="text" class="form-control form-control-sm" id="leavingTotal" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Optional Override Fields: Character Certificate -->
+            <div class="filter-section optional-section" id="characterFields"
+                 style="background: #f8fafc; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; display:none;">
+                <div class="row g-2 align-items-end">
+                    <div class="col-12 mb-1">
+                        <small class="text-muted">Optional fields (leave blank to use defaults from school record)</small>
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-12">
+                        <label for="boardRollNo" class="form-label form-label-sm mb-1">Board Roll No</label>
+                        <input type="text" class="form-control form-control-sm" id="boardRollNo" />
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-12">
+                        <label for="examRollNo" class="form-label form-label-sm mb-1">Exam Roll No</label>
+                        <input type="text" class="form-control form-control-sm" id="examRollNo" />
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-12">
+                        <label for="charExamination" class="form-label form-label-sm mb-1">Examination</label>
+                        <input type="text" class="form-control form-control-sm" id="charExamination" />
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-12">
+                        <label for="charSession" class="form-label form-label-sm mb-1">Session</label>
+                        <select class="form-select form-select-sm" id="charSession">
+                            <option value="">-- Latest Session --</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-12">
+                        <label for="charMarks" class="form-label form-label-sm mb-1">Marks Obtained</label>
+                        <input type="text" class="form-control form-control-sm" id="charMarks" />
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-12">
+                        <label for="charTotal" class="form-label form-label-sm mb-1">Total Marks</label>
+                        <input type="text" class="form-control form-control-sm" id="charTotal" />
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-12">
+                        <label for="conduct" class="form-label form-label-sm mb-1">Conduct</label>
+                        <input type="text" class="form-control form-control-sm" id="conduct"
+                               placeholder="e.g. regular, punctual, obedient" />
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-12">
+                        <label for="moralCharacter" class="form-label form-label-sm mb-1">Moral Character</label>
+                        <input type="text" class="form-control form-control-sm" id="moralCharacter" placeholder="e.g. Excellent" />
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-12">
+                        <label for="issueDate" class="form-label form-label-sm mb-1">Issue Date</label>
+                        <input type="date" class="form-control form-control-sm" id="issueDate" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="filter-section" style="background: #f8fafc; border-radius: 8px; padding: 12px 14px;">
+                <div class="row g-2 align-items-end">
+                    <div class="col-12 d-flex gap-2 align-items-end justify-content-end">
+                        <button type="button" class="btn btn-success btn-sm" onclick="printCertificate()" id="btnPrint">
+                            <i class="bi bi-printer me-1"></i> Print Certificate
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearFilters()" title="Clear">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .form-label-sm { font-size: 12px; }
+        .form-check-sm .form-check-label { font-size: 12px; }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        let isSyncing = false;
+
+        $(document).ready(function () {
+            loadDropdowns();
+            toggleCertFields();
+        });
+
+        // ── Toggle optional override panels ───────────────────────────────
+        function toggleCertFields() {
+            const type = $('input[name="certType"]:checked').val();
+            $('#leavingFields').toggle(type === 'leaving');
+            $('#characterFields').toggle(type === 'character');
+        }
+
+        // ── Load Class + Sessions dropdowns ───────────────────────────────
+        async function loadDropdowns() {
+            try {
+                const [classes, sessions] = await Promise.all([
+                    fetch(`${API_BASE}/class`).then(r => r.ok ? r.json() : []),
+                    fetch(`${API_BASE}/AcademicSessionYear`).then(r => r.ok ? r.json() : [])
+                ]);
+                classes.forEach(c => $('#filterClass').append(`<option value="${c.vid}">${c.vName}</option>`));
+                sessions.forEach(s => $('#charSession').append(`<option value="${s.vid}">${s.vName}</option>`));
+            } catch (err) {
+                console.error('Error loading dropdowns:', err);
+            }
+        }
+
+        // ── Load Sections by Class ────────────────────────────────────────
+        async function loadFilterSections() {
+            const classId = $('#filterClass').val();
+            const sectionSelect = $('#filterSection');
+            sectionSelect.find('option:not(:first)').remove();
+            sectionSelect.val('').prop('disabled', true);
+            $('#filterRollNo').find('option:not(:first)').remove();
+            $('#filterStudent').find('option:not(:first)').remove();
+
+            if (!classId) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/section/byClass/${classId}`);
+                if (response.ok) {
+                    const sections = await response.json();
+                    sections.forEach(s => {
+                        sectionSelect.append(`<option value="${s.vid}">${s.vName}</option>`);
+                    });
+                    sectionSelect.prop('disabled', false);
+                }
+            } catch (err) {
+                console.error('Error loading sections:', err);
+            }
+
+            await loadStudents();
+        }
+
+        // ── Load Students ─────────────────────────────────────────────────
+        async function loadStudents() {
+            const classId = $('#filterClass').val() || 0;
+            const sectionId = $('#filterSection').val() || 0;
+
+            $('#filterRollNo').find('option:not(:first)').remove();
+            $('#filterStudent').find('option:not(:first)').remove();
+
+            if (!classId) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/Student/students?classId=${classId}&sectionId=${sectionId}`);
+                if (response.ok) {
+                    const students = await response.json();
+                    students.forEach(s => {
+                        const roll = s.classRollNo || s.rollNo || '-';
+                        $('#filterRollNo').append(`<option value="${s.vid}">${roll}</option>`);
+                        $('#filterStudent').append(`<option value="${s.vid}">${s.name || '-'}</option>`);
+                    });
+                }
+            } catch (err) {
+                console.error('Error loading students:', err);
+            }
+        }
+
+        // ── Sync Roll / Student selects ───────────────────────────────────
+        function selectStudentByRoll() {
+            if (isSyncing) return;
+            isSyncing = true;
+            const val = $('#filterRollNo').val();
+            if (val) $('#filterStudent').val(val);
+            isSyncing = false;
+        }
+
+        function selectRollByStudent() {
+            if (isSyncing) return;
+            isSyncing = true;
+            const val = $('#filterStudent').val();
+            if (val) $('#filterRollNo').val(val);
+            isSyncing = false;
+        }
+
+        // ── Print ─────────────────────────────────────────────────────────
+        function printCertificate() {
+            const studentId = parseInt($('#filterStudent').val()) || 0;
+            if (!studentId) {
+                alert('Please select a student.');
+                return;
+            }
+
+            const type = $('input[name="certType"]:checked').val();
+            const params = new URLSearchParams();
+
+            if (type === 'leaving') {
+                addParam(params, 'leavingDate',   $('#leavingDate').val());
+                addParam(params, 'examination',   $('#leavingExamination').val());
+                addParam(params, 'marksObtained', $('#leavingMarks').val());
+                addParam(params, 'totalMarks',    $('#leavingTotal').val());
+            } else {
+                addParam(params, 'sessionId',      $('#charSession').val());
+                addParam(params, 'boardRollNo',    $('#boardRollNo').val());
+                addParam(params, 'examRollNo',     $('#examRollNo').val());
+                addParam(params, 'examination',    $('#charExamination').val());
+                addParam(params, 'marksObtained',  $('#charMarks').val());
+                addParam(params, 'totalMarks',     $('#charTotal').val());
+                addParam(params, 'conduct',        $('#conduct').val());
+                addParam(params, 'moralCharacter', $('#moralCharacter').val());
+                addParam(params, 'issueDate',      $('#issueDate').val());
+            }
+
+            const qs = params.toString();
+            const url = `/certificates/${type}/${studentId}${qs ? '?' + qs : ''}`;
+            window.open(url, '_blank');
+        }
+
+        function addParam(params, key, val) {
+            if (val !== undefined && val !== null && String(val).trim() !== '') {
+                params.append(key, val);
+            }
+        }
+
+        // ── Clear ─────────────────────────────────────────────────────────
+        function clearFilters() {
+            $('#filterClass').val('');
+            $('#filterSection').val('').prop('disabled', true);
+            $('#filterRollNo').find('option:not(:first)').remove();
+            $('#filterStudent').find('option:not(:first)').remove();
+            $('input[name="certType"][value="leaving"]').prop('checked', true);
+            $('#leavingDate, #leavingExamination, #leavingMarks, #leavingTotal').val('');
+            $('#boardRollNo, #examRollNo, #charExamination, #charMarks, #charTotal, #conduct, #moralCharacter, #issueDate').val('');
+            $('#charSession').val('');
+            toggleCertFields();
+        }
+    </script>
+}

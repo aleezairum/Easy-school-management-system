@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using School.API.Data.DBModels.Accounts;
 using School.API.DTOs.Academic;
+using School.API.Extensions;
 using School.API.Services.Interfaces.Academic;
 
 [ApiController]
@@ -74,7 +75,7 @@ public class StudentController : ControllerBase
     {
         try
         {
-            int userId = 1; // later from JWT
+            int userId = Request.GetUserId();
             string userIp = HttpContext.Connection.RemoteIpAddress?.ToString();
 
             var result = await _service.SaveAsync(dto, userId, userIp);
@@ -90,7 +91,7 @@ public class StudentController : ControllerBase
     {
         try
         {
-            int userId = 1; // later from JWT
+            int userId = Request.GetUserId();
             string userIp = HttpContext.Connection.RemoteIpAddress?.ToString();
 
             var result = await _service.StatusChangeAsync(dto.StudentIds, dto.StatusID, userId, userIp);
@@ -107,7 +108,7 @@ public class StudentController : ControllerBase
     {
         try
         {
-            int userId = 1; // later from JWT
+            int userId = Request.GetUserId();
             string userIp = HttpContext.Connection.RemoteIpAddress?.ToString();
 
             var result = await _service.SectionChangeAsync(dto.StudentIds, dto.StatusID, userId, userIp);
@@ -124,7 +125,7 @@ public class StudentController : ControllerBase
     {
         try
         {
-            int userId = 1; // later from JWT
+            int userId = Request.GetUserId();
             string userIp = HttpContext.Connection.RemoteIpAddress?.ToString();
 
             var result = await _service.GradeChangeAsync(dto.StudentIds, dto.StatusID, dto.Description, userId, userIp);
@@ -141,7 +142,7 @@ public class StudentController : ControllerBase
     {
         try
         {
-            int userId = 1; // later from JWT
+            int userId = Request.GetUserId();
             string userIp = HttpContext.Connection.RemoteIpAddress?.ToString();
 
             var result = await _service.FeeChangeAsync(dto.StudentIds, dto.Fee, dto.Description, userId, userIp);
@@ -159,7 +160,7 @@ public class StudentController : ControllerBase
         try
         {
             dto.VID = id;
-            int userId = 1; // later from JWT
+            int userId = Request.GetUserId();
             string userIp = HttpContext.Connection.RemoteIpAddress?.ToString();
 
             var result = await _service.SaveAsync(dto, userId, userIp);
@@ -174,7 +175,7 @@ public class StudentController : ControllerBase
     [HttpPatch("{id}/toggle-status")]
     public async Task<IActionResult> ToggleStatus(int id)
     {
-        int userId = 1; // later from JWT
+        int userId = Request.GetUserId();
         string userIp = HttpContext.Connection.RemoteIpAddress?.ToString();
 
         var result = await _service.ToggleStatusAsync(id, userId, userIp);
@@ -186,7 +187,7 @@ public class StudentController : ControllerBase
     [HttpPatch("{id}/avail-academy")]
     public async Task<IActionResult> AvailAcademy(int id, AvailAcademyRequest dto)
     {
-        int userId = 1; // later from JWT
+        int userId = Request.GetUserId();
         string userIp = HttpContext.Connection.RemoteIpAddress?.ToString();
         var result = await _service.AvailAcademyAsync(id, dto.IsAvailAcademy, userId, userIp);
         if (result.ReturnCode < 0)

@@ -4,25 +4,11 @@
 }
 
 @section Styles {
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <style>
-        .flatpickr-day.selected,
-        .flatpickr-day.startRange,
-        .flatpickr-day.endRange,
-        .flatpickr-day.selected.inRange {
-            background: #008649 !important;
-            border-color: #008649 !important;
-        }
-
-        .flatpickr-day.inRange {
-            background: rgba(0,134,73,0.15) !important;
-            box-shadow: -5px 0 0 rgba(0,134,73,0.15), 5px 0 0 rgba(0,134,73,0.15) !important;
-        }
-
         .main-card {
             border: none;
-            border-radius: 16px;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            border-radius: 10px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
             overflow: hidden;
         }
 
@@ -32,24 +18,24 @@
         }
 
         .page-icon {
-            width: 44px;
-            height: 44px;
+            width: 34px;
+            height: 34px;
             background: rgba(255,255,255,0.2);
-            border-radius: 12px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            font-size: 16px;
         }
 
         .page-title {
-            font-size: 16px;
+            font-size: 13px;
             font-weight: 700;
             letter-spacing: 0.3px;
         }
 
         .page-subtitle {
-            font-size: 12px;
+            font-size: 10.5px;
             opacity: 0.8;
             margin-top: 2px;
         }
@@ -58,28 +44,29 @@
             background: rgba(255,255,255,0.15);
             color: white;
             border: 1px solid rgba(255,255,255,0.3);
-            border-radius: 8px;
-            font-size: 13px;
+            border-radius: 6px;
+            font-size: 11.5px;
             font-weight: 600;
-            padding: 8px 16px;
+            padding: 5px 12px;
+            white-space: nowrap;
         }
 
-        .btn-add:hover {
-            background: rgba(255,255,255,0.25);
-            color: white;
-        }
+            .btn-add:hover {
+                background: rgba(255,255,255,0.25);
+                color: white;
+            }
 
         .section-card {
             border: 1px solid #e2e8f0;
-            border-radius: 12px;
+            border-radius: 8px;
             overflow: hidden;
-            margin-top: 16px;
+            margin-top: 10px;
         }
 
         .section-header {
             background: #f8fafc;
-            padding: 10px 16px;
-            font-size: 13px;
+            padding: 6px 12px;
+            font-size: 11.5px;
             font-weight: 600;
             color: #475569;
             border-bottom: 1px solid #e2e8f0;
@@ -89,38 +76,142 @@
             letter-spacing: 0.4px;
         }
 
-        .section-body {
-            padding: 16px;
-        }
-
-        .form-label {
-            font-size: 12px;
-            font-weight: 600;
-            color: #64748b;
-            margin-bottom: 5px;
+        .filter-label-group {
+            font-size: 10.5px;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.3px;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 8px;
         }
 
-        .form-control, .form-select {
-            border: 1.5px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 13px;
-            padding: 8px 12px;
+        .server-label {
+            color: #008649;
+        }
+
+        .btn-search {
+            background: linear-gradient(135deg, #008649, #005f33);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 11.5px;
+            font-weight: 600;
+            padding: 4px 12px;
+            white-space: nowrap;
+        }
+
+            .btn-search:hover {
+                opacity: 0.9;
+                color: white;
+            }
+
+        .btn-clear-f {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            color: #64748b;
+            border-radius: 5px;
+            font-size: 11.5px;
+            font-weight: 600;
+            padding: 4px 10px;
+            white-space: nowrap;
+        }
+
+            .btn-clear-f:hover {
+                background: #e2e8f0;
+            }
+
+        /* ════ Grid top bar — wraps if needed, NO horizontal scroll ════ */
+        .grid-top-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 12px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            flex-wrap: wrap;
+        }
+
+        /* LEFT — title + count badge */
+        .grid-top-left {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11.5px;
+            font-weight: 600;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            flex-shrink: 0;
+        }
+
+        /* CENTER — summary cards */
+        .grid-top-center {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-shrink: 0; /* never compress */
+        }
+
+        .summary-item {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 7px;
+            padding: 3px 10px;
+            text-align: center;
+            min-width: 80px;
+        }
+
+            .summary-item .s-label {
+                font-size: 9px;
+                font-weight: 600;
+                color: #64748b;
+                text-transform: uppercase;
+                letter-spacing: 0.3px;
+            }
+
+            .summary-item .s-val {
+                font-size: 12.5px;
+                font-weight: 700;
+                color: #166534;
+                line-height: 1.3;
+                white-space: nowrap;
+            }
+
+        /* RIGHT — client filters, pushed to end */
+        .grid-top-right {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: auto;
+            flex-wrap: wrap;
+        }
+
+        .grid-filter-input {
+            border: 1px solid #e2e8f0;
+            border-radius: 5px;
+            font-size: 11px;
+            padding: 3px 8px;
             transition: all 0.2s;
+            background: white;
+            min-width: 0;
         }
 
-        .form-control:focus, .form-select:focus {
-            border-color: #008649;
-            box-shadow: 0 0 0 3px rgba(0,134,73,0.1);
-        }
+            .grid-filter-input:focus {
+                border-color: #008649;
+                box-shadow: 0 0 0 2px rgba(0,134,73,0.1);
+                outline: none;
+            }
 
+        /* ════ Table ════ */
         .voucher-table thead th {
             background: #f8fafc;
-            font-size: 12px;
+            font-size: 10.5px;
             font-weight: 600;
             color: #64748b;
-            padding: 10px 12px;
+            padding: 5px 8px;
             border-bottom: 2px solid #e2e8f0;
             white-space: nowrap;
             text-transform: uppercase;
@@ -128,8 +219,8 @@
         }
 
         .voucher-table tbody td {
-            font-size: 13px;
-            padding: 10px 12px;
+            font-size: 11px;
+            padding: 4px 8px;
             vertical-align: middle;
             border-bottom: 1px solid #f1f5f9;
         }
@@ -138,120 +229,92 @@
             background: #f0fdf4;
         }
 
+        .vno-badge {
+            background: #f0fdf4;
+            color: #008649;
+            font-weight: 700;
+            font-size: 10.5px;
+            padding: 1px 7px;
+            border-radius: 5px;
+            border: 1px solid #bbf7d0;
+            display: inline-block;
+        }
+
+        .pm-badge {
+            background: #eff6ff;
+            color: #1d4ed8;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 1px 7px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+
+        /* Received By badge */
+        .user-badge {
+            background: #fef3c7;
+            color: #92400e;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 1px 7px;
+            border-radius: 20px;
+            white-space: nowrap;
+            border: 1px solid #fde68a;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* ════ Action buttons ════ */
+        .actions-cell {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-wrap: nowrap;
+        }
+
         .btn-action {
             border: none;
-            border-radius: 6px;
-            padding: 5px 10px;
-            font-size: 12px;
+            border-radius: 5px;
+            padding: 3px 7px;
+            font-size: 10.5px;
             font-weight: 600;
             color: white;
             transition: all 0.15s;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .btn-action:hover {
-            transform: translateY(-1px);
-            color: white;
-        }
+            .btn-action:hover {
+                transform: translateY(-1px);
+                color: white;
+            }
 
-        .btn-edit {
+        .btn-print {
             background: linear-gradient(135deg, #008649, #005f33);
         }
 
-        .btn-edit:hover {
+        .btn-delete {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+        }
+
+        .btn-print:hover {
             box-shadow: 0 3px 8px rgba(0,134,73,0.3);
         }
 
-        .btn-expand {
-            background: linear-gradient(135deg, #008649, #005f33);
-        }
-
-        .btn-expand:hover {
-            box-shadow: 0 3px 8px rgba(0,134,73,0.3);
-        }
-
-        .detail-row {
-            background: #f8fafb;
-        }
-
-        .detail-content {
-            border-left: 3px solid #008649;
-            margin: 0 12px;
-        }
-
-        .detail-table thead th {
-            background: #f1f5f9;
-            font-size: 11px;
-            font-weight: 600;
-            color: #64748b;
-            padding: 6px 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-        }
-
-        .detail-table tbody td {
-            font-size: 12px;
-            padding: 6px 10px;
-        }
-
-        .btn-search {
-            background: linear-gradient(135deg, #008649, #005f33);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            padding: 8px 18px;
-        }
-
-        .btn-search:hover {
-            background: linear-gradient(135deg, #006d3b, #004d29);
-            color: white;
-        }
-
-        .btn-clear {
-            background: #f1f5f9;
-            border: 1.5px solid #e2e8f0;
-            color: #64748b;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            padding: 8px 18px;
-        }
-
-        .btn-clear:hover {
-            background: #e2e8f0;
+        .btn-delete:hover {
+            box-shadow: 0 3px 8px rgba(220,38,38,0.3);
         }
 
         .badge-count {
             background: #008649;
             color: white;
-            font-size: 11px;
-            padding: 2px 8px;
+            font-size: 10px;
+            padding: 1px 7px;
             border-radius: 20px;
             font-weight: 600;
-        }
-
-        .summary-bar {
-            display: flex;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
-
-        .summary-item {
-            background: #f0fdf4;
-            border: 1px solid #bbf7d0;
-            border-radius: 8px;
-            padding: 8px 16px;
-            font-size: 13px;
-            font-weight: 600;
-            color: #166534;
-        }
-
-        .summary-item .label {
-            font-size: 11px;
-            font-weight: 500;
-            color: #64748b;
-            text-transform: uppercase;
         }
     </style>
 }
@@ -262,12 +325,10 @@
     <div class="card main-card">
         <div class="card-body p-0">
 
-            <!-- Top Bar -->
+            <!-- ════ TOP BAR ════ -->
             <div class="top-bar d-flex justify-content-between align-items-center px-4 py-3">
                 <div class="d-flex align-items-center gap-3">
-                    <div class="page-icon">
-                        <i class="bi bi-receipt"></i>
-                    </div>
+                    <div class="page-icon"><i class="bi bi-receipt"></i></div>
                     <div>
                         <div class="page-title">Fee Vouchers</div>
                         <div class="page-subtitle">Payment Records</div>
@@ -280,103 +341,156 @@
 
             <div class="px-4 pb-4">
 
-                <!-- Filter Section -->
-                <div class="section-card mb-3">
+                <!-- ════ FILTER CARD ════ -->
+                <div class="section-card">
                     <div class="section-header">
                         <i class="bi bi-funnel me-2"></i>Filters
                     </div>
-                    <div class="section-body">
-                        <div class="row g-3">
-                            <div class="col-lg-3 col-md-4 col-sm-6 col-12">
-                                <label class="form-label">Date Range</label>
-                                <input type="text" class="form-control" id="filterDateRange" placeholder="Select date range" readonly style="background: white; cursor: pointer;" />
+                    <div class="p-3">
+                        <div class="filter-label-group server-label">
+                            <i class="bi bi-server"></i> Server Filters
+                            <span style="font-weight:400; color:#94a3b8; font-size:10px;">
+                                (Search button press karo)
+                            </span>
+                        </div>
+                        <div class="row g-2 align-items-end">
+                            <div class="col-lg-2 col-md-4 col-sm-6">
+                                <label class="form-label">Date From</label>
+                                <input type="date" class="form-control" id="dateFrom" />
                             </div>
-                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                            <div class="col-lg-2 col-md-4 col-sm-6">
+                                <label class="form-label">Date To</label>
+                                <input type="date" class="form-control" id="dateTo" />
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-sm-6">
                                 <label class="form-label">Class</label>
-                                <select class="form-select" id="filterClass" onchange="onFilterClassChange()">
+                                <select class="form-select" id="filterClass"
+                                        onchange="onFilterClassChange()">
                                     <option value="">All Classes</option>
                                 </select>
                             </div>
-                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                            <div class="col-lg-2 col-md-4 col-sm-6">
                                 <label class="form-label">Section</label>
-                                <select class="form-select" id="filterSection" disabled onchange="onFilterSectionChange()">
+                                <select class="form-select" id="filterSection" disabled>
                                     <option value="">All Sections</option>
                                 </select>
                             </div>
-                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                            <div class="col-lg-2 col-md-4 col-sm-6">
                                 <label class="form-label">Student</label>
                                 <select class="form-select" id="filterStudent">
                                     <option value="">All Students</option>
                                 </select>
                             </div>
-                            <div class="col-lg-2 col-md-4 col-sm-6 col-12">
-                                <label class="form-label">Payment Method</label>
-                                <select class="form-select" id="filterPaymentMethod">
-                                    <option value="">All Methods</option>
-                                </select>
-                            </div>
-                            <div class="col-lg-3 col-md-6 col-12">
-                                <label class="form-label">Search</label>
-                                <input type="text" class="form-control" id="searchText" placeholder="Voucher #, Student, Roll No..." />
-                            </div>
-                            <div class="col-lg-3 col-md-6 col-12 d-flex align-items-end gap-2">
-                                <button type="button" class="btn btn-search" onclick="applyFilters()">
-                                    <i class="bi bi-search me-1"></i> Search
-                                </button>
-                                <button type="button" class="btn btn-clear" onclick="clearFilters()">
-                                    <i class="bi bi-x-lg me-1"></i> Clear
-                                </button>
+                            <div class="col-lg-2 col-md-4 col-sm-6">
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-search flex-fill"
+                                            onclick="loadVouchers()">
+                                        <i class="bi bi-search me-1"></i> Search
+                                    </button>
+                                    <button class="btn btn-clear-f"
+                                            onclick="clearServerFilters()" title="Clear">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Summary -->
-                <div class="summary-bar mb-3" id="summaryBar" style="display: none;">
-                    <div class="summary-item">
-                        <div class="label">Total Records</div>
-                        <div id="summaryCount">0</div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="label">Total Amount</div>
-                        <div id="summaryAmount">0.00</div>
-                    </div>
-                </div>
-
-                <!-- Voucher Grid -->
+                <!-- ════ GRID CARD ════ -->
                 <div class="section-card">
-                    <div class="section-header">
-                        <i class="bi bi-table me-2"></i>Payment Records
-                        <span id="gridCount" class="badge-count ms-2"></span>
-                    </div>
-                    <div class="section-body p-0">
-                        <div class="table-responsive">
-                            <table class="table voucher-table mb-0">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 50px;">Sr#</th>
-                                        <th>Voucher #</th>
-                                        <th>Date</th>
-                                        <th>Roll No</th>
-                                        <th>Student</th>
-                                        <th>Father Name</th>
-                                        <th>Payment Method</th>
-                                        <th class="text-end">Balance</th>
-                                        <th class="text-end">Pending</th>
-                                        <th class="text-end">Amount Paid</th>
-                                        <th>Remarks</th>
-                                        <th class="text-center" style="width: 120px;">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="voucherBody">
-                                    <tr>
-                                        <td colspan="12" class="text-center text-muted py-4">
-                                            <i class="bi bi-receipt me-2"></i>Loading payment records...
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+
+                    <!-- Grid top bar: LEFT | CENTER | RIGHT — all on one row -->
+                    <div class="grid-top-bar">
+
+                        <!-- LEFT: title + badge -->
+                        <div class="grid-top-left">
+                            <i class="bi bi-table"></i>
+                            Payment Records
+                            <span id="gridCount" class="badge-count"></span>
                         </div>
+
+                        <!-- CENTER: summary cards (shown after data loads) -->
+                        <div class="grid-top-center" id="summaryBar">
+                            <div class="summary-item">
+                                <div class="s-label">Records</div>
+                                <div class="s-val" id="summaryCount">0</div>
+                            </div>
+                            <div class="summary-item"
+                                 style="background:#ecfdf5; border-color:#6ee7b7;">
+                                <div class="s-label">Total Paid</div>
+                                <div class="s-val" id="summaryAmount">Rs. 0.00</div>
+                            </div>
+                        </div>
+
+                        <!-- RIGHT: search + method + user + clear — single row always -->
+                        <div class="grid-top-right">
+
+                            <!-- Search -->
+                            <div style="position:relative; flex-shrink:0;">
+                                <i class="bi bi-search"
+                                   style="position:absolute; left:8px; top:50%;
+                                          transform:translateY(-50%);
+                                          color:#94a3b8; font-size:12px;
+                                          pointer-events:none;"></i>
+                                <input type="text" class="grid-filter-input"
+                                       id="clientSearch"
+                                       placeholder="Voucher#, Student, Father..."
+                                       style="width:195px; padding-left:26px;"
+                                       oninput="applyClientFilters()" />
+                            </div>
+
+                            <!-- Payment Method -->
+                            <select class="grid-filter-input" id="clientPaymentMethod"
+                                    style="width:130px;"
+                                    onchange="applyClientFilters()">
+                                <option value="">All Methods</option>
+                            </select>
+
+                            <!-- User / Received By -->
+                            <select class="grid-filter-input" id="clientUser"
+                                    style="width:130px;"
+                                    onchange="applyClientFilters()">
+                                <option value="">All Users</option>
+                            </select>
+
+                            <!-- Clear -->
+                            <button class="btn btn-clear-f"
+                                    style="padding:5px 10px; font-size:12px; flex-shrink:0;"
+                                    onclick="clearClientFilters()" title="Clear filters">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="table-responsive">
+                        <table class="table voucher-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width:45px;">SR#</th>
+                                    <th>Voucher #</th>
+                                    <th>Date</th>
+                                    <th>Student</th>
+                                    <th>Class / Section</th>
+                                    <th>Father Name</th>
+                                    <th>Payment Method</th>
+                                    <th class="text-end">Balance</th>
+                                    <th class="text-end">Amount Paid</th>
+                                    <th>Remarks</th>
+                                    <th>Received By</th>
+                                    <th style="width:90px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="voucherBody">
+                                <tr>
+                                    <td colspan="12" class="text-center text-muted py-5">
+                                        <i class="bi bi-search me-2"></i>
+                                        Select filters and click Search
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
@@ -386,328 +500,329 @@
 </div>
 
 @section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
+
+        /* ════════════════════════════════════════════
+           STATE
+        ════════════════════════════════════════════ */
         let allVouchers = [];
-        let datePicker = null;
+        let filtered    = [];
 
+        /* ════════════════════════════════════════════
+           INIT
+        ════════════════════════════════════════════ */
         $(document).ready(function () {
-            const today = new Date();
-            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-
-            datePicker = flatpickr('#filterDateRange', {
-                mode: 'range',
-                dateFormat: 'Y-m-d',
-                altInput: true,
-                altFormat: 'd M Y',
-                defaultDate: [firstDay, today]
-            });
-
-            loadDropdowns();
-            loadVouchers();
+            const now = new Date();
+            const y   = now.getFullYear();
+            const m   = String(now.getMonth() + 1).padStart(2, '0');
+            const d   = String(now.getDate()).padStart(2, '0');
+            $('#dateFrom').val(`${y}-${m}-${d}`);
+            $('#dateTo').val(`${y}-${m}-${d}`);
+            loadFilterDropdowns().then(() => loadVouchers());
         });
 
-        // ── Load Dropdowns ──────────────────────────────────────
-        async function loadDropdowns() {
+        /* ════════════════════════════════════════════
+           LOAD DROPDOWNS — Classes, Payment Methods, Users
+        ════════════════════════════════════════════ */
+        async function loadFilterDropdowns() {
             try {
-                const [classes] = await Promise.all([
-                    fetch(`${API_BASE}/class`).then(r => r.ok ? r.json() : [])
+                const [classes, paymentMethods, users] = await Promise.all([
+                    fetch(`${API_BASE}/class`).then(r => r.ok ? r.json() : []),
+                    fetch(`${API_BASE}/PaymentMethod`).then(r => r.ok ? r.json() : []),
+                    fetch(`${API_BASE}/SecUser`).then(r => r.ok ? r.json() : [])
                 ]);
-                classes.forEach(c => $('#filterClass').append(`<option value="${c.vid}">${c.vName}</option>`));
-            } catch (e) { console.error(e); }
 
-            loadPaymentMethods();
-        }
+                classes.forEach(c =>
+                    $('#filterClass').append(`<option value="${c.vid}">${c.vName}</option>`)
+                );
 
-        async function loadPaymentMethods() {
-            const staticMethods = [
-                { id: 1, name: 'JazzCash' },
-                { id: 2, name: 'EasyPaisa' },
-                { id: 3, name: 'Cash' },
-                { id: 4, name: 'Bank Transfer' }
-            ];
+                paymentMethods.forEach(p =>
+                    $('#clientPaymentMethod').append(
+                        `<option value="${p.vid}"
+                                 data-name="${(p.vName || '').toLowerCase()}">
+                            ${p.vName}
+                        </option>`
+                    )
+                );
 
-            let methods = staticMethods;
-            try {
-                const r = await fetch(`${API_BASE}/PaymentMethod/dropdown`);
-                if (r.ok) {
-                    const data = await r.json();
-                    if (data && data.length > 0) methods = data;
+                users.forEach(u => {
+                    const name = u.userFullName|| '-';
+                    $('#clientUser').append(
+                        `<option value="${u.vid}"
+                                 data-name="${name.toLowerCase()}">
+                            ${name}
+                        </option>`
+                    );
+                });
+
+                // Select logged-in user by default
+                if (USER_ID) {
+                    $('#clientUser').val(String(USER_ID)).trigger('change');
                 }
-            } catch { }
 
-            const select = $('#filterPaymentMethod');
-            methods.forEach(pm => {
-                select.append(`<option value="${pm.id}">${pm.name}</option>`);
-            });
+            } catch (err) { console.error(err); }
         }
 
-        // ── Class → Section → Student cascade ───────────────────
+        /* ════════════════════════════════════════════
+           CLASS → SECTION → STUDENT
+        ════════════════════════════════════════════ */
         async function onFilterClassChange() {
             const classId = $('#filterClass').val();
-            const secSelect = $('#filterSection');
-            const stuSelect = $('#filterStudent');
-
-            secSelect.find('option:not(:first)').remove();
-            stuSelect.find('option:not(:first)').remove();
-
-            if (!classId) {
-                secSelect.prop('disabled', true);
-                return;
-            }
-
-            try {
-                const r = await fetch(`${API_BASE}/section/byClass/${classId}`);
-                if (r.ok) {
-                    const sections = await r.json();
-                    sections.forEach(s => secSelect.append(`<option value="${s.vid}">${s.vName}</option>`));
-                    secSelect.prop('disabled', false);
-                }
-            } catch (e) { console.error(e); }
-
-            await loadStudentFilter();
-        }
-
-        async function onFilterSectionChange() {
-            await loadStudentFilter();
-        }
-
-        async function loadStudentFilter() {
-            const classId   = $('#filterClass').val()   || 0;
-            const sectionId = $('#filterSection').val() || 0;
-            const stuSelect = $('#filterStudent');
-            stuSelect.find('option:not(:first)').remove();
-
+            const secSel  = $('#filterSection');
+            const stuSel  = $('#filterStudent');
+            secSel.find('option:not(:first)').remove().end().prop('disabled', true);
+            stuSel.find('option:not(:first)').remove();
             if (!classId) return;
-
             try {
-                const r = await fetch(`${API_BASE}/Student/students?classId=${classId}&sectionId=${sectionId}`);
-                if (r.ok) {
-                    const students = await r.json();
-                    students.forEach(s => {
-                        const roll = s.classRollNo || s.rollNo || '';
-                        const label = `${s.name || '-'}${roll ? ' (' + roll + ')' : ''}`;
-                        stuSelect.append(`<option value="${s.vid}">${label}</option>`);
-                    });
-                }
-            } catch (e) { console.error(e); }
-        }
-
-        // ── Load Vouchers ───────────────────────────────────────
-        async function loadVouchers() {
-            $('#voucherBody').html('<tr><td colspan="12" class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm me-2"></span>Loading...</td></tr>');
-
-            try {
-                const r = await fetch(`${API_BASE}/FeeVoucher`);
-                if (r.ok) {
-                    allVouchers = await r.json();
-                    applyFilters();
-                } else {
-                    $('#voucherBody').html('<tr><td colspan="12" class="text-center text-muted py-4">Failed to load vouchers</td></tr>');
-                }
-            } catch (e) {
-                console.error('Error loading vouchers:', e);
-                $('#voucherBody').html('<tr><td colspan="12" class="text-center text-muted py-4">Error loading vouchers</td></tr>');
-            }
-        }
-
-        // ── Apply Filters ───────────────────────────────────────
-        function applyFilters() {
-            let filtered = [...allVouchers];
-
-            // Date range
-            const dates = datePicker.selectedDates;
-            if (dates.length > 0) {
-                const fromDate = dates[0].toISOString().split('T')[0];
-                filtered = filtered.filter(v => v.paymentDate && v.paymentDate.split('T')[0] >= fromDate);
-            }
-            if (dates.length > 1) {
-                const toDate = dates[1].toISOString().split('T')[0];
-                filtered = filtered.filter(v => v.paymentDate && v.paymentDate.split('T')[0] <= toDate);
-            }
-
-            // Class
-            const classId = $('#filterClass').val();
-            if (classId) {
-                filtered = filtered.filter(v => v.classId == classId);
-            }
-
-            // Section
-            const sectionId = $('#filterSection').val();
-            if (sectionId) {
-                filtered = filtered.filter(v => v.sectionId == sectionId);
-            }
-
-            // Student
-            const studentId = $('#filterStudent').val();
-            if (studentId) {
-                filtered = filtered.filter(v => v.studentId == studentId);
-            }
-
-            // Payment Method
-            const paymentMethodId = $('#filterPaymentMethod').val();
-            if (paymentMethodId) {
-                filtered = filtered.filter(v => v.paymentMethodId == paymentMethodId);
-            }
-
-            // Text search
-            const searchText = $('#searchText').val().toLowerCase().trim();
-            if (searchText) {
-                filtered = filtered.filter(v =>
-                    (v.voucherNumber && v.voucherNumber.toLowerCase().includes(searchText)) ||
-                    (v.studentName && v.studentName.toLowerCase().includes(searchText)) ||
-                    (v.rollNumber && v.rollNumber.toLowerCase().includes(searchText)) ||
-                    (v.challanNumber && v.challanNumber.toLowerCase().includes(searchText)) ||
-                    (v.transactionReference && v.transactionReference.toLowerCase().includes(searchText))
+                const [sections, students] = await Promise.all([
+                    fetch(`${API_BASE}/section/byClass/${classId}`).then(r => r.ok ? r.json() : []),
+                    fetch(`${API_BASE}/Student/students?classId=${classId}&sectionId=0`)
+                        .then(r => r.ok ? r.json() : [])
+                ]);
+                sections.forEach(s =>
+                    secSel.append(`<option value="${s.vid}">${s.vName}</option>`)
                 );
+                secSel.prop('disabled', false);
+                students.forEach(s => {
+                    const roll  = s.classRollNo || s.rollNo || '';
+                    const label = `${s.name || '-'}${roll ? ' (' + roll + ')' : ''}`;
+                    stuSel.append(`<option value="${s.vid}">${label}</option>`);
+                });
+            } catch (err) { console.error(err); }
+        }
+
+        /* ════════════════════════════════════════════
+           LOAD VOUCHERS — SERVER
+        ════════════════════════════════════════════ */
+        async function loadVouchers() {
+            const dateFrom  = $('#dateFrom').val();
+            const dateTo    = $('#dateTo').val();
+            const classId   = $('#filterClass').val();
+            const sectionId = $('#filterSection').val();
+            const studentId = $('#filterStudent').val();
+
+            if (!dateFrom || !dateTo) {
+                toastWarning('Please select Date From and Date To'); return;
             }
 
-            renderList(filtered);
+            $('#voucherBody').html(
+                '<tr><td colspan="12" class="text-center text-muted py-4">' +
+                '<span class="spinner-border spinner-border-sm me-2"></span>' +
+                'Loading...</td></tr>'
+            );
+
+            const params = new URLSearchParams({ dateFrom, dateTo });
+            if (classId)   params.append('classId',   classId);
+            if (sectionId) params.append('sectionId', sectionId);
+            if (studentId) params.append('studentId', studentId);
+
+            try {
+                const response = await fetch(`${API_BASE}/FeeVoucher?${params}`);
+                if (!response.ok) { showGridError(); return; }
+                allVouchers = await response.json();
+                $('#clientSearch').val('');
+                $('#clientPaymentMethod').val('');
+                applyClientFilters();
+            } catch (err) {
+                console.error(err); showGridError();
+            }
+        }
+
+        /* ════════════════════════════════════════════
+           CLIENT FILTERS — search + method + user
+        ════════════════════════════════════════════ */
+        function applyClientFilters() {
+            const searchVal = ($('#clientSearch').val()        || '').toLowerCase().trim();
+            const pmVal     = ($('#clientPaymentMethod').val() || '').trim();
+            const pmName    = ($('#clientPaymentMethod option:selected').attr('data-name') || '').trim();
+            const userVal   = ($('#clientUser').val()          || '').trim();
+            const userName  = ($('#clientUser option:selected').attr('data-name') || '').trim();
+
+            filtered = allVouchers.filter(v => {
+
+                const matchSearch = !searchVal || [
+                    v.vNo, v.studentName, v.parentName,
+                    v.sectionName, v.remarks, v.userFullName
+                ].some(f => (f || '').toLowerCase().includes(searchVal));
+
+                const matchPM = !pmVal ||
+                    (v.paymentMethod || '').toLowerCase() === pmName;
+
+                const matchUser = !userVal ||
+                    (v.userFullName || '').toLowerCase() === userName;
+
+                return matchSearch && matchPM && matchUser;
+            });
+
+            renderGrid(filtered);
             updateSummary(filtered);
         }
 
-        function renderList(items) {
-            const tbody = $('#voucherBody');
-            tbody.empty();
-
-            $('#gridCount').text(items.length > 0 ? items.length : '');
-
-            if (items.length === 0) {
-                tbody.html('<tr><td colspan="12" class="text-center text-muted py-4"><i class="bi bi-inbox me-2"></i>No payment records found</td></tr>');
+        /* ════════════════════════════════════════════
+           RENDER GRID
+        ════════════════════════════════════════════ */
+        function renderGrid(data) {
+            $('#gridCount').text(data.length || '');
+            if (!data.length) {
+                $('#voucherBody').html(
+                    '<tr><td colspan="12" class="text-center text-muted py-5">' +
+                    '<i class="bi bi-inbox me-2"></i>No payment records found</td></tr>'
+                );
                 return;
             }
 
-            items.forEach((item, index) => {
-                const row = `
+            let rows = '';
+            data.forEach((v, i) => {
+                const id      = v.vid || v.vID || v.VID || 0;
+                const safeVNo = (v.vNo || v.VNo || '').replace(/'/g, "\\'");
+
+                const receivedBy   = v.userFullName || '';
+                const receivedCell = receivedBy
+                    ? `<span class="user-badge">
+                           <i class="bi bi-person-check" style="font-size:10px;"></i>
+                           ${receivedBy}
+                       </span>`
+                    : `<span style="color:#94a3b8; font-size:12px;">—</span>`;
+
+                rows += `
                     <tr>
-                        <td>${index + 1}</td>
-                        <td><strong>${item.voucherNumber || '-'}</strong></td>
-                        <td>${formatDate(item.paymentDate)}</td>
-                        <td>${item.rollNumber || '-'}</td>
-                        <td>${item.studentName || '-'}</td>
-                        <td>${item.fatherName || '-'}</td>
-                        <td>${item.paymentMethodName || '-'}</td>
-                        <td class="text-end">${fmt(item.balance)}</td>
-                        <td class="text-end text-danger">${fmt(item.pendingAmount)}</td>
-                        <td class="text-end fw-bold text-success">${fmt(item.amountPaid)}</td>
-                        <td>${item.remarks || '-'}</td>
-                        <td class="text-center">
-                            <button type="button" class="btn-action btn-edit me-1" onclick="editVoucher(${item.id})" title="Edit">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button type="button" class="btn-action btn-expand" onclick="toggleDetail(${item.id}, this)" title="Details">
-                                <i class="bi bi-plus-lg"></i>
-                            </button>
+                        <td style="color:#94a3b8; font-size:12px;">${i + 1}</td>
+                        <td><span class="vno-badge">${v.vNo || v.VNo || '-'}</span></td>
+                        <td style="white-space:nowrap;">${fmtDate(v.vDate || v.VDate)}</td>
+                        <td style="font-weight:600;">${v.studentName || v.StudentName || '-'}</td>
+                        <td style="color:#64748b; font-size:12px;">${v.sectionName || v.SectionName || '-'}</td>
+                        <td>${v.parentName || v.ParentName || '-'}</td>
+                        <td><span class="pm-badge">${v.paymentMethod || v.PaymentMethod || '-'}</span></td>
+                        <td class="text-end" style="color:#dc2626; font-weight:600;">
+                            ${fmt(v.balanceAmount || v.BalanceAmount)}
                         </td>
-                    </tr>
-                    <tr id="detail_${item.id}" class="detail-row" style="display:none;">
-                        <td colspan="12" class="p-0">
-                            <div class="detail-content p-3">
-                                <div class="text-center text-muted py-2"><span class="spinner-border spinner-border-sm me-2"></span>Loading fee details...</div>
+                        <td class="text-end" style="color:#008649; font-weight:700;">
+                            Rs.${fmt(v.paidAmount || v.PaidAmount)}
+                        </td>
+                        <td style="color:#64748b; font-size:12px;">${v.remarks || v.Remarks || '-'}</td>
+                        <td>${receivedCell}</td>
+                        <td>
+                            <div class="actions-cell">
+                                <button class="btn-action btn-print"
+                                        onclick="printVoucher(${id})"
+                                        title="Print">
+                                    <i class="bi bi-printer"></i>
+                                </button>
+                                <button class="btn-action btn-delete"
+                                        onclick="deleteVoucher(${id}, '${safeVNo}')"
+                                        title="Delete">
+                                    <i class="bi bi-trash"></i>
+                                </button>
                             </div>
                         </td>
-                    </tr>
-                `;
-                tbody.append(row);
+                    </tr>`;
             });
+
+            $('#voucherBody').html(rows);
         }
 
-        function updateSummary(items) {
-            const total = items.reduce((s, v) => s + (v.amountPaid || 0), 0);
-            $('#summaryCount').text(items.length);
-            $('#summaryAmount').text(fmt(total));
-            $('#summaryBar').show();
+        /* ════════════════════════════════════════════
+           SUMMARY
+        ════════════════════════════════════════════ */
+        function updateSummary(data) {
+            const seen = new Set();
+            let total  = 0;
+            let count  = 0;
+            data.forEach(v => {
+                const id = v.vid || v.vID || v.VID || 0;
+                if (!seen.has(id)) {
+                    seen.add(id);
+                    total += Number(v.paidAmount || v.PaidAmount || 0);
+                    count++;
+                }
+            });
+            $('#summaryCount').text(count);
+            $('#summaryAmount').text('Rs. ' + fmt(total));
+            $('#summaryBar').css('display', 'flex');
         }
 
-        function editVoucher(id) {
-            window.location.href = `/feevoucher/form/${id}`;
-        }
+        /* ════════════════════════════════════════════
+           DELETE
+        ════════════════════════════════════════════ */
+        async function deleteVoucher(vid, vno) {
+            const confirmed = await confirmDelete({
+                title: `Delete ${vno}?`,
+                html:  'Student fee balances will be recalculated.'
+            });
 
-        async function toggleDetail(voucherId, btn) {
-            const detailRow = $(`#detail_${voucherId}`);
-            const icon = $(btn).find('i');
-
-            if (detailRow.is(':visible')) {
-                detailRow.hide();
-                icon.removeClass('bi-dash-lg').addClass('bi-plus-lg');
-                return;
-            }
-
-            icon.removeClass('bi-plus-lg').addClass('bi-dash-lg');
-            detailRow.show();
-
-            const content = detailRow.find('.detail-content');
-
-            // Find the voucher to get studentId
-            const voucher = allVouchers.find(v => v.id === voucherId);
-            if (!voucher || !voucher.studentId) {
-                content.html('<div class="text-muted py-2">No student linked to this voucher</div>');
-                return;
-            }
+            if (!confirmed) return;
 
             try {
-                const r = await fetch(`${API_BASE}/ApplyFee?studentId=${voucher.studentId}&dateFrom=2000-01-01&dateTo=2099-12-31`);
-                if (!r.ok) { content.html('<div class="text-muted py-2">Failed to load fee details</div>'); return; }
-
-                const fees = await r.json();
-                if (fees.length === 0) {
-                    content.html('<div class="text-muted py-2">No fee records found</div>');
-                    return;
+                const response = await fetch(`${API_BASE}/FeeVoucher/${vid}`,
+                    { method: 'DELETE' });
+                const result = await response.json();
+                if (result.returnCode === 200) {
+                    toastSuccess(result.returnMessage || 'Deleted successfully');
+                    loadVouchers();
+                } else {
+                    toastError(result.returnMessage || 'Delete failed');
                 }
-
-                let html = `<table class="table table-sm mb-0 detail-table">
-                    <thead><tr>
-                        <th>Month</th><th>Fee Type</th><th>Class</th><th>Section</th><th>Grade</th>
-                        <th class="text-end">Fee Amount</th><th class="text-end">Cleared</th>
-                        <th class="text-end">Pending</th><th>Status</th>
-                    </tr></thead><tbody>`;
-
-                fees.forEach(f => {
-                    const month = f.vDate ? new Date(f.vDate).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) : '-';
-                    const statusBadge = f.isClear
-                        ? '<span class="badge bg-success">Cleared</span>'
-                        : '<span class="badge bg-warning text-dark">Pending</span>';
-                    html += `<tr>
-                        <td>${month}</td>
-                        <td>${f.feeTypeName || '-'}</td>
-                        <td>${f.className || '-'}</td>
-                        <td>${f.sectionName || '-'}</td>
-                        <td>${f.gradeName || '-'}</td>
-                        <td class="text-end">${fmt(f.feeAmount)}</td>
-                        <td class="text-end text-success">${fmt(f.clearedAmount)}</td>
-                        <td class="text-end text-danger">${fmt(f.pendingAmount)}</td>
-                        <td>${statusBadge}</td>
-                    </tr>`;
-                });
-
-                html += '</tbody></table>';
-                content.html(html);
-            } catch (e) {
-                console.error(e);
-                content.html('<div class="text-muted py-2">Error loading fee details</div>');
+            } catch (err) {
+                console.error(err);
+                toastError('Error deleting voucher');
             }
         }
 
-        function clearFilters() {
-            const today = new Date();
-            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-            datePicker.setDate([firstDay, today]);
-            $('#filterClass').val('');
-            $('#filterSection').val('').prop('disabled', true).find('option:not(:first)').remove();
-            $('#filterStudent').val('').find('option:not(:first)').remove();
-            $('#filterPaymentMethod').val('');
-            $('#searchText').val('');
-            applyFilters();
+        /* ════════════════════════════════════════════
+           PRINT
+        ════════════════════════════════════════════ */
+        function printVoucher(vid) {
+            window.open(`/feevoucher/print/${vid}?printer=thermal`, '_blank');
         }
 
-        function formatDate(dateString) {
-            if (!dateString) return '-';
-            const d = new Date(dateString);
-            return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        /* ════════════════════════════════════════════
+           CLEAR FILTERS
+        ════════════════════════════════════════════ */
+        function clearServerFilters() {
+            const now = new Date();
+            const y   = now.getFullYear();
+            const m   = String(now.getMonth() + 1).padStart(2, '0');
+            const d   = String(now.getDate()).padStart(2, '0');
+            $('#dateFrom').val(`${y}-${m}-01`);
+            $('#dateTo').val(`${y}-${m}-${d}`);
+            $('#filterClass').val('');
+            $('#filterSection').val('')
+                .prop('disabled', true).find('option:not(:first)').remove();
+            $('#filterStudent').val('').find('option:not(:first)').remove();
+            loadVouchers();
+        }
+
+        function clearClientFilters() {
+            $('#clientSearch').val('');
+            $('#clientPaymentMethod').val('');
+            $('#clientUser').val('');
+            applyClientFilters();
+        }
+
+        /* ════════════════════════════════════════════
+           HELPERS
+        ════════════════════════════════════════════ */
+        function showGridError() {
+            $('#voucherBody').html(
+                '<tr><td colspan="12" class="text-center text-danger py-5">' +
+                '<i class="bi bi-exclamation-triangle me-2"></i>' +
+                'Error loading records</td></tr>'
+            );
         }
 
         function fmt(val) {
-            return (val || 0).toLocaleString('en-PK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            return (val || 0).toLocaleString('en-PK', {
+                minimumFractionDigits: 2, maximumFractionDigits: 2
+            });
         }
+
+        function fmtDate(dateStr) {
+            if (!dateStr) return '-';
+            const d = new Date(dateStr);
+            return d.getDate().toString().padStart(2, '0') + '-' +
+                   (d.getMonth() + 1).toString().padStart(2, '0') + '-' +
+                   d.getFullYear();
+        }
+
     </script>
 }

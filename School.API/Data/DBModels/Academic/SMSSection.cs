@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace School.API.Data.DBModels.Academic
 {
+    [Table("SMSSection")]
     public class SMSSection
     {
         [Key]

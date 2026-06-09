@@ -5,29 +5,34 @@
 
 <div class="login-wrapper">
     <div class="login-left">
+        <div class="login-blob login-blob-1"></div>
+        <div class="login-blob login-blob-2"></div>
+        <div class="login-blob login-blob-3"></div>
+        <div class="login-blob-4"></div>
+
         <div class="login-left-content">
-            <div class="logo-icon">
-                <i class="bi bi-mortarboard-fill"></i>
+            <div class="logo-card">
+                <img src="~/images/logo.png" alt="School Logo" />
             </div>
             <h1>School Management System</h1>
             <p>A complete solution for managing your educational institution efficiently and effectively.</p>
 
             <div class="features-list">
                 <div class="feature-item">
-                    <i class="bi bi-people-fill"></i>
-                    <span>Student & Teacher Management</span>
+                    <div class="feature-icon"><i class="bi bi-people-fill"></i></div>
+                    <span>Student &amp; Teacher Management</span>
                 </div>
                 <div class="feature-item">
-                    <i class="bi bi-calendar-check-fill"></i>
+                    <div class="feature-icon"><i class="bi bi-calendar-check-fill"></i></div>
                     <span>Attendance Tracking</span>
                 </div>
                 <div class="feature-item">
-                    <i class="bi bi-graph-up-arrow"></i>
+                    <div class="feature-icon"><i class="bi bi-graph-up-arrow"></i></div>
                     <span>Performance Analytics</span>
                 </div>
                 <div class="feature-item">
-                    <i class="bi bi-shield-check"></i>
-                    <span>Secure & Reliable</span>
+                    <div class="feature-icon"><i class="bi bi-shield-check"></i></div>
+                    <span>Secure &amp; Reliable</span>
                 </div>
             </div>
         </div>
@@ -35,8 +40,12 @@
 
     <div class="login-right">
         <div class="login-form-container">
+            <div class="login-brand-mobile">
+                <img src="~/images/logo.png" alt="School Logo" />
+            </div>
+
             <div class="login-header">
-                <h2>Welcome Back!</h2>
+                <h2>Welcome Back</h2>
                 <p>Please sign in to access your dashboard</p>
             </div>
 
@@ -50,11 +59,21 @@
 
             <form method="post" asp-action="Login">
                 <div class="mb-4">
-                    <label for="session" class="form-label">Academic Session</label>
+                    <label for="sessionSelect" class="form-label">Academic Session <span class="text-danger">*</span></label>
                     <div class="select-wrapper">
                         <i class="bi bi-calendar3 select-icon"></i>
-                        <select class="form-select" id="session" name="session">
-                           
+                        <select class="form-select" id="sessionSelect" name="session" required>
+                            <option value="" disabled selected hidden>-- Select Session --</option>
+                            @{
+                                var sessions = ViewBag.Sessions as System.Collections.IEnumerable;
+                            }
+                            @if (sessions != null)
+                            {
+                                foreach (dynamic s in sessions)
+                                {
+                                    <option value="@s.VID" selected="@(s.IsCurrent ? "selected" : null)">@s.VName</option>
+                                }
+                            }
                         </select>
                     </div>
                 </div>
@@ -82,18 +101,19 @@
                     <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
                 </button>
             </form>
-
-            <div class="demo-credentials">
-                <p><i class="bi bi-info-circle me-1"></i> Demo: <code>admin</code> / <code>admin123</code></p>
-            </div>
         </div>
     </div>
 </div>
 <script src="~/js/common.js"></script>
 @section Scripts {
     <script>
-         document.addEventListener('DOMContentLoaded', function() {
-            // Try to load sessions from API, but keep defaults if API fails
+        // Sessions are rendered server-side for instant load. This is only a
+        // fallback for when the server-side fetch failed (dropdown has just the
+        // default placeholder option). It never blocks login.
+        document.addEventListener('DOMContentLoaded', function () {
+            const select = document.getElementById('sessionSelect');
+            if (!select || select.options.length > 1) return; // already populated
+
             fetch(`${API_BASE}/AcademicSessionYear`)
                 .then(response => {
                     if (!response.ok) throw new Error('API not available');
@@ -101,20 +121,16 @@
                 })
                 .then(sessions => {
                     if (sessions && sessions.length > 0) {
-                        const select = document.getElementById('session');
-                        select.innerHTML = ''; // Clear defaults
                         sessions.forEach(session => {
                             const option = document.createElement('option');
-                            option.value = session.vid;
-                            option.textContent = session.vName;
-                            if (session.isCurrent) {
-                                option.selected = true;
-                            }
+                            option.value = session.vid ?? session.vID ?? session.VID;
+                            option.textContent = session.vName ?? session.vName ?? session.VName;
+                            if (session.isCurrent) option.selected = true;
                             select.appendChild(option);
                         });
                     }
                 })
-                .catch(error => {
+                .catch(() => {
                     console.log('Using default sessions (API not available)');
                 });
         });

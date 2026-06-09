@@ -1,4 +1,6 @@
-using School.API.DTOs;
+﻿using School.API.Data.DBModels.Accounts;
+using School.API.DTOs.Common;
+using School.API.DTOs.FeeManagement;
 using School.API.Repositories.Interfaces.Accounts;
 using School.API.Services.Interfaces.Accounts;
 
@@ -6,52 +8,24 @@ namespace School.API.Services.Implementations.Accounts
 {
     public class FeeVoucherService : IFeeVoucherService
     {
-        private readonly IFeeVoucherRepository _repository;
+        private readonly IFeeVoucherRepository _repo;
 
-        public FeeVoucherService(IFeeVoucherRepository repository)
+        public FeeVoucherService(IFeeVoucherRepository repo)
         {
-            _repository = repository;
+            _repo = repo;
         }
 
-        public async Task<IEnumerable<FeeVoucherListDto>> GetAllAsync()
-        {
-            return await _repository.GetAllAsync();
-        }
+        public Task<FeeVoucherMain?> GetByIdAsync(int id) => _repo.GetByIdAsync(id);
+        public Task<ResponseDto> SaveAsync(FeeVoucherSaveDto dto, int userId, string userIp)
+            => _repo.SaveAsync(dto, userId, userIp);
+        public Task<string> GetNextVNoAsync() => _repo.GetNextVNoAsync();
+        public Task<FeeVoucherReceiptDto?> GetReceiptAsync(decimal id)
+             => _repo.GetReceiptAsync(id);
+        public Task<List<FeeVoucherListDto>> GetAllAsync(int? classId, int? sectionId, int? studentId, DateTime dateFrom, DateTime dateTo)
+             => _repo.GetAllAsync(classId, sectionId, studentId, dateFrom, dateTo);
 
-        public async Task<FeeVoucherDto?> GetByIdAsync(int id)
-        {
-            return await _repository.GetByIdAsync(id);
-        }
+        public Task<ResponseDto> DeleteByIdAsync(int id, int userId, string userIp)
+            => _repo.DeleteByIdAsync(id, userId, userIp);
 
-        public async Task<IEnumerable<FeeVoucherListDto>> GetByChallanAsync(int challanVoucherId)
-        {
-            return await _repository.GetByChallanAsync(challanVoucherId);
-        }
-
-        public async Task<IEnumerable<FeeVoucherListDto>> GetByDateRangeAsync(DateTime fromDate, DateTime toDate)
-        {
-            return await _repository.GetByDateRangeAsync(fromDate, toDate);
-        }
-
-        public async Task<FeeVoucherDto> CreateAsync(CreateFeeVoucherDto dto)
-        {
-            var entity = await _repository.CreateAsync(dto);
-            var result = await _repository.GetByIdAsync(entity.Id);
-            return result!;
-        }
-
-        public async Task<FeeVoucherDto?> UpdateAsync(int id, UpdateFeeVoucherDto dto)
-        {
-            var entity = await _repository.UpdateAsync(id, dto);
-            if (entity == null)
-                return null;
-
-            return await _repository.GetByIdAsync(id);
-        }
-
-        public async Task<bool> DeleteAsync(int id)
-        {
-            return await _repository.DeleteAsync(id);
-        }
     }
 }

@@ -1,0 +1,344 @@
+@{
+    ViewData["Title"] = "Exam Reports";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<div class="container-fluid">
+    <div id="alertContainer"></div>
+
+    <div class="card" style="border-radius: 16px; border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0"><i class="bi bi-file-earmark-bar-graph-fill me-2"></i>Exam Reports</h5>
+                <a href="/exam" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Exams
+                </a>
+            </div>
+
+            <!-- Filter Section -->
+            <div class="filter-section" style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                <div class="row g-3">
+                    <div class="col-xl col-lg-3 col-md-4 col-sm-6 col-12" id="classFilterCol">
+                        <label for="classId" class="form-label">Class <span class="text-danger" id="classReq">*</span></label>
+                        <select class="form-select" id="classId">
+                            <option value="">-- Select Class --</option>
+                        </select>
+                    </div>
+                    <div class="col-xl col-lg-3 col-md-4 col-sm-6 col-12" id="sectionFilterCol">
+                        <label for="sectionId" class="form-label">Section <span class="text-danger" id="sectionReq">*</span></label>
+                        <select class="form-select" id="sectionId" disabled>
+                            <option value="">-- Select Section --</option>
+                        </select>
+                    </div>
+                    <div class="col-xl col-lg-3 col-md-4 col-sm-6 col-12">
+                        <label for="examId" class="form-label">Exam <span class="text-danger">*</span></label>
+                        <select class="form-select" id="examId" required>
+                            <option value="">-- Select Exam --</option>
+                        </select>
+                    </div>
+                    <div class="col-xl col-lg-3 col-md-4 col-sm-6 col-12" id="prevExamFilterCol">
+                        <label for="prevExamId" class="form-label">Previous Exam</label>
+                        <select class="form-select" id="prevExamId">
+                            <option value="">-- Select Previous Exam --</option>
+                        </select>
+                    </div>
+                    <div class="col-xl col-lg-3 col-md-4 col-sm-6 col-12" id="studentFilterCol" style="display:none;">
+                        <label for="studentId" class="form-label">Student</label>
+                        <select class="form-select" id="studentId" disabled>
+                            <option value="">-- All Students --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Report Type -->
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <label class="form-label d-block">Report Type</label>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="reportType" id="rtSheet" value="sheet" checked onchange="onReportTypeChange()">
+                            <label class="form-check-label" for="rtSheet">Result Sheet</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="reportType" id="rtCard" value="card" onchange="onReportTypeChange()">
+                            <label class="form-check-label" for="rtCard">Result Card</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="reportType" id="rtPosition" value="position" onchange="onReportTypeChange()">
+                            <label class="form-check-label" for="rtPosition">Position Wise Report</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="reportType" id="rtPercentage" value="percentage" onchange="onReportTypeChange()">
+                            <label class="form-check-label" for="rtPercentage">Percentage Wise Report</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="reportType" id="rtExecutive" value="executive" onchange="onReportTypeChange()">
+                            <label class="form-check-label" for="rtExecutive">Executive Report</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="reportType" id="rtAnnouncement" value="announcement" onchange="onReportTypeChange()">
+                            <label class="form-check-label" for="rtAnnouncement">Result Announcement</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-12 d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-secondary" onclick="resetFilters()">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="generateReport()">
+                            <i class="bi bi-printer me-1"></i> Generate Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <p class="text-muted mb-0">
+                <i class="bi bi-info-circle me-1"></i>
+                Choose a <strong>Report Type</strong>, set the filters, then click <strong>Generate Report</strong> to open the printable report in a new tab.
+                For <strong>Result Card</strong> only the <strong>Exam</strong> is required (Class / Section / Student are optional).
+                <strong>Position Wise Report</strong> needs a <strong>Class</strong> + <strong>Exam</strong> (it ranks the whole class across all sections).
+            </p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    let allExams = [];
+
+    $(document).ready(function () {
+        loadDropdowns();
+        onReportTypeChange();   // set initial filter visibility for the default report type
+
+        $('#classId').on('change', function () {
+            loadSections();
+            resetStudents();
+        });
+
+        // Reload the student list whenever the section changes
+        $('#sectionId').on('change', function () {
+            loadStudents();
+        });
+
+        // Don't allow the same exam to be picked as its own "previous" comparison
+        $('#examId').on('change', function () {
+            const examId = $(this).val();
+            $('#prevExamId option').prop('disabled', false);
+            if (examId) {
+                $(`#prevExamId option[value="${examId}"]`).prop('disabled', true);
+                if ($('#prevExamId').val() === examId) $('#prevExamId').val('');
+            }
+        });
+    });
+
+    async function loadDropdowns() {
+        try {
+            const [classes, exams] = await Promise.all([
+                fetch(`${API_BASE}/class`).then(r => r.ok ? r.json() : []).catch(() => []),
+                fetch(`${API_BASE}/exam`).then(r => r.ok ? r.json() : []).catch(() => [])
+            ]);
+
+            allExams = exams || [];
+
+            const classSelect = $('#classId');
+            classSelect.find('option:not(:first)').remove();
+            (classes || []).forEach(c => {
+                classSelect.append(`<option value="${c.vid}">${c.vName}</option>`);
+            });
+
+            renderExamDropdowns(allExams);
+        } catch (error) {
+            console.error('Error loading dropdowns:', error);
+        }
+    }
+
+    function renderExamDropdowns(exams) {
+        const examSelect = $('#examId');
+        const prevSelect = $('#prevExamId');
+        examSelect.find('option:not(:first)').remove();
+        prevSelect.find('option:not(:first)').remove();
+        (exams || []).forEach(e => {
+            examSelect.append(`<option value="${e.vid}">${e.vName}</option>`);
+            prevSelect.append(`<option value="${e.vid}">${e.vName}</option>`);
+        });
+        // Default-select the latest exam (highest VID = most recently created)
+        if (exams && exams.length > 0) {
+            const latest = exams.reduce((a, b) => (a.vid >= b.vid ? a : b));
+            examSelect.val(String(latest.vid)).trigger('change');
+        }
+    }
+
+    async function loadSections() {
+        const classId = $('#classId').val();
+        const sectionSelect = $('#sectionId');
+        sectionSelect.find('option:not(:first)').remove();
+        sectionSelect.prop('disabled', true);
+
+        if (!classId) return;
+
+        try {
+            const response = await fetch(`${API_BASE}/section/byClass/${classId}`);
+            if (response.ok) {
+                const sections = await response.json();
+                (sections || []).forEach(s => {
+                    sectionSelect.append(`<option value="${s.vid}">${s.vName}</option>`);
+                });
+                sectionSelect.prop('disabled', false);
+            }
+        } catch (error) {
+            console.error('Error loading sections:', error);
+        }
+    }
+
+    function resetStudents() {
+        $('#studentId').val('').prop('disabled', true).find('option:not(:first)').remove();
+    }
+
+    async function loadStudents() {
+        resetStudents();
+
+        const classId   = $('#classId').val();
+        const sectionId = $('#sectionId').val();
+        if (!classId || !sectionId) return;
+
+        try {
+            const response = await fetch(`${API_BASE}/student/students?classId=${classId}&sectionId=${sectionId}`);
+            if (response.ok) {
+                const students = await response.json();
+                const studentSelect = $('#studentId');
+                (students || []).forEach(st => {
+                    const roll = st.rollNo ? `${st.rollNo} - ` : '';
+                    studentSelect.append(`<option value="${st.vid}">${roll}${st.name}</option>`);
+                });
+                // Only enable the picker when the Result Card report is selected
+                if ($('input[name="reportType"]:checked').val() === 'card') {
+                    studentSelect.prop('disabled', false);
+                }
+            }
+        } catch (error) {
+            console.error('Error loading students:', error);
+        }
+    }
+
+    // Adapt which filters are shown / required to the selected report type:
+    //   Result Sheet    -> Class* + Section* + Exam* (+ optional Previous Exam)
+    //   Result Card     -> Exam* only; Class / Section / Student / Previous Exam optional
+    //   Position Wise   -> Class* + Exam*; no Section, no Previous Exam
+    function onReportTypeChange() {
+        const type          = $('input[name="reportType"]:checked').val();
+        const isCard        = type === 'card';
+        const isSheet       = type === 'sheet';
+        const isExecutive   = type === 'executive';
+        const isAnnouncement = type === 'announcement';   // whole school — Exam only
+        // Position & Percentage are both class-wide (all sections, no prev exam)
+        const isClassWide = (type === 'position' || type === 'percentage');
+
+        // Class: every report needs it except the whole-school Announcement
+        $('#classFilterCol').toggle(!isAnnouncement);
+        // Section: used by Sheet (required), Card (optional) & Executive (required)
+        $('#sectionFilterCol').toggle(!isClassWide && !isAnnouncement);
+        // Previous Exam: Sheet & Card only
+        $('#prevExamFilterCol').toggle(isSheet || isCard);
+        // Student: Card only
+        $('#studentFilterCol').toggle(isCard);
+
+        // Required-asterisk hints
+        $('#classReq').toggle(!isCard && !isAnnouncement);   // Class required except Card / Announcement
+        $('#sectionReq').toggle(isSheet || isExecutive);     // Section required for Sheet & Executive
+
+        if (isCard) {
+            $('#studentId').prop('disabled', $('#studentId option').length <= 1);
+        } else {
+            $('#studentId').val('').prop('disabled', true);
+        }
+        if (isClassWide || isAnnouncement) {
+            $('#sectionId').val('');        // section is ignored for these reports
+        }
+    }
+
+    function resetFilters() {
+        $('#classId').val('');
+        $('#sectionId').val('').prop('disabled', true).find('option:not(:first)').remove();
+        $('#examId').val('');
+        $('#prevExamId').val('');
+        $('#prevExamId option').prop('disabled', false);
+        resetStudents();
+        $('#rtSheet').prop('checked', true);
+        onReportTypeChange();
+    }
+
+    // Builds the query string. Only selected filters are appended, so the
+    // Result Card can run at any scope (whole school / class / section / student).
+    function buildReportParams() {
+        const classId    = $('#classId').val();
+        const sectionId  = $('#sectionId').val();
+        const examId     = $('#examId').val();
+        const prevExamId = $('#prevExamId').val();
+
+        const params = new URLSearchParams({
+            examId,
+            examName: $('#examId option:selected').text()
+        });
+        if (classId) {
+            params.append('classId', classId);
+            params.append('className', $('#classId option:selected').text());
+        }
+        if (sectionId) {
+            params.append('sectionId', sectionId);
+            params.append('sectionName', $('#sectionId option:selected').text());
+        }
+        if (prevExamId) params.append('prevExamId', prevExamId);
+        return params;
+    }
+
+    function generateReport() {
+        const reportType = $('input[name="reportType"]:checked').val();
+        const classId    = $('#classId').val();
+        const sectionId  = $('#sectionId').val();
+        const examId     = $('#examId').val();
+
+        // Exam is always required
+        if (!examId) { toastWarning('Please select an Exam'); return; }
+
+        if (reportType === 'card') {
+            // Result Card: Class / Section / Student are all optional
+            const params = buildReportParams();
+            const studentId = $('#studentId').val();
+            if (studentId) params.append('studentId', studentId);
+            // Open the printable Result Cards (2 per page) in a print window
+            window.open(`/exam/result-card?${params.toString()}`, '_blank', 'width=1000,height=800');
+        } else if (reportType === 'position' || reportType === 'percentage') {
+            // Position / Percentage reports: need a Class (both are class-wide, all sections)
+            if (!classId) { toastWarning('Please select a Class'); return; }
+            const params = new URLSearchParams({
+                examId,
+                classId,
+                examName: $('#examId option:selected').text(),
+                className: $('#classId option:selected').text()
+            });
+            const url = reportType === 'position' ? '/exam/position-report' : '/exam/percentage-report';
+            window.open(`${url}?${params.toString()}`, '_blank', 'width=1000,height=800');
+        } else if (reportType === 'executive') {
+            // Executive Report: needs a specific Class + Section
+            if (!classId)   { toastWarning('Please select a Class');   return; }
+            if (!sectionId) { toastWarning('Please select a Section'); return; }
+            const params = buildReportParams();
+            window.open(`/exam/executive-report?${params.toString()}`, '_blank', 'width=1000,height=800');
+        } else if (reportType === 'announcement') {
+            // Result Announcement: whole school — Exam only
+            const params = new URLSearchParams({
+                examId,
+                examName: $('#examId option:selected').text()
+            });
+            window.open(`/exam/announcement-report?${params.toString()}`, '_blank', 'width=1000,height=800');
+        } else {
+            // Result Sheet needs a specific Class + Section
+            if (!classId)   { toastWarning('Please select a Class');   return; }
+            if (!sectionId) { toastWarning('Please select a Section'); return; }
+            const params = buildReportParams();
+            // Open the printable Result Sheet in a print window (same as Fee Report)
+            window.open(`/exam/result-sheet?${params.toString()}`, '_blank', 'width=1200,height=800');
+        }
+    }
+</script>
+}

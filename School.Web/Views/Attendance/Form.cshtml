@@ -3,10 +3,119 @@
     Layout = "~/Views/Shared/_DashboardLayout.cshtml";
 }
 
+@section Styles {
+<style>
+    :root {
+        --as-green: #008649;
+        --as-green-dark: #006c3a;
+        --as-ink: #1e293b;
+        --as-muted: #64748b;
+        --as-line: #e2e8f0;
+        --as-bg: #f8fafc;
+    }
+
+    /* ---------- Page header / toolbar ---------- */
+    .page-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+    .page-toolbar .pt-title { display: flex; align-items: center; gap: 14px; }
+    .page-toolbar .pt-icon { width: 46px; height: 46px; border-radius: 12px; flex: 0 0 46px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--as-green), var(--as-green-dark)); color: #fff; font-size: 22px; box-shadow: 0 6px 16px rgba(0,134,73,0.30); }
+    .page-toolbar h4 { margin: 0; font-weight: 700; color: var(--as-ink); font-size: 20px; }
+    .page-toolbar .pt-sub { margin: 2px 0 0; font-size: 13px; color: var(--as-muted); }
+    .page-toolbar .pt-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    /* ---------- Buttons ---------- */
+    .btn-as-primary { background: var(--as-green); border: none; color: #fff; border-radius: 10px; padding: 8px 16px; font-weight: 600; font-size: 14px; white-space: nowrap; }
+    .btn-as-primary:hover { background: var(--as-green-dark); color: #fff; }
+    .btn-as-ghost { border: 1.5px solid #cbd5e1; background: #fff; color: #334155; border-radius: 10px; padding: 8px 16px; font-weight: 600; font-size: 14px; white-space: nowrap; box-shadow: 0 1px 2px rgba(15,23,42,0.06); text-decoration: none; display: inline-flex; align-items: center; }
+    .btn-as-ghost:hover { border-color: var(--as-green); color: var(--as-green); background: #f0fdf4; }
+    .btn-as-danger { background: #dc2626; border: none; color: #fff; border-radius: 10px; padding: 8px 16px; font-weight: 600; font-size: 14px; white-space: nowrap; display: inline-flex; align-items: center; }
+    .btn-as-danger:hover { background: #b91c1c; color: #fff; }
+
+    /* ---------- Cards / sections ---------- */
+    .card { border: 1px solid var(--as-line); border-radius: 16px; box-shadow: 0 4px 24px rgba(15,23,42,0.05); }
+    .filter-card { background: var(--as-bg); border: 1px solid var(--as-line); border-radius: 14px; padding: 18px 20px; margin-bottom: 22px; }
+    .section-label { font-size: 12px; font-weight: 700; color: var(--as-muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+    .form-label { font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 5px; }
+    .form-select, .form-control { border-radius: 10px; border: 1.5px solid var(--as-line); font-size: 14px; padding: 9px 12px; }
+    .form-select:focus, .form-control:focus { border-color: var(--as-green); box-shadow: 0 0 0 3px rgba(0,134,73,0.12); }
+    .input-icon { position: relative; }
+    .input-icon > i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 15px; }
+    .input-icon > .form-control { padding-left: 36px; }
+
+    /* ---------- Summary stat chips ---------- */
+    .stats-bar { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+    .stat-chip { flex: 1 1 140px; min-width: 130px; border-radius: 14px; padding: 14px 16px; border: 1px solid var(--as-line); background: #fff; display: flex; align-items: center; gap: 12px; transition: transform .15s, box-shadow .15s; }
+    .stat-chip:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(15,23,42,0.08); }
+    .stat-chip .sc-dot { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex: 0 0 38px; }
+    .stat-chip .sc-meta { line-height: 1.1; }
+    .stat-chip .sc-num { font-size: 22px; font-weight: 700; color: var(--as-ink); }
+    .stat-chip .sc-label { font-size: 12px; font-weight: 600; color: var(--as-muted); text-transform: uppercase; letter-spacing: .4px; }
+    .sc-total .sc-dot { background: #eef2ff; color: #4f46e5; }
+    .sc-present .sc-dot { background: #dcfce7; color: #16a34a; }
+    .sc-absent  .sc-dot { background: #fee2e2; color: #dc2626; }
+    .sc-leave   .sc-dot { background: #dbeafe; color: #2563eb; }
+
+    /* ---------- Table ---------- */
+    .grid-section-title { font-size: 12px; font-weight: 700; color: var(--as-muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+    .table-responsive { border: 1px solid var(--as-line); border-radius: 14px; overflow: hidden; }
+    #attendanceTable { margin: 0; }
+    #attendanceTable thead th { background: #f1f5f9; color: #334155; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; padding: 12px 14px; border-bottom: 2px solid var(--as-line); white-space: nowrap; position: sticky; top: 0; z-index: 2; }
+    #attendanceTable tbody td { padding: 10px 14px; vertical-align: middle; font-size: 14px; color: var(--as-ink); border-top: 1px solid #eef2f6; }
+    #attendanceTable tbody tr:hover td { background: #f8fafc; }
+    .roll-badge { display: inline-block; min-width: 30px; text-align: center; background: #eef2ff; color: #4338ca; font-weight: 700; border-radius: 8px; padding: 2px 8px; font-size: 13px; }
+    .student-name { font-weight: 600; }
+    .contact-cell { color: var(--as-muted); font-variant-numeric: tabular-nums; }
+
+    /* Row highlight by attendance status */
+    #attendanceBody tr.row-present td { background-color: #f0fdf4 !important; }
+    #attendanceBody tr.row-absent  td { background-color: #fef2f2 !important; }
+    #attendanceBody tr.row-leave   td { background-color: #eff6ff !important; }
+
+    /* Attendance pill toggle (buttons) */
+    .attendance-btn-group { display: inline-flex; gap: 6px; background: #fff; padding: 4px; border-radius: 10px; border: 1px solid var(--as-line); }
+    .attendance-btn { width: 32px; height: 28px; border-radius: 7px; font-weight: 700; font-size: 13px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; color: #94a3b8; transition: all 0.15s; }
+    .attendance-btn:hover { background: #f1f5f9; color: #475569; }
+    .attendance-btn.active[data-value="P"] { background: #16a34a; color: #fff; }
+    .attendance-btn.active[data-value="A"] { background: #dc2626; color: #fff; }
+    .attendance-btn.active[data-value="L"] { background: #2563eb; color: #fff; }
+
+    .form-check-input:checked { background-color: var(--as-green); border-color: var(--as-green); }
+    .form-check-input:focus { box-shadow: 0 0 0 0.25rem rgba(0,134,73,0.20); border-color: var(--as-green); }
+    .mark-all-icon { cursor: pointer; color: #16a34a; font-size: 16px; margin-left: 6px; }
+
+    .empty-state { text-align: center; padding: 48px 20px; color: var(--as-muted); }
+    .empty-state i { font-size: 42px; color: #cbd5e1; display: block; margin-bottom: 12px; }
+    .empty-state .es-title { font-weight: 600; color: #475569; margin-bottom: 4px; }
+
+    /* Loading overlay */
+    .loading-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; z-index: 100; border-radius: 16px; }
+    .spinner-border { width: 3rem; height: 3rem; border-width: 0.3rem; }
+</style>
+}
+
 <div class="container-fluid">
     <div id="alertContainer"></div>
 
-    <div class="card" style="border-radius: 16px; border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+    <!-- Page toolbar -->
+    <div class="page-toolbar">
+        <div class="pt-title">
+            <div class="pt-icon"><i class="bi bi-check2-square"></i></div>
+            <div>
+                <h4>Mark Attendance</h4>
+                <p class="pt-sub">Mark daily attendance for a class &amp; section</p>
+            </div>
+        </div>
+        <div class="pt-actions">
+            <button type="button" class="btn-as-primary" onclick="saveAttendance()">
+                <i class="bi bi-check-lg me-1"></i> Save
+            </button>
+            <button type="button" class="btn-as-danger" onclick="deleteAttendance()">
+                <i class="bi bi-trash me-1"></i> Delete
+            </button>
+            <a href="/attendance" class="btn-as-ghost"><i class="bi bi-arrow-left me-1"></i> Back to List</a>
+        </div>
+    </div>
+
+    <div class="card">
         <div class="card-body p-4 position-relative">
             <!-- Loading overlay -->
             <div id="loadingOverlay" class="loading-overlay" style="display: none;">
@@ -14,125 +123,138 @@
                     <span class="visually-hidden">Loading...</span>
                 </div>
             </div>
-            <div class="d-flex justify-content-end mb-3">
-                <a href="/attendance" class="btn btn-secondary">
-                    <i class="bi bi-arrow-left me-1"></i> Back to List
-                </a>
-            </div>
-            <!-- Filter Section -->
-            <div class="filter-section" style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+
+            <!-- Filter Card -->
+            <div class="filter-card">
+                <div class="section-label"><i class="bi bi-funnel-fill"></i> Filters</div>
                 <div class="row g-3 align-items-end">
-                    <div class="col-lg-2 col-md-3 col-sm-6 col-12">
+                    <div class="col-lg-3 col-md-4 col-sm-6 col-12">
                         <label for="classId" class="form-label">Class <span class="text-danger">*</span></label>
                         <select class="form-select" id="classId" required onchange="loadSections()">
                             <option value="">-- Select Class --</option>
                         </select>
                     </div>
-                    <div class="col-lg-2 col-md-3 col-sm-6 col-12">
+                    <div class="col-lg-3 col-md-4 col-sm-6 col-12">
                         <label for="sectionId" class="form-label">Section <span class="text-danger">*</span></label>
                         <select class="form-select" id="sectionId" required disabled onchange="loadStudents()">
                             <option value="">-- Select Section --</option>
                         </select>
                     </div>
-                    <div class="col-lg-2 col-md-3 col-sm-6 col-12">
+                    <div class="col-lg-2 col-md-4 col-sm-6 col-12">
                         <label for="attendanceDate" class="form-label">Date <span class="text-danger">*</span></label>
                         <input type="date" class="form-control" id="attendanceDate" required />
                     </div>
-                    <div class="col-lg-1 col-md-3 col-sm-6 col-12">
-                        <label class="form-label">Total</label>
-                        <input type="text" class="form-control" id="totalStudents" readonly value="0" style="background-color: #e2e8f0; font-weight: 600; text-align: center;" />
-                    </div>
-                    <div class="col-lg-1 col-md-3 col-sm-6 col-12">
-                        <label class="form-label text-success">Present</label>
-                        <input type="text" class="form-control" id="totalPresent" readonly value="0" style="background-color: #dcfce7; color: #16a34a; font-weight: 600; text-align: center;" />
-                    </div>
-                    <div class="col-lg-1 col-md-3 col-sm-6 col-12">
-                        <label class="form-label text-danger">Absent</label>
-                        <input type="text" class="form-control" id="totalAbsent" readonly value="0" style="background-color: #fee2e2; color: #dc2626; font-weight: 600; text-align: center;" />
-                    </div>
-                    <div class="col-lg-1 col-md-3 col-sm-6 col-12">
-                        <label class="form-label text-info">Leave</label>
-                        <input type="text" class="form-control" id="totalLeave" readonly value="0" style="background-color: #e0f2fe; color: #0284c7; font-weight: 600; text-align: center;" />
-                    </div>
-                    <div class="col-lg-2 col-md-3 col-sm-6 col-12 d-flex align-items-end gap-2">
-                        <button type="button" class="btn btn-primary" onclick="loadStudents()">
-                            <i class="bi bi-search me-1"></i> Load Students
-                        </button>
+                    <div class="col-lg-4 col-md-12 col-sm-12 col-12">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn-as-primary" onclick="loadStudents()">
+                                <i class="bi bi-search me-1"></i> Load Students
+                            </button>
+                            <button type="button" class="btn-as-ghost" onclick="clearFilters()">
+                                <i class="bi bi-arrow-counterclockwise me-1"></i> Clear
+                            </button>
+                        </div>
                     </div>
                 </div>
-                <!-- Action Buttons -->
-                <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
-                    <a href="/attendance" class="btn btn-secondary">
-                        <i class="bi bi-x-lg me-1"></i> Close
-                    </a>
-                    @* <button type="button" class="btn btn-primary" onclick="printAttendance()">
-                    <i class="bi bi-printer me-1"></i> Print
-                </button>
-                <button type="button" class="btn btn-primary" onclick="printAttendanceReport()">
-                    <i class="bi bi-file-earmark-text me-1"></i> Print Report
-                </button> *@
-                    <button type="button" class="btn btn-primary" id="btnSave" onclick="saveAttendance()">
-                        <i class="bi bi-check-lg me-1"></i> Save
-                    </button>
+
+                <hr style="border-color:var(--as-line); margin:18px 0 16px;">
+
+                <div class="row g-3 align-items-end">
+                    <div class="col-lg-5 col-md-7 col-sm-12 col-12">
+                        <label for="searchBox" class="form-label">Search students</label>
+                        <div class="input-icon">
+                            <i class="bi bi-search"></i>
+                            <input type="text" class="form-control" id="searchBox" oninput="applySearchFilter()"
+                                   placeholder="Roll No, Name, Father Name or Contact...">
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-5 col-sm-6 col-12">
+                        <label for="statusFilter" class="form-label">Status</label>
+                        <select class="form-select" id="statusFilter" onchange="applySearchFilter()">
+                            <option value="">All statuses</option>
+                            <option value="P">Present</option>
+                            <option value="A">Absent</option>
+                            <option value="L">Leave</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary stat chips -->
+            <div class="stats-bar">
+                <div class="stat-chip sc-total">
+                    <div class="sc-dot"><i class="bi bi-people-fill"></i></div>
+                    <div class="sc-meta"><div class="sc-num" id="statTotal">0</div><div class="sc-label">Total</div></div>
+                </div>
+                <div class="stat-chip sc-present">
+                    <div class="sc-dot"><i class="bi bi-check-circle-fill"></i></div>
+                    <div class="sc-meta"><div class="sc-num" id="statPresent">0</div><div class="sc-label">Present</div></div>
+                </div>
+                <div class="stat-chip sc-absent">
+                    <div class="sc-dot"><i class="bi bi-x-circle-fill"></i></div>
+                    <div class="sc-meta"><div class="sc-num" id="statAbsent">0</div><div class="sc-label">Absent</div></div>
+                </div>
+                <div class="stat-chip sc-leave">
+                    <div class="sc-dot"><i class="bi bi-clock-fill"></i></div>
+                    <div class="sc-meta"><div class="sc-num" id="statLeave">0</div><div class="sc-label">Leave</div></div>
+                </div>
             </div>
 
             <!-- Attendance Grid -->
             <div class="grid-section">
+                <div class="grid-section-title"><i class="bi bi-table"></i> Students</div>
                 <div class="table-responsive">
-                    <table class="table table-hover" id="attendanceTable">
+                    <table class="table" id="attendanceTable">
                         <thead>
-                            <tr style="background: #f8fafc;">
-                                <th>Roll No</th>
+                            <tr>
+                                <th style="width: 50px;">Sr.#</th>
+                                <th style="width: 70px;">Roll No.</th>
                                 <th>Student Name</th>
-                                <th class="text-center">Attendance <i class="bi bi-check-all" onclick="markAllPresent()" title="Mark All Present" style="cursor: pointer; color: #16a34a; font-size: 18px; margin-left: 4px;"></i></th>
-                                <th class="text-center">Late</th>
-                                <th class="text-center">Again</th>
+                                <th>Father's Name</th>
+                                <th style="width: 130px;">Contact</th>
+                                <th class="text-center" style="width: 140px;">
+                                    Attendance
+                                    <i class="bi bi-check-all mark-all-icon" onclick="markAllPresent()" title="Mark All Present"></i>
+                                </th>
+                                <th class="text-center" style="width: 70px;">Late</th>
+                                <th class="text-center" style="width: 70px;">Again</th>
                             </tr>
                         </thead>
                         <tbody id="attendanceBody">
                             <tr>
-                                <td colspan="5" class="text-center text-muted py-4">Select Class and Section to load students</td>
+                                <td colspan="8">
+                                    <div class="empty-state">
+                                        <i class="bi bi-clipboard"></i>
+                                        <div class="es-title">No students loaded</div>
+                                        <div>Select Class, Section &amp; Date, then click <strong>Load Students</strong>.</div>
+                                    </div>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            
+            <!-- Action Buttons -->
+            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                <a href="/attendance" class="btn-as-ghost">
+                    <i class="bi bi-x-lg me-1"></i> Close
+                </a>
+                <button type="button" class="btn-as-danger" id="btnDelete" onclick="deleteAttendance()">
+                    <i class="bi bi-trash me-1"></i> Delete
+                </button>
+                <button type="button" class="btn-as-primary" id="btnSave" onclick="saveAttendance()">
+                    <i class="bi bi-check-lg me-1"></i> Save
+                </button>
             </div>
+
         </div>
     </div>
 </div>
 
-@section Styles {
-<style>
-    .loading-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; z-index: 100; border-radius: 16px; }
-    .spinner-border { width: 3rem; height: 3rem; border-width: 0.3rem; }
-    .btn-outline-leave { border: 1px solid #2563eb; color: #2563eb; background: transparent; }
-    .btn-outline-leave:hover { background: #2563eb; color: white; }
-    .form-check-input:checked { background-color: #008649; border-color: #008649; }
-    .form-check-input:focus { box-shadow: 0 0 0 0.25rem rgba(0,134,73,0.25); border-color: #008649; }
-    .attendance-btn.btn-success, .attendance-btn.btn-success:hover, .attendance-btn.btn-success:focus { background: linear-gradient(135deg, #008649 0%, #006d3b 100%); border-color: #008649; color: white; }
-    .attendance-btn.btn-danger, .attendance-btn.btn-danger:hover, .attendance-btn.btn-danger:focus { background: #dc2626; border-color: #dc2626; color: white; }
-    .attendance-btn.btn-leave, .attendance-btn.btn-leave:hover, .attendance-btn.btn-leave:focus { background: #2563eb; border-color: #2563eb; color: white; }
-    @@media (max-width: 767px) {
-        .btn-group .btn {
-            min-width: 40px;
-            min-height: 40px;
-            padding: 8px;
-        }
-        .form-check {
-            min-height: 40px;
-            display: flex;
-            align-items: center;
-        }
-    }
-</style>
-}
-
 @section Scripts {
     <script>
-                let allStudents = [];
+        let allStudents = [];
         let sessionId = null;
 
         $(document).ready(function () {
@@ -211,10 +333,19 @@
                 const students = await studentsRes.json();
 
                 // Step 2: Filter by class, section, active
+                let hiddenByAdmission = 0;
                 allStudents = students.filter(s => {
                     const matchClass   = String(s.classID   || s.classId   || '') === String(classId);
                     const matchSection = String(s.sectionID || s.sectionId || '') === String(sectionId);
-                    return matchClass && matchSection && s.isActive === true && s.statusID === 1;
+                    if (!(matchClass && matchSection && s.isActive === true && s.statusID === 1)) return false;
+
+                    // Exclude students admitted AFTER the selected date — they were not yet
+                    // enrolled on that day, so they must not be markable/absent for it.
+                    // (Compare YYYY-MM-DD strings — timezone-safe; `date` is the date input value.)
+                    const adm = (s.admissionDate || s.AdmissionDate || '').substring(0, 10);
+                    if (adm && adm > date) { hiddenByAdmission++; return false; }
+
+                    return true;
                 });
 
                 allStudents.sort((a, b) => (parseInt(a.rollNo) || 0) - (parseInt(b.rollNo) || 0));
@@ -240,7 +371,7 @@
 
                     if (existing) {
                         // Pre-fill from existing record
-                        //  FIX 2: correctly map attendence value 
+                        //  FIX 2: correctly map attendence value
                         if      (existing.attendence === 1 ) s.attendance = 'P';
                         else if (existing.attendence === 0 ) s.attendance = 'A';
                         else if (existing.attendence === 2 ) s.attendance = 'L';
@@ -250,7 +381,7 @@
                         s.again   = existing.isAgain || false;
                         s.vid_att = existing.vID;      // store attendance VID for update
                     } else {
-                        // Fresh � default to Present
+                        // Fresh — default to Present
                         s.attendance = 'P';
                         s.late       = false;
                         s.again      = false;
@@ -265,9 +396,13 @@
                 if (allStudents.length === 0) {
                     toastInfo('No students found');
                 } else if (hasExisting) {
-                    toastInfo(`Attendance already marked � loaded for editing`);
+                    toastInfo(`Attendance already marked — loaded for editing`);
                 } else {
                     toastSuccess(`${allStudents.length} student(s) loaded`);
+                }
+
+                if (hiddenByAdmission > 0) {
+                    toastInfo(`${hiddenByAdmission} student(s) hidden — admitted after this date`);
                 }
 
             } catch (error) {
@@ -282,39 +417,48 @@
             tbody.empty();
 
             if (studentList.length === 0) {
-                tbody.html('<tr><td colspan="5" class="text-center text-muted py-4">Select Class and Section to load students</td></tr>');
-                $('#totalStudents').val(0);
+                tbody.html(`
+                    <tr><td colspan="8">
+                        <div class="empty-state">
+                            <i class="bi bi-clipboard"></i>
+                            <div class="es-title">No students loaded</div>
+                            <div>Select Class, Section &amp; Date, then click <strong>Load Students</strong>.</div>
+                        </div>
+                    </td></tr>`);
                 updateCounts();
                 return;
             }
 
-            $('#totalStudents').val(studentList.length);
-
             studentList.forEach((student, index) => {
-                const sid = student.vid || student.id;
-                const att = student.attendance || 'P';
+                const sid     = student.vid || student.id;
+                const att     = student.attendance || 'P';
+                const name    = student.studentName || student.name || '-';
+                const father  = student.fatherName || '-';
+                const contact = student.mobileNo || student.fatherMobile || '-';
+                const roll    = student.rollNo || (index + 1);
 
-                const pActive = att === 'P' ? 'active btn-success text-white'     : '';
-                const aActive = att === 'A' ? 'active btn-danger text-white'      : '';
-                const lActive = att === 'L' ? 'active btn-leave text-white'       : '';
+                const pActive = att === 'P' ? 'active' : '';
+                const aActive = att === 'A' ? 'active' : '';
+                const lActive = att === 'L' ? 'active' : '';
 
                 // Late/Again disabled if not Present
                 const checkDisabled = att !== 'P' ? 'disabled' : '';
 
+                const searchText = `${roll} ${name} ${father} ${contact}`.replace(/"/g, '');
                 const row = `
-                    <tr data-student-id="${sid}">
-                        <td><strong>${student.rollNo || index + 1}</strong></td>
-                        <td>${student.studentName || student.name || '-'}</td>
+                    <tr data-student-id="${sid}" data-search="${searchText}">
+                        <td>${index + 1}</td>
+                        <td><span class="roll-badge">${roll}</span></td>
+                        <td class="student-name">${name}</td>
+                        <td>${father}</td>
+                        <td class="contact-cell">${contact}</td>
                         <td class="text-center">
-                            <div class="btn-group" role="group">
-                                <button type="button"
-                                    class="btn btn-sm btn-outline-success attendance-btn ${pActive}"
+                            <div class="attendance-btn-group" role="group">
+                                <button type="button" class="attendance-btn ${pActive}"
                                     onclick="setAttendance(${sid}, 'P', this)" data-value="P">P</button>
-                                <button type="button"
-                                    class="btn btn-sm btn-outline-danger attendance-btn ${aActive}"
+                                <button type="button" class="attendance-btn ${aActive}"
                                     onclick="setAttendance(${sid}, 'A', this)" data-value="A">A</button>
-                                <button type="button"
-                                    class="btn btn-sm btn-outline-leave attendance-btn ${lActive}"
+                                <button type="button" class="attendance-btn ${lActive}"
                                     onclick="setAttendance(${sid}, 'L', this)" data-value="L">L</button>
                             </div>
                         </td>
@@ -337,19 +481,19 @@
                 tbody.append(row);
             });
 
+            // Apply row colors and any active search/status filter
+            $('#attendanceBody tr').each(function () { updateRowColor($(this)); });
             updateCounts();
+            applySearchFilter();
         }
 
         function setAttendance(studentId, value, button) {
             const student = allStudents.find(s => (s.vid || s.id) === studentId);
             if (student) student.attendance = value;
 
-            const btnGroup = $(button).closest('.btn-group');
-            btnGroup.find('.attendance-btn').removeClass('active btn-success btn-danger btn-leave text-white');
-            $(button).addClass('active text-white');
-            if      (value === 'P') $(button).addClass('btn-success');
-            else if (value === 'A') $(button).addClass('btn-danger');
-            else if (value === 'L') $(button).addClass('btn-leave');
+            const btnGroup = $(button).closest('.attendance-btn-group');
+            btnGroup.find('.attendance-btn').removeClass('active');
+            $(button).addClass('active');
 
             const row = $(button).closest('tr');
             if (value === 'P') {
@@ -359,7 +503,9 @@
                 if (student) { student.late = false; student.again = false; }
             }
 
+            updateRowColor(row);
             updateCounts();
+            applySearchFilter();
         }
 
         function updateLate(studentId, isLate) {
@@ -372,10 +518,39 @@
             if (student) student.again = isAgain;
         }
 
+        // Highlight the full row based on the student's attendance status
+        function updateRowColor($row) {
+            const sid = parseInt($row.attr('data-student-id'));
+            const student = allStudents.find(s => (s.vid || s.id) === sid);
+            const v = student ? student.attendance : '';
+            $row.removeClass('row-present row-absent row-leave');
+            if (v === 'P') $row.addClass('row-present');
+            else if (v === 'A') $row.addClass('row-absent');
+            else if (v === 'L') $row.addClass('row-leave');
+        }
+
+        // Filter loaded rows by search text (roll/name/father/contact) and status
+        function applySearchFilter() {
+            const q = ($('#searchBox').val() || '').toLowerCase().trim();
+            const status = $('#statusFilter').val();
+            $('#attendanceBody tr').each(function () {
+                const $row = $(this);
+                const search = $row.attr('data-search');
+                if (search === undefined) return; // skip placeholder rows
+                const sid = parseInt($row.attr('data-student-id'));
+                const student = allStudents.find(s => (s.vid || s.id) === sid);
+                const st = student ? student.attendance : '';
+                const matchSearch = !q || String(search).toLowerCase().indexOf(q) !== -1;
+                const matchStatus = !status || st === status;
+                $row.toggle(matchSearch && matchStatus);
+            });
+        }
+
         function updateCounts() {
-            $('#totalPresent').val(allStudents.filter(s => s.attendance === 'P').length);
-            $('#totalAbsent').val(allStudents.filter(s => s.attendance === 'A').length);
-            $('#totalLeave').val(allStudents.filter(s => s.attendance === 'L').length);
+            $('#statTotal').text(allStudents.length);
+            $('#statPresent').text(allStudents.filter(s => s.attendance === 'P').length);
+            $('#statAbsent').text(allStudents.filter(s => s.attendance === 'A').length);
+            $('#statLeave').text(allStudents.filter(s => s.attendance === 'L').length);
         }
 
         function markAllPresent() {
@@ -384,15 +559,17 @@
             allStudents.forEach(s => { s.attendance = 'P'; s.late = false; s.again = false; });
 
             $('#attendanceBody tr').each(function () {
-                const btnGroup = $(this).find('.btn-group');
-                btnGroup.find('.attendance-btn').removeClass('active btn-success btn-danger btn-leave text-white');
-                btnGroup.find('.attendance-btn[data-value="P"]').addClass('active btn-success text-white');
+                const btnGroup = $(this).find('.attendance-btn-group');
+                btnGroup.find('.attendance-btn').removeClass('active');
+                btnGroup.find('.attendance-btn[data-value="P"]').addClass('active');
                 $(this).find('.late-checkbox, .again-checkbox')
                        .prop('checked', false)
                        .prop('disabled', false);
+                updateRowColor($(this));
             });
 
             updateCounts();
+            applySearchFilter();
             toastSuccess('All students marked as Present');
         }
 
@@ -408,7 +585,7 @@
             if (!sessionId) { toastWarning('No active session found'); return; }
             if (allStudents.length === 0) { toastWarning('No students loaded'); return; }
 
-            //  FIX 3: correctly map P/A/L to attendence value 
+            //  FIX 3: correctly map P/A/L to attendence value
             const payload = allStudents.map(s => ({
                 vID:        s.vid_att || 0,
                 sessionID:  sessionId,
@@ -445,6 +622,66 @@
                 }
             } catch (error) {
                 toastError('Error saving attendance: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function clearFilters() {
+            $('#classId').val('').trigger('change');
+            $('#sectionId').find('option:not(:first)').remove();
+            $('#sectionId').prop('disabled', true);
+            $('#attendanceDate').val(new Date().toISOString().split('T')[0]);
+            $('#searchBox').val('');
+            $('#statusFilter').val('');
+            allStudents = [];
+            renderGrid([]);
+        }
+
+        // Delete a whole class/section's attendance for the selected day
+        async function deleteAttendance() {
+            const classId   = $('#classId').val();
+            const sectionId = $('#sectionId').val();
+            const date      = $('#attendanceDate').val();
+
+            if (!classId || !sectionId || !date) {
+                toastWarning('Please select Class, Section and Date');
+                return;
+            }
+            if (!sessionId) { toastWarning('No active session found'); return; }
+
+            const sectionLabel = $('#sectionId option:selected').text();
+            const confirmed = await confirmDelete({
+                title: 'Delete attendance?',
+                html:  `Attendance of <b>${sectionLabel}</b> for <b>${date}</b> will be permanently deleted.<br><span style="color:#94a3b8;font-size:13px;">This action cannot be undone.</span>`
+            });
+
+            if (!confirmed) return;
+
+            showLoading();
+            try {
+                const params = new URLSearchParams({
+                    SessionID: sessionId,
+                    SectionID: sectionId,
+                    DateFrom:  date,
+                    DateTo:    date
+                });
+
+                const res = await fetch(`${API_BASE}/StdAttendence/by-filter?${params.toString()}`, {
+                    method: 'DELETE'
+                });
+                const result = res.ok ? await res.json() : null;
+
+                if (result && result.returnCode === 200) {
+                    toastSuccess(result.returnMessage || 'Attendance deleted');
+                    // Reset the grid back to fresh (Present) defaults so it can be re-marked
+                    allStudents.forEach(s => { s.attendance = 'P'; s.late = false; s.again = false; s.vid_att = 0; });
+                    renderGrid(allStudents);
+                } else {
+                    toastWarning((result && result.returnMessage) || 'Failed to delete attendance');
+                }
+            } catch (error) {
+                toastError('Error deleting attendance: ' + error.message);
             } finally {
                 hideLoading();
             }
