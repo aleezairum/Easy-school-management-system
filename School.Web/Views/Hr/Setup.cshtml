@@ -1,0 +1,398 @@
+@{
+    ViewData["Title"] = "Payroll Setup";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<style>
+    .nav-tabs { border-bottom: 2px solid #e2e8f0; margin-bottom: 16px; }
+    .nav-tabs .nav-link { border: none; color: #64748b; font-weight: 500; }
+    .nav-tabs .nav-link.active { color: #008649; border-bottom: 3px solid #008649; background: transparent; }
+    .form-section { background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+    .section-title { font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #e2e8f0; }
+    .preview-box { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 12px 16px; margin-top: 10px; }
+</style>
+
+<div class="container-fluid">
+    <div id="alertContainer"></div>
+
+    <ul class="nav nav-tabs">
+        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabShifts" type="button">Shifts</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabHolidays" type="button">Holidays</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabLeaveTypes" type="button">Leave Types</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabComponents" type="button">Pay Components</button></li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- SHIFTS -->
+        <div class="tab-pane fade show active" id="tabShifts">
+            <div class="card"><div class="card-body">
+                <div class="form-section">
+                    <div class="section-title"><i class="bi bi-clock me-2"></i>Add / Edit Shift</div>
+                    <input type="hidden" id="shiftId" value="0" />
+                    <div class="row g-3">
+                        <div class="col-md-2"><label class="form-label">Code</label><input class="form-control" id="shiftCode" /></div>
+                        <div class="col-md-3"><label class="form-label">Name</label><input class="form-control" id="shiftName" /></div>
+                        <div class="col-md-2"><label class="form-label">Time In</label><input type="time" class="form-control" id="shiftTimeIn" /></div>
+                        <div class="col-md-2"><label class="form-label">Time Out</label><input type="time" class="form-control" id="shiftTimeOut" /></div>
+                        <div class="col-md-1"><label class="form-label">Grace (min)</label><input type="number" class="form-control" id="shiftGrace" value="10" /></div>
+                        <div class="col-md-2"><label class="form-label">Work Hours</label><input type="number" step="0.1" class="form-control" id="shiftWorkHours" value="8" /></div>
+                        <div class="col-md-2"><label class="form-label">Half-day (min)</label><input type="number" class="form-control" id="shiftHalfDayMin" value="180" /></div>
+                        <div class="col-md-2"><label class="form-label">Full-day (min)</label><input type="number" class="form-control" id="shiftFullDayMin" value="360" /></div>
+                        <div class="col-md-2"><label class="form-label">Off Day 1</label><select class="form-select" id="shiftOff1"><option value="">None</option></select></div>
+                        <div class="col-md-2"><label class="form-label">Off Day 2</label><select class="form-select" id="shiftOff2"><option value="">None</option></select></div>
+                        <div class="col-md-2 d-flex align-items-end"><div class="form-check"><input class="form-check-input" type="checkbox" id="shiftActive" checked /><label class="form-check-label">Active</label></div></div>
+                        <div class="col-md-3 d-flex align-items-end gap-2">
+                            <button class="btn btn-primary" onclick="saveShift()"><i class="bi bi-check-lg"></i> Save</button>
+                            <button class="btn btn-secondary" onclick="resetShiftForm()"><i class="bi bi-x-lg"></i> Clear</button>
+                        </div>
+                    </div>
+                </div>
+                <table class="table table-hover">
+                    <thead><tr><th>Code</th><th>Name</th><th>Time In</th><th>Time Out</th><th>Grace</th><th>Hours</th><th>Status</th><th></th></tr></thead>
+                    <tbody id="shiftsBody"></tbody>
+                </table>
+            </div></div>
+        </div>
+
+        <!-- HOLIDAYS -->
+        <div class="tab-pane fade" id="tabHolidays">
+            <div class="card"><div class="card-body">
+                <div class="form-section">
+                    <div class="section-title"><i class="bi bi-calendar-x me-2"></i>Add Holiday</div>
+                    <input type="hidden" id="holidayId" value="0" />
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-3"><label class="form-label">Date</label><input type="date" class="form-control" id="holidayDate" /></div>
+                        <div class="col-md-4"><label class="form-label">Name</label><input class="form-control" id="holidayName" /></div>
+                        <div class="col-md-2"><label class="form-label">Type</label>
+                            <select class="form-select" id="holidayType">
+                                <option value="1">Gazetted</option>
+                                <option value="2">Vacation</option>
+                                <option value="3">Half Day</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-flex gap-2">
+                            <button class="btn btn-primary" onclick="saveHoliday()"><i class="bi bi-check-lg"></i> Save</button>
+                            <button class="btn btn-secondary" onclick="resetHolidayForm()">Clear</button>
+                        </div>
+                    </div>
+                    <div class="row g-2 align-items-end mt-2">
+                        <div class="col-md-2"><label class="form-label">Copy from year</label><input type="number" class="form-control" id="copyFromYear" placeholder="2025" /></div>
+                        <div class="col-md-2"><label class="form-label">To year</label><input type="number" class="form-control" id="copyToYear" placeholder="2026" /></div>
+                        <div class="col-md-3"><button class="btn btn-outline-success" onclick="copyHolidayYear()"><i class="bi bi-copy"></i> Copy Year</button></div>
+                    </div>
+                </div>
+                <div class="row g-2 mb-2">
+                    <div class="col-md-2"><input type="number" class="form-control" id="holidayFilterYear" placeholder="Year filter" /></div>
+                    <div class="col-md-2"><button class="btn btn-outline-secondary" onclick="loadHolidays()">Filter</button></div>
+                </div>
+                <table class="table table-hover">
+                    <thead><tr><th>Date</th><th>Name</th><th>Type</th><th></th></tr></thead>
+                    <tbody id="holidaysBody"></tbody>
+                </table>
+            </div></div>
+        </div>
+
+        <!-- LEAVE TYPES -->
+        <div class="tab-pane fade" id="tabLeaveTypes">
+            <div class="card"><div class="card-body">
+                <p class="text-muted">Leave types are seeded from setup and shared across all schools using this system. Contact support to add new ones.</p>
+                <table class="table table-hover">
+                    <thead><tr><th>Code</th><th>Name</th><th>Paid</th><th>Deduct Days</th><th>Max/Year</th></tr></thead>
+                    <tbody id="leaveTypesBody"></tbody>
+                </table>
+            </div></div>
+        </div>
+
+        <!-- PAY COMPONENTS -->
+        <div class="tab-pane fade" id="tabComponents">
+            <div class="card"><div class="card-body">
+                <div class="form-section">
+                    <div class="section-title"><i class="bi bi-calculator me-2"></i>Add / Edit Pay Component</div>
+                    <input type="hidden" id="compId" value="0" />
+                    <div class="row g-3">
+                        <div class="col-md-2"><label class="form-label">Code</label><input class="form-control" id="compCode" /></div>
+                        <div class="col-md-3"><label class="form-label">Name</label><input class="form-control" id="compName" /></div>
+                        <div class="col-md-2"><label class="form-label">Kind</label>
+                            <select class="form-select" id="compKind"><option value="1">Earning</option><option value="2">Deduction</option></select>
+                        </div>
+                        <div class="col-md-2"><label class="form-label">Calc Type</label>
+                            <select class="form-select" id="compCalcType" onchange="toggleCalcFields()">
+                                <option value="1">Fixed</option>
+                                <option value="2">Percent Of</option>
+                                <option value="3">Per Late Minute</option>
+                                <option value="4">Per Absent Day</option>
+                                <option value="5">Per Overtime Hour</option>
+                                <option value="6">Slab</option>
+                                <option value="7">Formula</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3"><label class="form-label">Scope</label>
+                            <div class="d-flex gap-2">
+                                <select class="form-select" id="compScopeType">
+                                    <option value="1">Global</option>
+                                    <option value="2">Grade</option>
+                                    <option value="3">Designation</option>
+                                    <option value="4">Employee</option>
+                                </select>
+                                <input type="number" class="form-control" id="compScopeId" placeholder="Scope Id" style="max-width:110px;" />
+                            </div>
+                        </div>
+
+                        <div class="col-md-2" id="fldRate"><label class="form-label">Rate</label><input type="number" step="0.0001" class="form-control" id="compRate" /></div>
+                        <div class="col-md-2" id="fldRateSource"><label class="form-label">Rate Source</label>
+                            <select class="form-select" id="compRateSource"><option value="1">Fixed</option><option value="2">Derived from Salary</option></select>
+                        </div>
+                        <div class="col-md-2" id="fldBaseOn"><label class="form-label">Base On</label>
+                            <select class="form-select" id="compBaseOn"><option value="1">Basic</option><option value="2">Gross</option></select>
+                        </div>
+                        <div class="col-md-2" id="fldDivisorDays"><label class="form-label">Divisor Days</label>
+                            <select class="form-select" id="compDivisorDays"><option value="30">Fixed 30</option><option value="0">Calendar</option><option value="255">Working Days</option></select>
+                        </div>
+                        <div class="col-md-2" id="fldGrace"><label class="form-label">Grace Minutes</label><input type="number" class="form-control" id="compGrace" value="0" /></div>
+                        <div class="col-md-2"><label class="form-label">Free Units/Month</label><input type="number" step="0.5" class="form-control" id="compFreeUnits" /></div>
+                        <div class="col-md-2"><label class="form-label">Cap / Day</label><input type="number" class="form-control" id="compCapDay" /></div>
+                        <div class="col-md-2"><label class="form-label">Cap / Month</label><input type="number" class="form-control" id="compCapMonth" /></div>
+                        <div class="col-md-2"><label class="form-label">Priority</label><input type="number" class="form-control" id="compPriority" value="0" /></div>
+                        <div class="col-md-4" id="fldFormula" style="display:none;"><label class="form-label">Formula (NCalc)</label><input class="form-control" id="compFormula" placeholder="if(LateCount > 3, PerDayRate * 0.5, LateMinutes * PerMinuteRate)" /></div>
+                        <div class="col-md-6" id="fldSlabs" style="display:none;">
+                            <label class="form-label">Slabs (one per line: from,to,amount|days|percent)</label>
+                            <textarea class="form-control" id="compSlabsText" rows="2" placeholder="0,2,,0,\n3,,,0.5,"></textarea>
+                            <div class="form-text">Format: from,to,amount,days,percent — leave a field blank if unused. Example: 3,, , 0.5, means "3 and above -> 0.5 days".</div>
+                        </div>
+                        <div class="col-md-2"><label class="form-label">Effective From</label><input type="date" class="form-control" id="compEffFrom" /></div>
+                        <div class="col-md-2"><label class="form-label">Effective To</label><input type="date" class="form-control" id="compEffTo" /></div>
+                        <div class="col-md-2 d-flex align-items-end"><div class="form-check"><input class="form-check-input" type="checkbox" id="compShowSlip" checked /><label class="form-check-label">Show on payslip</label></div></div>
+                        <div class="col-md-2 d-flex align-items-end"><div class="form-check"><input class="form-check-input" type="checkbox" id="compActive" checked /><label class="form-check-label">Active</label></div></div>
+                        <div class="col-md-3 d-flex align-items-end gap-2">
+                            <button class="btn btn-primary" onclick="saveComponent()"><i class="bi bi-check-lg"></i> Save</button>
+                            <button class="btn btn-secondary" onclick="resetComponentForm()">Clear</button>
+                        </div>
+                    </div>
+
+                    <div class="section-title mt-4"><i class="bi bi-eye me-2"></i>Live Preview</div>
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-2"><label class="form-label">Basic</label><input type="number" class="form-control" id="prevBasic" value="20000" /></div>
+                        <div class="col-md-2"><label class="form-label">Gross</label><input type="number" class="form-control" id="prevGross" value="20000" /></div>
+                        <div class="col-md-2"><label class="form-label">Late Min/day</label><input type="number" class="form-control" id="prevLateMin" value="25" /></div>
+                        <div class="col-md-2"><label class="form-label">Late Count</label><input type="number" class="form-control" id="prevLateCount" value="1" /></div>
+                        <div class="col-md-2"><label class="form-label">Absent Days</label><input type="number" class="form-control" id="prevAbsent" value="0" /></div>
+                        <div class="col-md-2"><button class="btn btn-outline-success" onclick="runPreview()"><i class="bi bi-play-fill"></i> Preview</button></div>
+                    </div>
+                    <div class="preview-box" id="previewResult" style="display:none;"></div>
+                </div>
+
+                <table class="table table-hover">
+                    <thead><tr><th>Code</th><th>Name</th><th>Kind</th><th>Calc</th><th>Scope</th><th>Status</th><th></th></tr></thead>
+                    <tbody id="componentsBody"></tbody>
+                </table>
+            </div></div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const KIND_NAMES = {1:'Earning',2:'Deduction'};
+    const CALC_NAMES = {1:'Fixed',2:'Percent Of',3:'Per Late Minute',4:'Per Absent Day',5:'Per Overtime Hour',6:'Slab',7:'Formula'};
+    const SCOPE_NAMES = {1:'Global',2:'Grade',3:'Designation',4:'Employee'};
+    const WEEKDAYS = [{v:1,n:'Sunday'},{v:2,n:'Monday'},{v:3,n:'Tuesday'},{v:4,n:'Wednesday'},{v:5,n:'Thursday'},{v:6,n:'Friday'},{v:7,n:'Saturday'}];
+
+    $(document).ready(function () {
+        WEEKDAYS.forEach(d => { $('#shiftOff1').append(`<option value="${d.v}">${d.n}</option>`); $('#shiftOff2').append(`<option value="${d.v}">${d.n}</option>`); });
+        loadShifts(); loadHolidays(); loadLeaveTypes(); loadComponents();
+        toggleCalcFields();
+    });
+
+    // ---- Shifts ----
+    async function loadShifts() {
+        const res = await fetch(`${API_BASE}/hr/shifts`);
+        const data = res.ok ? await res.json() : [];
+        const body = $('#shiftsBody'); body.empty();
+        data.forEach(s => {
+            body.append(`<tr>
+                <td>${s.code}</td><td>${s.name}</td><td>${s.timeIn}</td><td>${s.timeOut}</td>
+                <td>${s.graceMinutes}</td><td>${s.workHours}</td>
+                <td><span class="badge ${s.isActive?'bg-success':'bg-secondary'}">${s.isActive?'Active':'Inactive'}</span></td>
+                <td><button class="btn btn-sm btn-info" onclick='editShift(${JSON.stringify(s)})'><i class="bi bi-pencil"></i></button></td>
+            </tr>`);
+        });
+    }
+    function editShift(s) {
+        $('#shiftId').val(s.id); $('#shiftCode').val(s.code); $('#shiftName').val(s.name);
+        $('#shiftTimeIn').val(s.timeIn?.substring(0,5)); $('#shiftTimeOut').val(s.timeOut?.substring(0,5));
+        $('#shiftGrace').val(s.graceMinutes); $('#shiftWorkHours').val(s.workHours);
+        $('#shiftHalfDayMin').val(s.halfDayMinutes); $('#shiftFullDayMin').val(s.fullDayMinutes);
+        $('#shiftOff1').val(s.offDay1 || ''); $('#shiftOff2').val(s.offDay2 || '');
+        $('#shiftActive').prop('checked', s.isActive);
+    }
+    function resetShiftForm() {
+        $('#shiftId').val(0); $('#shiftCode,#shiftName').val('');
+        $('#shiftTimeIn,#shiftTimeOut').val(''); $('#shiftGrace').val(10); $('#shiftWorkHours').val(8);
+        $('#shiftHalfDayMin').val(180); $('#shiftFullDayMin').val(360);
+        $('#shiftOff1,#shiftOff2').val(''); $('#shiftActive').prop('checked', true);
+    }
+    async function saveShift() {
+        const id = parseInt($('#shiftId').val()) || 0;
+        const dto = {
+            Id: id, Code: $('#shiftCode').val().trim(), Name: $('#shiftName').val().trim(),
+            TimeIn: $('#shiftTimeIn').val() + ':00', TimeOut: $('#shiftTimeOut').val() + ':00',
+            GraceMinutes: parseInt($('#shiftGrace').val()) || 0, WorkHours: parseFloat($('#shiftWorkHours').val()) || 0,
+            HalfDayMinutes: parseInt($('#shiftHalfDayMin').val()) || 0, FullDayMinutes: parseInt($('#shiftFullDayMin').val()) || 0,
+            OffDay1: $('#shiftOff1').val() ? parseInt($('#shiftOff1').val()) : null,
+            OffDay2: $('#shiftOff2').val() ? parseInt($('#shiftOff2').val()) : null,
+            IsActive: $('#shiftActive').is(':checked')
+        };
+        const res = await fetch(`${API_BASE}/hr/shifts${id ? '/'+id : ''}`, { method: id ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(dto) });
+        if (res.ok) { toastSuccess('Shift saved'); resetShiftForm(); loadShifts(); } else toastError('Failed to save shift');
+    }
+
+    // ---- Holidays ----
+    async function loadHolidays() {
+        const year = $('#holidayFilterYear').val();
+        const url = year ? `${API_BASE}/hr/holidays?year=${year}` : `${API_BASE}/hr/holidays`;
+        const res = await fetch(url);
+        const data = res.ok ? await res.json() : [];
+        const body = $('#holidaysBody'); body.empty();
+        data.forEach(h => {
+            const typeName = h.hType === 1 ? 'Gazetted' : h.hType === 2 ? 'Vacation' : 'Half Day';
+            body.append(`<tr>
+                <td>${new Date(h.hDate).toLocaleDateString()}</td><td>${h.name}</td><td>${typeName}</td>
+                <td><button class="btn btn-sm btn-info" onclick='editHoliday(${JSON.stringify(h)})'><i class="bi bi-pencil"></i></button></td>
+            </tr>`);
+        });
+    }
+    function editHoliday(h) {
+        $('#holidayId').val(h.id); $('#holidayDate').val(h.hDate.split('T')[0]); $('#holidayName').val(h.name); $('#holidayType').val(h.hType);
+    }
+    function resetHolidayForm() { $('#holidayId').val(0); $('#holidayDate,#holidayName').val(''); $('#holidayType').val(1); }
+    async function saveHoliday() {
+        const id = parseInt($('#holidayId').val()) || 0;
+        const dto = { Id: id, HDate: $('#holidayDate').val(), Name: $('#holidayName').val().trim(), HType: parseInt($('#holidayType').val()), IsActive: true };
+        if (!dto.HDate || !dto.Name) { toastError('Enter date and name'); return; }
+        const res = await fetch(`${API_BASE}/hr/holidays${id ? '/'+id : ''}`, { method: id ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(dto) });
+        if (res.ok) { toastSuccess('Holiday saved'); resetHolidayForm(); loadHolidays(); } else toastError('Failed to save holiday');
+    }
+    async function copyHolidayYear() {
+        const fromYear = parseInt($('#copyFromYear').val()), toYear = parseInt($('#copyToYear').val());
+        if (!fromYear || !toYear) { toastError('Enter both years'); return; }
+        const res = await fetch(`${API_BASE}/hr/holidays/copy-year`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({FromYear: fromYear, ToYear: toYear}) });
+        if (res.ok) { const r = await res.json(); toastSuccess(`Copied ${r.copied} holiday(s)`); loadHolidays(); } else toastError('Copy failed');
+    }
+
+    // ---- Leave Types ----
+    async function loadLeaveTypes() {
+        const res = await fetch(`${API_BASE}/hr/leave-types`);
+        const data = res.ok ? await res.json() : [];
+        const body = $('#leaveTypesBody'); body.empty();
+        data.forEach(l => body.append(`<tr><td>${l.code}</td><td>${l.name}</td><td>${l.isPaid?'Yes':'No'}</td><td>${l.deductDays}</td><td>${l.maxPerYear ?? '-'}</td></tr>`));
+    }
+
+    // ---- Pay Components ----
+    function toggleCalcFields() {
+        const t = parseInt($('#compCalcType').val());
+        $('#fldFormula').toggle(t === 7);
+        $('#fldSlabs').toggle(t === 6);
+        $('#fldRate').toggle(t !== 6);
+        $('#fldRateSource').toggle(t === 3 || t === 4);
+        $('#fldBaseOn').toggle(t === 2 || t === 3 || t === 4 || t === 6);
+        $('#fldDivisorDays').toggle(t === 3 || t === 4);
+        $('#fldGrace').toggle(t === 3);
+    }
+    function parseSlabs() {
+        const text = $('#compSlabsText').val().trim();
+        if (!text) return [];
+        return text.split('\n').filter(l => l.trim()).map(line => {
+            const [from, to, amount, days, percent] = line.split(',').map(s => s.trim());
+            return {
+                FromValue: parseFloat(from) || 0,
+                ToValue: to ? parseFloat(to) : null,
+                Amount: amount ? parseFloat(amount) : null,
+                Days: days ? parseFloat(days) : null,
+                Percent: percent ? parseFloat(percent) : null
+            };
+        });
+    }
+    async function loadComponents() {
+        const res = await fetch(`${API_BASE}/hr/pay-components`);
+        const data = res.ok ? await res.json() : [];
+        window._components = data;
+        const body = $('#componentsBody'); body.empty();
+        data.forEach(c => {
+            body.append(`<tr>
+                <td>${c.code}</td><td>${c.name}</td><td>${KIND_NAMES[c.kind]}</td><td>${CALC_NAMES[c.calcType]}</td>
+                <td>${SCOPE_NAMES[c.scopeType]}${c.scopeId ? ' #'+c.scopeId : ''}</td>
+                <td><span class="badge ${c.isActive?'bg-success':'bg-secondary'}">${c.isActive?'Active':'Inactive'}</span></td>
+                <td><button class="btn btn-sm btn-info" onclick="editComponent(${c.id})"><i class="bi bi-pencil"></i></button></td>
+            </tr>`);
+        });
+    }
+    function editComponent(id) {
+        const c = (window._components || []).find(x => x.id === id);
+        if (!c) return;
+        $('#compId').val(c.id); $('#compCode').val(c.code); $('#compName').val(c.name);
+        $('#compKind').val(c.kind); $('#compCalcType').val(c.calcType);
+        $('#compScopeType').val(c.scopeType); $('#compScopeId').val(c.scopeId || '');
+        $('#compRate').val(c.rate); $('#compRateSource').val(c.rateSource || 1); $('#compBaseOn').val(c.baseOn || 1);
+        $('#compDivisorDays').val(c.divisorDays ?? 30); $('#compGrace').val(c.graceMinutes || 0);
+        $('#compFreeUnits').val(c.freeUnitsPerMonth || ''); $('#compCapDay').val(c.capPerDay || '');
+        $('#compCapMonth').val(c.capPerMonth || ''); $('#compPriority').val(c.priority || 0);
+        $('#compFormula').val(c.formula || '');
+        $('#compSlabsText').val((c.slabs || []).map(s => `${s.fromValue},${s.toValue ?? ''},${s.amount ?? ''},${s.days ?? ''},${s.percent ?? ''}`).join('\n'));
+        $('#compEffFrom').val(c.effectiveFrom ? c.effectiveFrom.split('T')[0] : '');
+        $('#compEffTo').val(c.effectiveTo ? c.effectiveTo.split('T')[0] : '');
+        $('#compShowSlip').prop('checked', c.showOnPayslip); $('#compActive').prop('checked', c.isActive);
+        toggleCalcFields();
+    }
+    function resetComponentForm() {
+        $('#compId').val(0); $('#compCode,#compName,#compRate,#compFormula,#compSlabsText,#compScopeId,#compFreeUnits,#compCapDay,#compCapMonth').val('');
+        $('#compKind,#compCalcType,#compScopeType,#compRateSource,#compBaseOn').val(1);
+        $('#compDivisorDays').val(30); $('#compGrace,#compPriority').val(0);
+        $('#compEffFrom').val(new Date().toISOString().split('T')[0]); $('#compEffTo').val('');
+        $('#compShowSlip,#compActive').prop('checked', true);
+        toggleCalcFields();
+    }
+    async function saveComponent() {
+        const id = parseInt($('#compId').val()) || 0;
+        const dto = {
+            Id: id, Code: $('#compCode').val().trim(), Name: $('#compName').val().trim(),
+            Kind: parseInt($('#compKind').val()), CalcType: parseInt($('#compCalcType').val()),
+            Rate: $('#compRate').val() ? parseFloat($('#compRate').val()) : null,
+            RateSource: parseInt($('#compRateSource').val()), BaseOn: parseInt($('#compBaseOn').val()),
+            DivisorDays: parseInt($('#compDivisorDays').val()),
+            GraceMinutes: $('#compGrace').val() ? parseInt($('#compGrace').val()) : null,
+            FreeUnitsPerMonth: $('#compFreeUnits').val() ? parseFloat($('#compFreeUnits').val()) : null,
+            CapPerDay: $('#compCapDay').val() ? parseFloat($('#compCapDay').val()) : null,
+            CapPerMonth: $('#compCapMonth').val() ? parseFloat($('#compCapMonth').val()) : null,
+            Slabs: parseSlabs(), Formula: $('#compFormula').val().trim() || null,
+            ScopeType: parseInt($('#compScopeType').val()), ScopeId: $('#compScopeId').val() ? parseInt($('#compScopeId').val()) : null,
+            Priority: parseInt($('#compPriority').val()) || 0,
+            ShowOnPayslip: $('#compShowSlip').is(':checked'),
+            EffectiveFrom: $('#compEffFrom').val(), EffectiveTo: $('#compEffTo').val() || null,
+            IsActive: $('#compActive').is(':checked')
+        };
+        if (!dto.Code || !dto.Name || !dto.EffectiveFrom) { toastError('Code, name and effective-from date are required'); return; }
+        const res = await fetch(`${API_BASE}/hr/pay-components${id ? '/'+id : ''}`, { method: id ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(dto) });
+        if (res.ok) { toastSuccess('Pay component saved'); resetComponentForm(); loadComponents(); } else toastError('Failed to save component');
+    }
+
+    async function runPreview() {
+        const id = parseInt($('#compId').val());
+        if (!id) { toastError('Save (or select) the component first, then preview'); return; }
+        const dto = {
+            ComponentId: id,
+            Basic: parseFloat($('#prevBasic').val()) || 0,
+            Gross: parseFloat($('#prevGross').val()) || 0,
+            LateMinutes: parseInt($('#prevLateMin').val()) || 0,
+            LateCount: parseInt($('#prevLateCount').val()) || 0,
+            AbsentDays: parseInt($('#prevAbsent').val()) || 0,
+            OvertimeHours: 0,
+            ShiftWorkHours: 8
+        };
+        const res = await fetch(`${API_BASE}/hr/pay-components/preview`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(dto) });
+        if (res.ok) {
+            const r = await res.json();
+            $('#previewResult').show().html(`<strong>Amount: Rs ${Number(r.amount).toLocaleString(undefined,{minimumFractionDigits:2})}</strong><br/><span class="text-muted">${r.explanation}</span>`);
+        } else toastError('Preview failed');
+    }
+</script>
+}

@@ -18,6 +18,12 @@
             <!-- Filter Section -->
             <div class="filter-section" style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
                 <div class="row g-3">
+                    <div class="col-xl col-lg-3 col-md-4 col-sm-6 col-12" id="teacherFilterCol" style="display:none;">
+                        <label for="teacherId" class="form-label">Teacher</label>
+                        <select class="form-select" id="teacherId">
+                            <option value="">-- All Teachers --</option>
+                        </select>
+                    </div>
                     <div class="col-xl col-lg-3 col-md-4 col-sm-6 col-12" id="classFilterCol">
                         <label for="classId" class="form-label">Class <span class="text-danger" id="classReq">*</span></label>
                         <select class="form-select" id="classId">
@@ -75,11 +81,160 @@
                             <label class="form-check-label" for="rtExecutive">Executive Report</label>
                         </div>
                         <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="reportType" id="rtSubjectWise" value="subjectwise" onchange="onReportTypeChange()">
+                            <label class="form-check-label" for="rtSubjectWise">Subject Wise Report</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="reportType" id="rtTeacherWise" value="teacherwise" onchange="onReportTypeChange()">
+                            <label class="form-check-label" for="rtTeacherWise">Teacher Wise Report</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="reportType" id="rtTeacherCompare" value="teachercompare" onchange="onReportTypeChange()">
+                            <label class="form-check-label" for="rtTeacherCompare">Teacher Comparison Report</label>
+                        </div>
+                        <div class="form-check form-check-inline">
                             <input class="form-check-input" type="radio" name="reportType" id="rtAnnouncement" value="announcement" onchange="onReportTypeChange()">
                             <label class="form-check-label" for="rtAnnouncement">Result Announcement</label>
                         </div>
                     </div>
                 </div>
+                <!-- Result Announcement scope — only shown for the Announcement report -->
+                <div class="row mt-3" id="annScopeCol" style="display:none;">
+                    <div class="col-12">
+                        <label class="form-label d-block mb-1"><i class="bi bi-funnel me-1"></i>Announcement Scope</label>
+                        <small class="text-muted d-block mb-2">
+                            Leave everything unticked for the <strong>whole school</strong>.
+                            Tick one or more <strong>classes</strong> for a class-wise report, or tick one or more
+                            <strong>sections</strong> for a section-wise report (sections take precedence over classes).
+                        </small>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="border rounded p-2 bg-white">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <strong>Classes</strong>
+                                        <a href="javascript:void(0)" class="small text-decoration-none" onclick="annClearClasses()">Clear</a>
+                                    </div>
+                                    <div id="annClassList" style="max-height:170px; overflow-y:auto;">
+                                        <span class="text-muted small">Loading classes…</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="border rounded p-2 bg-white">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <strong>Sections</strong>
+                                        <a href="javascript:void(0)" class="small text-decoration-none" onclick="annClearSections()">Clear</a>
+                                    </div>
+                                    <div id="annSectionList" style="max-height:170px; overflow-y:auto;">
+                                        <span class="text-muted small">Tick class(es) to load their sections.</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Subject Wise scope — multi-select Class / Section (Subject Wise report only) -->
+                <div class="row mt-3" id="swScopeCol" style="display:none;">
+                    <div class="col-12">
+                        <label class="form-label d-block mb-1"><i class="bi bi-funnel me-1"></i>Subject Wise Scope</label>
+                        <small class="text-muted d-block mb-2">
+                            Tick one or more <strong>classes</strong> and (optionally) <strong>sections</strong>.
+                            Leave everything unticked to produce the report for <strong>all sections</strong>.
+                            The report is always built <strong>section wise</strong> (one table per section, two per page).
+                        </small>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="border rounded p-2 bg-white">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <strong>Classes</strong>
+                                        <a href="javascript:void(0)" class="small text-decoration-none" onclick="swClearClasses()">Clear</a>
+                                    </div>
+                                    <div id="swClassList" style="max-height:170px; overflow-y:auto;">
+                                        <span class="text-muted small">Loading classes…</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="border rounded p-2 bg-white">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <strong>Sections</strong>
+                                        <a href="javascript:void(0)" class="small text-decoration-none" onclick="swClearSections()">Clear</a>
+                                    </div>
+                                    <div id="swSectionList" style="max-height:170px; overflow-y:auto;">
+                                        <span class="text-muted small">Tick class(es) to load their sections.</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Teacher Comparison scope — Left vs Right (only for the Comparison report) -->
+                <div class="row mt-3" id="cmpScopeCol" style="display:none;">
+                    <div class="col-12">
+                        <label class="form-label d-block mb-1"><i class="bi bi-layout-split me-1"></i>Comparison Scope (Left vs Right)</label>
+                        <small class="text-muted d-block mb-2">
+                            Tick one or more <strong>Classes</strong> and (optionally) <strong>Sections</strong> for each
+                            side. Each side shows its teachers ranked by their average result %. Leave a dimension
+                            unticked to include all of it.
+                        </small>
+                        <div class="row g-3">
+                            @* Two identical panels — Left ('L') and Right ('R') *@
+                            <div class="col-md-6">
+                                <div class="border rounded p-2 bg-white">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label for="cmpTitle_L" class="form-label fw-bold mb-0 text-primary">
+                                            <i class="bi bi-pencil-square me-1"></i>Left Heading
+                                        </label>
+                                        <a href="javascript:void(0)" class="small text-decoration-none" onclick="cmpClear('L')">Clear</a>
+                                    </div>
+                                    <input type="text" class="form-control form-control-sm mb-2" id="cmpTitle_L" placeholder="e.g. Play Group to One (Girls)">
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <div class="fw-semibold small mb-1">Classes</div>
+                                            <div id="cmpClassList_L" style="max-height:150px; overflow-y:auto;">
+                                                <span class="text-muted small">Loading…</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="fw-semibold small mb-1">Sections</div>
+                                            <div id="cmpSectionList_L" style="max-height:150px; overflow-y:auto;">
+                                                <span class="text-muted small">Tick class(es).</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="border rounded p-2 bg-white">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label for="cmpTitle_R" class="form-label fw-bold mb-0 text-primary">
+                                            <i class="bi bi-pencil-square me-1"></i>Right Heading
+                                        </label>
+                                        <a href="javascript:void(0)" class="small text-decoration-none" onclick="cmpClear('R')">Clear</a>
+                                    </div>
+                                    <input type="text" class="form-control form-control-sm mb-2" id="cmpTitle_R" placeholder="e.g. Play Group to One (Boys)">
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <div class="fw-semibold small mb-1">Classes</div>
+                                            <div id="cmpClassList_R" style="max-height:150px; overflow-y:auto;">
+                                                <span class="text-muted small">Loading…</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="fw-semibold small mb-1">Sections</div>
+                                            <div id="cmpSectionList_R" style="max-height:150px; overflow-y:auto;">
+                                                <span class="text-muted small">Tick class(es).</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="row mt-3">
                     <div class="col-md-12 d-flex justify-content-end gap-2">
                         <button type="button" class="btn btn-secondary" onclick="resetFilters()">
@@ -105,6 +260,7 @@
 @section Scripts {
 <script>
     let allExams = [];
+    let allClasses = [];
 
     $(document).ready(function () {
         loadDropdowns();
@@ -133,19 +289,31 @@
 
     async function loadDropdowns() {
         try {
-            const [classes, exams] = await Promise.all([
+            const [classes, exams, teachers] = await Promise.all([
                 fetch(`${API_BASE}/class`).then(r => r.ok ? r.json() : []).catch(() => []),
-                fetch(`${API_BASE}/exam`).then(r => r.ok ? r.json() : []).catch(() => [])
+                fetch(`${API_BASE}/exam`).then(r => r.ok ? r.json() : []).catch(() => []),
+                fetch(`${API_BASE}/teacher`).then(r => r.ok ? r.json() : []).catch(() => [])
             ]);
 
             allExams = exams || [];
+            allClasses = classes || [];
 
             const classSelect = $('#classId');
             classSelect.find('option:not(:first)').remove();
-            (classes || []).forEach(c => {
+            allClasses.forEach(c => {
                 classSelect.append(`<option value="${c.vid}">${c.vName}</option>`);
             });
 
+            const teacherSelect = $('#teacherId');
+            teacherSelect.find('option:not(:first)').remove();
+            (teachers || []).forEach(t => {
+                teacherSelect.append(`<option value="${t.vid}">${t.vName}</option>`);
+            });
+
+            renderAnnClassCheckboxes();   // build the Announcement scope class list
+            renderSwClassCheckboxes();    // build the Subject Wise scope class list
+            renderCmpClassCheckboxes('L');   // Comparison scope — left class list
+            renderCmpClassCheckboxes('R');   // Comparison scope — right class list
             renderExamDropdowns(allExams);
         } catch (error) {
             console.error('Error loading dropdowns:', error);
@@ -229,22 +397,40 @@
         const isCard        = type === 'card';
         const isSheet       = type === 'sheet';
         const isExecutive   = type === 'executive';
+        const isSubjectWise = type === 'subjectwise';     // Class + Section + Exam
+        const isTeacherWise = type === 'teacherwise';     // Exam only; Class + Section optional
+        const isCompare     = type === 'teachercompare';  // Exam only; Left/Right scope picker
         const isAnnouncement = type === 'announcement';   // whole school — Exam only
         // Position & Percentage are both class-wide (all sections, no prev exam)
         const isClassWide = (type === 'position' || type === 'percentage');
 
-        // Class: every report needs it except the whole-school Announcement
-        $('#classFilterCol').toggle(!isAnnouncement);
+        // Class: every report needs it except the whole-school Announcement, the
+        // Teacher Wise report (filters by Teacher), the Comparison report and the
+        // Subject Wise report (both use their own multi-select scope pickers).
+        $('#classFilterCol').toggle(!isAnnouncement && !isTeacherWise && !isCompare && !isSubjectWise);
         // Section: used by Sheet (required), Card (optional) & Executive (required)
-        $('#sectionFilterCol').toggle(!isClassWide && !isAnnouncement);
+        $('#sectionFilterCol').toggle(!isClassWide && !isAnnouncement && !isTeacherWise && !isCompare && !isSubjectWise);
+        if (isTeacherWise || isCompare || isSubjectWise) {
+            $('#classId').val('');
+            $('#sectionId').val('').prop('disabled', true).find('option:not(:first)').remove();
+        }
         // Previous Exam: Sheet & Card only
         $('#prevExamFilterCol').toggle(isSheet || isCard);
         // Student: Card only
         $('#studentFilterCol').toggle(isCard);
+        // Teacher: Teacher Wise only (optional filter)
+        $('#teacherFilterCol').toggle(isTeacherWise);
+        if (!isTeacherWise) $('#teacherId').val('');
+        // Announcement scope (class / section checkbox lists): Announcement only
+        $('#annScopeCol').toggle(isAnnouncement);
+        // Subject Wise scope (class / section checkbox lists): Subject Wise only
+        $('#swScopeCol').toggle(isSubjectWise);
+        // Comparison scope (Left/Right pickers): Comparison report only
+        $('#cmpScopeCol').toggle(isCompare);
 
         // Required-asterisk hints
-        $('#classReq').toggle(!isCard && !isAnnouncement);   // Class required except Card / Announcement
-        $('#sectionReq').toggle(isSheet || isExecutive);     // Section required for Sheet & Executive
+        $('#classReq').toggle(!isCard && !isAnnouncement && !isTeacherWise && !isCompare && !isSubjectWise);   // Class optional for Card / Announcement / Teacher Wise / Compare / Subject Wise
+        $('#sectionReq').toggle(isSheet || isExecutive);   // Section required for Sheet & Executive
 
         if (isCard) {
             $('#studentId').prop('disabled', $('#studentId option').length <= 1);
@@ -256,13 +442,229 @@
         }
     }
 
+    // ── Result Announcement scope helpers ──────────────────────────────
+    // Build the class checkbox list from the loaded classes.
+    function renderAnnClassCheckboxes() {
+        const box = $('#annClassList');
+        box.empty();
+        if (!allClasses.length) { box.html('<span class="text-muted small">No classes.</span>'); return; }
+        allClasses.forEach(c => {
+            box.append(
+                `<div class="form-check">
+                    <input class="form-check-input ann-class-cb" type="checkbox" id="annCls_${c.vid}" value="${c.vid}" data-label="${c.vName}">
+                    <label class="form-check-label" for="annCls_${c.vid}">${c.vName}</label>
+                 </div>`);
+        });
+        box.find('.ann-class-cb').on('change', loadAnnSections);
+    }
+
+    // Load sections for the ticked classes (union), labelled "Class - Section".
+    async function loadAnnSections() {
+        const checked = $('#annClassList input:checked');
+        const box = $('#annSectionList');
+        if (checked.length === 0) {
+            box.html('<span class="text-muted small">Tick class(es) to load their sections.</span>');
+            return;
+        }
+        box.html('<span class="text-muted small">Loading…</span>');
+        const picked = checked.map((i, e) => ({ id: e.value, name: $(e).data('label') })).get();
+        try {
+            const results = await Promise.all(picked.map(c =>
+                fetch(`${API_BASE}/section/byClass/${c.id}`)
+                    .then(r => r.ok ? r.json() : []).catch(() => [])
+                    .then(secs => (secs || []).map(s => ({ vid: s.vid, vName: s.vName, className: c.name })))
+            ));
+            const all = results.flat();
+            if (!all.length) { box.html('<span class="text-muted small">No sections found.</span>'); return; }
+            box.empty();
+            all.forEach(s => {
+                const lbl = `${s.className} - ${s.vName}`;
+                box.append(
+                    `<div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="annSec_${s.vid}" value="${s.vid}" data-label="${lbl}">
+                        <label class="form-check-label" for="annSec_${s.vid}">${lbl}</label>
+                     </div>`);
+            });
+        } catch (e) {
+            box.html('<span class="text-danger small">Error loading sections.</span>');
+        }
+    }
+
+    function annClearClasses() {
+        $('#annClassList input:checked').prop('checked', false);
+        loadAnnSections();   // sections depend on classes
+    }
+    function annClearSections() {
+        $('#annSectionList input:checked').prop('checked', false);
+    }
+
+    // Resolve the chosen scope: sections win, then classes, else whole school.
+    function getAnnScope() {
+        const secs = $('#annSectionList input:checked');
+        if (secs.length > 0) {
+            return {
+                sectionIds: secs.map((i, e) => e.value).get().join(','),
+                classIds: '',
+                scopeText: 'Sections: ' + secs.map((i, e) => $(e).data('label')).get().join(', ')
+            };
+        }
+        const cls = $('#annClassList input:checked');
+        if (cls.length > 0) {
+            return {
+                sectionIds: '',
+                classIds: cls.map((i, e) => e.value).get().join(','),
+                scopeText: 'Classes: ' + cls.map((i, e) => $(e).data('label')).get().join(', ')
+            };
+        }
+        return { sectionIds: '', classIds: '', scopeText: 'Whole School' };
+    }
+
+    // ── Subject Wise scope helpers (multi-select Class / Section) ───────
+    // Build the class checkbox list from the loaded classes.
+    function renderSwClassCheckboxes() {
+        const box = $('#swClassList');
+        box.empty();
+        if (!allClasses.length) { box.html('<span class="text-muted small">No classes.</span>'); return; }
+        allClasses.forEach(c => {
+            box.append(
+                `<div class="form-check">
+                    <input class="form-check-input sw-class-cb" type="checkbox" id="swCls_${c.vid}" value="${c.vid}" data-label="${c.vName}">
+                    <label class="form-check-label" for="swCls_${c.vid}">${c.vName}</label>
+                 </div>`);
+        });
+        box.find('.sw-class-cb').on('change', loadSwSections);
+    }
+
+    // Load sections for the ticked classes (union), labelled "Class - Section".
+    async function loadSwSections() {
+        const checked = $('#swClassList input:checked');
+        const box = $('#swSectionList');
+        if (checked.length === 0) {
+            box.html('<span class="text-muted small">Tick class(es) to load their sections.</span>');
+            return;
+        }
+        box.html('<span class="text-muted small">Loading…</span>');
+        const picked = checked.map((i, e) => ({ id: e.value, name: $(e).data('label') })).get();
+        try {
+            const results = await Promise.all(picked.map(c =>
+                fetch(`${API_BASE}/section/byClass/${c.id}`)
+                    .then(r => r.ok ? r.json() : []).catch(() => [])
+                    .then(secs => (secs || []).map(s => ({ vid: s.vid, vName: s.vName, className: c.name })))
+            ));
+            const all = results.flat();
+            if (!all.length) { box.html('<span class="text-muted small">No sections found.</span>'); return; }
+            box.empty();
+            all.forEach(s => {
+                const lbl = `${s.className} - ${s.vName}`;
+                box.append(
+                    `<div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="swSec_${s.vid}" value="${s.vid}" data-label="${lbl}">
+                        <label class="form-check-label" for="swSec_${s.vid}">${lbl}</label>
+                     </div>`);
+            });
+        } catch (e) {
+            box.html('<span class="text-danger small">Error loading sections.</span>');
+        }
+    }
+
+    function swClearClasses() {
+        $('#swClassList input:checked').prop('checked', false);
+        loadSwSections();   // sections depend on classes
+    }
+    function swClearSections() {
+        $('#swSectionList input:checked').prop('checked', false);
+    }
+
+    // Resolve the chosen scope: comma-separated class + section id lists.
+    // Both empty => all sections (whole school). Section ids narrow the classes.
+    function getSwScope() {
+        const secs = $('#swSectionList input:checked');
+        const cls  = $('#swClassList input:checked');
+        const classIds   = cls.map((i, e) => e.value).get().join(',');
+        const sectionIds = secs.map((i, e) => e.value).get().join(',');
+        let scopeText;
+        if (sectionIds) {
+            scopeText = 'Sections: ' + secs.map((i, e) => $(e).data('label')).get().join(', ');
+        } else if (classIds) {
+            scopeText = 'Classes: ' + cls.map((i, e) => $(e).data('label')).get().join(', ');
+        } else {
+            scopeText = 'All Sections';
+        }
+        return { classIds, sectionIds, scopeText };
+    }
+
+    // ── Teacher Comparison scope helpers (side = 'L' | 'R') ─────────────
+    // Build the class checkbox list for one side from the loaded classes.
+    function renderCmpClassCheckboxes(side) {
+        const box = $(`#cmpClassList_${side}`);
+        box.empty();
+        if (!allClasses.length) { box.html('<span class="text-muted small">No classes.</span>'); return; }
+        allClasses.forEach(c => {
+            box.append(
+                `<div class="form-check">
+                    <input class="form-check-input cmp-class-cb-${side}" type="checkbox" id="cmpCls_${side}_${c.vid}" value="${c.vid}" data-label="${c.vName}">
+                    <label class="form-check-label" for="cmpCls_${side}_${c.vid}">${c.vName}</label>
+                 </div>`);
+        });
+        box.find(`.cmp-class-cb-${side}`).on('change', () => loadCmpSections(side));
+    }
+
+    // Load sections (union) for the ticked classes of one side.
+    async function loadCmpSections(side) {
+        const checked = $(`#cmpClassList_${side} input:checked`);
+        const box = $(`#cmpSectionList_${side}`);
+        if (checked.length === 0) {
+            box.html('<span class="text-muted small">Tick class(es).</span>');
+            return;
+        }
+        box.html('<span class="text-muted small">Loading…</span>');
+        const picked = checked.map((i, e) => ({ id: e.value, name: $(e).data('label') })).get();
+        try {
+            const results = await Promise.all(picked.map(c =>
+                fetch(`${API_BASE}/section/byClass/${c.id}`)
+                    .then(r => r.ok ? r.json() : []).catch(() => [])
+                    .then(secs => (secs || []).map(s => ({ vid: s.vid, vName: s.vName, className: c.name })))
+            ));
+            const all = results.flat();
+            if (!all.length) { box.html('<span class="text-muted small">No sections.</span>'); return; }
+            box.empty();
+            all.forEach(s => {
+                const lbl = `${s.className} - ${s.vName}`;
+                box.append(
+                    `<div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="cmpSec_${side}_${s.vid}" value="${s.vid}" data-label="${lbl}">
+                        <label class="form-check-label" for="cmpSec_${side}_${s.vid}">${lbl}</label>
+                     </div>`);
+            });
+        } catch (e) {
+            box.html('<span class="text-danger small">Error loading sections.</span>');
+        }
+    }
+
+    function cmpClear(side) {
+        $(`#cmpClassList_${side} input:checked`).prop('checked', false);
+        loadCmpSections(side);   // sections depend on classes
+    }
+
+    // Collect one side's chosen class + section id lists (comma separated).
+    function getCmpSide(side) {
+        const classIds   = $(`#cmpClassList_${side} input:checked`).map((i, e) => e.value).get().join(',');
+        const sectionIds = $(`#cmpSectionList_${side} input:checked`).map((i, e) => e.value).get().join(',');
+        return { classIds, sectionIds };
+    }
+
     function resetFilters() {
         $('#classId').val('');
         $('#sectionId').val('').prop('disabled', true).find('option:not(:first)').remove();
         $('#examId').val('');
         $('#prevExamId').val('');
         $('#prevExamId option').prop('disabled', false);
+        $('#teacherId').val('');
         resetStudents();
+        annClearClasses();   // also clears sections (they depend on classes)
+        swClearClasses();    // Subject Wise scope — also clears its sections
+        cmpClear('L'); cmpClear('R');   // clear both Comparison sides
+        $('#cmpTitle_L').val(''); $('#cmpTitle_R').val('');
         $('#rtSheet').prop('checked', true);
         onReportTypeChange();
     }
@@ -324,12 +726,56 @@
             if (!sectionId) { toastWarning('Please select a Section'); return; }
             const params = buildReportParams();
             window.open(`/exam/executive-report?${params.toString()}`, '_blank', 'width=1000,height=800');
-        } else if (reportType === 'announcement') {
-            // Result Announcement: whole school — Exam only
+        } else if (reportType === 'subjectwise') {
+            // Subject Wise Report: section wise, multi-select Class / Section scope.
+            // Nothing ticked => all sections (whole school).
+            const scope = getSwScope();
             const params = new URLSearchParams({
                 examId,
-                examName: $('#examId option:selected').text()
+                examName: $('#examId option:selected').text(),
+                scopeText: scope.scopeText
             });
+            if (scope.classIds)   params.append('classIds', scope.classIds);
+            if (scope.sectionIds) params.append('sectionIds', scope.sectionIds);
+            window.open(`/exam/subject-wise-report?${params.toString()}`, '_blank', 'width=1200,height=800');
+        } else if (reportType === 'teacherwise') {
+            // Teacher Wise Report: Exam only (Teacher / Class / Section optional filters)
+            const params = buildReportParams();   // includes class/section names when chosen
+            const teacherId = $('#teacherId').val();
+            if (teacherId) {
+                params.append('teacherId', teacherId);
+                params.append('teacherName', $('#teacherId option:selected').text());
+            }
+            window.open(`/exam/teacher-wise-report?${params.toString()}`, '_blank', 'width=1200,height=800');
+        } else if (reportType === 'teachercompare') {
+            // Teacher Comparison: Exam + a Left and Right scope (class/section lists)
+            const L = getCmpSide('L');
+            const R = getCmpSide('R');
+            if (!L.classIds && !L.sectionIds && !R.classIds && !R.sectionIds) {
+                toastWarning('Pick at least one Class or Section for the Left or Right side');
+                return;
+            }
+            const params = new URLSearchParams({
+                examId,
+                examName: $('#examId option:selected').text(),
+                leftTitle:  $('#cmpTitle_L').val() || 'Left',
+                rightTitle: $('#cmpTitle_R').val() || 'Right'
+            });
+            if (L.classIds)   params.append('lClassIds', L.classIds);
+            if (L.sectionIds) params.append('lSectionIds', L.sectionIds);
+            if (R.classIds)   params.append('rClassIds', R.classIds);
+            if (R.sectionIds) params.append('rSectionIds', R.sectionIds);
+            window.open(`/exam/teacher-comparison-report?${params.toString()}`, '_blank', 'width=1100,height=800');
+        } else if (reportType === 'announcement') {
+            // Result Announcement: whole school, selected class(es) or selected section(s)
+            const scope = getAnnScope();
+            const params = new URLSearchParams({
+                examId,
+                examName: $('#examId option:selected').text(),
+                scopeText: scope.scopeText
+            });
+            if (scope.sectionIds) params.append('sectionIds', scope.sectionIds);
+            if (scope.classIds)   params.append('classIds', scope.classIds);
             window.open(`/exam/announcement-report?${params.toString()}`, '_blank', 'width=1000,height=800');
         } else {
             // Result Sheet needs a specific Class + Section

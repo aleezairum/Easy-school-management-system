@@ -1,0 +1,63 @@
+@{
+    ViewData["Title"] = "Salary Sheet";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    var runId = ViewData["RunId"];
+}
+
+<div class="container-fluid">
+    <div id="alertContainer"></div>
+    <div class="card mb-3"><div class="card-body d-flex justify-content-between align-items-center">
+        <a href="/hr/payroll/@runId" class="btn btn-secondary btn-sm"><i class="bi bi-arrow-left"></i> Back to Review</a>
+        <a class="btn btn-success btn-sm" href="#" onclick="return exportExcel(event)"><i class="bi bi-file-earmark-excel"></i> Export Excel</a>
+    </div></div>
+
+    <div class="card"><div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover table-sm" id="sheetTable">
+                <thead><tr id="sheetHead"><th>Code</th><th>Employee</th><th>Designation</th><th>Basic</th></tr></thead>
+                <tbody id="sheetBody"></tbody>
+                <tfoot id="sheetFoot"></tfoot>
+            </table>
+        </div>
+    </div></div>
+</div>
+
+@section Scripts {
+<script>
+    const runId = @runId;
+
+    $(document).ready(function () { loadSheet(); });
+
+    function exportExcel(e) {
+        e.preventDefault();
+        window.open(`${API_BASE}/hr/reports/salary-sheet?runId=${runId}&format=xlsx`, '_blank');
+        return false;
+    }
+
+    async function loadSheet() {
+        const res = await fetch(`${API_BASE}/hr/reports/salary-sheet?runId=${runId}`);
+        const rows = res.ok ? await res.json() : [];
+        if (!rows.length) { $('#sheetBody').html('<tr><td colspan="7" class="text-center text-muted py-3">No data.</td></tr>'); return; }
+
+        const componentNames = [...new Set(rows.flatMap(r => r.breakdown.map(b => b.name)))];
+        const head = $('#sheetHead'); head.find('th').slice(4).remove();
+        componentNames.forEach(n => head.append(`<th>${n}</th>`));
+        head.append('<th>Gross</th><th>Deduction</th><th>Net Pay</th>');
+
+        const body = $('#sheetBody'); body.empty();
+        let totalNet = 0;
+        rows.forEach(r => {
+            let row = `<tr><td>${r.employeeCode}</td><td>${r.employeeName}</td><td>${r.designationName || '-'}</td><td>${Number(r.basic).toLocaleString()}</td>`;
+            componentNames.forEach(n => {
+                const line = r.breakdown.find(b => b.name === n);
+                row += `<td>${line ? Number(line.amount).toLocaleString() : '-'}</td>`;
+            });
+            row += `<td>${Number(r.grossEarning).toLocaleString()}</td><td>${Number(r.totalDeduction).toLocaleString()}</td><td><strong>${Number(r.netPay).toLocaleString()}</strong></td></tr>`;
+            totalNet += r.netPay;
+            body.append(row);
+        });
+
+        $('#sheetFoot').html(`<tr class="table-light"><td colspan="${4 + componentNames.length + 2}" class="text-end"><strong>Total Net Pay</strong></td><td><strong>${totalNet.toLocaleString(undefined,{minimumFractionDigits:2})}</strong></td></tr>`);
+    }
+</script>
+}

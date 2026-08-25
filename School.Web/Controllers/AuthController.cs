@@ -17,16 +17,15 @@ namespace School.Web.Controllers
 
         [Route("login")]
         [Route("")]
-        public async Task<IActionResult> Login()
+        public IActionResult Login()
         {
             // If already logged in, redirect to dashboard
             if (HttpContext.Session.GetInt32("UserId") != null)
                 return RedirectToAction("Index", "Dashboard");
 
-            // Load Academic Sessions server-side so the dropdown is ready on first
-            // paint (no extra client round-trip => no "late load"). Failure is
-            // non-fatal: login does not require a session selection.
-            ViewBag.Sessions = await GetSessionsAsync();
+            // Render instantly. The Academic Session dropdown is populated client-side
+            // (non-blocking fetch in the view) so a slow/cold API never delays first
+            // paint of the login form. Login does not require the list to be present.
             return View();
         }
 

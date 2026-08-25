@@ -1,0 +1,109 @@
+@{
+    ViewData["Title"] = "Attendance Reports";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<div class="container-fluid">
+    <div id="alertContainer"></div>
+
+    <div class="card mb-3"><div class="card-body">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-2"><label class="form-label">Report</label>
+                <select class="form-select" id="repType" onchange="toggleFilters()">
+                    <option value="daily">Daily Attendance</option>
+                    <option value="monthly">Monthly Summary</option>
+                    <option value="late">Late Comers</option>
+                    <option value="absent">Absentees</option>
+                </select>
+            </div>
+            <div class="col-md-2" id="fltDate"><label class="form-label">Date</label><input type="date" class="form-control" id="repDate" /></div>
+            <div class="col-md-2" id="fltYearMonth" style="display:none;">
+                <label class="form-label">Year / Month</label>
+                <div class="d-flex gap-1">
+                    <input type="number" class="form-control" id="repYear" />
+                    <select class="form-select" id="repMonth">
+                        <option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option><option value="4">Apr</option>
+                        <option value="5">May</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Aug</option>
+                        <option value="9">Sep</option><option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-2" id="fltRange" style="display:none;">
+                <label class="form-label">From</label><input type="date" class="form-control" id="repFrom" />
+            </div>
+            <div class="col-md-2" id="fltRangeTo" style="display:none;">
+                <label class="form-label">To</label><input type="date" class="form-control" id="repTo" />
+            </div>
+            <div class="col-md-2"><label class="form-label">Designation</label><select class="form-select" id="repDesignation"><option value="">All</option></select></div>
+            <div class="col-md-2"><button class="btn btn-primary w-100" onclick="runReport()"><i class="bi bi-search"></i> Run</button></div>
+        </div>
+    </div></div>
+
+    <div class="card"><div class="card-body">
+        <div class="table-responsive"><table class="table table-hover" id="repTable"><thead id="repHead"></thead><tbody id="repBody"></tbody></table></div>
+    </div></div>
+</div>
+
+@section Scripts {
+<script>
+    $(document).ready(function () {
+        const now = new Date();
+        $('#repDate').val(now.toISOString().split('T')[0]);
+        $('#repYear').val(now.getFullYear());
+        $('#repMonth').val(now.getMonth() + 1);
+        $('#repFrom').val(new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]);
+        $('#repTo').val(now.toISOString().split('T')[0]);
+        fetch(`${API_BASE}/Designation/dropdown`).then(r => r.ok ? r.json() : []).then(list => {
+            list.forEach(d => $('#repDesignation').append(`<option value="${d.id}">${d.name}</option>`));
+        }).catch(() => {});
+        toggleFilters();
+    });
+
+    function toggleFilters() {
+        const type = $('#repType').val();
+        $('#fltDate').toggle(type === 'daily');
+        $('#fltYearMonth').toggle(type === 'monthly');
+        $('#fltRange,#fltRangeTo').toggle(type === 'late' || type === 'absent');
+    }
+
+    async function runReport() {
+        const type = $('#repType').val();
+        const desig = $('#repDesignation').val();
+        let url = `${API_BASE}/hr/reports/attendance?type=${type}`;
+        if (desig) url += `&designationId=${desig}`;
+        if (type === 'daily') url += `&date=${$('#repDate').val()}`;
+        if (type === 'monthly') url += `&year=${$('#repYear').val()}&month=${$('#repMonth').val()}`;
+        if (type === 'late' || type === 'absent') url += `&from=${$('#repFrom').val()}&to=${$('#repTo').val()}`;
+
+        const res = await fetch(url);
+        if (!res.ok) { toastError('Failed to load report'); return; }
+        const data = await res.json();
+        renderReport(type, data);
+    }
+
+    function renderReport(type, data) {
+        const head = $('#repHead'), body = $('#repBody');
+        head.empty(); body.empty();
+
+        if (type === 'daily') {
+            head.html('<tr><th>Code</th><th>Employee</th><th>Designation</th><th>Status</th><th>Time In</th><th>Time Out</th><th>Late (min)</th></tr>');
+            data.forEach(r => body.append(`<tr><td>${r.employeeCode}</td><td>${r.employeeName}</td><td>${r.designationName||'-'}</td><td>${statusLabel(r.status)}</td><td>${r.timeIn?.substring(0,5)||'-'}</td><td>${r.timeOut?.substring(0,5)||'-'}</td><td>${r.lateMinutes}</td></tr>`));
+        } else if (type === 'monthly') {
+            head.html('<tr><th>Code</th><th>Employee</th><th>Designation</th><th>Present</th><th>Absent</th><th>Leave</th><th>Half Day</th><th>Late Count</th><th>Total Late (min)</th></tr>');
+            data.forEach(r => body.append(`<tr><td>${r.employeeCode}</td><td>${r.employeeName}</td><td>${r.designationName||'-'}</td><td>${r.presentDays}</td><td>${r.absentDays}</td><td>${r.leaveDays}</td><td>${r.halfDays}</td><td>${r.lateCount}</td><td>${r.totalLateMinutes}</td></tr>`));
+        } else if (type === 'late') {
+            head.html('<tr><th>Date</th><th>Code</th><th>Employee</th><th>Designation</th><th>Time In</th><th>Late (min)</th><th>Ignored</th></tr>');
+            data.forEach(r => body.append(`<tr><td>${new Date(r.attDate).toLocaleDateString()}</td><td>${r.employeeCode}</td><td>${r.employeeName}</td><td>${r.designationName||'-'}</td><td>${r.timeIn?.substring(0,5)||'-'}</td><td>${r.lateMinutes}</td><td>${r.ignoreLate?'Yes':'No'}</td></tr>`));
+        } else if (type === 'absent') {
+            head.html('<tr><th>Date</th><th>Code</th><th>Employee</th><th>Designation</th><th>Remarks</th></tr>');
+            data.forEach(r => body.append(`<tr><td>${new Date(r.attDate).toLocaleDateString()}</td><td>${r.employeeCode}</td><td>${r.employeeName}</td><td>${r.designationName||'-'}</td><td>${r.remarks||'-'}</td></tr>`));
+        }
+
+        if (!data.length) body.html(`<tr><td colspan="10" class="text-center text-muted py-3">No data.</td></tr>`);
+    }
+
+    function statusLabel(s) {
+        return {1:'Present',2:'Absent',3:'Leave',4:'Half Day',5:'Holiday',6:'Weekly Off',7:'Short Leave'}[s] || '-';
+    }
+</script>
+}

@@ -9,7 +9,9 @@ namespace School.API.Services.Interfaces.Academic
             DateTime? leavingDate,
             string? examination,
             string? marksObtained,
-            string? totalMarks);
+            string? totalMarks,
+            string? classAdmitted,
+            string? classStudying);
 
         Task<ProvisionalCertificateDto?> GetProvisionalAsync(
             int studentId,

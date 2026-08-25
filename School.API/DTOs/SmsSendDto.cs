@@ -7,6 +7,11 @@ namespace School.API.DTOs
         public string Phone { get; set; } = string.Empty;
         public string? Name { get; set; }
         public string? Message { get; set; } // per-recipient message
+
+        // Values for the approved Meta template's {{1}}, {{2}}, ... placeholders,
+        // in order. Populated server-side for absent/late lists and posted back
+        // unchanged by the SMS page, so free-form tabs simply leave it empty.
+        public List<string>? Params { get; set; }
     }
 
     public class SmsSendDto
@@ -66,6 +71,45 @@ namespace School.API.DTOs
         public int? SectionId { get; set; }
         public int? SessionId { get; set; }
         public string? JobId { get; set; }   // client-supplied id for live progress tracking
+    }
+
+    // ── Result Card (Rcard) WhatsApp PDF request ──────────────────
+    // One PDF result card is generated and sent to each matched student.
+    public class RcardSendDto
+    {
+        public int ExamId { get; set; }
+        public string? ExamName { get; set; }
+        public string Scope { get; set; } = "student"; // student | section | class | all
+        public int? ClassId { get; set; }
+        public int? SectionId { get; set; }
+        public int? StudentId { get; set; }
+        public string? Message { get; set; }           // WhatsApp caption (optional)
+        public string? JobId { get; set; }
+    }
+
+    // Send each matched student's result as a TEXT summary (no PDF attachment).
+    // Same scope/filters as Rcard.
+    public class ResultTextSendDto
+    {
+        public int ExamId { get; set; }
+        public string? ExamName { get; set; }
+        public string Scope { get; set; } = "student"; // student | section | class | all
+        public int? ClassId { get; set; }
+        public int? SectionId { get; set; }
+        public int? StudentId { get; set; }
+        public string? Message { get; set; }           // optional prefix prepended to each result
+        public string? JobId { get; set; }
+    }
+
+    // Resolved recipient for the Rcard report: who gets the PDF and on which number.
+    public class RcardRecipientDto
+    {
+        public int StudentId { get; set; }
+        public int ClassId { get; set; }
+        public int SectionId { get; set; }
+        public string? StudentName { get; set; }
+        public string? ClassName { get; set; }   // {{2}} of the result_card template
+        public string? Phone { get; set; }   // Father -> Guardian -> Student (resolved in SQL)
     }
 
     // ── NEW: Live SMS Progress Snapshot ───────────────────────────

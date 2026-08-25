@@ -1,0 +1,64 @@
+@{
+    ViewData["Title"] = "Payroll Review";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    var runId = ViewData["RunId"];
+}
+
+<div class="container-fluid">
+    <div id="alertContainer"></div>
+
+    <div class="card mb-3"><div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <a href="/hr/payroll" class="btn btn-secondary btn-sm"><i class="bi bi-arrow-left"></i> Back to Runs</a>
+            <a href="/hr/salary-sheet/@runId" class="btn btn-outline-success btn-sm ms-2"><i class="bi bi-table"></i> Salary Sheet</a>
+        </div>
+        <div>
+            <button class="btn btn-warning btn-sm" onclick="lockRun()"><i class="bi bi-lock-fill"></i> Lock Run</button>
+            <button class="btn btn-success btn-sm" onclick="payRun()"><i class="bi bi-cash-coin"></i> Mark Whole Run Paid</button>
+        </div>
+    </div></div>
+
+    <div class="card"><div class="card-body">
+        <table class="table table-hover">
+            <thead><tr><th>Code</th><th>Employee</th><th>Designation</th><th>Basic</th><th>Gross</th><th>Deduction</th><th>Net Pay</th><th>Present</th><th>Absent</th><th>Late (min)</th><th></th></tr></thead>
+            <tbody id="payslipsBody"></tbody>
+        </table>
+    </div></div>
+</div>
+
+@section Scripts {
+<script>
+    const runId = @runId;
+
+    $(document).ready(function () { loadPayslips(); });
+
+    async function loadPayslips() {
+        const res = await fetch(`${API_BASE}/hr/payroll/runs/${runId}`);
+        const data = res.ok ? await res.json() : [];
+        const body = $('#payslipsBody'); body.empty();
+        if (!data.length) { body.html('<tr><td colspan="11" class="text-center text-muted py-3">No payslips in this run.</td></tr>'); return; }
+        data.forEach(p => {
+            body.append(`<tr>
+                <td>${p.employeeCode}</td><td>${p.employeeName}</td><td>${p.designationName || '-'}</td>
+                <td>${Number(p.basic).toLocaleString()}</td><td>${Number(p.grossEarning).toLocaleString()}</td>
+                <td>${Number(p.totalDeduction).toLocaleString()}</td><td><strong>${Number(p.netPay).toLocaleString()}</strong></td>
+                <td>${p.presentDays}</td><td>${p.absentDays}</td><td>${p.lateMinutes}</td>
+                <td><a class="btn btn-sm btn-info" href="/hr/payslip/${p.id}"><i class="bi bi-receipt"></i></a></td>
+            </tr>`);
+        });
+    }
+
+    async function lockRun() {
+        if (!await confirmDelete('Lock this payroll run? It cannot be regenerated after locking.')) return;
+        const res = await fetch(`${API_BASE}/hr/payroll/runs/${runId}/lock`, { method: 'PUT' });
+        if (res.ok) toastSuccess('Run locked'); else toastError('Failed to lock run');
+    }
+
+    async function payRun() {
+        if (!await confirmDelete('Mark the entire run as paid via cash today?')) return;
+        const dto = { PaidDate: new Date().toISOString().split('T')[0], PaymentMethod: 'Cash', Reference: null };
+        const res = await fetch(`${API_BASE}/hr/payroll/runs/${runId}/pay`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(dto) });
+        if (res.ok) { toastSuccess('Run marked as paid'); loadPayslips(); } else toastError('Failed to mark as paid');
+    }
+</script>
+}

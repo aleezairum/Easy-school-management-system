@@ -2,6 +2,7 @@ using System.Data;
 using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using School.API.Data;
+using School.API.DTOs;
 using School.API.DTOs.Academic;
 using School.API.DTOs.Common;
 using School.API.Repositories.Interfaces.Academic;
@@ -222,7 +223,7 @@ namespace School.API.Repositories.Implementations.Academic
             return result;
         }
 
-        public async Task<ExamAnnouncementDto> GetAnnouncementReportAsync(int examId)
+        public async Task<ExamAnnouncementDto> GetAnnouncementReportAsync(int examId, string? classIds = null, string? sectionIds = null)
         {
             var result = new ExamAnnouncementDto();
 
@@ -236,6 +237,8 @@ namespace School.API.Repositories.Implementations.Academic
                 cmd.CommandType = CommandType.StoredProcedure;
                 cmd.CommandText = "dbo.SpRPT_SMSExamResultAnnouncement";
                 AddParam(cmd, "@ExamID", examId);
+                AddParam(cmd, "@ClassIDs", string.IsNullOrWhiteSpace(classIds) ? (object?)null : classIds);
+                AddParam(cmd, "@SectionIDs", string.IsNullOrWhiteSpace(sectionIds) ? (object?)null : sectionIds);
 
                 await using var reader = await cmd.ExecuteReaderAsync();
 
@@ -261,6 +264,8 @@ namespace School.API.Repositories.Implementations.Academic
                         result.TopPositions.Add(new AnnouncementTopRowDto
                         {
                             ClassName     = GetString(reader, "ClassName"),
+                            Scope         = GetString(reader, "Scope"),
+                            ScopeOrder    = GetInt(reader, "ScopeOrder"),
                             Position      = GetNullableInt(reader, "Position"),
                             RollNo        = GetString(reader, "RollNo"),
                             StudentName   = GetString(reader, "StudentName"),
@@ -279,6 +284,69 @@ namespace School.API.Repositories.Implementations.Academic
             }
 
             return result;
+        }
+
+        public async Task<List<RcardRecipientDto>> GetRcardRecipientsAsync(int examId, int classId, int sectionId, int studentId)
+        {
+            var rows = new List<RcardRecipientDto>();
+
+            var conn = _context.Database.GetDbConnection();
+            var shouldClose = conn.State != ConnectionState.Open;
+            if (shouldClose) await conn.OpenAsync();
+
+            try
+            {
+                await using var cmd = conn.CreateCommand();
+                cmd.CommandText = @"
+                    SELECT
+                        R.StudentID AS StudentId,
+                        MIN(R.ClassID)   AS ClassId,
+                        MIN(R.SectionID) AS SectionId,
+                        ST.Name AS StudentName,
+                        -- Class is always shown together with its section, e.g. Play Group G1.
+                        LTRIM(RTRIM(MIN(CL.VName) + ' ' + ISNULL(MIN(SEC.VName), ''))) AS ClassName,
+                        COALESCE(
+                            NULLIF(LTRIM(RTRIM(PA.FatherMobile)),   ''),
+                            NULLIF(LTRIM(RTRIM(PA.GuardianMobile)), ''),
+                            NULLIF(LTRIM(RTRIM(ST.MobileNo)),       '')
+                        ) AS Phone
+                    FROM        SMSExamResult R
+                    INNER JOIN  SMSStudent    ST ON ST.VID = R.StudentID
+                    LEFT  JOIN  SMSParent     PA ON PA.VID = ST.ParentID
+                    LEFT  JOIN  SMSClass      CL ON CL.VID = R.ClassID
+                    LEFT  JOIN  SMSSection    SEC ON SEC.VID = R.SectionID
+                    WHERE       R.ExamID = @ExamID AND R.IsActive = 1
+                      AND       (@ClassID   = 0 OR R.ClassID   = @ClassID)
+                      AND       (@SectionID = 0 OR R.SectionID = @SectionID)
+                      AND       (@StudentID = 0 OR R.StudentID = @StudentID)
+                    GROUP BY    R.StudentID, ST.Name, ST.MobileNo, PA.FatherMobile, PA.GuardianMobile
+                    ORDER BY    MIN(R.ClassID), MIN(R.SectionID), ST.Name;";
+                cmd.CommandType = CommandType.Text;
+                AddParam(cmd, "@ExamID", examId);
+                AddParam(cmd, "@ClassID", classId);
+                AddParam(cmd, "@SectionID", sectionId);
+                AddParam(cmd, "@StudentID", studentId);
+
+                await using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    rows.Add(new RcardRecipientDto
+                    {
+                        StudentId   = GetInt(reader, "StudentId"),
+                        ClassId     = GetInt(reader, "ClassId"),
+                        SectionId   = GetInt(reader, "SectionId"),
+                        StudentName = GetString(reader, "StudentName"),
+                        ClassName   = GetString(reader, "ClassName"),
+                        Phone       = GetString(reader, "Phone")
+                    });
+                }
+            }
+            finally
+            {
+                if (shouldClose) await conn.CloseAsync();
+            }
+
+            return rows;
         }
 
         private static ResultStatRowDto ReadStatRow(DbDataReader reader) => new()
@@ -354,6 +422,156 @@ namespace School.API.Repositories.Implementations.Academic
             }
 
             return result;
+        }
+
+        public async Task<List<ExamSubjectWiseRowDto>> GetSubjectWiseReportAsync(int examId, string? classIds, string? sectionIds)
+        {
+            // Per-subject aggregate statistics for one Exam, SECTION WISE — one row
+            // per (Class, Section, Subject). Class / Section scope is a pair of
+            // comma-separated id lists; empty / NULL = all sections in the school.
+            // Backed by dbo.SpRPT_SMSExamSubjectWise (Scripts/SpRPT_SMSExamSubjectWise.sql).
+            var rows = new List<ExamSubjectWiseRowDto>();
+
+            var conn = _context.Database.GetDbConnection();
+            var shouldClose = conn.State != ConnectionState.Open;
+            if (shouldClose) await conn.OpenAsync();
+
+            try
+            {
+                await using var cmd = conn.CreateCommand();
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.CommandText = "dbo.SpRPT_SMSExamSubjectWise";
+                AddParam(cmd, "@ExamID", examId);
+                AddParam(cmd, "@ClassIDs",   string.IsNullOrWhiteSpace(classIds)   ? (object?)null : classIds);
+                AddParam(cmd, "@SectionIDs", string.IsNullOrWhiteSpace(sectionIds) ? (object?)null : sectionIds);
+
+                await using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    rows.Add(new ExamSubjectWiseRowDto
+                    {
+                        ClassId                    = GetInt(reader, "ClassId"),
+                        ClassName                  = GetString(reader, "ClassName"),
+                        SectionId                  = GetInt(reader, "SectionId"),
+                        SectionName                = GetString(reader, "SectionName"),
+                        SubjectId                  = GetInt(reader, "SubjectId"),
+                        SubjectName                = GetString(reader, "SubjectName"),
+                        TotalStudents              = GetInt(reader, "TotalStudents"),
+                        Appeared                   = GetInt(reader, "Appeared"),
+                        Passed                     = GetInt(reader, "Passed"),
+                        Failed                     = GetInt(reader, "Failed"),
+                        PassPercentByPassMarks     = GetDecimal(reader, "PassPercentByPassMarks"),
+                        AggregateTotalMarks        = GetDecimal(reader, "AggregateTotalMarks"),
+                        TotalObtainedMarks         = GetDecimal(reader, "TotalObtainedMarks"),
+                        PassPercentByObtainedMarks = GetDecimal(reader, "PassPercentByObtainedMarks"),
+                        Average                    = GetDecimal(reader, "Average"),
+                        TeacherName                = GetString(reader, "TeacherName")
+                    });
+                }
+            }
+            finally
+            {
+                if (shouldClose) await conn.CloseAsync();
+            }
+
+            return rows;
+        }
+
+        public async Task<List<ExamTeacherWiseRowDto>> GetTeacherWiseReportAsync(int examId, int teacherId)
+        {
+            // One row per (Teacher, Subject, Class, Section) for one Exam, driven
+            // by the teacher → subject assignments (SMSStaffSubject); the web layer
+            // groups these by teacher. teacherId of 0 means "all teachers" and is
+            // passed to the SP as NULL.
+            // Backed by dbo.SpRPT_SMSExamTeacherWise (Scripts/SpRPT_SMSExamTeacherWise.sql).
+            var rows = new List<ExamTeacherWiseRowDto>();
+
+            var conn = _context.Database.GetDbConnection();
+            var shouldClose = conn.State != ConnectionState.Open;
+            if (shouldClose) await conn.OpenAsync();
+
+            try
+            {
+                await using var cmd = conn.CreateCommand();
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.CommandText = "dbo.SpRPT_SMSExamTeacherWise";
+                AddParam(cmd, "@ExamID", examId);
+                AddParam(cmd, "@TeacherID", teacherId > 0 ? teacherId : (object?)null);
+
+                await using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    rows.Add(new ExamTeacherWiseRowDto
+                    {
+                        TeacherId     = GetNullableInt(reader, "TeacherId"),
+                        TeacherName   = GetString(reader, "TeacherName"),
+                        SubjectId     = GetInt(reader, "SubjectId"),
+                        SubjectName   = GetString(reader, "SubjectName"),
+                        ClassId       = GetInt(reader, "ClassId"),
+                        ClassName     = GetString(reader, "ClassName"),
+                        SectionId     = GetInt(reader, "SectionId"),
+                        SectionName   = GetString(reader, "SectionName"),
+                        ColumnLabel   = GetString(reader, "ColumnLabel"),
+                        Appeared      = GetInt(reader, "Appeared"),
+                        TotalMarks    = GetDecimal(reader, "TotalMarks"),
+                        ObtainedMarks = GetDecimal(reader, "ObtainedMarks"),
+                        Percent       = GetDecimal(reader, "Percent")
+                    });
+                }
+            }
+            finally
+            {
+                if (shouldClose) await conn.CloseAsync();
+            }
+
+            return rows;
+        }
+
+        public async Task<List<ExamTeacherComparisonRowDto>> GetTeacherComparisonReportAsync(
+            int examId, string? lClassIds, string? lSectionIds, string? rClassIds, string? rSectionIds)
+        {
+            // Two ranked teacher lists (Side 'L' / 'R') for one Exam, each scope
+            // defined by comma-separated class + section id lists. Each teacher's
+            // ResultPercent is the same average shown by the Teacher Wise report.
+            // Backed by dbo.SpRPT_SMSExamTeacherComparison
+            // (Scripts/SpRPT_SMSExamTeacherComparison.sql).
+            var rows = new List<ExamTeacherComparisonRowDto>();
+
+            var conn = _context.Database.GetDbConnection();
+            var shouldClose = conn.State != ConnectionState.Open;
+            if (shouldClose) await conn.OpenAsync();
+
+            try
+            {
+                await using var cmd = conn.CreateCommand();
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.CommandText = "dbo.SpRPT_SMSExamTeacherComparison";
+                AddParam(cmd, "@ExamID", examId);
+                AddParam(cmd, "@LClassIDs",   string.IsNullOrWhiteSpace(lClassIds)   ? (object?)null : lClassIds);
+                AddParam(cmd, "@LSectionIDs", string.IsNullOrWhiteSpace(lSectionIds) ? (object?)null : lSectionIds);
+                AddParam(cmd, "@RClassIDs",   string.IsNullOrWhiteSpace(rClassIds)   ? (object?)null : rClassIds);
+                AddParam(cmd, "@RSectionIDs", string.IsNullOrWhiteSpace(rSectionIds) ? (object?)null : rSectionIds);
+
+                await using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    rows.Add(new ExamTeacherComparisonRowDto
+                    {
+                        Side          = GetString(reader, "Side") ?? "L",
+                        Sr            = GetInt(reader, "Sr"),
+                        TeacherId     = GetNullableInt(reader, "TeacherId"),
+                        TeacherName   = GetString(reader, "TeacherName"),
+                        ResultPercent = GetDecimal(reader, "ResultPercent"),
+                        Position      = GetInt(reader, "Position")
+                    });
+                }
+            }
+            finally
+            {
+                if (shouldClose) await conn.CloseAsync();
+            }
+
+            return rows;
         }
 
         // Shared reader for the Position / Percentage reports — both stored

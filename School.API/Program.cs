@@ -29,12 +29,30 @@ using School.API.Repositories.Implementations.UserManagement;
 using School.API.Repositories.Interfaces.UserManagement;
 using School.API.Services.Implementations.UserManagement;
 using School.API.Services.Interfaces.UserManagement;
+using School.API.Repositories.Implementations.Settings;
+using School.API.Repositories.Interfaces.Settings;
+using School.API.Services.Implementations.Settings;
+using School.API.Services.Interfaces.Settings;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Database
+// Database — EnableRetryOnFailure added per HR-Payroll-Final-Plan.md section 9
+// (transient connection blips shouldn't fail a payroll run or attendance save).
 builder.Services.AddDbContext<SchoolDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        sql => sql.EnableRetryOnFailure().UseCompatibilityLevel(120)));
+
+// Used to hold short-lived OAuth "state" nonces for the Google Drive connect flow,
+// and (HR Payroll) to cache shifts/holidays/pay components — section 9.
+builder.Services.AddMemoryCache();
+
+// Response compression — the HR attendance grid and salary sheet are the
+// largest JSON payloads in the app; compresses ~80% (section 9).
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+});
 
 // JWT
 var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new Exception("JWT Key is missing");
@@ -86,6 +104,8 @@ builder.Services.AddScoped<ISMSExamRepository, SMSExamRepository>();
 builder.Services.AddScoped<ISMSExamService, SMSExamService>();
 builder.Services.AddScoped<ISMSExamResultRepository, SMSExamResultRepository>();
 builder.Services.AddScoped<ISMSExamResultService, SMSExamResultService>();
+builder.Services.AddScoped<IStaffSubjectRepository, StaffSubjectRepository>();
+builder.Services.AddScoped<IStaffSubjectService, StaffSubjectService>();
 builder.Services.AddScoped<ISMSClassRepository, SMSClassRepository>();
 builder.Services.AddScoped<ISMSClassService, SMSClassService>();
 builder.Services.AddScoped<ISMSCampusRepository, SMSCampusRepository>();
@@ -104,8 +124,25 @@ builder.Services.AddScoped<IHRGradeRepository, HRGradeRepository>();
 builder.Services.AddScoped<IHRGradeService, HRGradeService>();
 builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
 builder.Services.AddScoped<IEmployeeService, EmployeeService>();
-builder.Services.AddScoped<ISalaryRepository, SalaryRepository>();
-builder.Services.AddScoped<ISalaryService, SalaryService>();
+builder.Services.AddScoped<ITeacherRepository, TeacherRepository>();
+builder.Services.AddScoped<ITeacherService, TeacherService>();
+
+// HR Payroll (HR-Payroll-Final-Plan.md)
+builder.Services.AddScoped<IShiftRepository, ShiftRepository>();
+builder.Services.AddScoped<IShiftService, ShiftService>();
+builder.Services.AddScoped<IHolidayRepository, HolidayRepository>();
+builder.Services.AddScoped<IHolidayService, HolidayService>();
+builder.Services.AddScoped<IAttendanceRepository, AttendanceRepository>();
+builder.Services.AddScoped<IAttendanceService, AttendanceService>();
+builder.Services.AddScoped<ILeaveRepository, LeaveRepository>();
+builder.Services.AddScoped<ILeaveService, LeaveService>();
+builder.Services.AddScoped<IPayComponentRepository, PayComponentRepository>();
+builder.Services.AddScoped<IPayComponentService, PayComponentService>();
+builder.Services.AddScoped<IEmployeePayRepository, EmployeePayRepository>();
+builder.Services.AddScoped<IEmployeePayService, EmployeePayService>();
+builder.Services.AddScoped<IPayrollRepository, PayrollRepository>();
+builder.Services.AddScoped<IPayrollService, PayrollService>();
+builder.Services.AddScoped<IHrReportsRepository, HrReportsRepository>();
 
 // Accounts
 builder.Services.AddScoped<IFeeTypeRepository, FeeTypeRepository>();
@@ -119,16 +156,42 @@ builder.Services.AddScoped<IPaymentMethodService, PaymentMethodService>();
 
 // SMS
 builder.Services.AddScoped<ISmsMessageRepository, SmsMessageRepository>();
-// Swap sender: LogOnlySmsSender (logs only) or WahaSmsSender (WhatsApp via WAHA)
+// Active sender: TypeRoutedSmsSender sends Absent notifications free through
+// WAHA and everything else through Meta's paid Cloud API (falling back to
+// Meta automatically if WAHA is down or a send fails) — see
+// SmsRouting:WahaMessageTypes in appsettings.json. Both concrete senders are
+// registered so the router can use either.
+builder.Services.AddScoped<WahaSmsSender>();
+builder.Services.AddScoped<MetaWhatsAppSender>();
+builder.Services.AddSingleton<IWahaSessionStatusService, WahaSessionStatusService>();
+builder.Services.AddScoped<ISmsSender, TypeRoutedSmsSender>();
+// Other senders still available to swap in directly instead of the router:
+// LogOnlySmsSender (logs only), WasenderSmsSender (WhatsApp via WasenderAPI),
+// ArsalSmsSender (WhatsApp via Arsal Solutions gateway)
 // builder.Services.AddScoped<ISmsSender, LogOnlySmsSender>();
-builder.Services.AddScoped<ISmsSender, WahaSmsSender>();
+// builder.Services.AddScoped<ISmsSender, WasenderSmsSender>();
+// builder.Services.AddScoped<ISmsSender, ArsalSmsSender>();
+// Approved Meta template names per message type (appsettings MetaWhatsApp:Templates)
+builder.Services.AddSingleton<ISmsTemplateCatalog, SmsTemplateCatalog>();
 builder.Services.AddScoped<ISmsService, SmsService>();
+// Two-way WhatsApp chat (inbound webhook + replies)
+builder.Services.AddScoped<IWaChatRepository, WaChatRepository>();
+builder.Services.AddScoped<IWhatsAppChatService, WhatsAppChatService>();
 builder.Services.AddSingleton<ISmsProgressTracker, SmsProgressTracker>();
+// HTML->PDF renderer (shared headless Chromium) for WhatsApp result cards
+builder.Services.AddSingleton<IPdfRenderer, PuppeteerPdfRenderer>();
+
+// Settings
+builder.Services.AddScoped<IBackupJobSettingRepository, BackupJobSettingRepository>();
+builder.Services.AddScoped<IBackupJobSettingService, BackupJobSettingService>();
+builder.Services.AddScoped<IGoogleDriveBackupUploader, GoogleDriveBackupUploader>();
+builder.Services.AddScoped<IGoogleOAuthConnectService, GoogleOAuthConnectService>();
 
 // Background Jobs
 builder.Services.AddHostedService<AbsentNotificationJob>();
 builder.Services.AddHostedService<FeeReminderJob>();
 builder.Services.AddHostedService<SmsQueueProcessor>();
+builder.Services.AddHostedService<DbBackupJob>();
 
 // Controllers — registered ONCE with JSON options
 builder.Services.AddControllers()
@@ -185,6 +248,8 @@ var app = builder.Build();
 // by the CORS middleware before they ever hit authentication.
 
 app.UseForwardedHeaders();
+
+app.UseResponseCompression();
 
 // Exception handler FIRST so every failure path (including ones from
 // auth/routing) is caught. We manually re-attach the CORS headers here

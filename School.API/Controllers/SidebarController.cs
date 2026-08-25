@@ -108,8 +108,9 @@ namespace School.API.Controllers
                                     new MenuItemDto { Id = 7, Title = "Class", Icon = "bi-building", Url = "/Classes", Order = 4, Section = "Academic" },
                                     new MenuItemDto { Id = 28, Title = "Student Status", Icon = "bi-person-check", Url = "/student-status", Order = 5, Section = "Academic" },
                                     new MenuItemDto { Id = 8, Title = "Section", Icon = "bi-diagram-3-fill", Url = "/Sections", Order = 3, Section = "Academic" },
-                                    new MenuItemDto { Id = 10, Title = "Time Table", Icon = "bi-calendar-event-fill", Url = "/TimeTable", Order = 6, Section = "Academic" },
-                                    new MenuItemDto { Id = 20, Title = "Staff Subjects", Icon = "bi-person-workspace", Url = "/staff-subjects", Order = 7, Section = "Academic" }
+                                    //new MenuItemDto { Id = 10, Title = "Time Table", Icon = "bi-calendar-event-fill", Url = "/TimeTable", Order = 6, Section = "Academic" },
+                                    new MenuItemDto { Id = 36, Title = "Teacher", Icon = "bi-person-badge-fill", Url = "/Teacher", Order = 7, Section = "Academic" },
+                                    new MenuItemDto { Id = 20, Title = "Staff Subjects", Icon = "bi-person-workspace", Url = "/staff-subjects", Order = 8, Section = "Academic" }
                                 }
                             },
                             // 2.2 Transactions (with children)
@@ -146,15 +147,19 @@ namespace School.API.Controllers
                             new MenuItemDto { Id = 35, Title = "Reports", Icon = "bi-file-earmark-bar-graph-fill", Url = "/exam/reports", Order = 4, Section = "Exam" }
                         }
                     },
-                    // 4. HR Payroll
+                    // 4. HR Payroll (HR-Payroll-Final-Plan.md section 7)
                     new MenuSectionDto
                     {
                         Title = "HR Payroll",
                         Icon = "bi-briefcase-fill",
                         Items = new List<MenuItemDto>
                         {
-                            new MenuItemDto { Id = 15, Title = "Employee", Icon = "bi-person-vcard-fill", Url = "/Employee", Order = 1, Section = "HR Payroll" },
-                            new MenuItemDto { Id = 16, Title = "Salary", Icon = "bi-cash-stack", Url = "/Salary", Order = 2, Section = "HR Payroll" }
+                            new MenuItemDto { Id = 40, Title = "Employee", Icon = "bi-person-vcard-fill", Url = "/Employee", Order = 1, Section = "HR Payroll" },
+                            new MenuItemDto { Id = 41, Title = "Payroll Setup", Icon = "bi-sliders", Url = "/hr/setup", Order = 2, Section = "HR Payroll" },
+                            new MenuItemDto { Id = 42, Title = "Attendance", Icon = "bi-calendar2-check-fill", Url = "/hr/attendance", Order = 3, Section = "HR Payroll" },
+                            new MenuItemDto { Id = 43, Title = "Leave", Icon = "bi-calendar-minus-fill", Url = "/hr/leave", Order = 4, Section = "HR Payroll" },
+                            new MenuItemDto { Id = 44, Title = "Payroll Run", Icon = "bi-cash-stack", Url = "/hr/payroll", Order = 5, Section = "HR Payroll" },
+                            new MenuItemDto { Id = 45, Title = "Attendance Reports", Icon = "bi-bar-chart-fill", Url = "/hr/reports/attendance", Order = 6, Section = "HR Payroll" }
                         }
                     },
                     // 4. Fee Management
@@ -179,7 +184,9 @@ namespace School.API.Controllers
                         Icon = "bi-envelope-fill",
                         Items = new List<MenuItemDto>
                         {
-                            new MenuItemDto { Id = 24, Title = "SMS Module", Icon = "bi-chat-dots-fill", Url = "/sms", Order = 1, Section = "SMS" }
+                            new MenuItemDto { Id = 24, Title = "SMS Module", Icon = "bi-chat-dots-fill", Url = "/sms", Order = 1, Section = "SMS" },
+                            new MenuItemDto { Id = 25, Title = "WhatsApp Messages", Icon = "bi-whatsapp", Url = "/sms/messages", Order = 2, Section = "SMS" },
+                            new MenuItemDto { Id = 26, Title = "WhatsApp Chat", Icon = "bi-chat-left-text-fill", Url = "/sms/chat", Order = 3, Section = "SMS" }
 
                         }
                     },
@@ -192,6 +199,16 @@ namespace School.API.Controllers
                         {
                             new MenuItemDto { Id = 33, Title = "Fee Reports", Icon = "bi-cash-coin", Url = "/fee-report", Order = 1, Section = "Reports" },
                             new MenuItemDto { Id = 34, Title = "Certificates", Icon = "bi-award-fill", Url = "/certificates", Order = 2, Section = "Reports" }
+                        }
+                    },
+                    // 7. Settings
+                    new MenuSectionDto
+                    {
+                        Title = "Settings",
+                        Icon = "bi-sliders",
+                        Items = new List<MenuItemDto>
+                        {
+                            new MenuItemDto { Id = 37, Title = "Backup & Restore", Icon = "bi-cloud-arrow-up-fill", Url = "/Settings/Backup", Order = 1, Section = "Settings" }
                         }
                     }
                 }

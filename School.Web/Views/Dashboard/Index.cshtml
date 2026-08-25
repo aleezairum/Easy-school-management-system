@@ -562,6 +562,19 @@
             </div>
         </div>
     </div>
+    <!-- 9) Outstanding fees dated up to today -->
+    <div class="stat-card">
+        <div class="stat-icon orange">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+        </div>
+        <div class="stat-content">
+            <h3 id="statPendingFees">—</h3>
+            <p>Pending Fees (till today)</p>
+            <div class="stat-trend down">
+                <i class="bi bi-people"></i> <span id="statPendingStudents">—</span> student(s)
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="row g-4 mb-4">
@@ -765,6 +778,8 @@
                         setText('statTodayVouchers',   fmtNumber(f.todayVoucherCount));
                         setText('statMonthCollection', fmtMoney(f.monthCollection));
                         setText('statMonthVouchers',   fmtNumber(f.monthVoucherCount));
+                        setText('statPendingFees',     fmtMoney(f.pendingFeeTotal));
+                        setText('statPendingStudents', fmtNumber(f.pendingFeeStudents));
 
                         renderStudents(data.recentStudents);
                         renderVouchers(data.recentVouchers);

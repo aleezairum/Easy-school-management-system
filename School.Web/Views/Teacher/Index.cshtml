@@ -1,0 +1,584 @@
+@{
+    ViewData["Title"] = "Teachers";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<style>
+    /* ── Toast ── */
+    .toast-container-custom {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .toast-custom {
+        min-width: 280px;
+        max-width: 380px;
+        padding: 14px 18px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #fff;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        animation: slideIn 0.3s ease;
+    }
+
+        .toast-custom.toast-success {
+            background: #008649;
+        }
+
+        .toast-custom.toast-error {
+            background: #ef4444;
+        }
+
+        .toast-custom.toast-warning {
+            background: #f59e0b;
+        }
+
+        .toast-custom.toast-info {
+            background: #3b82f6;
+        }
+
+        .toast-custom .toast-close {
+            margin-left: auto;
+            cursor: pointer;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 16px;
+            padding: 0;
+        }
+
+    @@keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    /* ── Buttons ── */
+    .btn-save {
+        background: linear-gradient(135deg, #008649 0%, #006d3b 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-weight: 600;
+        font-size: 14px;
+        color: #fff;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,134,73,0.4);
+        }
+
+    .btn-clear {
+        background: #f1f5f9;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-weight: 600;
+        font-size: 14px;
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+        .btn-clear:hover {
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+    .btn-edit {
+        background: linear-gradient(135deg, #008649 0%, #006d3b 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 5px 11px;
+        font-size: 13px;
+        color: #fff;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+        .btn-edit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,134,73,0.4);
+        }
+
+    .btn-delete {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 5px 11px;
+        font-size: 13px;
+        color: #fff;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+        .btn-delete:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(239,68,68,0.4);
+        }
+
+    /* ── Table ── */
+        .table tbody tr.selected {
+            background: #ecfdf5;
+            border-left: 3px solid #008649;
+        }
+
+    /* ── Loading ── */
+    .loading-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(255,255,255,0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        border-radius: 16px;
+    }
+
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+        border-width: 0.3rem;
+    }
+
+    /* ── Sections ── */
+    .form-section {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .section-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .grid-section {
+        margin-top: 24px;
+    }
+</style>
+
+<!-- Toast Container -->
+<div class="toast-container-custom" id="toastContainer"></div>
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-body position-relative">
+
+            <!-- Loading Overlay -->
+            <div id="loadingOverlay" class="loading-overlay" style="display:none;">
+                <div class="spinner-border text-success" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+
+            <!-- ── Form ── -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="bi bi-pencil-square me-2"></i>
+                    <span id="formTitle">Add New Teacher</span>
+                </div>
+
+                <!-- Hidden: VID (0 = new, >0 = edit) -->
+                <input type="hidden" id="hdnVID" value="0" />
+
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label for="txtVName" class="form-label">
+                            Name <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="txtVName"
+                               placeholder="Teacher full name" maxlength="200" />
+                    </div>
+                    <div class="col-md-3">
+                        <label for="txtFatherName" class="form-label">Father Name</label>
+                        <input type="text" class="form-control" id="txtFatherName"
+                               placeholder="Father name" maxlength="200" />
+                    </div>
+                    <div class="col-md-2">
+                        <label for="ddlGender" class="form-label">Gender</label>
+                        <select class="form-select" id="ddlGender">
+                            <option value="1">Male</option>
+                            <option value="2">Female</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="txtCNIC" class="form-label">CNIC</label>
+                        <input type="text" class="form-control" id="txtCNIC"
+                               placeholder="e.g., 31201-1234567-1" maxlength="20" />
+                    </div>
+                    <div class="col-md-2">
+                        <label for="txtMobile" class="form-label">Mobile</label>
+                        <input type="text" class="form-control" id="txtMobile"
+                               placeholder="e.g., 0300-1234567" maxlength="20" />
+                    </div>
+                    <div class="col-md-3">
+                        <label for="txtEmail" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="txtEmail"
+                               placeholder="email@example.com" maxlength="150" />
+                    </div>
+                    <div class="col-md-3">
+                        <label for="txtQualification" class="form-label">Qualification</label>
+                        <input type="text" class="form-control" id="txtQualification"
+                               placeholder="e.g., M.A, B.Ed" maxlength="500" />
+                    </div>
+                    <div class="col-md-2">
+                        <label for="txtExperience" class="form-label">Experience (Years)</label>
+                        <input type="number" class="form-control" id="txtExperience"
+                               placeholder="0" min="0" />
+                    </div>
+                    <div class="col-md-4">
+                        <label for="txtAddress" class="form-label">Address</label>
+                        <input type="text" class="form-control" id="txtAddress"
+                               placeholder="Address" maxlength="500" />
+                    </div>
+
+                    <div class="col-12 d-flex align-items-center gap-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="chkIsActive" checked />
+                            <label class="form-check-label" for="chkIsActive">Active</label>
+                        </div>
+                        <div class="d-flex gap-2 ms-auto">
+                            <button type="button" class="btn-save" onclick="saveTeacher()">
+                                <i class="bi bi-check-lg me-1"></i> Save
+                            </button>
+                            <button type="button" class="btn-clear" onclick="resetForm()">
+                                <i class="bi bi-x-lg me-1"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Grid ── -->
+            <div class="grid-section">
+                <div class="section-title">
+                    <i class="bi bi-table me-2"></i>Teacher List
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th style="width:60px;">Sr#</th>
+                                <th>Name</th>
+                                <th>Father Name</th>
+                                <th>Gender</th>
+                                <th>Mobile</th>
+                                <th>CNIC</th>
+                                <th>Qualification</th>
+                                <th class="text-center" style="width:100px;">Status</th>
+                                <th class="text-center" style="width:130px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teacherBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        /*
+         *  BASE_URL  →  uses API_BASE from layout if available, else falls back to '/api'
+         */
+        const BASE_URL = (typeof API_BASE !== 'undefined' ? API_BASE : '/api');
+
+        let editingVID = 0;
+
+        document.addEventListener('DOMContentLoaded', () => loadTeachers());
+
+        function genderText(g) {
+            const n = parseInt(g);
+            return n === 2 ? 'Female' : (n === 1 ? 'Male' : '-');
+        }
+
+        /* ═══════════════════════════════════════════
+           GET  /api/teacher
+        ═══════════════════════════════════════════ */
+        async function loadTeachers() {
+            showLoading();
+            try {
+                const res = await fetch(`${BASE_URL}/teacher`);
+                if (res.ok) {
+                    renderList(await res.json());
+                } else {
+                    const err = await safeJson(res);
+                    showToast(err.message || 'Failed to load teachers', 'error');
+                }
+            } catch (ex) {
+                showToast('Network error: ' + ex.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        /* ═══════════════════════════════════════════
+           Render table rows
+        ═══════════════════════════════════════════ */
+        function renderList(items) {
+            const tbody = document.getElementById('teacherBody');
+            tbody.innerHTML = '';
+
+            if (!items || items.length === 0) {
+                tbody.innerHTML = `<tr>
+                    <td colspan="9" class="text-center text-muted py-4">
+                        No teachers found. Add one using the form above.
+                    </td></tr>`;
+                return;
+            }
+
+            items.forEach((item, index) => {
+                const vid           = item.vID           ?? item.vid           ?? item.VID           ?? 0;
+                const name          = item.vName         ?? item.vname         ?? item.VName         ?? '';
+                const fatherName    = item.fatherName    ?? item.FatherName    ?? '';
+                const gender        = item.gender        ?? item.Gender        ?? 0;
+                const mobile        = item.mobile        ?? item.Mobile        ?? '';
+                const cnic          = item.cNIC          ?? item.cnic          ?? item.CNIC          ?? '';
+                const qualification = item.qualification ?? item.Qualification ?? '';
+                const isActive      = item.isActive      ?? item.IsActive      ?? false;
+
+                const tr = document.createElement('tr');
+                tr.setAttribute('data-vid', vid);
+                if (editingVID === vid) tr.classList.add('selected');
+
+                tr.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td><strong>${esc(name)}</strong></td>
+                    <td>${esc(fatherName) || '-'}</td>
+                    <td>${genderText(gender)}</td>
+                    <td>${esc(mobile) || '-'}</td>
+                    <td>${esc(cnic) || '-'}</td>
+                    <td>${esc(qualification) || '-'}</td>
+                    <td class="text-center">
+                        <span class="badge ${isActive ? 'bg-success' : 'bg-secondary'}">
+                            ${isActive ? 'Active' : 'Inactive'}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <button class="btn-edit me-1" onclick="editTeacher(${vid})" title="Edit">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn-delete" onclick="deleteTeacher(${vid})" title="Delete">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>`;
+                tbody.appendChild(tr);
+            });
+        }
+
+        /* ═══════════════════════════════════════════
+           GET  /api/teacher/{id}
+        ═══════════════════════════════════════════ */
+        async function editTeacher(vid) {
+            showLoading();
+            try {
+                const res = await fetch(`${BASE_URL}/teacher/${vid}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    populateForm(data);
+                    editingVID = vid;
+                    document.getElementById('formTitle').textContent = 'Edit Teacher';
+
+                    document.querySelectorAll('#teacherBody tr').forEach(r => r.classList.remove('selected'));
+                    const row = document.querySelector(`#teacherBody tr[data-vid="${vid}"]`);
+                    if (row) row.classList.add('selected');
+
+                    document.querySelector('.form-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                    const err = await safeJson(res);
+                    showToast(err.message || 'Failed to load teacher', 'error');
+                }
+            } catch (ex) {
+                showToast('Network error: ' + ex.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        /* ═══════════════════════════════════════════
+           Populate form
+        ═══════════════════════════════════════════ */
+        function populateForm(data) {
+            document.getElementById('hdnVID').value           = data.vID           ?? data.vid           ?? data.VID           ?? 0;
+            document.getElementById('txtVName').value         = data.vName         ?? data.vname         ?? data.VName         ?? '';
+            document.getElementById('txtFatherName').value    = data.fatherName    ?? data.FatherName    ?? '';
+            document.getElementById('ddlGender').value        = (data.gender       ?? data.Gender        ?? 1).toString();
+            document.getElementById('txtCNIC').value          = data.cNIC          ?? data.cnic          ?? data.CNIC          ?? '';
+            document.getElementById('txtMobile').value        = data.mobile        ?? data.Mobile        ?? '';
+            document.getElementById('txtEmail').value         = data.email         ?? data.Email         ?? '';
+            document.getElementById('txtQualification').value = data.qualification ?? data.Qualification ?? '';
+            document.getElementById('txtExperience').value    = data.experienceYears ?? data.ExperienceYears ?? '';
+            document.getElementById('txtAddress').value       = data.address       ?? data.Address       ?? '';
+            document.getElementById('chkIsActive').checked    = data.isActive      ?? data.IsActive      ?? true;
+        }
+
+        /* ═══════════════════════════════════════════
+           Reset form
+        ═══════════════════════════════════════════ */
+        function resetForm() {
+            document.getElementById('hdnVID').value           = '0';
+            document.getElementById('txtVName').value          = '';
+            document.getElementById('txtFatherName').value     = '';
+            document.getElementById('ddlGender').value         = '1';
+            document.getElementById('txtCNIC').value           = '';
+            document.getElementById('txtMobile').value         = '';
+            document.getElementById('txtEmail').value          = '';
+            document.getElementById('txtQualification').value  = '';
+            document.getElementById('txtExperience').value     = '';
+            document.getElementById('txtAddress').value        = '';
+            document.getElementById('chkIsActive').checked     = true;
+            document.getElementById('formTitle').textContent   = 'Add New Teacher';
+            editingVID = 0;
+            document.querySelectorAll('#teacherBody tr').forEach(r => r.classList.remove('selected'));
+        }
+
+        /* ═══════════════════════════════════════════
+           POST  /api/teacher
+           Payload keys MUST match TeacherDto
+        ═══════════════════════════════════════════ */
+        async function saveTeacher() {
+            const vName = document.getElementById('txtVName').value.trim();
+
+            if (!vName) {
+                showToast('Please enter a Name', 'warning');
+                document.getElementById('txtVName').focus();
+                return;
+            }
+
+            const vid = parseInt(document.getElementById('hdnVID').value) || 0;
+            const expVal = document.getElementById('txtExperience').value.trim();
+
+            const payload = {
+                VID:             vid,
+                VName:           vName,
+                FatherName:      document.getElementById('txtFatherName').value.trim() || null,
+                Gender:          parseInt(document.getElementById('ddlGender').value) || 1,
+                CNIC:            document.getElementById('txtCNIC').value.trim() || null,
+                Mobile:          document.getElementById('txtMobile').value.trim() || null,
+                Email:           document.getElementById('txtEmail').value.trim() || null,
+                Address:         document.getElementById('txtAddress').value.trim() || null,
+                Qualification:   document.getElementById('txtQualification').value.trim() || null,
+                ExperienceYears: expVal === '' ? null : (parseInt(expVal) || 0),
+                IsActive:        document.getElementById('chkIsActive').checked
+            };
+
+            showLoading();
+            try {
+                const res = await fetch(`${BASE_URL}/teacher`, {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    showToast(vid === 0 ? 'Teacher created successfully!' : 'Teacher updated successfully!', 'success');
+                    resetForm();
+                    await loadTeachers();
+                } else {
+                    const err = await safeJson(res);
+                    showToast(err.message || 'Failed to save teacher', 'error');
+                }
+            } catch (ex) {
+                showToast('Network error: ' + ex.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        /* ═══════════════════════════════════════════
+           DELETE  /api/teacher/{id}
+        ═══════════════════════════════════════════ */
+        async function deleteTeacher(vid) {
+            if (!await confirmDelete('Are you sure you want to delete this teacher?')) return;
+
+            showLoading();
+            try {
+                const res = await fetch(`${BASE_URL}/teacher/${vid}`, { method: 'DELETE' });
+
+                if (res.ok) {
+                    showToast('Teacher deleted successfully!', 'success');
+                    if (editingVID === vid) resetForm();
+                    await loadTeachers();
+                } else if (res.status === 404) {
+                    showToast('Teacher not found', 'error');
+                } else {
+                    const err = await safeJson(res);
+                    showToast(err.message || 'Failed to delete teacher', 'error');
+                }
+            } catch (ex) {
+                showToast('Network error: ' + ex.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        /* ═══════════════════════════════════════════
+           Helpers
+        ═══════════════════════════════════════════ */
+        function showLoading() { document.getElementById('loadingOverlay').style.display = 'flex'; }
+        function hideLoading() { document.getElementById('loadingOverlay').style.display = 'none'; }
+
+        async function safeJson(res) {
+            try { return await res.json(); } catch (_) { return {}; }
+        }
+
+        function showToast(message, type) {
+            if (type === 'success' && typeof toastSuccess === 'function') return toastSuccess(message);
+            if (type === 'error'   && typeof toastError   === 'function') return toastError(message);
+            if (type === 'warning' && typeof toastWarning === 'function') return toastWarning(message);
+            if (type === 'info'    && typeof toastInfo    === 'function') return toastInfo(message);
+
+            const icons = {
+                success: 'bi-check-circle-fill',
+                error:   'bi-x-circle-fill',
+                warning: 'bi-exclamation-triangle-fill',
+                info:    'bi-info-circle-fill'
+            };
+            const el = document.createElement('div');
+            el.className = `toast-custom toast-${type}`;
+            el.innerHTML = `
+                <i class="bi ${icons[type] || 'bi-info-circle-fill'}"></i>
+                <span>${esc(message)}</span>
+                <button class="toast-close" onclick="this.parentElement.remove()">&#x2715;</button>`;
+            document.getElementById('toastContainer').appendChild(el);
+            setTimeout(() => el.remove(), 4000);
+        }
+
+        function esc(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+    </script>
+}

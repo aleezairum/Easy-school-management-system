@@ -4,6 +4,7 @@
     ViewBag.Title = "Result Announcement";
 
     var examName = ViewData["ExamName"] as string;
+    var scopeText = ViewData["ScopeText"] as string;
 
     var overall   = Model?.Overall ?? new School.Web.Controllers.ExamController.ResultStatRow();
     var campuses  = Model?.Campuses ?? new List<School.Web.Controllers.ExamController.ResultStatRow>();
@@ -12,6 +13,14 @@
 
     string Pct(decimal? v) => v.HasValue ? v.Value.ToString("0.00") + "%" : "-";
     string Marks(decimal? v) => v.HasValue ? (v.Value == Math.Floor(v.Value) ? ((long)v.Value).ToString() : v.Value.ToString("0.##")) : "-";
+
+    // Friendly heading per scope shown inside each class block.
+    string ScopeLabel(string? s) => s switch
+    {
+        "Girls" => "Girls Section (1st / 2nd / 3rd)",
+        "Boys"  => "Boys Section (1st / 2nd / 3rd)",
+        _       => "Overall (1st / 2nd / 3rd)"
+    };
 }
 
 <!DOCTYPE html>
@@ -114,6 +123,16 @@
             font-size: 12.5px;
         }
 
+        /* Scope sub-heading (Overall / Girls Section / Boys Section) inside a class */
+        tr.scope-row td {
+            background-color: #eef3ee !important;
+            color: #000;
+            font-weight: bold;
+            text-align: left;
+            padding-left: 8px;
+            font-size: 11.5px;
+        }
+
         /* One table per class — small gap between them */
         .positions-table { margin-bottom: 6px; }
         .positions-table:last-child { margin-bottom: 0; }
@@ -166,7 +185,11 @@
 
     <!-- Title -->
     <div class="report-title">RESULT ANNOUNCEMENT REPORT</div>
-    <div class="exam-row"><strong>Exam :</strong> @(string.IsNullOrWhiteSpace(examName) ? "-" : examName)</div>
+    <div class="exam-row">
+        <strong>Exam :</strong> @(string.IsNullOrWhiteSpace(examName) ? "-" : examName)
+        &nbsp;&nbsp;|&nbsp;&nbsp;
+        <strong>Scope :</strong> @(string.IsNullOrWhiteSpace(scopeText) ? "Whole School" : scopeText)
+    </div>
 
     <!-- 1) Overall (whole school) -->
     <div class="block">
@@ -293,18 +316,23 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var p in grp)
+                        @* Overall first, then Girls, then Boys (ScopeOrder), each with its own sub-heading *@
+                        @foreach (var scope in grp.GroupBy(p => p.Scope).OrderBy(s => s.First().ScopeOrder))
                         {
-                            <tr>
-                                <td>@(p.Position.HasValue ? p.Position.Value.ToString() : "-")</td>
-                                <td>@p.RollNo</td>
-                                <td class="col-left">@p.StudentName</td>
-                                <td class="col-left">@p.FatherName</td>
-                                <td>@p.SectionName</td>
-                                <td>@Marks(p.TotalMarks)</td>
-                                <td>@Marks(p.ObtainedMarks)</td>
-                                <td>@Pct(p.Percent)</td>
-                            </tr>
+                            <tr class="scope-row"><td colspan="8">@ScopeLabel(scope.Key)</td></tr>
+                            @foreach (var p in scope)
+                            {
+                                <tr>
+                                    <td>@(p.Position.HasValue ? p.Position.Value.ToString() : "-")</td>
+                                    <td>@p.RollNo</td>
+                                    <td class="col-left">@p.StudentName</td>
+                                    <td class="col-left">@p.FatherName</td>
+                                    <td>@p.SectionName</td>
+                                    <td>@Marks(p.TotalMarks)</td>
+                                    <td>@Marks(p.ObtainedMarks)</td>
+                                    <td>@Pct(p.Percent)</td>
+                                </tr>
+                            }
                         }
                     </tbody>
                 </table>

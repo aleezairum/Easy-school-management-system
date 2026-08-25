@@ -20,7 +20,9 @@ namespace School.API.Repositories.Implementations.Academic
             DateTime? leavingDate,
             string? examination,
             string? marksObtained,
-            string? totalMarks)
+            string? totalMarks,
+            string? classAdmitted,
+            string? classStudying)
         {
             var parameters = new[]
             {
@@ -28,12 +30,14 @@ namespace School.API.Repositories.Implementations.Academic
                 new SqlParameter("@LeavingDate",   (object?)leavingDate   ?? DBNull.Value),
                 new SqlParameter("@Examination",   (object?)examination   ?? DBNull.Value),
                 new SqlParameter("@MarksObtained", (object?)marksObtained ?? DBNull.Value),
-                new SqlParameter("@TotalMarks",    (object?)totalMarks    ?? DBNull.Value)
+                new SqlParameter("@TotalMarks",    (object?)totalMarks    ?? DBNull.Value),
+                new SqlParameter("@ClassAdmitted", (object?)classAdmitted ?? DBNull.Value),
+                new SqlParameter("@ClassStudying", (object?)classStudying ?? DBNull.Value)
             };
 
             var rows = await _context.Database
                 .SqlQueryRaw<LeavingCertificateDto>(
-                    "EXEC SpGet_SMSStudentLeavingCertificate @StudentID, @LeavingDate, @Examination, @MarksObtained, @TotalMarks",
+                    "EXEC SpGet_SMSStudentLeavingCertificate @StudentID, @LeavingDate, @Examination, @MarksObtained, @TotalMarks, @ClassAdmitted, @ClassStudying",
                     parameters)
                 .ToListAsync();
 

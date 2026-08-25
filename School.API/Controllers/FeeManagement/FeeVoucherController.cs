@@ -76,7 +76,8 @@ public class FeeVoucherController : ControllerBase
         report.SetParameters(new[]
         {
             new ReportParameter("VNo", receipt.VNo ?? "-"),
-            new ReportParameter("VDate", receipt.VDate.ToString("dd-MM-yyyy")),
+            // VDate is date-only; append the actual save time from InsertedDate.
+            new ReportParameter("VDate", $"{receipt.VDate:dd-MM-yyyy} {receipt.InsertedDate:hh:mm tt}"),
             new ReportParameter("PaymentMethod", receipt.PaymentMethod ?? "-"),
             new ReportParameter("ParentName", receipt.ParentName ?? "-"),
             new ReportParameter("TotalPaid", totalPaid.ToString("N0")),

@@ -1,0 +1,801 @@
+@{
+    ViewData["Title"] = "Backup & Restore";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<style>
+    .form-section {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 18px 20px;
+        margin-bottom: 18px;
+        border: 1px solid #eef1f5;
+    }
+
+    .form-section-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .form-section-title .title-text i { color: #008649; margin-right: 6px; }
+
+    .form-label-sm { font-size: 12px; font-weight: 600; color: #334155; }
+    .form-check-sm .form-check-label { font-size: 12px; }
+    .form-text-hint { font-size: 11px; color: #94a3b8; }
+
+    /* Status strip */
+    .status-strip {
+        background: linear-gradient(135deg, #f0fdf4 0%, #f8fafc 100%);
+        border: 1px solid #dcfce7;
+        border-radius: 12px;
+        padding: 14px 18px;
+        margin-bottom: 18px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 20px;
+        justify-content: space-between;
+    }
+
+    .status-strip .status-item .status-label {
+        font-size: 10.5px;
+        font-weight: 700;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 2px;
+    }
+
+    .last-run-datetime {
+        color: #15803d;
+        font-weight: 700;
+        font-size: 14px;
+    }
+
+    .last-run-message {
+        font-size: 11.5px;
+        color: #64748b;
+        max-width: 420px;
+    }
+
+    .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-size: 11.5px;
+        font-weight: 700;
+    }
+    .pill-on  { background: #dcfce7; color: #15803d; }
+    .pill-off { background: #f1f5f9; color: #64748b; }
+    .pill-success { background: #dcfce7; color: #15803d; }
+    .pill-fail    { background: #fee2e2; color: #b91c1c; }
+
+    /* Run-time slots */
+    .run-slot {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 10px 12px;
+        height: 100%;
+        transition: opacity .15s ease;
+    }
+    .run-slot.slot-disabled { opacity: .5; }
+    .run-slot .slot-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 6px;
+    }
+    .run-slot .slot-head label { font-size: 12px; font-weight: 600; color: #334155; margin: 0; }
+
+    /* Auth mode cards */
+    .auth-mode-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 10px 12px;
+        cursor: pointer;
+        flex: 1;
+        background: #fff;
+        transition: border-color .15s ease, background .15s ease;
+    }
+    .auth-mode-card:hover { border-color: #86efac; }
+    .auth-mode-card.active { border-color: #008649; background: #f0fdf4; }
+    .auth-mode-card .form-check-label { font-weight: 600; font-size: 12.5px; color: #334155; }
+    .auth-mode-card small { display: block; color: #94a3b8; font-size: 11px; margin-top: 2px; }
+
+    .btn-brand { background: #008649; border-color: #008649; }
+    .btn-brand:hover { background: #006d3b; border-color: #006d3b; }
+
+    #localFilesBody tr td { vertical-align: middle; }
+
+    /* Setup guide modal */
+    .nav-tabs-sm .nav-link { font-size: 12.5px; font-weight: 600; padding: 6px 12px; }
+    .guide-steps { padding-left: 20px; font-size: 12.5px; color: #334155; }
+    .guide-steps li { margin-bottom: 12px; line-height: 1.5; }
+    .guide-steps code {
+        background: #f1f5f9;
+        color: #0f172a;
+        padding: 1px 5px;
+        border-radius: 4px;
+        font-size: 11.5px;
+    }
+    .btn-link.p-0 { font-size: 12px; font-weight: 600; text-decoration: none; color: #008649; }
+    .btn-link.p-0:hover { text-decoration: underline; }
+</style>
+
+<div class="container-fluid">
+    <div id="alertContainer"></div>
+
+    <div class="card" style="border-radius: 10px; border: none; box-shadow: 0 2px 12px rgba(0,0,0,0.08);">
+        <div class="card-body p-3">
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 style="font-weight: 700; color: #1e293b; margin: 0; font-size: 15px;">
+                    <i class="bi bi-cloud-arrow-up-fill me-1" style="color:#008649;"></i> Database Backup Schedule
+                </h6>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="runBackupNow()" id="btnRunNow">
+                        <i class="bi bi-play-fill me-1"></i> Run Backup Now
+                    </button>
+                    <button type="button" class="btn btn-brand btn-sm text-white" onclick="saveSettings()" id="btnSave">
+                        <i class="bi bi-save me-1"></i> Save Settings
+                    </button>
+                </div>
+            </div>
+
+            <!-- Status strip -->
+            <div class="status-strip">
+                <div class="status-item">
+                    <div class="status-label">Job Status</div>
+                    <span id="jobStatusPill" class="pill pill-off"><i class="bi bi-circle-fill" style="font-size:7px;"></i> Disabled</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Last Execution</div>
+                    <div id="lastRunDateTime" class="last-run-datetime">Never run yet</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Last Result</div>
+                    <span id="lastRunBadge" class="pill" style="display:none;"></span>
+                </div>
+                <div class="status-item" style="flex: 1 1 260px; min-width: 200px;">
+                    <div class="status-label">Details</div>
+                    <div id="lastRunInfo" class="last-run-message">No backup has run yet.</div>
+                </div>
+            </div>
+
+            <!-- Schedule & Local Storage -->
+            <div class="form-section">
+                <div class="form-section-title">
+                    <span class="title-text"><i class="bi bi-clock-history"></i>Schedule &amp; Local Storage</span>
+                    <div class="form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox" id="isEnabled" onchange="updateStatusPill()">
+                        <label class="form-check-label form-label-sm" for="isEnabled">Job Enabled</label>
+                    </div>
+                </div>
+
+                <div class="row g-2 mb-3">
+                    <div class="col-lg-6 col-12">
+                        <label class="form-label form-label-sm mb-1 d-block">Databases to Back Up</label>
+                        <div class="dropdown">
+                            <button class="form-select form-select-sm text-start dropdown-toggle" type="button"
+                                    id="dbDropdownBtn" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                                Loading databases...
+                            </button>
+                            <div class="dropdown-menu w-100 p-2" style="max-height: 260px; overflow-y: auto;" aria-labelledby="dbDropdownBtn">
+                                <div class="form-check form-check-sm mb-1 pb-2 border-bottom">
+                                    <input class="form-check-input" type="checkbox" id="dbSelectAll">
+                                    <label class="form-check-label fw-semibold" for="dbSelectAll">Select All</label>
+                                </div>
+                                <div id="databaseChecklist" class="pt-1">
+                                    <span class="form-text-hint">Loading databases...</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-text-hint">Sourced from appsettings.json ConnectionStrings.</div>
+                    </div>
+                </div>
+
+                <div class="row g-2 mb-3">
+                    <div class="col-lg-8 col-12">
+                        <label for="backupFolder" class="form-label form-label-sm mb-1">Backup Folder</label>
+                        <input type="text" class="form-control form-control-sm" id="backupFolder" placeholder="D:\Backups\EasySchool\EasySchoolDB" readonly style="background-color:#eef0f2;">
+                        <div class="form-text-hint">Fixed server-side path — created automatically if missing; not editable here.</div>
+                    </div>
+                    <div class="col-lg-4 col-12">
+                        <label for="localRetentionDays" class="form-label form-label-sm mb-1">Local Retention (days)</label>
+                        <input type="number" min="1" class="form-control form-control-sm" id="localRetentionDays" value="30">
+                        <div class="form-text-hint">Local .bak files older than this are deleted after each run.</div>
+                    </div>
+                </div>
+
+                <label class="form-label form-label-sm mb-2 d-block">Run up to 3 times a day</label>
+                <div class="row g-2">
+                    <div class="col-lg-4 col-md-6 col-12">
+                        <div class="run-slot" id="slot1Wrap">
+                            <div class="slot-head">
+                                <label for="runTime1">Run #1 <span class="text-danger">*</span></label>
+                                <span class="form-text-hint">required</span>
+                            </div>
+                            <input type="time" class="form-control form-control-sm" id="runTime1" value="06:00">
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-12">
+                        <div class="run-slot" id="slot2Wrap">
+                            <div class="slot-head">
+                                <label for="runTime2">Run #2</label>
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox" id="runTime2Enabled" onchange="toggleRunSlot(2)">
+                                </div>
+                            </div>
+                            <input type="time" class="form-control form-control-sm" id="runTime2" value="14:00" disabled>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-12">
+                        <div class="run-slot" id="slot3Wrap">
+                            <div class="slot-head">
+                                <label for="runTime3">Run #3</label>
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox" id="runTime3Enabled" onchange="toggleRunSlot(3)">
+                                </div>
+                            </div>
+                            <input type="time" class="form-control form-control-sm" id="runTime3" value="22:00" disabled>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Google Drive Upload -->
+            <div class="form-section">
+                <div class="form-section-title">
+                    <span class="title-text"><i class="bi bi-google"></i>Google Drive Upload</span>
+                    <div class="form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox" id="driveEnabled" onchange="toggleDriveFields()">
+                        <label class="form-check-label form-label-sm" for="driveEnabled">Upload to Google Drive</label>
+                    </div>
+                </div>
+
+                <div id="driveFields" style="display:none;">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <label class="form-label form-label-sm mb-0 d-block">Authentication Mode</label>
+                        <button type="button" class="btn btn-link btn-sm p-0" onclick="openSetupGuide()">
+                            <i class="bi bi-question-circle-fill me-1"></i>Setup Guide
+                        </button>
+                    </div>
+                    <div class="d-flex gap-2 mb-3 flex-wrap">
+                        <label class="auth-mode-card d-flex align-items-start gap-2 mb-0" id="authServiceAccountCard">
+                            <input class="form-check-input mt-1" type="radio" name="driveAuthMode" id="authServiceAccount" value="ServiceAccount" checked onchange="toggleAuthModeFields()">
+                            <span>
+                                <span class="form-check-label d-block">Service Account</span>
+                                <small>Recommended — no login prompts, ever</small>
+                            </span>
+                        </label>
+                        <label class="auth-mode-card d-flex align-items-start gap-2 mb-0" id="authOAuthCard">
+                            <input class="form-check-input mt-1" type="radio" name="driveAuthMode" id="authOAuth" value="OAuth" onchange="toggleAuthModeFields()">
+                            <span>
+                                <span class="form-check-label d-block">OAuth</span>
+                                <small>Sign in with your personal Google account</small>
+                            </span>
+                        </label>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-lg-6 col-12" id="serviceAccountField">
+                            <label for="serviceAccountKeyPath" class="form-label form-label-sm mb-1">Service Account Key File Path</label>
+                            <input type="text" class="form-control form-control-sm" id="serviceAccountKeyPath" placeholder="C:\Secrets\easyschool-backup-sa.json">
+                        </div>
+
+                        <div class="col-lg-4 col-12 oauth-field" style="display:none;">
+                            <label for="oAuthClientId" class="form-label form-label-sm mb-1">OAuth Client ID</label>
+                            <input type="text" class="form-control form-control-sm" id="oAuthClientId">
+                        </div>
+                        <div class="col-lg-4 col-12 oauth-field" style="display:none;">
+                            <label for="oAuthClientSecret" class="form-label form-label-sm mb-1">OAuth Client Secret</label>
+                            <input type="password" class="form-control form-control-sm" id="oAuthClientSecret" placeholder="Leave blank to keep the saved secret">
+                        </div>
+                        <div class="col-lg-4 col-12 oauth-field d-flex flex-column justify-content-end" style="display:none;">
+                            <label class="form-label form-label-sm mb-1">Google Sign-In</label>
+                            <div class="d-flex align-items-center gap-2">
+                                <button type="button" class="btn btn-outline-dark btn-sm" onclick="connectGoogle()" id="btnConnectGoogle">
+                                    <i class="bi bi-google me-1"></i> Connect with Google
+                                </button>
+                                <span id="oauthConnectedPill" class="pill pill-off"><i class="bi bi-circle-fill" style="font-size:7px;"></i> Not Connected</span>
+                            </div>
+                            <div class="form-text-hint">Save the Client ID/Secret first, then click Connect and sign in once.</div>
+                        </div>
+                    </div>
+
+                    <div class="row g-2">
+                        <div class="col-lg-8 col-12">
+                            <label for="driveFolderPath" class="form-label form-label-sm mb-1">Google Drive Folder Path</label>
+                            <input type="text" class="form-control form-control-sm" id="driveFolderPath" placeholder="e.g. EasySchool Backups or Backups/EasySchool">
+                            <div class="form-text-hint">Service Account mode: the top-level folder in this path must already be shared with the service account's email first; subfolders are created automatically.</div>
+                        </div>
+                        <div class="col-lg-4 col-12">
+                            <label for="driveRetentionDays" class="form-label form-label-sm mb-1">Drive Retention (days)</label>
+                            <input type="number" min="1" class="form-control form-control-sm" id="driveRetentionDays" value="7">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent local backups -->
+            <div class="form-section mb-0">
+                <div class="form-section-title">
+                    <span class="title-text"><i class="bi bi-archive"></i>Recent Local Backups</span>
+                    <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2" onclick="loadLocalFiles()" title="Refresh">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0" style="font-size: 12px;">
+                        <thead>
+                            <tr>
+                                <th><i class="bi bi-file-earmark-zip me-1"></i>File Name</th>
+                                <th>Size</th>
+                                <th>Created</th>
+                            </tr>
+                        </thead>
+                        <tbody id="localFilesBody">
+                            <tr><td colspan="3" class="text-center text-muted py-3">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Google Drive Setup Guide -->
+    <div class="modal fade" id="setupGuideModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title" style="font-weight:700;">
+                        <i class="bi bi-google me-1" style="color:#008649;"></i> Google Drive Setup Guide
+                    </h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="nav nav-tabs nav-tabs-sm mb-3" id="guideTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="guide-tab-sa" data-bs-toggle="tab" data-bs-target="#guide-pane-sa" type="button" role="tab">
+                                Service Account
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="guide-tab-oauth" data-bs-toggle="tab" data-bs-target="#guide-pane-oauth" type="button" role="tab">
+                                OAuth (Sign in with Google)
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content">
+                        <!-- Service Account guide -->
+                        <div class="tab-pane fade show active" id="guide-pane-sa" role="tabpanel">
+                            <p class="small text-muted mb-3">
+                                Recommended for this job — uploads run unattended with no login prompts, ever.
+                                One-time setup, about 5 minutes.
+                            </p>
+                            <ol class="guide-steps">
+                                <li>
+                                    Open <a href="https://console.cloud.google.com" target="_blank" rel="noopener">Google Cloud Console</a>
+                                    and create (or select) a project.
+                                </li>
+                                <li>
+                                    Go to <strong>APIs &amp; Services &rarr; Library</strong>, search for
+                                    <strong>Google Drive API</strong>, and click <strong>Enable</strong>.
+                                </li>
+                                <li>
+                                    Go to <strong>APIs &amp; Services &rarr; Credentials &rarr; Create Credentials &rarr; Service Account</strong>.
+                                    Give it any name (e.g. <code>easyschool-backup</code>) — no roles are needed.
+                                </li>
+                                <li>
+                                    Open the new service account &rarr; <strong>Keys</strong> tab &rarr;
+                                    <strong>Add Key &rarr; Create new key &rarr; JSON</strong>. This downloads a
+                                    <code>.json</code> key file.
+                                </li>
+                                <li>
+                                    Save that file on the server running the API, e.g.
+                                    <code>C:\Secrets\easyschool-backup-sa.json</code>, and paste that path into
+                                    <strong>Service Account Key File Path</strong> below.
+                                </li>
+                                <li>
+                                    In Google Drive, create (or pick) a backup folder, e.g. <em>"EasySchool Backups"</em>.
+                                    Right-click it &rarr; <strong>Share</strong> &rarr; paste the service account's
+                                    email (looks like <code>xxx@xxx.iam.gserviceaccount.com</code>, shown on its
+                                    details page) &rarr; give it <strong>Editor</strong> access.
+                                </li>
+                                <li>
+                                    Type that folder's name into <strong>Google Drive Folder Path</strong> below
+                                    (e.g. <code>EasySchool Backups</code>, or <code>EasySchool Backups/2026</code>
+                                    for a subfolder — it will be created automatically).
+                                </li>
+                                <li>Select <strong>Service Account</strong> as the Authentication Mode above, then Save.</li>
+                            </ol>
+                        </div>
+
+                        <!-- OAuth guide -->
+                        <div class="tab-pane fade" id="guide-pane-oauth" role="tabpanel">
+                            <p class="small text-muted mb-3">
+                                Uploads into your own Google Drive using your personal account. Requires a one-time
+                                sign-in via the <strong>Connect with Google</strong> button.
+                            </p>
+                            <ol class="guide-steps">
+                                <li>
+                                    Open <a href="https://console.cloud.google.com" target="_blank" rel="noopener">Google Cloud Console</a>
+                                    (same project as above works fine) and enable the <strong>Google Drive API</strong>
+                                    under <strong>APIs &amp; Services &rarr; Library</strong> if you haven't already.
+                                </li>
+                                <li>
+                                    Go to <strong>APIs &amp; Services &rarr; OAuth consent screen</strong>. Choose
+                                    <strong>External</strong>, fill in the basic app info, and add your own Google
+                                    account under <strong>Test users</strong>.
+                                </li>
+                                <li>
+                                    On the same screen, set <strong>Publishing status</strong> to
+                                    <strong>In production</strong>. This doesn't require Google's review for this
+                                    scope, and avoids Google auto-expiring the connection after 7 days (which happens
+                                    to apps left in "Testing").
+                                </li>
+                                <li>
+                                    Go to <strong>APIs &amp; Services &rarr; Credentials &rarr; Create Credentials &rarr; OAuth client ID</strong>.
+                                    Application type: <strong>Web application</strong>.
+                                </li>
+                                <li>
+                                    Under <strong>Authorized redirect URIs</strong>, add exactly this URL:
+                                    <div class="input-group input-group-sm my-2">
+                                        <input type="text" class="form-control" id="guideRedirectUri" readonly>
+                                        <button class="btn btn-outline-secondary" type="button" onclick="copyRedirectUri()">
+                                            <i class="bi bi-clipboard"></i>
+                                        </button>
+                                    </div>
+                                    <span class="form-text-hint">Computed from where this app's API is reached — if you access it from another address (e.g. a live domain), add that variant too.</span>
+                                </li>
+                                <li>Copy the <strong>Client ID</strong> and <strong>Client Secret</strong> into the fields below and click <strong>Save Settings</strong>.</li>
+                                <li>
+                                    Click <strong>Connect with Google</strong>, sign in, and approve access. The page
+                                    will show <span class="pill pill-on d-inline-flex"><i class="bi bi-check-circle-fill" style="font-size:9px;"></i> Connected</span>
+                                    once done.
+                                </li>
+                                <li>
+                                    Type the destination folder's name into <strong>Google Drive Folder Path</strong>
+                                    below (e.g. <code>EasySchool Backups</code>) — it will be created in your Drive
+                                    automatically if it doesn't already exist.
+                                </li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let availableDatabases = [];
+
+        $(document).ready(function () {
+            loadDatabases().then(loadSettings);
+            loadLocalFiles();
+        });
+
+        // Refresh settings when the user comes back to this tab (e.g. after
+        // completing the Google sign-in in a separate tab) so the "Connected"
+        // status picks up without a manual reload.
+        window.addEventListener('focus', function () {
+            loadSettings();
+        });
+
+        async function loadDatabases() {
+            const $list = $('#databaseChecklist');
+            const $btn = $('#dbDropdownBtn');
+            try {
+                const response = await fetch(`${API_BASE}/BackupJob/available-databases`);
+                availableDatabases = response.ok ? await response.json() : [];
+            } catch (err) {
+                console.error('Error loading available databases:', err);
+                availableDatabases = [];
+            }
+
+            if (!availableDatabases.length) {
+                $list.html('<span class="form-text-hint">No connection strings found in appsettings.json.</span>');
+                $btn.text('No databases found').prop('disabled', true);
+                return;
+            }
+
+            $list.empty();
+            availableDatabases.forEach(db => {
+                $list.append(`
+                    <div class="form-check form-check-sm mb-1">
+                        <input class="form-check-input db-check" type="checkbox" value="${db.name}" data-label="${db.databaseName}" id="db_${db.name}">
+                        <label class="form-check-label" for="db_${db.name}">${db.databaseName} <span class="form-text-hint">(${db.name})</span></label>
+                    </div>
+                `);
+            });
+
+            $('.db-check').on('change', updateDbDropdownSummary);
+            $('#dbSelectAll').on('change', function () {
+                $('.db-check').prop('checked', $(this).is(':checked'));
+                updateDbDropdownSummary();
+            });
+        }
+
+        function updateDbDropdownSummary() {
+            const $all = $('.db-check');
+            const $checked = $('.db-check:checked');
+            const total = $all.length;
+            const checkedCount = $checked.length;
+
+            $('#dbSelectAll').prop('checked', total > 0 && checkedCount === total);
+            const selectAllEl = document.getElementById('dbSelectAll');
+            if (selectAllEl) selectAllEl.indeterminate = checkedCount > 0 && checkedCount < total;
+
+            let label;
+            if (checkedCount === 0) label = 'None selected';
+            else if (checkedCount === total) label = `All databases (${total})`;
+            else if (checkedCount <= 2) label = $checked.map(function () { return $(this).data('label'); }).get().join(', ');
+            else label = `${checkedCount} of ${total} selected`;
+
+            $('#dbDropdownBtn').text(label);
+        }
+
+        // Google refuses an OAuth redirect URI that points at a private LAN IP
+        // ("device_id and device_name are required for private IP") — only
+        // localhost / 127.0.0.1 / a public https domain are accepted.  So the
+        // Google flow alone is forced onto localhost, keeping API_BASE's port
+        // and path; every other call on this page still uses API_BASE as-is.
+        // Because of this, Connect must be clicked from a browser ON the API
+        // server itself — localhost resolves to whatever machine you click from.
+        function oauthApiBase() {
+            const u = new URL(API_BASE, window.location.href);
+            u.hostname = 'localhost';
+            return `${u.origin}${u.pathname}`;
+        }
+
+        function connectGoogle() {
+            window.open(`${oauthApiBase()}/BackupJob/oauth/start`, '_blank', 'width=520,height=650');
+        }
+
+        function openSetupGuide() {
+            const isOAuth = $('#authOAuth').is(':checked');
+            const tabId = isOAuth ? '#guide-tab-oauth' : '#guide-tab-sa';
+            bootstrap.Tab.getOrCreateInstance(document.querySelector(tabId)).show();
+
+            // Must match BuildRedirectUri() on the API side, which derives the
+            // URI from the request host — hence localhost here too.
+            $('#guideRedirectUri').val(`${oauthApiBase()}/BackupJob/oauth/callback`);
+
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('setupGuideModal')).show();
+        }
+
+        function copyRedirectUri() {
+            const $input = $('#guideRedirectUri');
+            $input.select();
+            navigator.clipboard?.writeText($input.val()).catch(() => document.execCommand('copy'));
+        }
+
+        function toggleDriveFields() {
+            $('#driveFields').toggle($('#driveEnabled').is(':checked'));
+        }
+
+        function toggleAuthModeFields() {
+            const isOAuth = $('#authOAuth').is(':checked');
+            $('.oauth-field').toggle(isOAuth);
+            $('#serviceAccountField').toggle(!isOAuth);
+            $('#authServiceAccountCard').toggleClass('active', !isOAuth);
+            $('#authOAuthCard').toggleClass('active', isOAuth);
+        }
+
+        function toggleRunSlot(slot) {
+            const enabled = $(`#runTime${slot}Enabled`).is(':checked');
+            $(`#runTime${slot}`).prop('disabled', !enabled);
+            $(`#slot${slot}Wrap`).toggleClass('slot-disabled', !enabled);
+        }
+
+        function updateStatusPill() {
+            const on = $('#isEnabled').is(':checked');
+            $('#jobStatusPill')
+                .toggleClass('pill-on', on)
+                .toggleClass('pill-off', !on)
+                .html(on
+                    ? '<i class="bi bi-circle-fill" style="font-size:7px;"></i> Enabled'
+                    : '<i class="bi bi-circle-fill" style="font-size:7px;"></i> Disabled');
+        }
+
+        function showAlert(type, message) {
+            const el = $(`<div class="alert alert-${type} alert-dismissible fade show py-2 px-3" style="font-size:13px;">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>`);
+            $('#alertContainer').empty().append(el);
+        }
+
+        async function loadSettings() {
+            try {
+                const response = await fetch(`${API_BASE}/BackupJob`);
+                if (!response.ok) return;
+                const s = await response.json();
+
+                $('#isEnabled').prop('checked', !!s.isEnabled);
+                $('#backupFolder').val(s.backupFolder || '');
+                $('#localRetentionDays').val(s.localRetentionDays || 30);
+
+                const selectedDbs = (s.selectedDatabasesCsv || '').split(',').map(d => d.trim()).filter(d => d);
+                $('.db-check').each(function () {
+                    $(this).prop('checked', selectedDbs.length === 0 || selectedDbs.includes($(this).val()));
+                });
+                updateDbDropdownSummary();
+
+                const times = (s.runTimesCsv || '').split(',').map(t => t.trim()).filter(t => t);
+                $('#runTime1').val(times[0] || '06:00');
+
+                $('#runTime2').val(times[1] || '14:00');
+                $('#runTime2Enabled').prop('checked', !!times[1]);
+                toggleRunSlot(2);
+
+                $('#runTime3').val(times[2] || '22:00');
+                $('#runTime3Enabled').prop('checked', !!times[2]);
+                toggleRunSlot(3);
+
+                $('#driveEnabled').prop('checked', !!s.driveEnabled);
+                $(`input[name="driveAuthMode"][value="${s.driveAuthMode || 'ServiceAccount'}"]`).prop('checked', true);
+                $('#driveFolderPath').val(s.driveFolderPath || '');
+                $('#driveRetentionDays').val(s.driveRetentionDays || 7);
+                $('#serviceAccountKeyPath').val(s.serviceAccountKeyPath || '');
+                $('#oAuthClientId').val(s.oAuthClientId || '');
+                // Secrets are never sent back by the server — leave blank ("keep saved value").
+                $('#oAuthClientSecret').val('');
+
+                $('#oauthConnectedPill')
+                    .toggleClass('pill-on', !!s.oAuthConnected)
+                    .toggleClass('pill-off', !s.oAuthConnected)
+                    .html(s.oAuthConnected
+                        ? '<i class="bi bi-check-circle-fill" style="font-size:9px;"></i> Connected'
+                        : '<i class="bi bi-circle-fill" style="font-size:7px;"></i> Not Connected');
+
+                toggleDriveFields();
+                toggleAuthModeFields();
+                updateStatusPill();
+                renderLastRun(s.lastRunAt, s.lastRunSuccess, s.lastRunMessage);
+            } catch (err) {
+                console.error('Error loading backup settings:', err);
+                showAlert('danger', 'Could not load backup settings.');
+            }
+        }
+
+        function renderLastRun(lastRunAt, lastRunSuccess, lastRunMessage) {
+            const $badge = $('#lastRunBadge');
+            if (!lastRunAt) {
+                $badge.hide();
+                $('#lastRunDateTime').removeClass('last-run-datetime').addClass('text-muted').text('Never run yet').css('font-weight', 'normal');
+                $('#lastRunInfo').text('No backup has run yet.');
+                return;
+            }
+            const when = new Date(lastRunAt).toLocaleString();
+            $('#lastRunDateTime').removeClass('text-muted').addClass('last-run-datetime').text(when);
+            $badge.text(lastRunSuccess ? 'Success' : 'Failed')
+                  .removeClass('pill-success pill-fail')
+                  .addClass(lastRunSuccess ? 'pill-success' : 'pill-fail')
+                  .show();
+            $('#lastRunInfo').text(lastRunMessage || '');
+        }
+
+        async function saveSettings() {
+            const runTimesCsv = [
+                $('#runTime1').val(),
+                $('#runTime2Enabled').is(':checked') ? $('#runTime2').val() : '',
+                $('#runTime3Enabled').is(':checked') ? $('#runTime3').val() : ''
+            ].filter(t => t).join(',');
+
+            const selectedDatabasesCsv = $('.db-check:checked').map(function () { return this.value; }).get().join(',');
+
+            const dto = {
+                isEnabled: $('#isEnabled').is(':checked'),
+                selectedDatabasesCsv: selectedDatabasesCsv,
+                backupFolder: $('#backupFolder').val().trim(),
+                runTimesCsv: runTimesCsv,
+                localRetentionDays: parseInt($('#localRetentionDays').val()) || 30,
+                driveEnabled: $('#driveEnabled').is(':checked'),
+                driveAuthMode: $('input[name="driveAuthMode"]:checked').val(),
+                driveFolderPath: $('#driveFolderPath').val().trim(),
+                driveRetentionDays: parseInt($('#driveRetentionDays').val()) || 7,
+                serviceAccountKeyPath: $('#serviceAccountKeyPath').val().trim(),
+                oAuthClientId: $('#oAuthClientId').val().trim(),
+                // Blank = keep the previously saved secret (server-side "leave blank to keep" rule).
+                oAuthClientSecret: $('#oAuthClientSecret').val().trim()
+            };
+
+            if (!dto.backupFolder) {
+                showAlert('warning', 'Backup folder is not configured.');
+                return;
+            }
+            if (!$('#runTime1').val()) {
+                showAlert('warning', 'Run #1 time is required.');
+                return;
+            }
+            if (!selectedDatabasesCsv) {
+                showAlert('warning', 'Select at least one database to back up.');
+                return;
+            }
+
+            $('#btnSave').prop('disabled', true);
+            try {
+                const response = await fetch(`${API_BASE}/BackupJob`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dto)
+                });
+                if (response.ok) {
+                    showAlert('success', 'Backup settings saved.');
+                } else {
+                    showAlert('danger', 'Could not save backup settings.');
+                }
+            } catch (err) {
+                console.error('Error saving backup settings:', err);
+                showAlert('danger', 'Could not save backup settings.');
+            } finally {
+                $('#btnSave').prop('disabled', false);
+            }
+        }
+
+        async function runBackupNow() {
+            $('#btnRunNow').prop('disabled', true).html('<i class="bi bi-hourglass-split me-1"></i> Running...');
+            try {
+                const response = await fetch(`${API_BASE}/BackupJob/run-now`, { method: 'POST' });
+                const result = await response.json();
+                showAlert(result.success ? 'success' : 'danger', result.message || 'Backup run finished.');
+                await loadSettings();
+                await loadLocalFiles();
+            } catch (err) {
+                console.error('Error running backup:', err);
+                showAlert('danger', 'Backup run failed to start.');
+            } finally {
+                $('#btnRunNow').prop('disabled', false).html('<i class="bi bi-play-fill me-1"></i> Run Backup Now');
+            }
+        }
+
+        function formatBytes(bytes) {
+            if (!bytes) return '0 B';
+            const units = ['B', 'KB', 'MB', 'GB'];
+            let i = 0, val = bytes;
+            while (val >= 1024 && i < units.length - 1) { val /= 1024; i++; }
+            return `${val.toFixed(1)} ${units[i]}`;
+        }
+
+        async function loadLocalFiles() {
+            const $body = $('#localFilesBody');
+            try {
+                const response = await fetch(`${API_BASE}/BackupJob/local-files`);
+                if (!response.ok) { $body.html('<tr><td colspan="3" class="text-center text-muted py-3">Could not load files.</td></tr>'); return; }
+                const files = await response.json();
+                if (!files.length) {
+                    $body.html('<tr><td colspan="3" class="text-center text-muted py-3">No local backups found yet.</td></tr>');
+                    return;
+                }
+                $body.empty();
+                files.forEach(f => {
+                    $body.append(`<tr>
+                        <td><i class="bi bi-file-earmark-zip-fill me-1" style="color:#008649;"></i>${f.fileName}</td>
+                        <td>${formatBytes(f.sizeBytes)}</td>
+                        <td>${new Date(f.createdDate).toLocaleString()}</td>
+                    </tr>`);
+                });
+            } catch (err) {
+                console.error('Error loading local backup files:', err);
+                $body.html('<tr><td colspan="3" class="text-center text-muted py-3">Could not load files.</td></tr>');
+            }
+        }
+    </script>
+}

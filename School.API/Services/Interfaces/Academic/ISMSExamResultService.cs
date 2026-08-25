@@ -24,7 +24,11 @@ namespace School.API.Services.Interfaces.Academic
         Task<List<ExamPositionRowDto>> GetPositionReportAsync(int examId, int classId);
         Task<List<ExamPositionRowDto>> GetPercentageReportAsync(int examId, int classId);
         Task<ExamExecutiveDto> GetExecutiveReportAsync(int examId, int classId, int sectionId);
-        Task<ExamAnnouncementDto> GetAnnouncementReportAsync(int examId);
+        Task<List<ExamSubjectWiseRowDto>> GetSubjectWiseReportAsync(int examId, string? classIds, string? sectionIds);
+        Task<List<ExamTeacherWiseRowDto>> GetTeacherWiseReportAsync(int examId, int teacherId);
+        Task<List<ExamTeacherComparisonRowDto>> GetTeacherComparisonReportAsync(
+            int examId, string? lClassIds, string? lSectionIds, string? rClassIds, string? rSectionIds);
+        Task<ExamAnnouncementDto> GetAnnouncementReportAsync(int examId, string? classIds = null, string? sectionIds = null);
         Task<ResponseDto?> DeleteByIdAsync(int id);
     }
 }

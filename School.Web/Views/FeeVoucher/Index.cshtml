@@ -688,7 +688,10 @@
                     <tr>
                         <td style="color:#94a3b8; font-size:12px;">${i + 1}</td>
                         <td><span class="vno-badge">${v.vNo || v.VNo || '-'}</span></td>
-                        <td style="white-space:nowrap;">${fmtDate(v.vDate || v.VDate)}</td>
+                        <td style="white-space:nowrap;">
+                            ${fmtDate(v.vDate || v.VDate)}
+                            <div style="color:#94a3b8; font-size:11px;">${fmtTime(v.insertedDate || v.InsertedDate)}</div>
+                        </td>
                         <td style="font-weight:600;">${v.studentName || v.StudentName || '-'}</td>
                         <td style="color:#64748b; font-size:12px;">${v.sectionName || v.SectionName || '-'}</td>
                         <td>${v.parentName || v.ParentName || '-'}</td>
@@ -822,6 +825,19 @@
             return d.getDate().toString().padStart(2, '0') + '-' +
                    (d.getMonth() + 1).toString().padStart(2, '0') + '-' +
                    d.getFullYear();
+        }
+
+        // Time-of-day (e.g. "11:53 AM") taken from the voucher's InsertedDate,
+        // since VDate is a date-only value.
+        function fmtTime(dateStr) {
+            if (!dateStr) return '';
+            const d = new Date(dateStr);
+            if (isNaN(d)) return '';
+            let h = d.getHours();
+            const m = d.getMinutes().toString().padStart(2, '0');
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12; if (h === 0) h = 12;
+            return h.toString().padStart(2, '0') + ':' + m + ' ' + ampm;
         }
 
     </script>

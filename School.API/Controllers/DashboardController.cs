@@ -76,6 +76,24 @@ namespace School.API.Controllers
             int monthVoucherCount = await SafeScalarInt(
                 "SELECT COUNT(*) AS Value FROM FeeVoucherMain WHERE CAST(VDate AS DATE) >= {0}", monthStart);
 
+            // ── Outstanding fees dated on or before today ──
+            // Deliberately mirrors SpGetPending_SMSStudentFee_Msg (the SP behind
+            // the fee-reminder SMS) so the dashboard figure and the reminder run
+            // always agree: unpaid balance, dated up to today, active fee row,
+            // and only students currently enrolled (StatusID = Active).
+            string pendingFeeFrom = $@"
+                FROM SMSStudentFee F
+                LEFT JOIN SMSStudentAcademic SA ON SA.StudentID = F.StudentID
+                WHERE F.FeeAmount - F.ClearedAmount > 0
+                  AND CAST(F.VDate AS DATE) <= {{0}}
+                  AND F.IsActive = 1
+                  AND SA.StatusID = {StatusActive}";
+
+            decimal pendingFeeTotal = await SafeScalarDecimal(
+                "SELECT ISNULL(SUM(F.FeeAmount - F.ClearedAmount), 0) AS Value" + pendingFeeFrom, today);
+            int pendingFeeStudents = await SafeScalarInt(
+                "SELECT COUNT(DISTINCT F.StudentID) AS Value" + pendingFeeFrom, today);
+
             // ── Today's attendance % (StdAttendence: Attendence=1 means Present) ──
             int todayMarked = await SafeScalarInt(
                 "SELECT COUNT(*) AS Value FROM StdAttendence WHERE CAST(VDate AS DATE) = {0}", today);
@@ -180,7 +198,10 @@ namespace School.API.Controllers
                     todayCollection,
                     monthCollection,
                     todayVoucherCount,
-                    monthVoucherCount
+                    monthVoucherCount,
+                    pendingFeeTotal,
+                    pendingFeeStudents,
+                    pendingAsOf = today
                 },
                 attendance = new
                 {

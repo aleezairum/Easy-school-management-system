@@ -107,12 +107,11 @@
 <script src="~/js/common.js"></script>
 @section Scripts {
     <script>
-        // Sessions are rendered server-side for instant load. This is only a
-        // fallback for when the server-side fetch failed (dropdown has just the
-        // default placeholder option). It never blocks login.
+        // The login form renders instantly; the Academic Session dropdown is filled
+        // here via a non-blocking fetch so a slow/cold API never delays first paint.
         document.addEventListener('DOMContentLoaded', function () {
             const select = document.getElementById('sessionSelect');
-            if (!select || select.options.length > 1) return; // already populated
+            if (!select || select.options.length > 1) return; // already populated (e.g. server-rendered on error)
 
             fetch(`${API_BASE}/AcademicSessionYear`)
                 .then(response => {

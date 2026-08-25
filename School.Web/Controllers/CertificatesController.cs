@@ -27,16 +27,20 @@ namespace School.Web.Controllers
             DateTime? leavingDate = null,
             string? examination = null,
             string? marksObtained = null,
-            string? totalMarks = null)
+            string? totalMarks = null,
+            string? classAdmitted = null,
+            string? classStudying = null)
         {
             ViewData["Title"] = "School Leaving Certificate";
 
             var query = BuildQuery(new Dictionary<string, string?>
             {
-                ["leavingDate"]   = leavingDate?.ToString("yyyy-MM-dd"),
-                ["examination"]   = examination,
-                ["marksObtained"] = marksObtained,
-                ["totalMarks"]    = totalMarks
+                ["leavingDate"]    = leavingDate?.ToString("yyyy-MM-dd"),
+                ["examination"]    = examination,
+                ["marksObtained"]  = marksObtained,
+                ["totalMarks"]     = totalMarks,
+                ["classAdmitted"]  = classAdmitted,
+                ["classStudying"]  = classStudying
             });
 
             var data = await FetchAsync<LeavingCertificatePayload>($"{_apiBaseUrl}/Certificate/leaving/{id}{query}");

@@ -138,6 +138,8 @@ namespace School.API.DTOs.Academic
     public class AnnouncementTopRowDto
     {
         public string? ClassName { get; set; }
+        public string? Scope { get; set; }       // "Overall" | "Girls" | "Boys"
+        public int ScopeOrder { get; set; }       // 0 = Overall, 1 = Girls, 2 = Boys
         public int? Position { get; set; }
         public string? RollNo { get; set; }
         public string? StudentName { get; set; }
@@ -175,6 +177,59 @@ namespace School.API.DTOs.Academic
         public decimal? Obtained { get; set; }
         public decimal? Total { get; set; }
         public decimal? Percent { get; set; }
+    }
+
+    // ---- Subject Wise report (per-subject statistics, section wise) ----
+
+    public class ExamSubjectWiseRowDto
+    {
+        public int ClassId { get; set; }
+        public string? ClassName { get; set; }
+        public int SectionId { get; set; }
+        public string? SectionName { get; set; }
+        public int SubjectId { get; set; }
+        public string? SubjectName { get; set; }
+        public int TotalStudents { get; set; }
+        public int Appeared { get; set; }
+        public int Passed { get; set; }
+        public int Failed { get; set; }
+        public decimal? PassPercentByPassMarks { get; set; }
+        public decimal? AggregateTotalMarks { get; set; }
+        public decimal? TotalObtainedMarks { get; set; }
+        public decimal? PassPercentByObtainedMarks { get; set; }
+        public decimal? Average { get; set; }
+        public string? TeacherName { get; set; }
+    }
+
+    // Flat row for the Teacher Wise report — one per (Teacher, Subject, Class,
+    // Section). The web layer groups these by teacher into report rows.
+    public class ExamTeacherWiseRowDto
+    {
+        public int? TeacherId { get; set; }
+        public string? TeacherName { get; set; }
+        public int SubjectId { get; set; }
+        public string? SubjectName { get; set; }
+        public int ClassId { get; set; }
+        public string? ClassName { get; set; }
+        public int SectionId { get; set; }
+        public string? SectionName { get; set; }
+        public string? ColumnLabel { get; set; }
+        public int Appeared { get; set; }
+        public decimal? TotalMarks { get; set; }
+        public decimal? ObtainedMarks { get; set; }
+        public decimal? Percent { get; set; }
+    }
+
+    // One ranked teacher inside a comparison scope. The Teacher Result
+    // Comparison report stacks two scopes (Side 'L' / 'R') side by side.
+    public class ExamTeacherComparisonRowDto
+    {
+        public string Side { get; set; } = "L";   // 'L' = left scope, 'R' = right scope
+        public int Sr { get; set; }
+        public int? TeacherId { get; set; }
+        public string? TeacherName { get; set; }
+        public decimal? ResultPercent { get; set; }
+        public int Position { get; set; }
     }
 
     public class ExamPositionRowDto

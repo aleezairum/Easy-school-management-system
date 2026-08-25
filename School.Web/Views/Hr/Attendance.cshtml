@@ -1,0 +1,206 @@
+@{
+    ViewData["Title"] = "Attendance";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<style>
+    .att-table { font-size: 12px; }
+    .att-table th, .att-table td { text-align: center; vertical-align: middle; padding: 4px 3px; white-space: nowrap; }
+    .att-table td.emp-name { text-align: left; position: sticky; left: 0; background: #fff; z-index: 2; min-width: 160px; }
+    .att-table thead th { position: sticky; top: 0; background: #f8fafc; z-index: 1; }
+    .att-cell { cursor: pointer; border-radius: 4px; display: inline-block; width: 28px; height: 24px; line-height: 24px; font-weight: 600; }
+    .att-cell.dirty { outline: 2px solid #f59e0b; }
+    .st-1 { background: #dcfce7; color: #166534; } /* Present */
+    .st-2 { background: #fee2e2; color: #991b1b; } /* Absent */
+    .st-3 { background: #dbeafe; color: #1e40af; } /* Leave */
+    .st-4 { background: #fef3c7; color: #92400e; } /* HalfDay */
+    .st-5 { background: #e5e7eb; color: #374151; } /* Holiday */
+    .st-6 { background: #f3e8ff; color: #6b21a8; } /* WeeklyOff */
+    .st-7 { background: #ffe4e6; color: #9f1239; } /* ShortLeave */
+    .st-0 { background: #f8fafc; color: #cbd5e1; } /* Unmarked */
+    .table-responsive { max-height: 70vh; }
+</style>
+
+<div class="container-fluid">
+    <div id="alertContainer"></div>
+
+    <div class="card mb-3"><div class="card-body">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-2"><label class="form-label">Year</label><input type="number" class="form-control" id="fYear" /></div>
+            <div class="col-md-2"><label class="form-label">Month</label>
+                <select class="form-select" id="fMonth">
+                    <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+                    <option value="4">April</option><option value="5">May</option><option value="6">June</option>
+                    <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+                    <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+                </select>
+            </div>
+            <div class="col-md-3"><label class="form-label">Designation</label><select class="form-select" id="fDesignation"><option value="">All</option></select></div>
+            <div class="col-md-2"><button class="btn btn-outline-success w-100" onclick="loadGrid()"><i class="bi bi-search"></i> Load</button></div>
+            <div class="col-md-3 d-flex gap-2">
+                <button class="btn btn-outline-secondary" onclick="fillAll(1)">Mark All Present</button>
+                <button class="btn btn-success" onclick="saveDirty()"><i class="bi bi-save"></i> Save Changes (<span id="dirtyCount">0</span>)</button>
+            </div>
+        </div>
+        <div class="mt-2">
+            <span class="badge st-1 me-1">P</span>Present
+            <span class="badge st-2 mx-1">A</span>Absent
+            <span class="badge st-3 mx-1">L</span>Leave
+            <span class="badge st-4 mx-1">H½</span>Half Day
+            <span class="badge st-5 mx-1">Hol</span>Holiday
+            <span class="badge st-6 mx-1">Off</span>Weekly Off
+            <span class="badge st-0 mx-1">-</span>Not entered
+        </div>
+    </div></div>
+
+    <div class="card"><div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered att-table" id="gridTable">
+                <thead><tr id="gridHeaderRow"><th class="emp-name">Employee</th></tr></thead>
+                <tbody id="gridBody"><tr><td class="text-center text-muted py-4">Choose year/month and click Load.</td></tr></tbody>
+            </table>
+        </div>
+    </div></div>
+</div>
+
+<!-- Cell editor modal -->
+<div class="modal fade" id="cellModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">Edit Attendance</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <div id="cellEmpLabel" class="mb-2 text-muted"></div>
+                <div class="row g-2">
+                    <div class="col-6"><label class="form-label">Time In</label><input type="time" class="form-control" id="cellTimeIn" /></div>
+                    <div class="col-6"><label class="form-label">Time Out</label><input type="time" class="form-control" id="cellTimeOut" /></div>
+                    <div class="col-12"><label class="form-label">Force Status (overrides time calc)</label>
+                        <select class="form-select" id="cellOverride">
+                            <option value="">Auto (compute from time)</option>
+                            <option value="1">Present</option>
+                            <option value="2">Absent</option>
+                            <option value="3">Leave</option>
+                            <option value="4">Half Day</option>
+                            <option value="7">Short Leave</option>
+                        </select>
+                    </div>
+                    <div class="col-12"><div class="form-check"><input class="form-check-input" type="checkbox" id="cellIgnoreLate" /><label class="form-check-label">Ignore late for payroll (minutes still recorded)</label></div></div>
+                    <div class="col-12"><label class="form-label">Remarks</label><input class="form-control" id="cellRemarks" /></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-primary" onclick="applyCellEdit()">Apply</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const STATUS_LABEL = {0:'-',1:'P',2:'A',3:'L',4:'H½',5:'Hol',6:'Off',7:'SL'};
+    let gridData = null;
+    let dirty = {}; // key: empId|day -> cell payload
+    let editingKey = null;
+
+    $(document).ready(function () {
+        const now = new Date();
+        $('#fYear').val(now.getFullYear());
+        $('#fMonth').val(now.getMonth() + 1);
+        fetch(`${API_BASE}/Designation/dropdown`).then(r => r.ok ? r.json() : []).then(list => {
+            list.forEach(d => $('#fDesignation').append(`<option value="${d.id}">${d.name}</option>`));
+        }).catch(() => {});
+    });
+
+    async function loadGrid() {
+        const year = $('#fYear').val(), month = $('#fMonth').val(), desig = $('#fDesignation').val();
+        let url = `${API_BASE}/hr/attendance/month?year=${year}&month=${month}`;
+        if (desig) url += `&designationId=${desig}`;
+        const res = await fetch(url);
+        if (!res.ok) { toastError('Failed to load attendance'); return; }
+        gridData = await res.json();
+        dirty = {};
+        updateDirtyCount();
+        renderGrid();
+    }
+
+    function renderGrid() {
+        const header = $('#gridHeaderRow'); header.find('th:not(:first)').remove();
+        gridData.days.forEach(d => {
+            const cls = d.isHoliday ? 'style="background:#f3f4f6" title="' + (d.holidayName||'') + '"' : '';
+            header.append(`<th ${cls}>${d.day}</th>`);
+        });
+
+        const body = $('#gridBody'); body.empty();
+        if (!gridData.employees.length) { body.html('<tr><td class="text-center text-muted py-4">No employees found.</td></tr>'); return; }
+
+        gridData.employees.forEach(emp => {
+            let row = `<tr><td class="emp-name">${emp.employeeCode} - ${emp.fullName}</td>`;
+            emp.cells.forEach(c => {
+                const key = `${emp.employeeId}|${c.day}`;
+                const dirtyOverride = dirty[key];
+                const status = dirtyOverride ? dirtyOverride._displayStatus : c.status;
+                const isDirty = !!dirtyOverride;
+                row += `<td><span class="att-cell st-${status} ${isDirty?'dirty':''}" onclick="openCellEditor(${emp.employeeId}, ${c.day}, '${emp.employeeCode} - ${emp.fullName}')">${STATUS_LABEL[status] ?? '-'}</span></td>`;
+            });
+            row += '</tr>';
+            body.append(row);
+        });
+    }
+
+    function openCellEditor(empId, day, empLabel) {
+        editingKey = `${empId}|${day}`;
+        const emp = gridData.employees.find(e => e.employeeId === empId);
+        const cell = emp.cells.find(c => c.day === day);
+        $('#cellEmpLabel').text(`${empLabel} — ${gridData.year}-${String(gridData.month).padStart(2,'0')}-${String(day).padStart(2,'0')}`);
+        $('#cellTimeIn').val(cell.timeIn ? cell.timeIn.substring(0,5) : '');
+        $('#cellTimeOut').val(cell.timeOut ? cell.timeOut.substring(0,5) : '');
+        $('#cellOverride').val('');
+        $('#cellIgnoreLate').prop('checked', cell.ignoreLate);
+        $('#cellRemarks').val(cell.remarks || '');
+        new bootstrap.Modal('#cellModal').show();
+    }
+
+    function applyCellEdit() {
+        const [empId, day] = editingKey.split('|').map(Number);
+        const year = parseInt($('#fYear').val()), month = parseInt($('#fMonth').val());
+        const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        const override = $('#cellOverride').val();
+        const timeIn = $('#cellTimeIn').val(), timeOut = $('#cellTimeOut').val();
+
+        const payload = {
+            EmployeeId: empId, AttDate: dateStr,
+            TimeIn: timeIn ? timeIn + ':00' : null, TimeOut: timeOut ? timeOut + ':00' : null,
+            StatusOverride: override ? parseInt(override) : null,
+            IgnoreLate: $('#cellIgnoreLate').is(':checked'),
+            Remarks: $('#cellRemarks').val().trim() || null,
+            _displayStatus: override ? parseInt(override) : (timeIn ? 1 : 0)
+        };
+        dirty[editingKey] = payload;
+        updateDirtyCount();
+        renderGrid();
+        bootstrap.Modal.getInstance(document.getElementById('cellModal')).hide();
+    }
+
+    function updateDirtyCount() { $('#dirtyCount').text(Object.keys(dirty).length); }
+
+    async function saveDirty() {
+        const cells = Object.values(dirty).map(c => { const { _displayStatus, ...rest } = c; return rest; });
+        if (!cells.length) { toastWarning('No changes to save'); return; }
+        const res = await fetch(`${API_BASE}/hr/attendance/bulk`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({Cells: cells}) });
+        if (res.ok) { toastSuccess(`Saved ${cells.length} record(s)`); dirty = {}; updateDirtyCount(); loadGrid(); }
+        else toastError('Failed to save attendance');
+    }
+
+    async function fillAll(status) {
+        if (!gridData || !gridData.employees.length) { toastWarning('Load the grid first'); return; }
+        if (!await confirmDelete(`Mark all employees Present for the whole month? Existing entries for other days are not affected unless already marked.`)) return;
+        const year = parseInt($('#fYear').val()), month = parseInt($('#fMonth').val());
+        const from = `${year}-${String(month).padStart(2,'0')}-01`;
+        const lastDay = new Date(year, month, 0).getDate();
+        const to = `${year}-${String(month).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
+        const employeeIds = gridData.employees.map(e => e.employeeId);
+        const res = await fetch(`${API_BASE}/hr/attendance/fill`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({EmployeeIds: employeeIds, FromDate: from, ToDate: to, Status: status}) });
+        if (res.ok) { toastSuccess('Bulk fill applied'); loadGrid(); } else toastError('Bulk fill failed');
+    }
+</script>
+}

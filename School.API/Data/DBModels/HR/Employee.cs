@@ -79,18 +79,19 @@ namespace School.API.Data.DBModels.HR
 
         public int? AcademicGradeId { get; set; }
 
-        // Salary Information
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal? BasicSalary { get; set; }
+        // Payroll (HR-Payroll-Final-Plan.md section 3)
+        public int? ShiftId { get; set; }
 
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal? Allowances { get; set; }
+        [MaxLength(50)]
+        public string? MachineCardNo { get; set; }
 
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal? Deductions { get; set; }
+        public byte? OffDay1 { get; set; }
+        public byte? OffDay2 { get; set; }
 
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal? NetSalary { get; set; }
+        // Links to the academic SMSTeacher record for staff who also teach.
+        // Payroll runs off Employees; academic reports keep running off
+        // SMSTeacher untouched (D6 — see HR-Payroll-Final-Plan.md section 2).
+        public int? TeacherId { get; set; }
 
         [MaxLength(100)]
         public string? BankName { get; set; }
@@ -127,8 +128,11 @@ namespace School.API.Data.DBModels.HR
         [ForeignKey("HRGradeId")]
         public virtual HRGrade? HRGrade { get; set; }
 
-        [ForeignKey("AcademicGradeId")]
-        //public virtual AcademicGrade? AcademicGrade { get; set; }
+        [ForeignKey("ShiftId")]
+        public virtual HrShift? Shift { get; set; }
+
+        [ForeignKey("TeacherId")]
+        public virtual Teacher? Teacher { get; set; }
 
         // User navigation property for bidirectional relationship
         public virtual User? User { get; set; }

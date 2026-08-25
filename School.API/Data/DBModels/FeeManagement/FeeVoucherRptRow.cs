@@ -5,6 +5,7 @@
         public int VID { get; set; }
         public string? VNo { get; set; }
         public DateTime VDate { get; set; }
+        public DateTime InsertedDate { get; set; }
         public string? PaymentMethod { get; set; }
         public int ParentID { get; set; }
         public string? ParentName { get; set; }

@@ -9,34 +9,26 @@
   <ItemGroup>
 
 
-    <Compile Remove="Controllers\HR\**" />
     <Compile Remove="DTOs\AcademicSessionYear\**" />
     <Compile Remove="DTOs\Auth\**" />
-    <Compile Remove="DTOs\HR\**" />
     <Compile Remove="Helpers\**" />
     <Compile Remove="Middlewares\**" />
     <Compile Remove="Repositories\Implementations\UserManagement\**" />
     <Compile Remove="Services\Interfaces\UserManagement\**" />
-    <Content Remove="Controllers\HR\**" />
     <Content Remove="DTOs\AcademicSessionYear\**" />
     <Content Remove="DTOs\Auth\**" />
-    <Content Remove="DTOs\HR\**" />
     <Content Remove="Helpers\**" />
     <Content Remove="Middlewares\**" />
     <Content Remove="Repositories\Implementations\UserManagement\**" />
     <Content Remove="Services\Interfaces\UserManagement\**" />
-    <EmbeddedResource Remove="Controllers\HR\**" />
     <EmbeddedResource Remove="DTOs\AcademicSessionYear\**" />
     <EmbeddedResource Remove="DTOs\Auth\**" />
-    <EmbeddedResource Remove="DTOs\HR\**" />
     <EmbeddedResource Remove="Helpers\**" />
     <EmbeddedResource Remove="Middlewares\**" />
     <EmbeddedResource Remove="Repositories\Implementations\UserManagement\**" />
     <EmbeddedResource Remove="Services\Interfaces\UserManagement\**" />
-    <None Remove="Controllers\HR\**" />
     <None Remove="DTOs\AcademicSessionYear\**" />
     <None Remove="DTOs\Auth\**" />
-    <None Remove="DTOs\HR\**" />
     <None Remove="Helpers\**" />
     <None Remove="Middlewares\**" />
     <None Remove="Repositories\Implementations\UserManagement\**" />
@@ -50,8 +42,6 @@
     <Compile Remove="Data\DBModels\FeeManagement\FeeVoucher.cs" />
     <Compile Remove="DTOs\FeeManagement\ChallanVoucher*" />
     <Compile Remove="DTOs\FeeManagement\FeeVoucher*" />
-    <Compile Remove="Data\DBModels\HR\Employee.cs" />
-    <Compile Remove="DTOs\EmployeeDto.cs" />
     <Compile Remove="Repositories\Interfaces\FeeManagement\IChallanVoucherRepository.cs" />
     <Compile Remove="Repositories\Implementations\FeeManagement\ChallanVoucherRepository.cs" />
     <Compile Remove="Services\Interfaces\FeeManagement\IChallanVoucherService.cs" />
@@ -66,6 +56,10 @@
 
   <ItemGroup>
 
+    <PackageReference Include="ClosedXML" Version="0.105.1" />
+
+    <PackageReference Include="Google.Apis.Drive.v3" Version="1.75.0.4218" />
+
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.8" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.8" />
@@ -73,6 +67,8 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.8">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="NCalcSync" Version="7.1.0" />
+    <PackageReference Include="PuppeteerSharp" Version="25.1.0" />
     <PackageReference Include="ReportViewerCore.NETCore" Version="15.1.33" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.3.0" />

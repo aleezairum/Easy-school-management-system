@@ -20,9 +20,11 @@ namespace School.API.Controllers.Academic
             [FromQuery] DateTime? leavingDate = null,
             [FromQuery] string? examination = null,
             [FromQuery] string? marksObtained = null,
-            [FromQuery] string? totalMarks = null)
+            [FromQuery] string? totalMarks = null,
+            [FromQuery] string? classAdmitted = null,
+            [FromQuery] string? classStudying = null)
         {
-            var record = await _service.GetLeavingAsync(studentId, leavingDate, examination, marksObtained, totalMarks);
+            var record = await _service.GetLeavingAsync(studentId, leavingDate, examination, marksObtained, totalMarks, classAdmitted, classStudying);
             return record == null ? NotFound() : Ok(record);
         }
 

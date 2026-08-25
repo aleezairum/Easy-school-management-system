@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>HR &amp; Payroll Module — Forms List &amp; Implementation Plan</title>
+<style>
+  @page { size: A4; margin: 16mm 14mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: #1f2933;
+    font-size: 11.5px;
+    line-height: 1.55;
+    margin: 0;
+  }
+  h1 {
+    font-size: 24px; margin: 0 0 6px; color: #0b5394;
+    border-left: 5px solid #0b5394; padding-left: 14px;
+  }
+  h2 {
+    font-size: 16px; color: #0b5394; margin: 24px 0 8px;
+    border-bottom: 2px solid #0b5394; padding-bottom: 4px;
+    page-break-after: avoid;
+  }
+  h3 {
+    font-size: 13px; margin: 16px 0 6px; color: #11507a;
+    page-break-after: avoid;
+  }
+  h1 + p { color: #52606d; font-size: 12px; }
+  p { margin: 6px 0; }
+  a { color: #0b5394; text-decoration: none; }
+  hr { border: 0; border-top: 1px solid #dde3ea; margin: 18px 0; }
+
+  code {
+    font-family: "Consolas", "Courier New", monospace;
+    background: #eef2f7; color: #b4002a;
+    padding: 1px 5px; border-radius: 3px; font-size: 10.5px;
+  }
+  pre {
+    background: #1e2733; color: #e6edf3;
+    padding: 11px 13px; border-radius: 6px;
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 10px; line-height: 1.45;
+    overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+    margin: 8px 0; page-break-inside: avoid;
+  }
+  pre code { background: none; color: inherit; padding: 0; font-size: 10px; }
+
+  table {
+    border-collapse: collapse; width: 100%;
+    margin: 8px 0; font-size: 10px;
+    page-break-inside: auto;
+  }
+  th, td {
+    border: 1px solid #cbd2d9; padding: 5px 7px;
+    text-align: left; vertical-align: top;
+  }
+  th { background: #0b5394; color: #fff; font-weight: 600; }
+  tr { page-break-inside: avoid; }
+  tr:nth-child(even) td { background: #f5f7fa; }
+  td code, th code { font-size: 9.5px; padding: 0 3px; }
+
+  blockquote {
+    background: #fff8e1; border-left: 4px solid #f0a500;
+    padding: 8px 12px; margin: 10px 0; border-radius: 4px;
+    color: #1f2933;
+  }
+  blockquote p { margin: 3px 0; }
+
+  ul, ol { margin: 6px 0; padding-left: 22px; }
+  li { margin: 3px 0; }
+  li input[type="checkbox"] {
+    margin-right: 6px; transform: translateY(1px);
+    accent-color: #0b5394;
+  }
+  ul:has(input[type="checkbox"]) { list-style: none; padding-left: 4px; }
+
+  strong { color: #11333f; }
+  .footer {
+    margin-top: 30px; padding-top: 8px;
+    border-top: 1px solid #cbd2d9; color: #7b8794; font-size: 10px;
+  }
+</style>
+</head>
+<body>
+<h1>HR &amp; Payroll Module — Forms List &amp; Implementation Plan</h1>
+<p><strong>Project:</strong> Easy School Management System (School.API + School.Web)
+<strong>Reference studied:</strong> <code>D:\01 ZETA Office\02 Projects\01 ZETA Dropware</code> → <code>ZETAPOS/Views/HRM/{HrSetup,HrTransaction,HrReports}</code> and <code>ZETAPOS/Models/{HR*,Att*}.cs</code>
+<strong>Date:</strong> 2026-08-25</p>
+<hr>
+<h2>1. What already exists in EasySchool</h2>
+<table>
+<thead>
+<tr>
+<th>Piece</th>
+<th>Status</th>
+<th>Location</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Designation</td>
+<td>Done (CRUD)</td>
+<td><code>DBModels/HR/Designation.cs</code>, <code>DesignationController</code>, <code>Views/Designation/Index.cshtml</code></td>
+</tr>
+<tr>
+<td>HR Grade</td>
+<td>Done (CRUD)</td>
+<td><code>DBModels/HR/HRGrade.cs</code>, <code>HRGradeController</code>, <code>Views/HRGrade/Index.cshtml</code></td>
+</tr>
+<tr>
+<td>Employee</td>
+<td>Partial — master exists but flat salary fields, <code>Department</code> is free text, no shift / machine card / off-days</td>
+<td><code>DBModels/HR/Employee.cs</code>, <code>Views/Employee/{Index,Form}.cshtml</code></td>
+</tr>
+<tr>
+<td>Salary</td>
+<td>Skeleton — one flat row per employee/month, hard-coded allowance/deduction columns, no posting engine</td>
+<td><code>DBModels/HR/Salary.cs</code>, <code>SalaryRepository.cs</code> (275 lines)</td>
+</tr>
+<tr>
+<td>Teacher</td>
+<td>Separate entity (<code>SMSTeacher</code>)</td>
+<td><code>DBModels/HR/Teacher.cs</code></td>
+</tr>
+<tr>
+<td>HR Payroll sidebar section</td>
+<td>Commented out</td>
+<td><code>School.API/Controllers/SidebarController.cs</code> ~line 152</td>
+</tr>
+</tbody></table>
+<p><strong>Everything else below is new.</strong></p>
+<h3>What the Dropware reference gives us (the proven flow)</h3>
+<pre><code>HrAttMain (raw punches)  --AttendancePost--&gt;  AttClosingDay (processed daily)
+                                                     |
+                                              --SalaryPost--&gt;  AttClosingMonth (monthly salary)
+</code></pre>
+<p>Dropware keeps all the heavy computation in stored procedures (<code>SPHRAttClosingMonth</code>). EasySchool already
+mixes EF Core with <code>Database.SqlQueryRaw&lt;T&gt;()</code> + SPs in <code>School.API/Scripts/</code>, so we follow the same
+pattern: <strong>setups/CRUD in EF Core, posting engines in stored procedures.</strong></p>
+<hr>
+<h2>2. Forms to add</h2>
+<h3>2.1 Setups (<code>HR Payroll &gt; Setups</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Form</th>
+<th>New/Existing</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>S1</td>
+<td><strong>Department</strong></td>
+<td>New</td>
+<td>Replaces the free-text <code>Employee.Department</code>. Code, Name, HOD, Campus, Active.</td>
+</tr>
+<tr>
+<td>S2</td>
+<td>Designation</td>
+<td>Existing</td>
+<td>Add <code>DepartmentId</code> + <code>IsTeachingStaff</code> flag.</td>
+</tr>
+<tr>
+<td>S3</td>
+<td>HR Grade</td>
+<td>Existing</td>
+<td>Keep as-is; used for rule scoping.</td>
+</tr>
+<tr>
+<td>S4</td>
+<td><strong>Shift / Duty Timing</strong></td>
+<td>New (key)</td>
+<td>TimeIn, TimeOut, GraceMinutes, WorkingHours, MinHalfDayMinutes, MinFullDayMinutes, RestFrom/To, OffDay1, OffDay2. <em>This is where &quot;when does late start&quot; lives.</em></td>
+</tr>
+<tr>
+<td>S5</td>
+<td><strong>Employee Shift Assignment</strong></td>
+<td>New</td>
+<td>Employee x Shift x EffectiveFrom/To (bulk assign by department).</td>
+</tr>
+<tr>
+<td>S6</td>
+<td><strong>Holiday Calendar</strong></td>
+<td>New (key)</td>
+<td>Date, Name, Type (Gazetted / Vacation / Weekly Off / Half Day), Campus, year-wise grid + &quot;copy last year&quot;.</td>
+</tr>
+<tr>
+<td>S7</td>
+<td><strong>Leave Type</strong></td>
+<td>New</td>
+<td>Casual, Sick, Annual, Short Leave, Without Pay, Maternity... with <code>IsPaid</code>, <code>DeductionDays</code>, <code>MaxPerYear</code>.</td>
+</tr>
+<tr>
+<td>S8</td>
+<td><strong>Leave Entitlement / Opening Balance</strong></td>
+<td>New</td>
+<td>Per employee (or per grade template) per session year.</td>
+</tr>
+<tr>
+<td>S9</td>
+<td><strong>Allowance &amp; Deduction Heads</strong></td>
+<td>New (key)</td>
+<td>House Rent, Medical, Conveyance, EOBI, PF, Income Tax, Late Deduction, Absent Deduction, Fine, Bonus... Type = Allowance/Deduction, IsTaxable, IsFixed/Formula, PostingOrder. Replaces the hard-coded columns in <code>Salary.cs</code>.</td>
+</tr>
+<tr>
+<td>S10</td>
+<td><strong>Payroll Rule (Deduction/Allowance Formula)</strong></td>
+<td>New (critical)</td>
+<td><strong>The generic engine — see section 3.</strong></td>
+</tr>
+<tr>
+<td>S11</td>
+<td><strong>Payroll Rule Slabs</strong></td>
+<td>New</td>
+<td>Child grid of S10 (e.g. late 1–15 min = Rs 50, 16–30 = Rs 150, or &quot;4th late = half day&quot;).</td>
+</tr>
+<tr>
+<td>S12</td>
+<td><strong>Late Exemption</strong></td>
+<td>New</td>
+<td>Employee + Date (or date range) + Reason -&gt; skip late deduction. Mirrors Dropware&#39;s <code>AttLateExempt</code>.</td>
+</tr>
+<tr>
+<td>S13</td>
+<td><strong>Payroll Settings (Globals)</strong></td>
+<td>New</td>
+<td>MonthDaysBasis (Calendar / Fixed-30 / WorkingDays), salary cut-off day, rounding, OT multiplier, payslip header/footer, currency.</td>
+</tr>
+<tr>
+<td>S14</td>
+<td><strong>Salary Month Lock</strong></td>
+<td>New</td>
+<td>Lock/unlock a posted month so nobody edits attendance behind payroll.</td>
+</tr>
+<tr>
+<td>S15</td>
+<td><strong>Bank Setup</strong></td>
+<td>New (small)</td>
+<td>For salary transfer advice. Optional in Phase 4.</td>
+</tr>
+</tbody></table>
+<h3>2.2 Day-to-Day / Transactions (<code>HR Payroll &gt; Day-to-Day</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Form</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>T1</td>
+<td><strong>Employee Info</strong> (enhance existing)</td>
+<td>Add: DepartmentId, ShiftId, <strong>MachineCardNo</strong> (Hikvision person/card no.), OffDay1/2, IsStopSalary, IsOvertime, IsLateExempt, ProbationEndDate, EmployeeType, IBAN/Bank, EOBI/PF flags, SalaryTransferType.</td>
+</tr>
+<tr>
+<td>T2</td>
+<td><strong>Employee Salary Structure</strong></td>
+<td>Effective-dated: Basic + N allowance/deduction lines from S9. Replaces the flat <code>BasicSalary/Allowances/Deductions</code> on <code>Employee</code>. Keeps salary history for increments.</td>
+</tr>
+<tr>
+<td>T3</td>
+<td><strong>Daily Attendance Entry (Manual)</strong> (key)</td>
+<td><strong>Phase-1 primary input.</strong> Grid: pick Department + Date -&gt; all employees listed with TimeIn / TimeOut / Status dropdown (P/A/L/HD/SL/Off/Holiday) / Remarks. Bulk &quot;mark all present&quot; + copy previous day.</td>
+</tr>
+<tr>
+<td>T4</td>
+<td><strong>Attendance Correction / Change</strong></td>
+<td>Single-employee, single-date fix with reason + audit trail (who changed, old -&gt; new).</td>
+</tr>
+<tr>
+<td>T5</td>
+<td><strong>Bulk Absent Marking</strong></td>
+<td>Mark a set of employees absent for a date range.</td>
+</tr>
+<tr>
+<td>T6</td>
+<td><strong>Attendance Posting</strong> (critical)</td>
+<td>Runs the engine for a date range: pairs in/out, applies shift + grace, computes <strong>LateMinutes, EarlyMinutes, WorkedMinutes, OverTime, HalfDay/Absent status</strong>, honours holidays, weekly offs, approved leaves and late exemptions -&gt; writes <code>HREmpAttendanceDaily</code>. Re-runnable (idempotent).</td>
+</tr>
+<tr>
+<td>T7</td>
+<td><strong>Leave Application</strong></td>
+<td>Employee, LeaveType, From/To, Days, Reason, attachment.</td>
+</tr>
+<tr>
+<td>T8</td>
+<td><strong>Leave Approval</strong></td>
+<td>Approver queue: approve / reject / partial, updates balance and feeds T6.</td>
+</tr>
+<tr>
+<td>T9</td>
+<td><strong>Monthly Allowance / Deduction Entry</strong></td>
+<td>One-off amounts for a month: bonus, fine, arrears, mobile bill.</td>
+</tr>
+<tr>
+<td>T10</td>
+<td><strong>Advance Entry</strong></td>
+<td>Salary advance, deducted in full next month.</td>
+</tr>
+<tr>
+<td>T11</td>
+<td><strong>Loan Entry + Approval</strong></td>
+<td>Amount, installments, start month -&gt; auto-generates installment schedule.</td>
+</tr>
+<tr>
+<td>T12</td>
+<td><strong>Salary Posting (Generate Payroll)</strong> (critical)</td>
+<td>Pick Month + Department/Employee -&gt; engine builds <code>HRSalaryMonth</code> header + detail lines from: salary structure, attendance summary, payroll rules (late/absent deduction), leaves, loans, advances, one-off entries, tax. Re-postable until month is locked.</td>
+</tr>
+<tr>
+<td>T13</td>
+<td><strong>Salary Sheet Review / Adjustment</strong></td>
+<td>Editable grid of the posted month before finalising; shows every allowance/deduction column, per-employee override with reason.</td>
+</tr>
+<tr>
+<td>T14</td>
+<td><strong>Salary Payment / Disbursement</strong></td>
+<td>Mark paid: Cash / Bank / Cheque, payment date, reference. Partial payment supported.</td>
+</tr>
+<tr>
+<td>T15</td>
+<td><strong>Employee Increment / Salary Revision</strong></td>
+<td>Creates a new effective-dated row in T2.</td>
+</tr>
+<tr>
+<td>T16</td>
+<td><strong>Final Settlement</strong> (later)</td>
+<td>Resignation: unpaid salary + leave encashment - loan balance.</td>
+</tr>
+</tbody></table>
+<h3>2.3 Reports (<code>HR Payroll &gt; Reports</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Report</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>R1</td>
+<td>Daily Attendance Report</td>
+<td>Department/date-wise, present/absent/late counts.</td>
+</tr>
+<tr>
+<td>R2</td>
+<td>Monthly Attendance Summary</td>
+<td>Employee x day matrix (P/A/L/H/O) + totals. Classic HR sheet.</td>
+</tr>
+<tr>
+<td>R3</td>
+<td><strong>Late Comers Report</strong></td>
+<td>Date range, late minutes, computed deduction — the client will use this daily.</td>
+</tr>
+<tr>
+<td>R4</td>
+<td>Absentee Report</td>
+<td></td>
+</tr>
+<tr>
+<td>R5</td>
+<td>Leave Ledger / Balance Report</td>
+<td>Opening, availed, balance per leave type.</td>
+</tr>
+<tr>
+<td>R6</td>
+<td><strong>Salary Sheet</strong></td>
+<td>Month + department, all heads as columns, grand totals. Excel export.</td>
+</tr>
+<tr>
+<td>R7</td>
+<td><strong>Salary Slip / Payslip</strong></td>
+<td>Print (PDF via existing <code>PuppeteerPdfRenderer</code>) <strong>and send via WhatsApp</strong> using the existing WAHA sender — infrastructure already there.</td>
+</tr>
+<tr>
+<td>R8</td>
+<td>Bank Transfer Advice</td>
+<td>Bank-wise list with IBAN + net amount.</td>
+</tr>
+<tr>
+<td>R9</td>
+<td>Loan / Advance Ledger</td>
+<td>Outstanding balances.</td>
+</tr>
+<tr>
+<td>R10</td>
+<td>Employee Master / Directory Report</td>
+<td></td>
+</tr>
+<tr>
+<td>R11</td>
+<td>EOBI / PF Statement</td>
+<td></td>
+</tr>
+<tr>
+<td>R12</td>
+<td>Employee Card Print</td>
+<td>(Dropware has this; low priority.)</td>
+</tr>
+</tbody></table>
+<p><strong>Total: ~15 setup forms + ~16 transaction forms + ~12 reports.</strong></p>
+<hr>
+<h2>3. The generic deduction engine (the key design decision)</h2>
+<p>Sir Syed Model School deducts <strong>per minute of late arrival</strong>. Other schools will not. So the formula must be
+<strong>data, not code</strong>.</p>
+<h3>3.1 <code>HRPayrollRule</code> table</h3>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Id</code>, <code>Code</code>, <code>Name</code>, <code>IsActive</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>RuleType</code></td>
+<td><code>LateComing</code>, <code>EarlyGoing</code>, <code>Absent</code>, <code>HalfDay</code>, <code>ShortHours</code>, <code>Overtime</code>, <code>Allowance</code></td>
+</tr>
+<tr>
+<td><code>AllowDedHeadId</code></td>
+<td>Which head (S9) the computed amount posts to</td>
+</tr>
+<tr>
+<td><code>CalcMethod</code></td>
+<td><code>PerMinute</code>, <code>PerHour</code>, <code>PerDay</code>, <code>FixedAmount</code>, <code>PercentOfBasic</code>, <code>Slab</code>, <code>Expression</code></td>
+</tr>
+<tr>
+<td><code>RateSource</code></td>
+<td><code>Fixed</code> (rate typed in) <strong>or</strong> <code>Derived</code> (computed from salary)</td>
+</tr>
+<tr>
+<td><code>FixedRate</code></td>
+<td>Rs per minute/hour/day/occurrence when <code>RateSource = Fixed</code></td>
+</tr>
+<tr>
+<td><code>BasisAmount</code></td>
+<td><code>Basic</code>, <code>Gross</code>, <code>Net</code> — the salary base when <code>RateSource = Derived</code></td>
+</tr>
+<tr>
+<td><code>MonthDaysBasis</code></td>
+<td><code>Calendar</code>, <code>Fixed30</code>, <code>WorkingDays</code></td>
+</tr>
+<tr>
+<td><code>HoursPerDaySource</code></td>
+<td><code>FromShift</code> or a fixed number</td>
+</tr>
+<tr>
+<td><code>GraceMinutes</code></td>
+<td>Free minutes before the rule bites (can also live on the shift; rule wins)</td>
+</tr>
+<tr>
+<td><code>FreeOccurrencesPerMonth</code></td>
+<td>e.g. first 3 lates forgiven</td>
+</tr>
+<tr>
+<td><code>MinAmount</code> / <code>MaxAmountPerDay</code> / <code>MaxAmountPerMonth</code></td>
+<td>Caps</td>
+</tr>
+<tr>
+<td><code>Expression</code></td>
+<td>Optional formula string for exotic cases (see 3.4)</td>
+</tr>
+<tr>
+<td><code>ScopeType</code> + <code>ScopeId</code></td>
+<td><code>Global</code> / <code>Campus</code> / <code>Department</code> / <code>Designation</code> / <code>Grade</code> / <code>EmployeeType</code> / <code>Employee</code></td>
+</tr>
+<tr>
+<td><code>Priority</code></td>
+<td>Tie-breaker</td>
+</tr>
+<tr>
+<td><code>EffectiveFrom</code> / <code>EffectiveTo</code></td>
+<td>Rules change; history must stay reproducible</td>
+</tr>
+</tbody></table>
+<p><code>HRPayrollRuleSlab</code> (child): <code>FromValue</code>, <code>ToValue</code>, <code>Amount</code> <strong>or</strong> <code>Days</code> <strong>or</strong> <code>Percent</code>.
+Used for &quot;1–15 min -&gt; Rs 100, 16–30 min -&gt; Rs 250, &gt;30 min -&gt; half day&quot;.</p>
+<h3>3.2 Rule resolution</h3>
+<p>Most-specific-wins, evaluated at posting time against the salary month&#39;s date:</p>
+<pre><code>Employee &gt; Grade &gt; Designation &gt; Department &gt; Campus &gt; Global
+</code></pre>
+<p>...filtered by <code>EffectiveFrom &lt;= MonthEnd AND (EffectiveTo IS NULL OR EffectiveTo &gt;= MonthStart)</code>,
+then ordered by <code>Priority</code>.</p>
+<h3>3.3 Worked example — Sir Syed Model School</h3>
+<p>Setup one rule:</p>
+<pre><code>RuleType          = LateComing
+CalcMethod        = PerMinute
+RateSource        = Derived
+BasisAmount       = Basic
+MonthDaysBasis    = Fixed30
+HoursPerDaySource = FromShift        (say 7 hrs)
+GraceMinutes      = 10
+MaxAmountPerDay   = 500
+ScopeType         = Global
+</code></pre>
+<p>Engine computes:</p>
+<pre><code>PerMinuteRate  = Basic / 30 / 7 / 60
+ChargeMinutes  = MAX(0, LateMinutes - GraceMinutes)
+Deduction      = MIN(ChargeMinutes * PerMinuteRate, MaxAmountPerDay)
+</code></pre>
+<p>Another school charging a <strong>flat Rs 20 per late minute</strong> only changes <code>RateSource = Fixed, FixedRate = 20</code>.
+A school that deducts <strong>half a day after 3 lates</strong> switches to <code>CalcMethod = Slab</code> with
+<code>FreeOccurrencesPerMonth = 3</code> and a slab row of <code>Days = 0.5</code>. <strong>No code change in any of these cases.</strong></p>
+<h3>3.4 Escape hatch</h3>
+<p><code>CalcMethod = Expression</code> evaluates <code>Expression</code> with <strong>NCalc</strong> (<code>dotnet add School.API package NCalc</code>)
+against variables: <code>LateMinutes</code>, <code>EarlyMinutes</code>, <code>AbsentDays</code>, <code>LateCount</code>, <code>Basic</code>, <code>Gross</code>,
+<code>MonthDays</code>, <code>WorkingDays</code>, <code>HoursPerDay</code>, <code>PerDayRate</code>, <code>PerMinuteRate</code>.</p>
+<p>Example: <code>if(LateCount &gt; 3, PerDayRate * 0.5, LateMinutes * PerMinuteRate)</code></p>
+<p>Keep this to Phase 3+; the structured methods cover the large majority of real schools.</p>
+<hr>
+<h2>4. Attendance input strategy (Hikvision)</h2>
+<p>Decision: <strong>manual entry now, Hikvision import later.</strong> The schema is designed so the import
+drops in without a migration.</p>
+<blockquote>
+<p><strong>Important:</strong> the same Hikvision machine will later feed <strong>student attendance as well as staff
+attendance</strong>. The punch-import layer must therefore be built generic from day one — see 4.2.</p>
+</blockquote>
+<h3>4.1 Staff attendance tables</h3>
+<p><strong>Two tables from day one:</strong></p>
+<ol>
+<li><code>HRAttendanceRaw</code> — one row per punch: <code>PersonType</code> (Staff/Student), <code>PersonId</code>, <code>MachineCardNo</code>,
+<code>PunchDateTime</code>, <code>Direction</code> (In/Out/Unknown), <code>DeviceCode</code>, <code>Source</code> (<code>Manual</code> / <code>Import</code> / <code>Device</code>),
+<code>BatchId</code>. Phase 1 writes to it from the manual form; Phase 6 writes to it from the file importer.
+Named without <code>Emp</code> on purpose — student punches land here too (see 4.2).</li>
+<li><code>HREmpAttendanceDaily</code> — one row per employee per day, produced by <strong>Attendance Posting</strong> (T6):
+<code>AttDate</code>, <code>ShiftId</code>, <code>TimeIn</code>, <code>TimeOut</code>, <code>WorkedMinutes</code>, <code>LateMinutes</code>, <code>EarlyMinutes</code>,
+<code>OverTimeMinutes</code>, <code>Status</code>, <code>LeaveTypeId</code>, <code>IsPayable</code>, <code>IsOff</code>, <code>IsHoliday</code>, <code>IgnoreLate</code>,
+<code>Remarks</code>, audit columns. This is what payroll reads. (Mirrors Dropware&#39;s <code>AttClosingDay</code>.)</li>
+</ol>
+<p><strong>Phase 6 importer:</strong> upload the iVMS-4200 / Hikvision export (CSV or XLSX — add <code>ClosedXML</code>), map
+<code>Person ID</code> / <code>Card No</code> -&gt; <code>Employee.MachineCardNo</code>, preview grid with unmatched rows flagged, then commit
+to <code>HRAttendanceRaw</code> under one <code>BatchId</code> (re-importable / reversible). Posting (T6) is unchanged.</p>
+<h3>4.2 Student attendance from the same machine (build the importer generic)</h3>
+<p>Later the school will also pull <strong>student</strong> attendance off the Hikvision device. The device does not care
+whether a card belongs to a teacher or a student — it emits the same punch record. So the importer must not
+be written as an HR-only feature.</p>
+<p><strong>Design rule: one raw punch table, one importer, two posting engines.</strong></p>
+<pre><code>Hikvision export (CSV/XLSX)
+        |
+        v
+  AttendanceImportService          &lt;-- shared, PersonType-aware
+        |
+        v
+  HRAttendanceRaw  (PersonType = Staff | Student, PersonId, MachineCardNo, PunchDateTime, ...)
+        |                                   |
+   Staff punches                      Student punches
+        |                                   |
+        v                                   v
+  SpPost_HRAttendanceDaily          SpPost_StdAttendanceDaily
+        |                                   |
+        v                                   v
+  HREmpAttendanceDaily                  StdAttendence  (existing table)
+</code></pre>
+<p>Concrete changes to make <strong>now</strong>, in Phase 0/1, so Phase 6 is a drop-in:</p>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Do it now</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Name the raw table generically</td>
+<td>Call it <code>HRAttendanceRaw</code> — <strong>not</strong> <code>HREmpAttendanceRaw</code></td>
+</tr>
+<tr>
+<td>Add <code>PersonType</code></td>
+<td><code>1 = Staff</code>, <code>2 = Student</code> — first column of the natural key</td>
+</tr>
+<tr>
+<td>Add <code>PersonId</code></td>
+<td>Resolves to <code>Employees.Id</code> or <code>Students.Id</code> depending on <code>PersonType</code></td>
+</tr>
+<tr>
+<td>Add <code>MachineCardNo</code> to <code>Student</code></td>
+<td>Same column already planned for <code>Employee</code> (T1). Students currently key on <code>AdmissionNo</code> / <code>RollNo</code> / <code>ClassRollNo</code> — none of these is the device card number</td>
+</tr>
+<tr>
+<td>Namespace the service</td>
+<td><code>Services/Implementations/Attendance/AttendanceImportService.cs</code>, not under <code>HR/</code></td>
+</tr>
+<tr>
+<td>Keep <code>StdAttendence</code> as the student target</td>
+<td>The table already exists (<code>DBModels/Academic/StdAttendence.cs</code>) with <code>IsLate</code>, <code>ISentSMS</code>, <code>Remarks</code> — the student posting engine writes into it, so the existing Mark Attendance screens, reports and the SMS/WhatsApp absent notification keep working unchanged</td>
+</tr>
+</tbody></table>
+<p>Student-side benefits that fall out for free once the device feed exists:</p>
+<ul>
+<li><strong>Auto absent/late WhatsApp to parents</strong> — the existing <code>AbsentNotificationJob</code> + WAHA pipeline already
+reads <code>StdAttendence</code>; it starts firing off real gate data instead of manual marking.</li>
+<li>Late-arrival tracking for students (<code>StdAttendence.IsLate</code> is already there and unused by the manual form).</li>
+<li>No student <em>deduction</em> logic is needed — the payroll rule engine (section 3) stays staff-only.</li>
+</ul>
+<p>Effort delta if this is designed in from the start: <strong>negligible</strong> (~2 extra columns + a namespace choice).
+Effort if retrofitted later: a data migration on the raw table plus a rewrite of the importer.</p>
+<hr>
+<h2>5. New tables (summary)</h2>
+<pre><code>Setups        HRDepartment, HRShift, HREmployeeShift, HRHoliday, HRLeaveType,
+              HRLeaveEntitlement, HRAllowDedHead, HRPayrollRule, HRPayrollRuleSlab,
+              HRLateExemption, HRPayrollSetting, HRSalaryMonthLock, HRBank
+
+Attendance    HRAttendanceRaw, HREmpAttendanceDaily
+
+Leave         HRLeaveApplication
+
+Payroll       HREmployeeSalaryStructure, HREmployeeSalaryStructureDetail,
+              HRMonthlyAllowDed, HRAdvance, HRLoan, HRLoanInstallment,
+              HRSalaryMonth, HRSalaryMonthDetail, HRSalaryPayment
+</code></pre>
+<p>Stored procedures (in <code>School.API/Scripts/</code>, following the existing <code>SpXxx_</code> naming):</p>
+<ul>
+<li><code>SpPost_HRAttendanceDaily</code> — the T6 posting engine</li>
+<li><code>SpPost_HRSalaryMonth</code> — the T12 payroll engine</li>
+<li><code>SpGet_HRPayrollRuleResolve</code> — rule resolution helper</li>
+<li><code>SpRPT_HRAttendanceMonthly</code>, <code>SpRPT_HRLateComers</code>, <code>SpRPT_HRSalarySheet</code>, <code>SpRPT_HRPayslip</code></li>
+</ul>
+<hr>
+<h2>6. Phased implementation plan</h2>
+<p>Each feature follows the 8-step recipe in <code>CLAUDE.md</code> (model -&gt; DbSet -&gt; DTO -&gt; repo -&gt; service -&gt;
+<code>Program.cs</code> <code>AddScoped</code> -&gt; API controller -&gt; Web MVC controller + view).</p>
+<h3>Phase 0 — Foundation (1–2 days)</h3>
+<ul>
+<li><input disabled="" type="checkbox"> Uncomment + expand the <strong>HR Payroll</strong> section in <code>SidebarController.cs</code> (Setups / Day-to-Day / Reports sub-menus)</li>
+<li><input disabled="" type="checkbox"> Register HR pages in <code>Menus</code> + <code>RolePermissions</code> so RBAC works</li>
+<li><input disabled="" type="checkbox"> <code>HRDepartment</code> setup (S1) — full stack, use <code>PaymentMethod</code> as the template (newest clean CRUD in the repo)</li>
+<li><input disabled="" type="checkbox"> Enhance <code>Employee</code> (T1): DepartmentId, ShiftId, MachineCardNo, OffDay1/2, IsStopSalary, IsLateExempt, ProbationEndDate, bank fields</li>
+<li><input disabled="" type="checkbox"> <code>Scripts/HRPayroll_CreateTables.sql</code> for the whole module (single idempotent script)</li>
+</ul>
+<p><strong>Deliverable:</strong> menu visible, departments manageable, employee master payroll-ready.</p>
+<h3>Phase 1 — Attendance core (4–6 days) — highest value</h3>
+<ul>
+<li><input disabled="" type="checkbox"> <code>HRShift</code> setup (S4) + <code>HREmployeeShift</code> assignment (S5)</li>
+<li><input disabled="" type="checkbox"> <code>HRHoliday</code> calendar (S6) with year grid + copy-previous-year</li>
+<li><input disabled="" type="checkbox"> <code>HRAttendanceRaw</code> (with <code>PersonType</code> / <code>PersonId</code> — see 4.2) + <code>HREmpAttendanceDaily</code> tables</li>
+<li><input disabled="" type="checkbox"> Add <code>MachineCardNo</code> to <code>Student</code> too, so the device feed can resolve students later</li>
+<li><input disabled="" type="checkbox"> <strong>Daily Attendance Entry</strong> manual grid (T3) — the form the client uses every morning</li>
+<li><input disabled="" type="checkbox"> Attendance Correction (T4) + Bulk Absent (T5)</li>
+<li><input disabled="" type="checkbox"> <code>SpPost_HRAttendanceDaily</code> + <strong>Attendance Posting</strong> screen (T6) — late/early/short-hours computation</li>
+<li><input disabled="" type="checkbox"> R1 Daily Attendance, R2 Monthly Summary, R3 Late Comers</li>
+</ul>
+<p><strong>Deliverable:</strong> the school can run attendance end-to-end without payroll.</p>
+<h3>Phase 2 — Leave management (3–4 days)</h3>
+<ul>
+<li><input disabled="" type="checkbox"> Leave Type (S7) + Entitlement (S8)</li>
+<li><input disabled="" type="checkbox"> Leave Application (T7) + Approval (T8)</li>
+<li><input disabled="" type="checkbox"> Feed approved leaves into <code>SpPost_HRAttendanceDaily</code></li>
+<li><input disabled="" type="checkbox"> R5 Leave Ledger</li>
+</ul>
+<h3>Phase 3 — Payroll setups &amp; the rule engine (4–5 days) — the generic part</h3>
+<ul>
+<li><input disabled="" type="checkbox"> <code>HRAllowDedHead</code> (S9)</li>
+<li><input disabled="" type="checkbox"> <code>HRPayrollRule</code> + <code>HRPayrollRuleSlab</code> (S10, S11) — form with a <strong>live preview calculator</strong>
+(&quot;employee X, 25 min late -&gt; Rs Y&quot;) so the client can verify the formula before it touches payroll</li>
+<li><input disabled="" type="checkbox"> Late Exemption (S12)</li>
+<li><input disabled="" type="checkbox"> Payroll Settings (S13)</li>
+<li><input disabled="" type="checkbox"> <code>HREmployeeSalaryStructure</code> (T2) — migrate existing flat <code>Employee</code> salary fields into it</li>
+<li><input disabled="" type="checkbox"> <code>SpGet_HRPayrollRuleResolve</code> + unit-testable C# <code>PayrollRuleEvaluator</code> service</li>
+</ul>
+<p><strong>Deliverable:</strong> Sir Syed&#39;s per-minute rule configured through the UI; another school&#39;s rule is a data change.</p>
+<h3>Phase 4 — Payroll processing (5–7 days)</h3>
+<ul>
+<li><input disabled="" type="checkbox"> <code>HRSalaryMonth</code> + <code>HRSalaryMonthDetail</code></li>
+<li><input disabled="" type="checkbox"> <code>SpPost_HRSalaryMonth</code> + <strong>Salary Posting</strong> screen (T12)</li>
+<li><input disabled="" type="checkbox"> Salary Sheet Review / Adjustment (T13)</li>
+<li><input disabled="" type="checkbox"> Salary Payment (T14) + Month Lock (S14)</li>
+<li><input disabled="" type="checkbox"> R6 Salary Sheet, R7 Payslip (PDF via <code>PuppeteerPdfRenderer</code>), R8 Bank Advice</li>
+<li><input disabled="" type="checkbox"> Retire the old flat <code>Salary</code> entity (keep the table, stop writing to it)</li>
+</ul>
+<h3>Phase 5 — Loans, advances &amp; increments (2–3 days)</h3>
+<ul>
+<li><input disabled="" type="checkbox"> Advance (T10), Loan + Approval + installments (T11)</li>
+<li><input disabled="" type="checkbox"> Monthly one-off Allowance/Deduction (T9)</li>
+<li><input disabled="" type="checkbox"> Increment / Salary Revision (T15)</li>
+<li><input disabled="" type="checkbox"> R9 Loan Ledger</li>
+</ul>
+<h3>Phase 6 — Hikvision import (staff) &amp; extras (3–4 days)</h3>
+<ul>
+<li><input disabled="" type="checkbox"> Shared <code>AttendanceImportService</code>: CSV/XLSX importer for <code>HRAttendanceRaw</code> (add <code>ClosedXML</code>),
+mapping preview, unmatched-card report, batch reversal. <strong>Written PersonType-aware from the start</strong></li>
+<li><input disabled="" type="checkbox"> Staff card mapping (<code>Employee.MachineCardNo</code>) + wire into <code>SpPost_HRAttendanceDaily</code></li>
+<li><input disabled="" type="checkbox"> <strong>Payslip over WhatsApp</strong> through the existing <code>ISmsSender</code> / WAHA pipeline — reuse <code>SmsTemplateCatalog</code></li>
+<li><input disabled="" type="checkbox"> R10 Employee Directory, R11 EOBI/PF, R12 Card Print</li>
+<li><input disabled="" type="checkbox"> Optional: absent-notification job for staff (mirror the existing <code>AbsentNotificationJob</code>)</li>
+</ul>
+<h3>Phase 7 — Student attendance from the machine (2–3 days)</h3>
+<p>Only reachable cheaply because 4.2 was designed in during Phase 1.</p>
+<ul>
+<li><input disabled="" type="checkbox"> Student card enrolment screen: bulk-assign <code>MachineCardNo</code> to students (class/section-wise grid)</li>
+<li><input disabled="" type="checkbox"> <code>SpPost_StdAttendanceDaily</code> — pairs student punches, applies school timing + grace,
+writes <code>StdAttendence</code> (sets <code>Attendence</code>, <code>IsLate</code>, <code>Remarks</code>)</li>
+<li><input disabled="" type="checkbox"> Student Attendance Posting screen (date range, per class/section, re-runnable)</li>
+<li><input disabled="" type="checkbox"> Reconciliation view: device punches vs manually marked attendance, with an override winner rule</li>
+<li><input disabled="" type="checkbox"> Point the existing <code>AbsentNotificationJob</code> at posted device data so parent WhatsApp alerts go out
+automatically instead of depending on manual marking</li>
+<li><input disabled="" type="checkbox"> Student late-comers report (<code>IsLate</code> is already on <code>StdAttendence</code> and currently unused)</li>
+</ul>
+<p><strong>Rough total: 24–34 working days.</strong></p>
+<hr>
+<h2>7. Decisions to confirm before Phase 1</h2>
+<ol>
+<li><strong>Teacher vs Employee</strong> — <code>SMSTeacher</code> and <code>Employees</code> are separate tables today. Do teachers get
+payroll? If yes, either merge teachers into <code>Employees</code> (recommended) or add <code>Employee.TeacherId</code> link.</li>
+<li><strong>Month days basis for Sir Syed</strong> — fixed 30, or calendar days (28/30/31)?</li>
+<li><strong>Working hours per day</strong> — from the shift, or a school-wide constant?</li>
+<li><strong>Grace period</strong> — how many minutes before late counts? Is there a daily cap on late deduction?</li>
+<li><strong>Weekly off</strong> — Sunday only, or Friday half-day + Sunday?</li>
+<li><strong>Summer/winter timings</strong> — does the shift change seasonally? (Dropware handles this with
+&quot;DayLight&quot; columns on the shift — worth copying if yes.)</li>
+<li><strong>Campus scoping</strong> — should HR data be per-campus like <code>FeeStructure</code>, or school-wide?</li>
+<li><strong>Student device attendance (4.2)</strong> — one machine for staff and students, or separate devices per gate?
+And when a student is punched by the device <em>and</em> marked manually by the class teacher, which wins?
+(Recommendation: device wins for time-in/late, manual wins for absent, with a reconciliation screen.)</li>
+</ol>
+
+<div class="footer">Easy School Management System &mdash; HR &amp; Payroll Module Plan &mdash; generated 2026-08-25</div>
+</body>
+</html>

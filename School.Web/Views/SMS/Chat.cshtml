@@ -1,0 +1,465 @@
+@{
+    ViewData["Title"] = "WhatsApp Chat";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+@section Styles {
+    <style>
+        .wa-wrap { display:flex; height:calc(100vh - 150px); min-height:480px;
+                   border:1px solid #d1d7db; border-radius:14px; overflow:hidden;
+                   box-shadow:0 4px 20px rgba(0,0,0,.08); background:#fff; }
+
+        /* ── Left pane: chat list ── */
+        .wa-list { width:340px; flex:0 0 340px; display:flex; flex-direction:column;
+                   border-right:1px solid #e9edef; background:#fff; }
+        .wa-list-head { padding:12px; border-bottom:1px solid #e9edef; }
+        .wa-list-body { flex:1; overflow-y:auto; }
+
+        .wa-chat-item { display:flex; gap:10px; padding:10px 12px; cursor:pointer;
+                        border-bottom:1px solid #f0f2f5; }
+        .wa-chat-item:hover { background:#f5f6f6; }
+        .wa-chat-item.active { background:#f0f2f5; }
+
+        .wa-avatar { width:42px; height:42px; flex:0 0 42px; border-radius:50%;
+                     background:#00a884; color:#fff; display:flex; align-items:center;
+                     justify-content:center; font-weight:600; font-size:15px; }
+        .wa-chat-meta { flex:1; min-width:0; }
+        .wa-chat-name { font-weight:600; font-size:14px; color:#111b21;
+                        white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .wa-chat-preview { font-size:12.5px; color:#667781;
+                           white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .wa-chat-time { font-size:11px; color:#667781; white-space:nowrap; }
+        .wa-unread { background:#25d366; color:#fff; border-radius:10px;
+                     font-size:11px; padding:1px 6px; font-weight:600; }
+
+        /* ── Right pane: thread ── */
+        .wa-thread { flex:1; display:flex; flex-direction:column; min-width:0; }
+        .wa-thread-head { padding:10px 16px; border-bottom:1px solid #e9edef;
+                          background:#f0f2f5; display:flex; align-items:center; gap:10px; }
+        .wa-body { flex:1; overflow-y:auto; padding:16px;
+                   background:#efeae2 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Ccircle cx='4' cy='4' r='1' fill='%23d9d2c8'/%3E%3C/svg%3E"); }
+
+        .wa-row { display:flex; margin-bottom:8px; }
+        .wa-row.out { justify-content:flex-end; }
+        .wa-bubble { max-width:72%; padding:7px 10px 5px; border-radius:8px;
+                     font-size:14px; line-height:1.4; white-space:pre-wrap;
+                     word-wrap:break-word; box-shadow:0 1px 1px rgba(0,0,0,.1); }
+        .wa-row.in  .wa-bubble { background:#fff; border-top-left-radius:0; }
+        .wa-row.out .wa-bubble { background:#d9fdd3; border-top-right-radius:0; }
+        .wa-time { font-size:10.5px; color:#667781; text-align:right;
+                   margin-top:2px; user-select:none; }
+        .wa-tick.read { color:#53bdeb; }
+        .wa-tpl { font-size:10.5px; color:#8696a0; margin-bottom:3px;
+                  border-left:3px solid #25d366; padding-left:6px; }
+
+        .wa-day { text-align:center; margin:14px 0 10px; }
+        .wa-day span { background:#fff; color:#54656f; font-size:11.5px;
+                       padding:4px 10px; border-radius:8px;
+                       box-shadow:0 1px 1px rgba(0,0,0,.08); }
+
+        /* ── Composer ── */
+        .wa-composer { padding:10px 14px; border-top:1px solid #e9edef; background:#f0f2f5; }
+        .wa-locked { background:#fff3cd; border-top:1px solid #ffe69c;
+                     padding:12px 16px; font-size:13px; color:#664d03; }
+
+        .wa-empty { flex:1; display:flex; flex-direction:column; align-items:center;
+                    justify-content:center; color:#8696a0; background:#f0f2f5; }
+
+        @@media (max-width: 768px) {
+            .wa-list { width:100%; flex:0 0 100%; }
+            .wa-wrap.has-active .wa-list { display:none; }
+            .wa-wrap:not(.has-active) .wa-thread { display:none; }
+        }
+    </style>
+}
+
+<div class="container-fluid">
+    <div id="alertContainer"></div>
+
+    <div class="wa-wrap" id="waWrap">
+
+        <!-- ══ CHAT LIST ══ -->
+        <div class="wa-list">
+            <div class="wa-list-head">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <i class="bi bi-whatsapp text-success" style="font-size:18px;"></i>
+                    <span class="fw-semibold">Chats</span>
+                    <span class="badge bg-success ms-auto" id="totalUnread" style="display:none;">0</span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2"
+                            onclick="loadConversations()" title="Refresh">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                </div>
+                <input type="text" class="form-control form-control-sm" id="chatSearch"
+                       placeholder="Search name or number" />
+            </div>
+            <div class="wa-list-body" id="chatList">
+                <div class="text-center text-muted py-4" style="font-size:13px;">Loading…</div>
+            </div>
+        </div>
+
+        <!-- ══ THREAD ══ -->
+        <div class="wa-thread" id="waThread">
+            <div class="wa-empty" id="waEmpty">
+                <i class="bi bi-chat-dots" style="font-size:52px; opacity:.35;"></i>
+                <div class="mt-3" style="font-size:14px;">Select a chat to view messages</div>
+                <div class="mt-1" style="font-size:12px;">
+                    Incoming messages appear here as parents reply on WhatsApp.
+                </div>
+            </div>
+
+            <div id="waActive" style="display:none; flex:1; flex-direction:column; min-height:0;">
+                <div class="wa-thread-head">
+                    <button type="button" class="btn btn-sm btn-link p-0 d-md-none"
+                            onclick="closeThread()"><i class="bi bi-arrow-left"></i></button>
+                    <div class="wa-avatar" id="headAvatar" style="width:38px;height:38px;flex:0 0 38px;font-size:14px;"></div>
+                    <div class="flex-grow-1" style="min-width:0;">
+                        <div class="fw-semibold" style="font-size:14px;" id="headName"></div>
+                        <div style="font-size:11.5px;color:#667781;" id="headMeta"></div>
+                    </div>
+                </div>
+
+                <div class="wa-body" id="waBody"></div>
+
+                <!-- Composer, shown only while the 24h window is open -->
+                <div class="wa-composer" id="waComposer" style="display:none;">
+                    <div class="d-flex gap-2 align-items-end">
+                        <textarea class="form-control" id="replyText" rows="1"
+                                  placeholder="Type a message" style="resize:none;max-height:110px;"></textarea>
+                        <button type="button" class="btn btn-success" id="btnSend" onclick="sendReply()">
+                            <i class="bi bi-send-fill"></i>
+                        </button>
+                    </div>
+                    <small class="text-muted" style="font-size:11px;">Enter to send · Shift+Enter for a new line</small>
+                </div>
+
+                <!-- Shown instead of the composer once the window has closed -->
+                <div class="wa-locked" id="waLocked" style="display:none;">
+                    <i class="bi bi-lock-fill me-1"></i>
+                    <strong>24-hour reply window closed.</strong>
+                    WhatsApp only allows free-form replies for 24 hours after the contact's
+                    last message. Send an approved template from the
+                    <a href="/EasySchool/sms">SMS Module</a>, or wait for
+                    this contact to write again.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let activeWaId = null;
+        let oldestVid = null;
+        let hasMore = false;
+        let pollTimer = null;
+        let renderedCache = [];
+
+        function esc(v) {
+            if (v === null || v === undefined) return '';
+            return String(v)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function initials(name) {
+            const parts = String(name || '?').trim().split(/\s+/).filter(Boolean);
+            if (!parts.length) return '?';
+            return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
+        }
+
+        function timeOnly(v) {
+            const d = new Date(v);
+            if (isNaN(d)) return '';
+            let h = d.getHours(), m = String(d.getMinutes()).padStart(2, '0');
+            const ap = h >= 12 ? 'PM' : 'AM';
+            h = h % 12 || 12;
+            return `${h}:${m} ${ap}`;
+        }
+
+        function dayLabel(v) {
+            const d = new Date(v);
+            if (isNaN(d)) return '';
+            const today = new Date(); today.setHours(0, 0, 0, 0);
+            const that = new Date(d); that.setHours(0, 0, 0, 0);
+            const diff = Math.round((today - that) / 86400000);
+            if (diff === 0) return 'Today';
+            if (diff === 1) return 'Yesterday';
+            const p = n => String(n).padStart(2, '0');
+            return `${p(d.getDate())}-${p(d.getMonth() + 1)}-${d.getFullYear()}`;
+        }
+
+        function listTime(v) {
+            if (!v) return '';
+            const d = new Date(v);
+            const today = new Date(); today.setHours(0, 0, 0, 0);
+            const that = new Date(d); that.setHours(0, 0, 0, 0);
+            return today.getTime() === that.getTime() ? timeOnly(v) : dayLabel(v);
+        }
+
+        // ── CHAT LIST ────────────────────────────────────────────────
+        async function loadConversations() {
+            const search = $('#chatSearch').val() || '';
+            try {
+                const resp = await fetch(`${API_BASE}/WhatsAppChat/conversations?search=${encodeURIComponent(search)}`);
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                const rows = await resp.json();
+
+                const unread = rows.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
+                $('#totalUnread').text(unread).toggle(unread > 0);
+
+                if (!rows.length) {
+                    $('#chatList').html(`<div class="text-center text-muted py-4" style="font-size:13px;">
+                        No chats yet.<br/><span style="font-size:11.5px;">
+                        Chats appear when a parent replies on WhatsApp.</span></div>`);
+                    return;
+                }
+
+                $('#chatList').html(rows.map(renderChatItem).join(''));
+            } catch (ex) {
+                console.error(ex);
+                $('#chatList').html('<div class="text-center text-danger py-4" style="font-size:13px;">Failed to load chats</div>');
+            }
+        }
+
+        function renderChatItem(c) {
+            const active = c.waId === activeWaId ? ' active' : '';
+            const unread = c.unreadCount > 0
+                ? `<span class="wa-unread">${c.unreadCount}</span>` : '';
+            const tick = c.lastMessageDirection === 'Outbound'
+                ? '<i class="bi bi-check2-all" style="font-size:11px;color:#8696a0;"></i> ' : '';
+
+            return `<div class="wa-chat-item${active}" onclick="openThread('${esc(c.waId)}')">
+                <div class="wa-avatar">${esc(initials(c.displayName))}</div>
+                <div class="wa-chat-meta">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="wa-chat-name">${esc(c.displayName)}</div>
+                        <div class="wa-chat-time">${listTime(c.lastMessageAt)}</div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center gap-2">
+                        <div class="wa-chat-preview">${tick}${esc(c.lastMessagePreview || '')}</div>
+                        ${unread}
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        // ── THREAD ───────────────────────────────────────────────────
+        async function openThread(waId) {
+            activeWaId = waId;
+            oldestVid = null;
+            $('#waEmpty').hide();
+            $('#waActive').css('display', 'flex');
+            $('#waWrap').addClass('has-active');
+            $('#waBody').html('<div class="text-center text-muted py-4" style="font-size:13px;">Loading…</div>');
+
+            await loadThread(true);
+            await markRead(waId);
+            loadConversations();
+        }
+
+        function closeThread() {
+            activeWaId = null;
+            $('#waWrap').removeClass('has-active');
+            $('#waActive').hide();
+            $('#waEmpty').css('display', 'flex');
+        }
+
+        async function loadThread(scrollToEnd) {
+            if (!activeWaId) return;
+            try {
+                const resp = await fetch(`${API_BASE}/WhatsAppChat/conversations/${encodeURIComponent(activeWaId)}/messages?take=50`);
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                const thread = await resp.json();
+
+                renderHeader(thread.conversation);
+                renderMessages(thread.messages, thread.hasMore);
+
+                if (scrollToEnd) {
+                    const body = document.getElementById('waBody');
+                    body.scrollTop = body.scrollHeight;
+                }
+            } catch (ex) {
+                console.error(ex);
+                $('#waBody').html('<div class="text-center text-danger py-4" style="font-size:13px;">Failed to load messages</div>');
+            }
+        }
+
+        function renderHeader(c) {
+            if (!c) return;
+            $('#headAvatar').text(initials(c.displayName));
+            $('#headName').text(c.displayName);
+
+            if (c.windowOpen) {
+                const h = Math.floor(c.windowMinutesLeft / 60);
+                const m = c.windowMinutesLeft % 60;
+                $('#headMeta').html(`+${esc(c.waId)} · <span class="text-success">
+                    Reply window open — ${h}h ${m}m left</span>`);
+                $('#waComposer').show();
+                $('#waLocked').hide();
+            } else {
+                $('#headMeta').html(`+${esc(c.waId)} · <span class="text-warning">Reply window closed</span>`);
+                $('#waComposer').hide();
+                $('#waLocked').show();
+            }
+        }
+
+        function renderMessages(messages, more) {
+            hasMore = more;
+            // Older pages are merged client-side, so what is on screen is kept
+            // here between fetches.
+            renderedCache = messages || [];
+
+            if (!messages || !messages.length) {
+                $('#waBody').html('<div class="text-center text-muted py-4" style="font-size:13px;">No messages yet</div>');
+                return;
+            }
+
+            oldestVid = messages[0].vid;
+
+            let html = more
+                ? `<div class="text-center mb-3"><button type="button"
+                     class="btn btn-sm btn-light" onclick="loadOlder()">Load older messages</button></div>`
+                : '';
+
+            let lastDay = '';
+            for (const m of messages) {
+                const day = dayLabel(m.messageTime);
+                if (day !== lastDay) {
+                    html += `<div class="wa-day"><span>${esc(day)}</span></div>`;
+                    lastDay = day;
+                }
+                html += renderBubble(m);
+            }
+
+            $('#waBody').html(html);
+        }
+
+        function renderBubble(m) {
+            const out = m.direction === 'Outbound';
+
+            // Only text is composed today; anything else is shown as a labelled
+            // placeholder so an incoming photo or voice note is still visible.
+            let content;
+            if (m.messageKind === 'text' || m.messageKind === 'template') {
+                content = esc(m.body || '');
+            } else {
+                const icons = { image: 'bi-image', document: 'bi-file-earmark-text',
+                                audio: 'bi-mic-fill', video: 'bi-camera-video',
+                                sticker: 'bi-emoji-smile', location: 'bi-geo-alt-fill' };
+                const icon = icons[m.messageKind] || 'bi-paperclip';
+                content = `<span class="text-muted"><i class="bi ${icon} me-1"></i>${esc(m.messageKind)}</span>`
+                        + (m.body ? `<br/>${esc(m.body)}` : '');
+            }
+
+            const tpl = out && m.templateName
+                ? `<div class="wa-tpl">Template: ${esc(m.templateName)}</div>` : '';
+
+            let ticks = '';
+            if (out) {
+                if (m.status === 'failed') {
+                    ticks = ` <i class="bi bi-exclamation-circle-fill text-danger" title="${esc(m.errorMessage || 'Failed')}"></i>`;
+                } else if (m.readAt) {
+                    ticks = ' <i class="bi bi-check2-all wa-tick read"></i>';
+                } else if (m.deliveredAt) {
+                    ticks = ' <i class="bi bi-check2-all"></i>';
+                } else {
+                    ticks = ' <i class="bi bi-check2"></i>';
+                }
+            }
+
+            return `<div class="wa-row ${out ? 'out' : 'in'}">
+                        <div class="wa-bubble">${tpl}${content}
+                            <div class="wa-time">${timeOnly(m.messageTime)}${ticks}</div>
+                        </div>
+                    </div>`;
+        }
+
+        async function loadOlder() {
+            if (!activeWaId || !oldestVid) return;
+            try {
+                const resp = await fetch(`${API_BASE}/WhatsAppChat/conversations/${encodeURIComponent(activeWaId)}/messages?beforeVid=${oldestVid}&take=50`);
+                if (!resp.ok) return;
+                const thread = await resp.json();
+                if (!thread.messages || !thread.messages.length) return;
+
+                const body = document.getElementById('waBody');
+                const previousHeight = body.scrollHeight;
+
+                // Prepend the older page and hold the reader's scroll position.
+                renderMessages(thread.messages.concat(renderedCache), thread.hasMore);
+                body.scrollTop = body.scrollHeight - previousHeight;
+            } catch (ex) { console.error(ex); }
+        }
+
+        // ── REPLY ────────────────────────────────────────────────────
+        async function sendReply() {
+            const text = ($('#replyText').val() || '').trim();
+            if (!text || !activeWaId) return;
+
+            $('#btnSend').prop('disabled', true);
+            try {
+                const resp = await fetch(`${API_BASE}/WhatsAppChat/conversations/${encodeURIComponent(activeWaId)}/reply`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text })
+                });
+
+                const result = await resp.json();
+
+                if (!resp.ok) {
+                    alert(result.message || 'Could not send the message');
+                    await loadThread(true);   // window may have just closed
+                    return;
+                }
+
+                $('#replyText').val('').css('height', 'auto');
+                await loadThread(true);
+                loadConversations();
+            } catch (ex) {
+                console.error(ex);
+                alert('Failed to send the message');
+            } finally {
+                $('#btnSend').prop('disabled', false);
+            }
+        }
+
+        async function markRead(waId) {
+            try {
+                await fetch(`${API_BASE}/WhatsAppChat/conversations/${encodeURIComponent(waId)}/read`, { method: 'POST' });
+            } catch (ex) { console.error(ex); }
+        }
+
+        // ── INIT ─────────────────────────────────────────────────────
+        $(function () {
+            loadConversations();
+
+            let searchTimer = null;
+            $('#chatSearch').on('keyup', function () {
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(loadConversations, 300);
+            });
+
+            $('#replyText').on('keydown', function (e) {
+                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendReply(); }
+            }).on('input', function () {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 110) + 'px';
+            });
+
+            // Meta pushes messages to the webhook; the page picks them up by
+            // polling, which is enough for a support inbox.
+            pollTimer = setInterval(async () => {
+                if (document.hidden) return;
+                await loadConversations();
+                if (activeWaId) {
+                    const body = document.getElementById('waBody');
+                    const atBottom = body.scrollHeight - body.scrollTop - body.clientHeight < 60;
+                    await loadThread(atBottom);
+                }
+            }, 5000);
+        });
+
+        $(window).on('beforeunload', () => clearInterval(pollTimer));
+    </script>
+}

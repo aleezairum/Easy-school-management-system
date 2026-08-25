@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using School.API.DTOs;
+using School.API.DTOs.HR;
 using School.API.Services.Interfaces.HR;
 
 namespace School.API.Controllers
@@ -15,52 +15,59 @@ namespace School.API.Controllers
             _service = service;
         }
 
-        //[HttpGet]
-        //public async Task<ActionResult<IEnumerable<EmployeeListDto>>> GetAll()
-        //{
-        //    var result = await _service.GetAllAsync();
-        //    return Ok(result);
-        //}
+        [HttpGet]
+        public async Task<ActionResult<List<EmployeeListDto>>> GetAll() => Ok(await _service.GetAllAsync());
 
-        //[HttpGet("{id}")]
-        //public async Task<ActionResult<EmployeeDto>> GetById(int id)
-        //{
-        //    var result = await _service.GetByIdAsync(id);
-        //    if (result == null)
-        //        return NotFound();
-        //    return Ok(result);
-        //}
+        [HttpGet("dropdown")]
+        public async Task<ActionResult<List<EmployeeDropdownDto>>> GetDropdown() => Ok(await _service.GetDropdownAsync());
 
-        //[HttpGet("dropdown")]
-        //public async Task<ActionResult<IEnumerable<EmployeeDropdownDto>>> GetDropdown()
-        //{
-        //    var result = await _service.GetDropdownAsync();
-        //    return Ok(result);
-        //}
+        [HttpGet("{id}")]
+        public async Task<ActionResult<EmployeeDto>> GetById(int id)
+        {
+            var result = await _service.GetByIdAsync(id);
+            return result == null ? NotFound() : Ok(result);
+        }
 
-        //[HttpPost]
-        //public async Task<ActionResult<EmployeeDto>> Create(CreateEmployeeDto dto)
-        //{
-        //    var result = await _service.CreateAsync(dto);
-        //    return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
-        //}
+        [HttpPost]
+        public async Task<ActionResult<EmployeeDto>> Create(SaveEmployeeDto dto)
+        {
+            try
+            {
+                var result = await _service.CreateAsync(dto);
+                return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
 
-        //[HttpPut("{id}")]
-        //public async Task<ActionResult<EmployeeDto>> Update(int id, UpdateEmployeeDto dto)
-        //{
-        //    var result = await _service.UpdateAsync(id, dto);
-        //    if (result == null)
-        //        return NotFound();
-        //    return Ok(result);
-        //}
+        [HttpPut("{id}")]
+        public async Task<ActionResult<EmployeeDto>> Update(int id, SaveEmployeeDto dto)
+        {
+            try
+            {
+                var result = await _service.UpdateAsync(id, dto);
+                return result == null ? NotFound() : Ok(result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
 
-        //[HttpDelete("{id}")]
-        //public async Task<ActionResult> Delete(int id)
-        //{
-        //    var success = await _service.DeleteAsync(id);
-        //    if (!success)
-        //        return NotFound();
-        //    return NoContent();
-        //}
+        [HttpDelete("{id}")]
+        public async Task<ActionResult> Delete(int id)
+        {
+            try
+            {
+                var success = await _service.DeleteAsync(id);
+                return success ? NoContent() : NotFound();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

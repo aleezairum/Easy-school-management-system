@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>WAHA (WEBJS) Setup on Windows 11 + Docker — EasySchool</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: #1a1a2e;
+    font-size: 12px;
+    line-height: 1.55;
+    margin: 0;
+  }
+  h1 {
+    font-size: 25px;
+    color: #0b3d2e;
+    margin: 0 0 4px;
+    border-bottom: 3px solid #25D366;
+    padding-bottom: 8px;
+  }
+  .sub { color: #555; font-size: 12px; margin: 0 0 18px; }
+  h2 {
+    font-size: 16px;
+    color: #0b3d2e;
+    margin: 22px 0 8px;
+    padding: 5px 10px;
+    background: #e8f8ef;
+    border-left: 4px solid #25D366;
+    border-radius: 3px;
+  }
+  h3 { font-size: 13.5px; color: #128C7E; margin: 14px 0 5px; }
+  p { margin: 6px 0; }
+  code {
+    background: #f0f2f5;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 11px;
+    color: #b5179e;
+  }
+  pre {
+    background: #1e1e2e;
+    color: #e0e0e0;
+    padding: 11px 14px;
+    border-radius: 6px;
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 10.5px;
+    line-height: 1.5;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    page-break-inside: avoid;
+  }
+  pre code { background: none; color: inherit; padding: 0; }
+  .note, .warn, .tip {
+    padding: 9px 12px;
+    border-radius: 5px;
+    margin: 10px 0;
+    font-size: 11px;
+    page-break-inside: avoid;
+  }
+  .note { background: #eaf2ff; border-left: 4px solid #2b6cff; }
+  .warn { background: #fff4e5; border-left: 4px solid #ff9800; }
+  .tip  { background: #e8f8ef; border-left: 4px solid #25D366; }
+  table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 11px; }
+  th, td { border: 1px solid #d0d0d0; padding: 6px 9px; text-align: left; vertical-align: top; }
+  th { background: #0b3d2e; color: #fff; }
+  tr:nth-child(even) td { background: #f6f8fa; }
+  ol, ul { margin: 6px 0 6px 20px; padding: 0; }
+  li { margin: 4px 0; }
+  .step-num {
+    display: inline-block; background: #25D366; color: #fff;
+    width: 20px; height: 20px; border-radius: 50%; text-align: center;
+    line-height: 20px; font-weight: bold; font-size: 11px; margin-right: 6px;
+  }
+  .footer { margin-top: 26px; padding-top: 10px; border-top: 1px solid #ddd; color: #888; font-size: 10px; }
+  .badge { display:inline-block; background:#128C7E; color:#fff; padding:2px 8px; border-radius:10px; font-size:10px; }
+</style>
+</head>
+<body>
+
+<h1>WAHA (WEBJS Engine) Setup on Windows 11 + Docker</h1>
+<p class="sub">WhatsApp HTTP API for the <strong>EasySchool Management System</strong> &nbsp;|&nbsp; <span class="badge">Engine: WEBJS</span> &nbsp; Generated 2026-06-12</p>
+
+<div class="note">
+<strong>Maqsad (Purpose):</strong> Yeh guide aapko Windows 11 par Docker ke through WAHA ko <strong>WEBJS engine</strong> ke sath chalana sikhati hai, phir EasySchool API ko us se connect karna. Aapki app already <code>/api/sendText</code> aur <code>/api/sendFile</code> endpoints, <code>X-Api-Key</code> header, session <code>default</code> aur country code <code>92</code> use karti hai — yeh setup usi ke mutabiq hai.
+</div>
+
+<h2>1. WAHA aur WEBJS engine kya hai?</h2>
+<p><strong>WAHA</strong> (WhatsApp HTTP API) ek self-hosted server hai jo WhatsApp ko ek simple REST API mein convert kar deta hai. Aap HTTP request bhej kar messages/files send kar sakte hain — koi official WhatsApp Business API ki zaroorat nahi.</p>
+<ul>
+  <li><strong>WEBJS</strong> — WhatsApp Web ko emulate karta hai (whatsapp-web.js library). Free, QR-code login. EasySchool ke liye recommended.</li>
+  <li><strong>NOWEB</strong> — halka engine, kam RAM. (Alternative)</li>
+</ul>
+
+<h2>2. Prerequisites (Pehle se zaroori cheezein)</h2>
+<table>
+  <tr><th>Requirement</th><th>Detail</th></tr>
+  <tr><td>Windows 11</td><td>Pro / Home (64-bit), virtualization BIOS mein ON</td></tr>
+  <tr><td>Docker Desktop</td><td>Aapne already install kar liya hai ✔ — WSL2 backend enabled hona chahiye</td></tr>
+  <tr><td>RAM</td><td>Minimum 4 GB free (WEBJS Chromium chalata hai)</td></tr>
+  <tr><td>A WhatsApp number</td><td>Jis se messages bhejne hain — uska phone QR scan ke liye paas ho</td></tr>
+  <tr><td>Internet</td><td>Docker image pull karne ke liye</td></tr>
+</table>
+
+<div class="tip"><strong>Docker check:</strong> PowerShell kholain aur confirm karein Docker chal raha hai:
+<pre><code>docker --version
+docker info</code></pre>
+Agar error aaye to Docker Desktop app open karke "Engine running" hone ka intezar karein.</div>
+
+<h2>3. WAHA Docker image pull karein</h2>
+<p>Do versions hain:</p>
+<table>
+  <tr><th>Image</th><th>Note</th></tr>
+  <tr><td><code>devlikeapro/waha</code></td><td><strong>Core (free)</strong> — NOWEB + WEBJS engine, text/file bhejne ke liye kaafi. EasySchool ke liye yehi use karein.</td></tr>
+  <tr><td><code>devlikeapro/waha-plus</code></td><td>Plus (paid) — extra features (groups bulk, media history). License chahiye.</td></tr>
+</table>
+
+<pre><code># PowerShell mein:
+docker pull devlikeapro/waha</code></pre>
+
+<h2>4. WAHA container chalayein (WEBJS engine ke sath)</h2>
+<p>Yeh sabse important command hai. <code>WHATSAPP_DEFAULT_ENGINE=WEBJS</code> se WEBJS engine force hoti hai, aur <code>WAHA_API_KEY</code> aapki app ke <code>X-Api-Key</code> se match hona chahiye.</p>
+
+<pre><code>docker run -d `
+  --name waha `
+  --restart always `
+  -p 3000:3000 `
+  -e WHATSAPP_DEFAULT_ENGINE=WEBJS `
+  -e WAHA_API_KEY=4c4662668dff4e48997492b11d4e7754 `
+  -e WHATSAPP_HOOK_EVENTS=session.status `
+  -e WAHA_PRINT_QR=false `
+  -v waha_sessions:/app/.sessions `
+  devlikeapro/waha</code></pre>
+
+<div class="note"><strong>Command samjhein:</strong>
+<ul>
+  <li><code>-d</code> — background mein chalayega</li>
+  <li><code>--restart always</code> — PC restart hone par container khud start ho jayega</li>
+  <li><code>-p 3000:3000</code> — WAHA <code>http://localhost:3000</code> par milega</li>
+  <li><code>WHATSAPP_DEFAULT_ENGINE=WEBJS</code> — WEBJS engine</li>
+  <li><code>WAHA_API_KEY=...</code> — yeh wahi key hai jo aapki <code>appsettings.json</code> mein hai. Iske bina API protected nahi hogi.</li>
+  <li><code>-v waha_sessions:/app/.sessions</code> — session data save rahega taa-ke har restart par dobara QR scan na karna pade</li>
+</ul>
+</div>
+
+<div class="warn"><strong>PowerShell note:</strong> Upar backtick <code>`</code> line continuation ke liye hai. Agar masla ho to poori command ek hi line mein likh dein (har <code>`</code> hata kar). CMD mein continuation ke liye <code>^</code> use hota hai.</div>
+
+<h3>Ek line wali (copy-paste safe) version:</h3>
+<pre><code>docker run -d --name waha --restart always -p 3000:3000 -e WHATSAPP_DEFAULT_ENGINE=WEBJS -e WAHA_API_KEY=4c4662668dff4e48997492b11d4e7754 -v waha_sessions:/app/.sessions devlikeapro/waha</code></pre>
+
+<h2>5. (Alternative) docker-compose se chalayein</h2>
+<p>Agar aap config file mein rakhna chahte hain to ek file <code>docker-compose.yml</code> banayein:</p>
+<pre><code>services:
+  waha:
+    image: devlikeapro/waha
+    container_name: waha
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - WHATSAPP_DEFAULT_ENGINE=WEBJS
+      - WAHA_API_KEY=4c4662668dff4e48997492b11d4e7754
+      - WAHA_PRINT_QR=false
+    volumes:
+      - waha_sessions:/app/.sessions
+
+volumes:
+  waha_sessions:</code></pre>
+<p>Phir us folder mein:</p>
+<pre><code>docker compose up -d</code></pre>
+
+<h2>6. Container chal raha hai confirm karein</h2>
+<pre><code>docker ps
+docker logs -f waha</code></pre>
+<p><code>docker ps</code> mein <code>waha</code> ka status <code>Up</code> hona chahiye. Logs band karne ke liye <code>Ctrl + C</code>.</p>
+
+<h2>7. WAHA Dashboard aur Swagger kholain</h2>
+<p>Browser mein jayein:</p>
+<table>
+  <tr><th>URL</th><th>Kya hai</th></tr>
+  <tr><td><code>http://localhost:3000/dashboard</code></td><td>Web dashboard — sessions, QR, status</td></tr>
+  <tr><td><code>http://localhost:3000/</code></td><td>Swagger API docs — testing ke liye</td></tr>
+</table>
+<div class="tip">Dashboard ya Swagger login API key maange to wahi key dein: <code>4c4662668dff4e48997492b11d4e7754</code></div>
+
+<h2>8. "default" session banayein aur QR scan karein</h2>
+<p>EasySchool session ka naam <code>default</code> use karti hai. Do tareeqe:</p>
+
+<h3>Tareeqa A — Dashboard se (aasan)</h3>
+<ol>
+  <li><span class="step-num">1</span><code>http://localhost:3000/dashboard</code> kholain</li>
+  <li><span class="step-num">2</span>"Sessions" → session <code>default</code> ko <strong>Start</strong> karein (agar na ho to naya banayein, naam <code>default</code>)</li>
+  <li><span class="step-num">3</span>QR code screen par aayega</li>
+  <li><span class="step-num">4</span>Apne phone par WhatsApp → <strong>Settings → Linked Devices → Link a Device</strong> → QR scan karein</li>
+  <li><span class="step-num">5</span>Status <code>WORKING</code> ho jaye to ready hai ✔</li>
+</ol>
+
+<h3>Tareeqa B — API se (Swagger / PowerShell)</h3>
+<pre><code># 1) Session start karein
+curl -X POST http://localhost:3000/api/sessions/default/start `
+  -H "X-Api-Key: 4c4662668dff4e48997492b11d4e7754"
+
+# 2) QR code haasil karein (browser mein bhi khol sakte hain)
+#    http://localhost:3000/api/default/auth/qr  (X-Api-Key header ke sath)
+
+# 3) Status check karein — "WORKING" aana chahiye
+curl http://localhost:3000/api/sessions/default `
+  -H "X-Api-Key: 4c4662668dff4e48997492b11d4e7754"</code></pre>
+
+<div class="warn"><strong>WEBJS pehli dafa:</strong> Engine Chromium download/launch karti hai, is liye QR aane mein 20–60 second lag sakte hain. Sabar karein. Agar QR expire ho jaye to refresh karein.</div>
+
+<h2>9. EasySchool ko WAHA se connect karein</h2>
+<p>File: <code>School.API/appsettings.json</code>. Aapki app currently <code>Wasender</code> section parhti hai (historical naam) aur <code>Waha</code> section ko fallback rakhti hai. Local WAHA point karne ke liye <code>BaseUrl</code> ko localhost par set karein:</p>
+
+<pre><code>"Wasender": {
+  "BaseUrl": "http://localhost:3000",
+  "Session": "default",
+  "CountryCode": "92",
+  "ApiKey": "4c4662668dff4e48997492b11d4e7754"
+}</code></pre>
+
+<table>
+  <tr><th>Setting</th><th>Value</th><th>Wajah</th></tr>
+  <tr><td>BaseUrl</td><td><code>http://localhost:3000</code></td><td>Local Docker WAHA</td></tr>
+  <tr><td>Session</td><td><code>default</code></td><td>Step 8 wala session</td></tr>
+  <tr><td>CountryCode</td><td><code>92</code></td><td>Pakistan — number ko <code>92xxxxxxxxxx@c.us</code> banata hai</td></tr>
+  <tr><td>ApiKey</td><td>(WAHA_API_KEY jaisa)</td><td>Header <code>X-Api-Key</code> mein jata hai</td></tr>
+</table>
+
+<div class="warn"><strong>Important:</strong> <code>appsettings.json</code> ki <code>ApiKey</code> aur container ka <code>WAHA_API_KEY</code> <strong>bilkul same</strong> hone chahiyein, warna <code>401 Unauthorized</code> aayega.</div>
+
+<h2>10. Test message bhejein</h2>
+<p>Direct WAHA test (apna number daalein, <code>92</code> ke sath, bina <code>0</code> ke):</p>
+<pre><code>curl -X POST http://localhost:3000/api/sendText `
+  -H "X-Api-Key: 4c4662668dff4e48997492b11d4e7754" `
+  -H "Content-Type: application/json" `
+  -d '{ "session": "default", "chatId": "923001234567@c.us", "text": "EasySchool WAHA test ✅" }'</code></pre>
+<p>Agar WhatsApp par message aa gaya to setup mukammal hai. Ab EasySchool API (<code>dotnet run --project School.API</code>) ke through SMS/WhatsApp features kaam karenge.</p>
+
+<h2>11. Container manage karne ke commands</h2>
+<table>
+  <tr><th>Kaam</th><th>Command</th></tr>
+  <tr><td>Status dekhein</td><td><code>docker ps</code></td></tr>
+  <tr><td>Logs dekhein</td><td><code>docker logs -f waha</code></td></tr>
+  <tr><td>Stop karein</td><td><code>docker stop waha</code></td></tr>
+  <tr><td>Start karein</td><td><code>docker start waha</code></td></tr>
+  <tr><td>Restart</td><td><code>docker restart waha</code></td></tr>
+  <tr><td>Remove (session volume rahega)</td><td><code>docker rm -f waha</code></td></tr>
+  <tr><td>Session data delete (dobara QR)</td><td><code>docker volume rm waha_sessions</code></td></tr>
+</table>
+
+<h2>12. Troubleshooting</h2>
+<table>
+  <tr><th>Masla</th><th>Hal</th></tr>
+  <tr><td><code>401 Unauthorized</code></td><td>API key mismatch — container ka <code>WAHA_API_KEY</code> aur appsettings ki <code>ApiKey</code> same karein. Header <code>X-Api-Key</code> bhejna zaroori.</td></tr>
+  <tr><td>QR nahi aa raha</td><td>WEBJS Chromium load ho rahi hai — 1 min wait, phir <code>docker logs waha</code> dekhein. RAM kam ho to dusri heavy apps band karein.</td></tr>
+  <tr><td>Session <code>FAILED</code> / <code>STOPPED</code></td><td>Session stop karke dobara start karein. Zaroorat par <code>docker volume rm waha_sessions</code> kar ke fresh QR scan.</td></tr>
+  <tr><td>Message nahi ja raha</td><td>Session status <code>WORKING</code> confirm karein. Number format <code>92xxxxxxxxxx@c.us</code> ho (leading 0 nahi).</td></tr>
+  <tr><td>Port 3000 already in use</td><td>Dusra port: <code>-p 3001:3000</code> aur <code>BaseUrl</code> ko <code>http://localhost:3001</code> karein.</td></tr>
+  <tr><td>PC restart ke baad band</td><td><code>--restart always</code> diya ho to khud start hoga. Docker Desktop "Start on login" enable rakhein.</td></tr>
+  <tr><td>Phone disconnect ho jata hai</td><td>Jis phone se QR scan kiya us mein internet on rahe; WhatsApp ko background mein band na karein.</td></tr>
+</table>
+
+<div class="tip"><strong>Production tip:</strong> Live server par <code>BaseUrl</code> ko <code>https://waha-messaging.dev.crymzee.com</code> (ya aapka domain) rakhein aur localhost sirf development ke liye use karein.</div>
+
+<div class="footer">
+EasySchool Management System — WAHA (WEBJS) Setup Guide • Windows 11 + Docker • Generated 2026-06-12<br>
+Reference: WAHA docs — https://waha.devlike.pro &nbsp;|&nbsp; Engine: whatsapp-web.js (WEBJS)
+</div>
+
+</body>
+</html>

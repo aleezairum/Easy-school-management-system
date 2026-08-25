@@ -1,0 +1,367 @@
+@{
+    ViewData["Title"] = "WhatsApp Messages";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<div class="container-fluid">
+
+    <!-- ── SUMMARY TILES ── -->
+    <div class="row g-3 mb-3">
+        <div class="col-6 col-lg-3">
+            <div class="p-3" style="background:#eef2ff;border:1px solid #c7d2fe;border-radius:12px;">
+                <div class="text-secondary" style="font-size:12px;">Total</div>
+                <div class="fw-bold" style="font-size:22px;" id="tileTotal">0</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="p-3" style="background:#fefce8;border:1px solid #fde68a;border-radius:12px;">
+                <div class="text-secondary" style="font-size:12px;">Pending</div>
+                <div class="fw-bold text-warning" style="font-size:22px;" id="tilePending">0</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="p-3" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;">
+                <div class="text-secondary" style="font-size:12px;">Sent</div>
+                <div class="fw-bold text-success" style="font-size:22px;" id="tileSent">0</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="p-3" style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;">
+                <div class="text-secondary" style="font-size:12px;">Failed</div>
+                <div class="fw-bold text-danger" style="font-size:22px;" id="tileFailed">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" style="border-radius:16px;border:none;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+        <div class="card-body">
+
+            <!-- ── FILTERS ── -->
+            <div class="row g-2 align-items-end mb-3">
+                <div class="col-6 col-lg-2">
+                    <label class="form-label mb-1" style="font-size:12px;">From Date</label>
+                    <input type="date" class="form-control form-control-sm" id="fFromDate" />
+                </div>
+                <div class="col-6 col-lg-2">
+                    <label class="form-label mb-1" style="font-size:12px;">To Date</label>
+                    <input type="date" class="form-control form-control-sm" id="fToDate" />
+                </div>
+                <div class="col-6 col-lg-2">
+                    <label class="form-label mb-1" style="font-size:12px;">Type</label>
+                    <select class="form-select form-select-sm" id="fMessageType">
+                        <option value="">All</option>
+                        <option value="1">Staff</option>
+                        <option value="2">General</option>
+                        <option value="3">Absent</option>
+                        <option value="4">Late</option>
+                        <option value="5">Fee</option>
+                        <option value="6">Result</option>
+                        <option value="7">From To</option>
+                        <option value="8">Excel</option>
+                        <option value="9">Result Card</option>
+                    </select>
+                </div>
+                <div class="col-6 col-lg-2">
+                    <label class="form-label mb-1" style="font-size:12px;">Status</label>
+                    <select class="form-select form-select-sm" id="fStatus">
+                        <option value="">All</option>
+                        <option value="0">Pending</option>
+                        <option value="1">Sent</option>
+                        <option value="2">Failed</option>
+                    </select>
+                </div>
+                <div class="col-6 col-lg-2">
+                    <label class="form-label mb-1" style="font-size:12px;">Delivery</label>
+                    <select class="form-select form-select-sm" id="fDeliveryStatus">
+                        <option value="">All</option>
+                        <option value="accepted">Accepted</option>
+                        <option value="sent">Sent</option>
+                        <option value="delivered">Delivered</option>
+                        <option value="read">Read</option>
+                        <option value="failed">Failed</option>
+                    </select>
+                </div>
+                <div class="col-6 col-lg-2">
+                    <label class="form-label mb-1" style="font-size:12px;">Search</label>
+                    <input type="text" class="form-control form-control-sm" id="fSearch" placeholder="Phone or name" />
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 mb-3">
+                <button type="button" class="btn btn-sm btn-primary" onclick="loadMessages(1)">
+                    <i class="bi bi-search me-1"></i>Search
+                </button>
+                <button type="button" class="btn btn-sm btn-secondary" onclick="clearFilters()">
+                    <i class="bi bi-x-lg me-1"></i>Clear
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="loadMessages(currentPage)">
+                    <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+                </button>
+                <div class="ms-auto d-flex align-items-center gap-2">
+                    <label class="mb-0 text-secondary" style="font-size:12px;">Page size</label>
+                    <select class="form-select form-select-sm" id="fPageSize" style="width:auto;" onchange="loadMessages(1)">
+                        <option value="25">25</option>
+                        <option value="50" selected>50</option>
+                        <option value="100">100</option>
+                        <option value="200">200</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- ── GRID ── -->
+            <div class="table-responsive" style="max-height:60vh;overflow:auto;">
+                <table class="table table-sm table-hover align-middle mb-0">
+                    <thead class="table-light" style="position:sticky;top:0;z-index:1;">
+                        <tr style="font-size:12px;">
+                            <th style="width:60px;">#</th>
+                            <th style="width:150px;">Date</th>
+                            <th style="width:130px;">Phone</th>
+                            <th style="width:160px;">Name</th>
+                            <th style="width:90px;">Type</th>
+                            <th style="width:110px;">Template</th>
+                            <th>Message</th>
+                            <th style="width:80px;">Provider</th>
+                            <th style="width:90px;">Status</th>
+                            <th style="width:100px;">Delivery</th>
+                            <th style="width:70px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="messagesBody" style="font-size:13px;">
+                        <tr><td colspan="10" class="text-center text-muted py-4">Loading…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ── PAGER ── -->
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <small class="text-muted" id="pagerInfo">—</small>
+                <div class="btn-group btn-group-sm">
+                    <button type="button" class="btn btn-outline-secondary" id="btnPrev" onclick="gotoPage(currentPage-1)">
+                        <i class="bi bi-chevron-left"></i> Prev
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" id="btnNext" onclick="gotoPage(currentPage+1)">
+                        Next <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ── DETAIL MODAL ── -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content" style="border-radius:14px;">
+            <div class="modal-header">
+                <h6 class="modal-title fw-semibold"><i class="bi bi-whatsapp text-success me-2"></i>Message Detail</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="detailBody"></div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let currentPage = 1;
+        let totalPages = 1;
+
+        function esc(v) {
+            if (v === null || v === undefined) return '';
+            return String(v)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function fmtDate(v) {
+            if (!v) return '';
+            const d = new Date(v);
+            if (isNaN(d)) return esc(v);
+            const p = n => String(n).padStart(2, '0');
+            return `${p(d.getDate())}-${p(d.getMonth() + 1)}-${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+        }
+
+        function statusBadge(s) {
+            const map = { Sent: 'bg-success', Failed: 'bg-danger', Pending: 'bg-warning text-dark' };
+            return `<span class="badge ${map[s] || 'bg-secondary'}">${esc(s)}</span>`;
+        }
+
+        function deliveryBadge(d) {
+            if (!d) return '<span class="text-muted">—</span>';
+            const map = {
+                accepted: 'bg-info text-dark', sent: 'bg-primary',
+                delivered: 'bg-success', read: 'bg-dark', failed: 'bg-danger'
+            };
+            return `<span class="badge ${map[d] || 'bg-secondary'}">${esc(d)}</span>`;
+        }
+
+        function buildQuery(page) {
+            const p = new URLSearchParams();
+            p.set('page', page);
+            p.set('pageSize', $('#fPageSize').val() || 50);
+
+            const map = {
+                fromDate: '#fFromDate', toDate: '#fToDate', messageType: '#fMessageType',
+                status: '#fStatus', deliveryStatus: '#fDeliveryStatus', search: '#fSearch'
+            };
+            for (const [key, sel] of Object.entries(map)) {
+                const val = $(sel).val();
+                if (val !== '' && val !== null && val !== undefined) p.set(key, val);
+            }
+            return p.toString();
+        }
+
+        async function loadMessages(page) {
+            currentPage = page < 1 ? 1 : page;
+            $('#messagesBody').html('<tr><td colspan="10" class="text-center text-muted py-4">Loading…</td></tr>');
+
+            try {
+                const resp = await fetch(`${API_BASE}/Sms/messages?${buildQuery(currentPage)}`);
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                const result = await resp.json();
+
+                $('#tileTotal').text(result.total || 0);
+                $('#tilePending').text(result.pending || 0);
+                $('#tileSent').text(result.sent || 0);
+                $('#tileFailed').text(result.failed || 0);
+
+                const rows = result.data || [];
+                if (rows.length === 0) {
+                    $('#messagesBody').html('<tr><td colspan="11" class="text-center text-muted py-4">No messages found</td></tr>');
+                } else {
+                    $('#messagesBody').html(rows.map(renderRow).join(''));
+                }
+
+                const pageSize = result.pageSize || 50;
+                totalPages = Math.max(1, Math.ceil((result.total || 0) / pageSize));
+                const from = (result.total || 0) === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+                const to = Math.min(currentPage * pageSize, result.total || 0);
+                $('#pagerInfo').text(`Showing ${from}–${to} of ${result.total || 0} · Page ${currentPage} of ${totalPages}`);
+                $('#btnPrev').prop('disabled', currentPage <= 1);
+                $('#btnNext').prop('disabled', currentPage >= totalPages);
+            } catch (ex) {
+                console.error(ex);
+                $('#messagesBody').html('<tr><td colspan="11" class="text-center text-danger py-4">Failed to load messages</td></tr>');
+            }
+        }
+
+        function renderRow(m) {
+            const body = m.fullMessage || m.messageText || '';
+            const preview = body.length > 90 ? body.substring(0, 90) + '…' : body;
+            const template = m.templateName
+                ? `<span class="badge bg-light text-dark border">${esc(m.templateName)}</span>`
+                : '<span class="text-muted">—</span>';
+            const clip = m.hasAttachment ? '<i class="bi bi-paperclip text-secondary me-1"></i>' : '';
+            const providerBadge = m.provider
+                ? `<span class="badge ${m.provider === 'Waha' ? 'bg-success' : 'bg-info text-dark'}">${esc(m.provider)}</span>`
+                : '<span class="text-muted">—</span>';
+
+            return `<tr>
+                <td class="text-muted">${m.vid}</td>
+                <td>${fmtDate(m.insertedDate)}</td>
+                <td>${esc(m.recipientPhone)}</td>
+                <td>${esc(m.recipientName || '')}</td>
+                <td><span class="badge bg-light text-dark border">${esc(m.messageType)}</span></td>
+                <td>${template}</td>
+                <td class="text-muted" style="white-space:pre-wrap;">${clip}${esc(preview)}</td>
+                <td>${providerBadge}</td>
+                <td>${statusBadge(m.status)}</td>
+                <td>${deliveryBadge(m.deliveryStatus)}</td>
+                <td><button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" onclick="showDetail(${m.vid})">
+                        <i class="bi bi-eye"></i></button></td>
+            </tr>`;
+        }
+
+        function row(label, value) {
+            if (value === null || value === undefined || value === '') return '';
+            return `<div class="row mb-2">
+                        <div class="col-4 text-secondary" style="font-size:13px;">${esc(label)}</div>
+                        <div class="col-8" style="font-size:13px;">${value}</div>
+                    </div>`;
+        }
+
+        async function showDetail(vid) {
+            $('#detailBody').html('<div class="text-center text-muted py-4">Loading…</div>');
+            new bootstrap.Modal(document.getElementById('detailModal')).show();
+
+            try {
+                const resp = await fetch(`${API_BASE}/Sms/messages/${vid}`);
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                const m = await resp.json();
+
+                const params = (m.templateParams || []).length
+                    ? '<ol class="mb-0 ps-3">' + m.templateParams.map(p => `<li>${esc(p)}</li>`).join('') + '</ol>'
+                    : '<span class="text-muted">—</span>';
+
+                let html = '';
+                html += row('Recipient', `${esc(m.recipientName || '')} <span class="text-muted">${esc(m.recipientPhone)}</span>`);
+                html += row('Type', esc(m.messageType));
+                html += row('Status', statusBadge(m.status));
+                html += row('Delivery', deliveryBadge(m.deliveryStatus));
+                html += row('Queued At', fmtDate(m.insertedDate));
+                html += row('Sent At', fmtDate(m.sentAt));
+                html += row('Delivered At', fmtDate(m.deliveredAt));
+                html += row('Read At', fmtDate(m.readAt));
+                html += row('Provider', esc(m.provider));
+                html += row('Provider Msg Id', `<code style="font-size:11px;">${esc(m.providerMessageId || '')}</code>`);
+                html += row('Job Id', `<code style="font-size:11px;">${esc(m.jobId || '')}</code>`);
+
+                html += '<hr/>';
+                html += row('Template', m.templateName
+                    ? `<span class="badge bg-light text-dark border">${esc(m.templateName)}</span>
+                       <span class="text-muted ms-1">${esc(m.templateLanguage || '')}</span>`
+                    : '<span class="text-muted">Free-form text (no template)</span>');
+                html += row('Parameters Sent', params);
+
+                html += '<hr/>';
+                html += `<div class="text-secondary mb-1" style="font-size:13px;">Complete Message</div>
+                         <div class="p-2" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;
+                              white-space:pre-wrap;font-size:13px;">${esc(m.fullMessage || m.messageText || '')}</div>`;
+
+                if (m.errorMessage || m.errorCode) {
+                    html += '<hr/>';
+                    html += row('Error Code', `<code>${esc(m.errorCode || '')}</code>`);
+                    html += `<div class="text-danger mt-1" style="font-size:13px;white-space:pre-wrap;">${esc(m.errorMessage || '')}</div>`;
+                }
+
+                if (m.providerResponse) {
+                    html += `<details class="mt-3">
+                                <summary class="text-secondary" style="font-size:12px;cursor:pointer;">Raw provider response</summary>
+                                <pre class="mt-2 p-2" style="background:#0f172a;color:#e2e8f0;border-radius:8px;
+                                     font-size:11px;white-space:pre-wrap;">${esc(m.providerResponse)}</pre>
+                             </details>`;
+                }
+
+                $('#detailBody').html(html);
+            } catch (ex) {
+                console.error(ex);
+                $('#detailBody').html('<div class="text-danger text-center py-4">Failed to load message detail</div>');
+            }
+        }
+
+        function gotoPage(page) {
+            if (page < 1 || page > totalPages) return;
+            loadMessages(page);
+        }
+
+        function clearFilters() {
+            $('#fFromDate,#fToDate,#fSearch').val('');
+            $('#fMessageType,#fStatus,#fDeliveryStatus').val('');
+            loadMessages(1);
+        }
+
+        $(function () {
+            // Default to the last 7 days so the page opens on recent traffic.
+            const today = new Date();
+            const weekAgo = new Date(today.getTime() - 6 * 24 * 60 * 60 * 1000);
+            const iso = d => d.toISOString().substring(0, 10);
+            $('#fFromDate').val(iso(weekAgo));
+            $('#fToDate').val(iso(today));
+
+            $('#fSearch').on('keyup', e => { if (e.key === 'Enter') loadMessages(1); });
+
+            loadMessages(1);
+        });
+    </script>
+}

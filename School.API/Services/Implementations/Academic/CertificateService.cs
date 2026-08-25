@@ -18,8 +18,10 @@ namespace School.API.Services.Implementations.Academic
             DateTime? leavingDate,
             string? examination,
             string? marksObtained,
-            string? totalMarks)
-            => _repo.GetLeavingAsync(studentId, leavingDate, examination, marksObtained, totalMarks);
+            string? totalMarks,
+            string? classAdmitted,
+            string? classStudying)
+            => _repo.GetLeavingAsync(studentId, leavingDate, examination, marksObtained, totalMarks, classAdmitted, classStudying);
 
         public Task<ProvisionalCertificateDto?> GetProvisionalAsync(
             int studentId,

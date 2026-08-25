@@ -91,10 +91,45 @@ public class ExamResultController : ControllerBase
         return Ok(report);
     }
 
-    [HttpGet("announcement-report")]
-    public async Task<IActionResult> GetAnnouncementReport([FromQuery] int examId)
+    [HttpGet("subject-wise-report")]
+    public async Task<IActionResult> GetSubjectWiseReport(
+        [FromQuery] int examId,
+        [FromQuery] string? classIds = null,
+        [FromQuery] string? sectionIds = null)
     {
-        var report = await _service.GetAnnouncementReportAsync(examId);
+        var rows = await _service.GetSubjectWiseReportAsync(examId, classIds, sectionIds);
+        return Ok(rows);
+    }
+
+    [HttpGet("teacher-wise-report")]
+    public async Task<IActionResult> GetTeacherWiseReport(
+        [FromQuery] int examId,
+        [FromQuery] int teacherId = 0)
+    {
+        var rows = await _service.GetTeacherWiseReportAsync(examId, teacherId);
+        return Ok(rows);
+    }
+
+    [HttpGet("teacher-comparison-report")]
+    public async Task<IActionResult> GetTeacherComparisonReport(
+        [FromQuery] int examId,
+        [FromQuery] string? lClassIds = null,
+        [FromQuery] string? lSectionIds = null,
+        [FromQuery] string? rClassIds = null,
+        [FromQuery] string? rSectionIds = null)
+    {
+        var rows = await _service.GetTeacherComparisonReportAsync(
+            examId, lClassIds, lSectionIds, rClassIds, rSectionIds);
+        return Ok(rows);
+    }
+
+    [HttpGet("announcement-report")]
+    public async Task<IActionResult> GetAnnouncementReport(
+        [FromQuery] int examId,
+        [FromQuery] string? classIds = null,
+        [FromQuery] string? sectionIds = null)
+    {
+        var report = await _service.GetAnnouncementReportAsync(examId, classIds, sectionIds);
         return Ok(report);
     }
 

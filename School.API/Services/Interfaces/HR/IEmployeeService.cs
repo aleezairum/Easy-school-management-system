@@ -1,14 +1,14 @@
-using School.API.DTOs;
+using School.API.DTOs.HR;
 
 namespace School.API.Services.Interfaces.HR
 {
     public interface IEmployeeService
     {
-        //Task<IEnumerable<EmployeeListDto>> GetAllAsync();
-        //Task<EmployeeDto?> GetByIdAsync(int id);
-        //Task<EmployeeDto> CreateAsync(CreateEmployeeDto dto);
-        //Task<EmployeeDto?> UpdateAsync(int id, UpdateEmployeeDto dto);
-        //Task<bool> DeleteAsync(int id);
-        //Task<IEnumerable<EmployeeDropdownDto>> GetDropdownAsync();
+        Task<List<EmployeeListDto>> GetAllAsync();
+        Task<EmployeeDto?> GetByIdAsync(int id);
+        Task<List<EmployeeDropdownDto>> GetDropdownAsync();
+        Task<EmployeeDto> CreateAsync(SaveEmployeeDto dto);
+        Task<EmployeeDto?> UpdateAsync(int id, SaveEmployeeDto dto);
+        Task<bool> DeleteAsync(int id);
     }
 }

@@ -1,6 +1,10 @@
+using System.Globalization;
+using System.Text.Json;
 using School.API.Data.DBModels.SMS;
 using School.API.Repositories.Interfaces;
+using School.API.Services.Implementations.Academic;
 using School.API.Services.Interfaces;
+using School.API.Services.Interfaces.Academic;
 
 namespace School.API.BackgroundJobs
 {
@@ -31,14 +35,14 @@ namespace School.API.BackgroundJobs
         {
             _scopeFactory = scopeFactory;
             _logger = logger;
-            _minDelayMs      = config.GetValue<int?>("Waha:Throttle:MinDelayMs") ?? 8000;
-            _maxDelayMs      = config.GetValue<int?>("Waha:Throttle:MaxDelayMs") ?? 12000;
-            _batchSize       = config.GetValue<int?>("Waha:Queue:BatchSize") ?? 20;
-            _idleSleepMs     = config.GetValue<int?>("Waha:Queue:IdleSleepMs") ?? 5000;
-            _enabled         = config.GetValue<bool?>("Waha:Queue:Enabled") ?? true;
-            _cooldownAfter   = config.GetValue<int?>("Waha:Throttle:CooldownAfter") ?? 30;
-            _cooldownMinMs   = config.GetValue<int?>("Waha:Throttle:CooldownMinMs") ?? 180_000;
-            _cooldownMaxMs   = config.GetValue<int?>("Waha:Throttle:CooldownMaxMs") ?? 300_000;
+            _minDelayMs      = config.GetValue<int?>("Wasender:Throttle:MinDelayMs") ?? 8000;
+            _maxDelayMs      = config.GetValue<int?>("Wasender:Throttle:MaxDelayMs") ?? 12000;
+            _batchSize       = config.GetValue<int?>("Wasender:Queue:BatchSize") ?? 20;
+            _idleSleepMs     = config.GetValue<int?>("Wasender:Queue:IdleSleepMs") ?? 5000;
+            _enabled         = config.GetValue<bool?>("Wasender:Queue:Enabled") ?? true;
+            _cooldownAfter   = config.GetValue<int?>("Wasender:Throttle:CooldownAfter") ?? 30;
+            _cooldownMinMs   = config.GetValue<int?>("Wasender:Throttle:CooldownMinMs") ?? 180_000;
+            _cooldownMaxMs   = config.GetValue<int?>("Wasender:Throttle:CooldownMaxMs") ?? 300_000;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -50,7 +54,7 @@ namespace School.API.BackgroundJobs
 
             if (!_enabled)
             {
-                _logger.LogWarning("SmsQueueProcessor is disabled (Waha:Queue:Enabled=false). Exiting.");
+                _logger.LogWarning("SmsQueueProcessor is disabled (Wasender:Queue:Enabled=false). Exiting.");
                 return;
             }
 
@@ -98,11 +102,42 @@ namespace School.API.BackgroundJobs
                 var msg = batch[i];
                 try
                 {
-                    bool ok = await sender.SendAsync(msg.RecipientPhone, msg.MessageText);
-                    await repo.UpdateStatusAsync(
+                    // Build the outgoing template request. Result cards attach a
+                    // freshly rendered PDF and result texts are composed here, so
+                    // both can also produce parameters/body not known at enqueue.
+                    BuiltMessage built;
+                    if (msg.MessageType == SmsMessageType.Rcard)
+                        built = await BuildResultCardAsync(scope.ServiceProvider, msg);
+                    else if (msg.MessageType == SmsMessageType.Result && msg.RefStudentId.HasValue)
+                        built = await BuildResultTextAsync(scope.ServiceProvider, msg);
+                    else
+                        built = BuildPlain(msg);
+
+                    var outcome = built.Error is null
+                        ? await sender.SendTemplateAsync(msg.RecipientPhone, built.Request!)
+                        : SmsSendOutcome.Fail(built.Error);
+
+                    await repo.UpdateSendResultAsync(
                         msg.VID,
-                        ok ? SmsStatus.Sent : SmsStatus.Failed,
-                        ok ? null : "Sender returned false");
+                        outcome.Success ? SmsStatus.Sent : SmsStatus.Failed,
+                        outcome,
+                        sender.ProviderName,
+                        built.FullMessage,
+                        built.TemplateParamsJson);
+
+                    // Mirror the send into the contact's chat thread so the
+                    // WhatsApp view shows the full history, not just replies.
+                    if (outcome.Success)
+                    {
+                        var chat = scope.ServiceProvider.GetRequiredService<IWhatsAppChatService>();
+                        await chat.MirrorOutboundAsync(
+                            msg.RecipientPhone,
+                            built.FullMessage ?? msg.MessageText,
+                            outcome.ProviderMessageId,
+                            msg.TemplateName,
+                            "accepted",
+                            msg.VID);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -136,6 +171,183 @@ namespace School.API.BackgroundJobs
 
             return true;
         }
+
+        // What one queued row turns into just before it is handed to the sender:
+        // the outgoing request plus anything computed here that must be written
+        // back to the row (rendered body, template parameters).
+        private sealed class BuiltMessage
+        {
+            public SmsTemplateRequest? Request { get; init; }
+            public string? FullMessage { get; init; }
+            public string? TemplateParamsJson { get; init; }
+
+            // Set when the row cannot be sent at all (missing data); the sender
+            // is skipped and this becomes the row's error.
+            public string? Error { get; init; }
+
+            public static BuiltMessage Failed(string error) => new() { Error = error };
+        }
+
+        // Ordinary text/template row: everything was resolved at enqueue time.
+        private static BuiltMessage BuildPlain(SmsMessage msg)
+        {
+            var body = string.IsNullOrWhiteSpace(msg.FullMessage) ? msg.MessageText : msg.FullMessage!;
+
+            return new BuiltMessage
+            {
+                Request = new SmsTemplateRequest
+                {
+                    Name = msg.TemplateName ?? string.Empty,
+                    Language = msg.TemplateLanguage ?? "en",
+                    BodyParams = DeserializeParams(msg.TemplateParams),
+                    RenderedText = body,
+                    MessageType = msg.MessageType
+                },
+                FullMessage = body
+            };
+        }
+
+        // Generates the student's result-card PDF (on demand, honoring throttle)
+        // and attaches it as the template's document header, with the row's
+        // caption as the body.
+        private async Task<BuiltMessage> BuildResultCardAsync(IServiceProvider sp, SmsMessage msg)
+        {
+            if (msg.RefExamId is null || msg.RefStudentId is null)
+                return BuiltMessage.Failed("Missing exam/student reference for result card");
+
+            var examResultService = sp.GetRequiredService<ISMSExamResultService>();
+            var pdfRenderer       = sp.GetRequiredService<IPdfRenderer>();
+
+            var card = await examResultService.GetResultCardAsync(
+                msg.RefExamId.Value,
+                msg.RefClassId ?? 0,
+                msg.RefSectionId ?? 0,
+                0,
+                msg.RefStudentId.Value);
+
+            var student = card?.Students?.FirstOrDefault();
+            if (student is null)
+                return BuiltMessage.Failed("No result-card data for this student/exam");
+
+            var html = ResultCardHtmlBuilder.Build(student, msg.RefExamName);
+            var pdf  = await pdfRenderer.RenderHtmlToPdfAsync(html);
+
+            var safeRoll = string.Concat((student.RollNo ?? msg.RefStudentId.ToString())
+                .Where(c => char.IsLetterOrDigit(c)));
+            var fileName = $"ResultCard_{safeRoll}.pdf";
+
+            // result_card takes {{1}} Student Name, {{2}} Class. These are
+            // stamped at enqueue time; rebuild them only for rows that predate
+            // that (or were queued before a template was configured).
+            var parameters = DeserializeParams(msg.TemplateParams);
+            if (parameters.Count == 0)
+                parameters = new List<string>
+                {
+                    student.StudentName ?? string.Empty,
+                    ClassWithSection(student.ClassName, student.SectionName)
+                };
+
+            return new BuiltMessage
+            {
+                Request = new SmsTemplateRequest
+                {
+                    Name = msg.TemplateName ?? string.Empty,
+                    Language = msg.TemplateLanguage ?? "en",
+                    BodyParams = parameters,
+                    RenderedText = msg.MessageText,
+                    DocumentBytes = pdf,
+                    DocumentFileName = fileName,
+                    DocumentMimeType = "application/pdf",
+                    MessageType = msg.MessageType
+                },
+                FullMessage = msg.MessageText,
+                TemplateParamsJson = JsonSerializer.Serialize(parameters)
+            };
+        }
+
+        // Composes the student's result summary as TEXT (at send time).
+        // MessageText carries the optional prefix.
+        private async Task<BuiltMessage> BuildResultTextAsync(IServiceProvider sp, SmsMessage msg)
+        {
+            if (msg.RefExamId is null || msg.RefStudentId is null)
+                return BuiltMessage.Failed("Missing exam/student reference for result text");
+
+            var examResultService = sp.GetRequiredService<ISMSExamResultService>();
+
+            var card = await examResultService.GetResultCardAsync(
+                msg.RefExamId.Value,
+                msg.RefClassId ?? 0,
+                msg.RefSectionId ?? 0,
+                0,
+                msg.RefStudentId.Value);
+
+            var student = card?.Students?.FirstOrDefault();
+            if (student is null)
+                return BuiltMessage.Failed("No result data for this student/exam");
+
+            var prefix = string.IsNullOrWhiteSpace(msg.MessageText) ? null : msg.MessageText;
+            var text = ResultTextBuilder.Build(student, msg.RefExamName, prefix);
+
+            // Marks/position only exist once the result is composed, so the
+            // template parameters are produced here and written back to the row.
+            var parameters = new List<string>
+            {
+                student.StudentName ?? string.Empty,
+                ClassWithSection(student.ClassName, student.SectionName),
+                msg.RefExamName ?? string.Empty,
+                $"{Num(student.GrandObt)}/{Num(student.GrandTotal)}",
+                Pct(student.CurrentPct),
+                student.Position.HasValue ? student.Position.Value.ToString() : "-",
+                student.GrandStatus ?? string.Empty
+            };
+
+            return new BuiltMessage
+            {
+                Request = new SmsTemplateRequest
+                {
+                    Name = msg.TemplateName ?? string.Empty,
+                    Language = msg.TemplateLanguage ?? "en",
+                    BodyParams = parameters,
+                    RenderedText = text,
+                    MessageType = msg.MessageType
+                },
+                FullMessage = text,
+                TemplateParamsJson = JsonSerializer.Serialize(parameters)
+            };
+        }
+
+        private static List<string> DeserializeParams(string? json)
+        {
+            if (string.IsNullOrWhiteSpace(json)) return new List<string>();
+            try
+            {
+                return JsonSerializer.Deserialize<List<string>>(json) ?? new List<string>();
+            }
+            catch (JsonException)
+            {
+                return new List<string>();
+            }
+        }
+
+        // A class is always shown with its section, e.g. "1 G2".
+        private static string ClassWithSection(string? className, string? sectionName)
+        {
+            var parts = new[] { className, sectionName }
+                .Where(p => !string.IsNullOrWhiteSpace(p))
+                .Select(p => p!.Trim());
+
+            return string.Join(" ", parts);
+        }
+
+        private static string Num(decimal? v)
+            => v.HasValue
+                ? (v.Value == Math.Floor(v.Value)
+                    ? ((long)v.Value).ToString(CultureInfo.InvariantCulture)
+                    : v.Value.ToString("0.##", CultureInfo.InvariantCulture))
+                : "-";
+
+        private static string Pct(decimal? v)
+            => v.HasValue ? v.Value.ToString("0.00", CultureInfo.InvariantCulture) + "%" : "-";
 
         private int NextDelayMs()
         {

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>WAHA NOWEB Engine — Docker Setup Guide</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: #1f2933;
+    font-size: 12.5px;
+    line-height: 1.55;
+    margin: 0;
+  }
+  h1 { font-size: 26px; margin: 0 0 4px; color: #0b5394; }
+  h2 {
+    font-size: 17px; color: #0b5394; margin: 26px 0 8px;
+    border-bottom: 2px solid #0b5394; padding-bottom: 4px;
+  }
+  h3 { font-size: 14px; margin: 16px 0 6px; color: #11507a; }
+  p { margin: 6px 0; }
+  code {
+    font-family: "Consolas", "Courier New", monospace;
+    background: #eef2f7; color: #b4002a;
+    padding: 1px 5px; border-radius: 3px; font-size: 11.5px;
+  }
+  pre {
+    background: #1e2733; color: #e6edf3;
+    padding: 12px 14px; border-radius: 6px;
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 11px; line-height: 1.45;
+    overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+    margin: 8px 0;
+  }
+  pre code { background: none; color: inherit; padding: 0; }
+  .lead { color: #52606d; font-size: 13px; margin-bottom: 2px; }
+  .cover {
+    border-left: 5px solid #0b5394; padding-left: 14px; margin-bottom: 8px;
+  }
+  table { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 11.5px; }
+  th, td { border: 1px solid #cbd2d9; padding: 6px 8px; text-align: left; vertical-align: top; }
+  th { background: #0b5394; color: #fff; }
+  tr:nth-child(even) td { background: #f5f7fa; }
+  .note {
+    background: #fff8e1; border-left: 4px solid #f0a500;
+    padding: 8px 12px; margin: 10px 0; border-radius: 4px;
+  }
+  .tip {
+    background: #e8f5e9; border-left: 4px solid #2e7d32;
+    padding: 8px 12px; margin: 10px 0; border-radius: 4px;
+  }
+  .step-num {
+    display: inline-block; background: #0b5394; color: #fff;
+    width: 22px; height: 22px; line-height: 22px; text-align: center;
+    border-radius: 50%; font-weight: bold; margin-right: 6px; font-size: 12px;
+  }
+  ul, ol { margin: 6px 0 6px 0; padding-left: 22px; }
+  li { margin: 3px 0; }
+  .footer { margin-top: 28px; padding-top: 8px; border-top: 1px solid #cbd2d9; color: #7b8794; font-size: 10.5px; }
+  .pill { display:inline-block; background:#e3effb; color:#0b5394; border-radius:10px; padding:1px 9px; font-size:11px; font-weight:600; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <h1>WAHA NOWEB Engine</h1>
+  <p class="lead">Complete Docker Setup Guide — WhatsApp HTTP API for EasySchool</p>
+  <p class="lead"><span class="pill">Engine: NOWEB</span> &nbsp; <span class="pill">Image: devlikeapro/waha</span> &nbsp; <span class="pill">Port: 3000</span></p>
+</div>
+
+<h2>1. What is WAHA &amp; the NOWEB Engine?</h2>
+<p><strong>WAHA</strong> (WhatsApp HTTP API) is a self-hosted server that exposes WhatsApp as a simple REST API.
+EasySchool calls it from <code>WahaSmsSender.cs</code> to send result cards, fee reminders and absent
+notifications via <code>/api/sendText</code> and <code>/api/sendFile</code>.</p>
+
+<p>WAHA can run on different <strong>engines</strong>. <strong>NOWEB</strong> is the lightweight engine built on the
+<em>Baileys</em> library — it talks to WhatsApp over a WebSocket directly, <strong>without a browser/Chromium</strong>.</p>
+
+<table>
+  <tr><th>Feature</th><th>NOWEB (recommended)</th><th>WEBJS</th></tr>
+  <tr><td>Needs Chromium browser</td><td>No</td><td>Yes</td></tr>
+  <tr><td>RAM usage</td><td>Low (~150&ndash;250&nbsp;MB)</td><td>High (~600&nbsp;MB+)</td></tr>
+  <tr><td>Startup speed</td><td>Fast</td><td>Slower</td></tr>
+  <tr><td>Best for</td><td>Servers / VPS / low-resource hosts</td><td>Browser-feature parity</td></tr>
+</table>
+<p class="tip"><strong>Why NOWEB for EasySchool:</strong> lower memory and faster reconnect make it ideal for an
+always-on messaging server that sends SMS/WhatsApp from background jobs.</p>
+
+<h2>2. Prerequisites</h2>
+<ul>
+  <li><strong>Docker</strong> installed (Docker Desktop on Windows/Mac, Docker Engine on Linux).</li>
+  <li>A free <strong>port 3000</strong> on the host (or pick another and map it).</li>
+  <li>A <strong>WhatsApp account on a phone</strong> to scan the pairing QR code.</li>
+  <li>Outbound internet access from the server.</li>
+</ul>
+
+<h2>3. Install Docker</h2>
+<h3>Windows / macOS</h3>
+<p>Download &amp; install <strong>Docker Desktop</strong> from <code>https://www.docker.com/products/docker-desktop</code>,
+then start it and confirm the whale icon is running.</p>
+<h3>Linux (Ubuntu/Debian)</h3>
+<pre><code>curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+sudo usermod -aG docker $USER     # log out / back in afterwards</code></pre>
+<p>Verify the install:</p>
+<pre><code>docker --version
+docker run --rm hello-world</code></pre>
+
+<h2>4. Pull the WAHA Image</h2>
+<p>The free <strong>WAHA Core</strong> image already includes the NOWEB engine:</p>
+<pre><code>docker pull devlikeapro/waha</code></pre>
+
+<h2>5. Run WAHA with the NOWEB Engine</h2>
+<p><span class="step-num">A</span><strong>Quick start</strong> — run a container with NOWEB as the default engine:</p>
+<pre><code>docker run -d ^
+  --name waha ^
+  --restart always ^
+  -p 3000:3000 ^
+  -e WHATSAPP_DEFAULT_ENGINE=NOWEB ^
+  -e WAHA_API_KEY=4c4662668dff4e48997492b11d4e7754 ^
+  -e WAHA_NOWEB_STORE_ENABLED=true ^
+  -e WAHA_NOWEB_STORE_FULLSYNC=true ^
+  -v waha-sessions:/app/.sessions ^
+  devlikeapro/waha</code></pre>
+
+<div class="note"><strong>Windows note:</strong> the <code>^</code> above is the line-continuation character for
+Windows <em>CMD</em>. In <strong>PowerShell</strong> use a backtick <code>`</code> instead, and on
+<strong>Linux/macOS</strong> use a backslash <code>\</code>. Or simply put the whole command on one line.</p>
+
+<h3>What each setting does</h3>
+<table>
+  <tr><th>Setting</th><th>Purpose</th></tr>
+  <tr><td><code>-p 3000:3000</code></td><td>Exposes the API on host port 3000.</td></tr>
+  <tr><td><code>WHATSAPP_DEFAULT_ENGINE=NOWEB</code></td><td>Makes NOWEB the engine for new sessions.</td></tr>
+  <tr><td><code>WAHA_API_KEY</code></td><td>Protects the API. Clients must send it as the <code>X-Api-Key</code> header — exactly what <code>WahaSmsSender</code> does.</td></tr>
+  <tr><td><code>WAHA_NOWEB_STORE_ENABLED</code></td><td>Stores contacts/chats so number lookups work.</td></tr>
+  <tr><td><code>WAHA_NOWEB_STORE_FULLSYNC</code></td><td>Full history sync on first login (optional).</td></tr>
+  <tr><td><code>-v waha-sessions:/app/.sessions</code></td><td><strong>Persists the logged-in session</strong> so you don't re-scan the QR after a restart.</td></tr>
+  <tr><td><code>--restart always</code></td><td>Auto-restarts the container on reboot/crash.</td></tr>
+</table>
+
+<h2>6. Recommended: docker-compose.yml</h2>
+<p>For a reproducible, easy-to-restart setup, save this as <code>docker-compose.yml</code>:</p>
+<pre><code>services:
+  waha:
+    image: devlikeapro/waha
+    container_name: waha
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      WHATSAPP_DEFAULT_ENGINE: NOWEB
+      WAHA_API_KEY: "4c4662668dff4e48997492b11d4e7754"
+      WAHA_NOWEB_STORE_ENABLED: "true"
+      WAHA_NOWEB_STORE_FULLSYNC: "true"
+      # Optional: protect the dashboard &amp; swagger UI
+      WAHA_DASHBOARD_USERNAME: admin
+      WAHA_DASHBOARD_PASSWORD: "change-me"
+      WHATSAPP_SWAGGER_USERNAME: admin
+      WHATSAPP_SWAGGER_PASSWORD: "change-me"
+    volumes:
+      - waha-sessions:/app/.sessions
+
+volumes:
+  waha-sessions:</code></pre>
+<p>Then start it:</p>
+<pre><code>docker compose up -d
+docker compose logs -f waha     # watch the logs</code></pre>
+
+<h2>7. Start a Session &amp; Scan the QR Code</h2>
+<ol>
+  <li>Open the <strong>Dashboard</strong>: <code>http://localhost:3000/dashboard</code>
+      (or <code>http://&lt;server-ip&gt;:3000/dashboard</code>).</li>
+  <li>Open <strong>Swagger</strong> API docs at <code>http://localhost:3000/</code>.</li>
+  <li>Create/start a session named <strong>default</strong> (this matches <code>Waha:Session</code> in EasySchool).</li>
+  <li>The status becomes <code>SCAN_QR_CODE</code> — a QR image appears. On your phone open
+      <strong>WhatsApp &rarr; Settings &rarr; Linked Devices &rarr; Link a device</strong> and scan it.</li>
+  <li>Status changes to <code>WORKING</code> — you're connected and ready to send.</li>
+</ol>
+
+<p>You can also do it via API (send the API key header):</p>
+<pre><code># Start the "default" session
+curl -X POST http://localhost:3000/api/sessions ^
+  -H "X-Api-Key: 4c4662668dff4e48997492b11d4e7754" ^
+  -H "Content-Type: application/json" ^
+  -d "{ \"name\": \"default\", \"start\": true }"
+
+# Fetch the QR code as an image (open the URL in a browser)
+http://localhost:3000/api/default/auth/qr?format=image</code></pre>
+
+<h2>8. Connect EasySchool to WAHA</h2>
+<p>EasySchool already reads WAHA settings from <code>School.API/appsettings.json</code>. Point <code>BaseUrl</code>
+at your container and keep the same API key, session and country code:</p>
+<pre><code>"Waha": {
+  "BaseUrl": "http://localhost:3000",          // or your server URL
+  "Session": "default",
+  "CountryCode": "92",
+  "ApiKey": "4c4662668dff4e48997492b11d4e7754"
+}</code></pre>
+<p class="note"><strong>Important:</strong> the <code>ApiKey</code> in <code>appsettings.json</code> <u>must equal</u>
+the <code>WAHA_API_KEY</code> you passed to Docker — otherwise requests get <code>401 Unauthorized</code>.</p>
+
+<h2>9. Test Sending a Message</h2>
+<p>Send a test WhatsApp message (replace the number; format is <code>&lt;countrycode&gt;&lt;number&gt;@c.us</code>):</p>
+<pre><code>curl -X POST http://localhost:3000/api/sendText ^
+  -H "X-Api-Key: 4c4662668dff4e48997492b11d4e7754" ^
+  -H "Content-Type: application/json" ^
+  -d "{ \"session\": \"default\", \"chatId\": \"923001234567@c.us\", \"text\": \"Hello from EasySchool \" }"</code></pre>
+<p>A <code>200/201</code> response and a delivered message confirm the full chain
+<em>EasySchool &rarr; WAHA (NOWEB) &rarr; WhatsApp</em> is working.</p>
+
+<h2>10. Useful Management Commands</h2>
+<pre><code>docker ps                       # is WAHA running?
+docker logs -f waha             # live logs
+docker restart waha             # restart
+docker stop waha                # stop
+docker compose down             # stop &amp; remove (compose)
+docker compose pull &amp;&amp; docker compose up -d   # update to latest image</code></pre>
+
+<h2>11. Troubleshooting</h2>
+<table>
+  <tr><th>Symptom</th><th>Fix</th></tr>
+  <tr><td><code>401 Unauthorized</code></td><td>API key mismatch — make <code>WAHA_API_KEY</code> = <code>appsettings Waha:ApiKey</code>.</td></tr>
+  <tr><td>QR not appearing / session stuck</td><td>Restart the session from the dashboard; check <code>docker logs waha</code>.</td></tr>
+  <tr><td>Has to re-scan QR after restart</td><td>The <code>/app/.sessions</code> volume isn't mounted — add the <code>-v waha-sessions:/app/.sessions</code> volume.</td></tr>
+  <tr><td>Messages fail / number not on WhatsApp</td><td>Confirm the number format <code>92XXXXXXXXXX@c.us</code> and that the recipient uses WhatsApp.</td></tr>
+  <tr><td>Port 3000 already in use</td><td>Map a different port, e.g. <code>-p 3100:3000</code>, and update <code>BaseUrl</code>.</td></tr>
+  <tr><td>Sending too fast / number flagged</td><td>EasySchool already throttles (<code>Waha:Throttle</code>) — keep delays sane to avoid bans.</td></tr>
+</table>
+
+<div class="tip"><strong>Production tips:</strong> run behind HTTPS (reverse proxy), set strong dashboard/swagger
+passwords, back up the <code>waha-sessions</code> volume, and use one dedicated WhatsApp number for the server.</div>
+
+<div class="footer">
+  EasySchool — WAHA NOWEB Docker Setup Guide &nbsp;|&nbsp; Engine: NOWEB &nbsp;|&nbsp; Image: devlikeapro/waha &nbsp;|&nbsp; Generated 2026-06-10
+</div>
+
+</body>
+</html>

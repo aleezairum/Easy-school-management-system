@@ -1,18 +1,17 @@
 using School.API.Data.DBModels.HR;
-using School.API.DTOs;
+using School.API.DTOs.HR;
 
 namespace School.API.Repositories.Interfaces.HR
 {
     public interface IEmployeeRepository
     {
-        //Task<IEnumerable<EmployeeListDto>> GetAllAsync();
-        //Task<EmployeeDto?> GetByIdAsync(int id);
-        //Task<Employee> CreateAsync(CreateEmployeeDto dto);
-        //Task<Employee?> UpdateAsync(int id, UpdateEmployeeDto dto);
-        //Task<bool> DeleteAsync(int id);
-        //Task<IEnumerable<EmployeeDropdownDto>> GetDropdownAsync();
-        //Task<bool> ExistsAsync(int id);
-        //Task<bool> EmployeeCodeExistsAsync(string employeeCode, int? excludeId = null);
-        //Task<bool> CNICExistsAsync(string cnic, int? excludeId = null);
+        Task<List<EmployeeListDto>> GetAllAsync();
+        Task<EmployeeDto?> GetByIdAsync(int id);
+        Task<List<EmployeeDropdownDto>> GetDropdownAsync();
+        Task<Employee> CreateAsync(SaveEmployeeDto dto);
+        Task<Employee?> UpdateAsync(int id, SaveEmployeeDto dto);
+        Task<bool> DeleteAsync(int id);
+        Task<bool> ExistsAsync(int id);
+        Task<bool> CodeExistsAsync(string code, int? excludeId = null);
     }
 }

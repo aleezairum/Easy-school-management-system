@@ -1,0 +1,98 @@
+@{
+    ViewData["Title"] = "Leave";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<div class="container-fluid">
+    <div id="alertContainer"></div>
+
+    <div class="card mb-3"><div class="card-body">
+        <div class="section-title mb-3" style="font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;">Apply for Leave</div>
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3"><label class="form-label">Employee</label><select class="form-select" id="leaveEmployee"></select></div>
+            <div class="col-md-2"><label class="form-label">Leave Type</label><select class="form-select" id="leaveType"></select></div>
+            <div class="col-md-2"><label class="form-label">From</label><input type="date" class="form-control" id="leaveFrom" /></div>
+            <div class="col-md-2"><label class="form-label">To</label><input type="date" class="form-control" id="leaveTo" /></div>
+            <div class="col-md-3"><label class="form-label">Reason</label><input class="form-control" id="leaveReason" /></div>
+            <div class="col-md-2"><button class="btn btn-primary" onclick="applyLeave()"><i class="bi bi-check-lg"></i> Apply</button></div>
+        </div>
+    </div></div>
+
+    <div class="card"><div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="section-title" style="font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;">Leave Applications</div>
+            <select class="form-select" id="statusFilter" style="max-width:200px;" onchange="loadLeaves()">
+                <option value="">All Statuses</option>
+                <option value="1">Pending</option>
+                <option value="2">Approved</option>
+                <option value="3">Rejected</option>
+            </select>
+        </div>
+        <table class="table table-hover">
+            <thead><tr><th>Employee</th><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Reason</th><th>Status</th><th></th></tr></thead>
+            <tbody id="leavesBody"></tbody>
+        </table>
+    </div></div>
+</div>
+
+@section Scripts {
+<script>
+    const STATUS_NAMES = {1:'Pending',2:'Approved',3:'Rejected'};
+    const STATUS_BADGE = {1:'bg-warning text-dark',2:'bg-success',3:'bg-danger'};
+
+    $(document).ready(function () {
+        loadEmployees(); loadLeaveTypes(); loadLeaves();
+    });
+
+    async function loadEmployees() {
+        const res = await fetch(`${API_BASE}/Employee/dropdown`);
+        const data = res.ok ? await res.json() : [];
+        data.forEach(e => $('#leaveEmployee').append(`<option value="${e.id}">${e.employeeCode} - ${e.fullName}</option>`));
+    }
+    async function loadLeaveTypes() {
+        const res = await fetch(`${API_BASE}/hr/leave-types`);
+        const data = res.ok ? await res.json() : [];
+        data.forEach(l => $('#leaveType').append(`<option value="${l.id}">${l.name}</option>`));
+    }
+
+    async function applyLeave() {
+        const dto = {
+            EmployeeId: parseInt($('#leaveEmployee').val()),
+            LeaveTypeId: parseInt($('#leaveType').val()),
+            FromDate: $('#leaveFrom').val(), ToDate: $('#leaveTo').val(),
+            Reason: $('#leaveReason').val().trim()
+        };
+        if (!dto.EmployeeId || !dto.LeaveTypeId || !dto.FromDate || !dto.ToDate) { toastError('Fill all required fields'); return; }
+        const res = await fetch(`${API_BASE}/hr/leaves`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(dto) });
+        if (res.ok) { toastSuccess('Leave application submitted'); $('#leaveFrom,#leaveTo,#leaveReason').val(''); loadLeaves(); }
+        else toastError('Failed to apply for leave');
+    }
+
+    async function loadLeaves() {
+        const status = $('#statusFilter').val();
+        const url = status ? `${API_BASE}/hr/leaves?status=${status}` : `${API_BASE}/hr/leaves`;
+        const res = await fetch(url);
+        const data = res.ok ? await res.json() : [];
+        const body = $('#leavesBody'); body.empty();
+        if (!data.length) { body.html('<tr><td colspan="8" class="text-center text-muted py-3">No leave applications.</td></tr>'); return; }
+        data.forEach(l => {
+            const actions = l.status === 1
+                ? `<button class="btn btn-sm btn-success me-1" onclick="setStatus(${l.id},2)"><i class="bi bi-check"></i></button>
+                   <button class="btn btn-sm btn-danger" onclick="setStatus(${l.id},3)"><i class="bi bi-x"></i></button>`
+                : '';
+            body.append(`<tr>
+                <td>${l.employeeName}</td><td>${l.leaveTypeName}</td>
+                <td>${new Date(l.fromDate).toLocaleDateString()}</td><td>${new Date(l.toDate).toLocaleDateString()}</td>
+                <td>${l.days}</td><td>${l.reason || '-'}</td>
+                <td><span class="badge ${STATUS_BADGE[l.status]}">${STATUS_NAMES[l.status]}</span></td>
+                <td>${actions}</td>
+            </tr>`);
+        });
+    }
+
+    async function setStatus(id, status) {
+        const res = await fetch(`${API_BASE}/hr/leaves/${id}/status`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({Status: status}) });
+        if (res.ok) { toastSuccess('Updated'); loadLeaves(); } else toastError('Failed to update');
+    }
+</script>
+}

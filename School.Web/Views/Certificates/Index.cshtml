@@ -88,6 +88,18 @@
                         <label for="leavingTotal" class="form-label form-label-sm mb-1">Total Marks</label>
                         <input type="text" class="form-control form-control-sm" id="leavingTotal" />
                     </div>
+                    <div class="col-lg-3 col-md-6 col-12">
+                        <label for="leavingClassAdmitted" class="form-label form-label-sm mb-1">Class in which admitted</label>
+                        <select class="form-select form-select-sm" id="leavingClassAdmitted">
+                            <option value="">-- Select Class --</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-12">
+                        <label for="leavingClassStudying" class="form-label form-label-sm mb-1">Class in which studying / Passed / Failed</label>
+                        <select class="form-select form-select-sm" id="leavingClassStudying">
+                            <option value="">-- Select Class --</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -172,6 +184,26 @@
         $(document).ready(function () {
             loadDropdowns();
             toggleCertFields();
+
+            // Leaving Date / Issue Date default to today; still plain date
+            // inputs the user can change before printing.
+            $('#leavingDate').val(todayIso());
+            $('#issueDate').val(todayIso());
+
+            $('#filterStudent').on('change', function () {
+                const studentId = parseInt($(this).val()) || 0;
+                if (studentId) {
+                    fillLeavingClassDefaults(studentId);
+                    fillCharacterDefaults(studentId);
+                }
+            });
+
+            // Re-fetch character defaults when the session changes, since the
+            // session scopes which exam's marks are picked up.
+            $('#charSession').on('change', function () {
+                const studentId = parseInt($('#filterStudent').val()) || 0;
+                if (studentId) fillCharacterDefaults(studentId);
+            });
         });
 
         // ── Toggle optional override panels ───────────────────────────────
@@ -188,8 +220,20 @@
                     fetch(`${API_BASE}/class`).then(r => r.ok ? r.json() : []),
                     fetch(`${API_BASE}/AcademicSessionYear`).then(r => r.ok ? r.json() : [])
                 ]);
-                classes.forEach(c => $('#filterClass').append(`<option value="${c.vid}">${c.vName}</option>`));
-                sessions.forEach(s => $('#charSession').append(`<option value="${s.vid}">${s.vName}</option>`));
+                classes.forEach(c => {
+                    $('#filterClass').append(`<option value="${c.vid}">${c.vName}</option>`);
+                    $('#leavingClassAdmitted').append(`<option value="${c.vName}">${c.vName}</option>`);
+                    $('#leavingClassStudying').append(`<option value="${c.vName}">${c.vName}</option>`);
+                });
+                sessions.forEach(s => $('#charSession').append(
+                    `<option value="${s.vid}" data-current="${s.isCurrent ? '1' : '0'}">${s.vName}</option>`));
+                // Default the Session picker to the current session.
+                const current = sessions.find(s => s.isCurrent);
+                if (current) $('#charSession').val(current.vid);
+                $('#filterClass').trigger('change');
+                $('#leavingClassAdmitted').trigger('change');
+                $('#leavingClassStudying').trigger('change');
+                $('#charSession').trigger('change');
             } catch (err) {
                 console.error('Error loading dropdowns:', err);
             }
@@ -247,12 +291,67 @@
             }
         }
 
+        // ── Auto-fill Examination / Marks / Class fields from school record ─
+        // These are still plain editable inputs, so staff can change any of
+        // them before printing — this just pre-fills what the certificate
+        // would otherwise fall back to on the server.
+        async function fillLeavingClassDefaults(studentId) {
+            try {
+                const response = await fetch(`${API_BASE}/Certificate/leaving/${studentId}`);
+                if (!response.ok) return;
+                const data = await response.json();
+                setClassSelectValue('#leavingClassAdmitted', data.classAdmitted);
+                setClassSelectValue('#leavingClassStudying', data.classStudying);
+                $('#leavingExamination').val(data.examination === 'N.A.' ? '' : (data.examination || ''));
+                $('#leavingMarks').val(data.marksObtained === 'N.A.' ? '' : (data.marksObtained || ''));
+                $('#leavingTotal').val(data.totalMarks === 'N.A.' ? '' : (data.totalMarks || ''));
+            } catch (err) {
+                console.error('Error loading class defaults:', err);
+            }
+        }
+
+        // ── Auto-fill Examination / Marks for the Provisional & Character
+        // certificate from school record. Still plain editable inputs, so
+        // staff can change any of them before printing.
+        async function fillCharacterDefaults(studentId) {
+            try {
+                const sessionId = $('#charSession').val();
+                const query = sessionId ? `?sessionId=${sessionId}` : '';
+                const response = await fetch(`${API_BASE}/Certificate/provisional/${studentId}${query}`);
+                if (!response.ok) return;
+                const data = await response.json();
+                $('#examRollNo').val(data.examRollNo || '');
+                $('#charExamination').val(data.examination === 'N.A.' ? '' : (data.examination || ''));
+                $('#charMarks').val(data.marksObtained === 'N.A.' ? '' : (data.marksObtained || ''));
+                $('#charTotal').val(data.totalMarks === 'N.A.' ? '' : (data.totalMarks || ''));
+            } catch (err) {
+                console.error('Error loading character certificate defaults:', err);
+            }
+        }
+
+        // Today's date as yyyy-MM-dd, in local time (not UTC), for <input type="date">.
+        function todayIso() {
+            const d = new Date();
+            const pad = n => String(n).padStart(2, '0');
+            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+        }
+
+        function setClassSelectValue(selector, className) {
+            const $sel = $(selector);
+            if (!className) { $sel.val('').trigger('change'); return; }
+            const exists = $sel.find('option').toArray().some(o => o.value === className);
+            if (!exists) {
+                $sel.append(`<option value="${className}">${className}</option>`);
+            }
+            $sel.val(className).trigger('change');
+        }
+
         // ── Sync Roll / Student selects ───────────────────────────────────
         function selectStudentByRoll() {
             if (isSyncing) return;
             isSyncing = true;
             const val = $('#filterRollNo').val();
-            if (val) $('#filterStudent').val(val);
+            if (val) $('#filterStudent').val(val).trigger('change');
             isSyncing = false;
         }
 
@@ -260,7 +359,7 @@
             if (isSyncing) return;
             isSyncing = true;
             const val = $('#filterStudent').val();
-            if (val) $('#filterRollNo').val(val);
+            if (val) $('#filterRollNo').val(val).trigger('change');
             isSyncing = false;
         }
 
@@ -276,10 +375,12 @@
             const params = new URLSearchParams();
 
             if (type === 'leaving') {
-                addParam(params, 'leavingDate',   $('#leavingDate').val());
-                addParam(params, 'examination',   $('#leavingExamination').val());
-                addParam(params, 'marksObtained', $('#leavingMarks').val());
-                addParam(params, 'totalMarks',    $('#leavingTotal').val());
+                addParam(params, 'leavingDate',    $('#leavingDate').val());
+                addParam(params, 'examination',    $('#leavingExamination').val());
+                addParam(params, 'marksObtained',  $('#leavingMarks').val());
+                addParam(params, 'totalMarks',     $('#leavingTotal').val());
+                addParam(params, 'classAdmitted',  $('#leavingClassAdmitted').val());
+                addParam(params, 'classStudying',  $('#leavingClassStudying').val());
             } else {
                 addParam(params, 'sessionId',      $('#charSession').val());
                 addParam(params, 'boardRollNo',    $('#boardRollNo').val());
@@ -305,14 +406,17 @@
 
         // ── Clear ─────────────────────────────────────────────────────────
         function clearFilters() {
-            $('#filterClass').val('');
-            $('#filterSection').val('').prop('disabled', true);
+            $('#filterClass').val('').trigger('change');
+            $('#filterSection').val('').prop('disabled', true).trigger('change');
             $('#filterRollNo').find('option:not(:first)').remove();
             $('#filterStudent').find('option:not(:first)').remove();
             $('input[name="certType"][value="leaving"]').prop('checked', true);
-            $('#leavingDate, #leavingExamination, #leavingMarks, #leavingTotal').val('');
-            $('#boardRollNo, #examRollNo, #charExamination, #charMarks, #charTotal, #conduct, #moralCharacter, #issueDate').val('');
-            $('#charSession').val('');
+            $('#leavingExamination, #leavingMarks, #leavingTotal').val('');
+            $('#leavingClassAdmitted, #leavingClassStudying').val('').trigger('change');
+            $('#boardRollNo, #examRollNo, #charExamination, #charMarks, #charTotal, #conduct, #moralCharacter').val('');
+            $('#leavingDate, #issueDate').val(todayIso());
+            const current = $('#charSession option').filter((i, o) => o.dataset.current === '1');
+            $('#charSession').val(current.length ? current.val() : '').trigger('change');
             toggleCertFields();
         }
     </script>

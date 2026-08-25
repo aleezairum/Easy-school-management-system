@@ -1,0 +1,85 @@
+@{
+    ViewData["Title"] = "Payroll Run";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<div class="container-fluid">
+    <div id="alertContainer"></div>
+
+    <div class="card mb-3"><div class="card-body">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-2"><label class="form-label">Year</label><input type="number" class="form-control" id="genYear" /></div>
+            <div class="col-md-2"><label class="form-label">Month</label>
+                <select class="form-select" id="genMonth">
+                    <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+                    <option value="4">April</option><option value="5">May</option><option value="6">June</option>
+                    <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+                    <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+                </select>
+            </div>
+            <div class="col-md-3"><button class="btn btn-primary" onclick="generateRun()"><i class="bi bi-gear-fill"></i> Generate / Regenerate Payroll</button></div>
+        </div>
+        <div class="form-text mt-2">Regenerating is only possible while a run is in <strong>Draft</strong>. Locking or marking paid freezes it.</div>
+        <div id="warningsBox" class="alert alert-warning mt-3" style="display:none;"></div>
+    </div></div>
+
+    <div class="card"><div class="card-body">
+        <table class="table table-hover">
+            <thead><tr><th>Period</th><th>Status</th><th>Employees</th><th>Total Net Pay</th><th>Generated</th><th></th></tr></thead>
+            <tbody id="runsBody"></tbody>
+        </table>
+    </div></div>
+</div>
+
+@section Scripts {
+<script>
+    const MONTH_NAMES = ['','January','February','March','April','May','June','July','August','September','October','November','December'];
+    const RUN_STATUS = {1:'Draft',2:'Locked',3:'Paid'};
+    const RUN_BADGE = {1:'bg-warning text-dark',2:'bg-info',3:'bg-success'};
+
+    $(document).ready(function () {
+        const now = new Date();
+        $('#genYear').val(now.getFullYear());
+        $('#genMonth').val(now.getMonth() + 1);
+        loadRuns();
+    });
+
+    async function loadRuns() {
+        const res = await fetch(`${API_BASE}/hr/payroll/runs`);
+        const data = res.ok ? await res.json() : [];
+        const body = $('#runsBody'); body.empty();
+        if (!data.length) { body.html('<tr><td colspan="6" class="text-center text-muted py-3">No payroll runs yet.</td></tr>'); return; }
+        data.forEach(r => {
+            body.append(`<tr>
+                <td>${MONTH_NAMES[r.payMonth]} ${r.payYear}</td>
+                <td><span class="badge ${RUN_BADGE[r.status]}">${RUN_STATUS[r.status]}</span></td>
+                <td>${r.employeeCount}</td>
+                <td>Rs ${Number(r.totalNetPay).toLocaleString(undefined,{minimumFractionDigits:2})}</td>
+                <td>${r.generatedAt ? new Date(r.generatedAt).toLocaleString() : '-'}</td>
+                <td><a class="btn btn-sm btn-info" href="/hr/payroll/${r.id}"><i class="bi bi-eye"></i> Review</a></td>
+            </tr>`);
+        });
+    }
+
+    async function generateRun() {
+        const dto = { Year: parseInt($('#genYear').val()), Month: parseInt($('#genMonth').val()) };
+        $('#warningsBox').hide().empty();
+        try {
+            const res = await fetch(`${API_BASE}/hr/payroll/runs/generate`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(dto) });
+            if (res.ok) {
+                const r = await res.json();
+                toastSuccess('Payroll generated');
+                if (r.warnings && r.warnings.length) {
+                    $('#warningsBox').show().html('<strong>Warnings:</strong><ul class="mb-0">' + r.warnings.map(w => `<li>${w.employeeName}: ${w.message}</li>`).join('') + '</ul>');
+                }
+                loadRuns();
+            } else if (res.status === 409) {
+                const err = await res.json();
+                toastError(err.message);
+            } else {
+                toastError('Failed to generate payroll');
+            }
+        } catch (e) { toastError('Error: ' + e.message); }
+    }
+</script>
+}

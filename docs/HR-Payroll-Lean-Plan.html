@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>HR &amp; Payroll — Lean Rebuild Plan</title>
+<style>
+  @page { size: A4; margin: 16mm 14mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: #1f2933;
+    font-size: 11.5px;
+    line-height: 1.55;
+    margin: 0;
+  }
+  h1 {
+    font-size: 24px; margin: 0 0 6px; color: #0b5394;
+    border-left: 5px solid #0b5394; padding-left: 14px;
+  }
+  h2 {
+    font-size: 16px; color: #0b5394; margin: 24px 0 8px;
+    border-bottom: 2px solid #0b5394; padding-bottom: 4px;
+    page-break-after: avoid;
+  }
+  h3 {
+    font-size: 13px; margin: 16px 0 6px; color: #11507a;
+    page-break-after: avoid;
+  }
+  h1 + p { color: #52606d; font-size: 12px; }
+  p { margin: 6px 0; }
+  a { color: #0b5394; text-decoration: none; }
+  hr { border: 0; border-top: 1px solid #dde3ea; margin: 18px 0; }
+
+  code {
+    font-family: "Consolas", "Courier New", monospace;
+    background: #eef2f7; color: #b4002a;
+    padding: 1px 5px; border-radius: 3px; font-size: 10.5px;
+  }
+  pre {
+    background: #1e2733; color: #e6edf3;
+    padding: 11px 13px; border-radius: 6px;
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 10px; line-height: 1.45;
+    overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+    margin: 8px 0; page-break-inside: avoid;
+  }
+  pre code { background: none; color: inherit; padding: 0; font-size: 10px; }
+
+  table {
+    border-collapse: collapse; width: 100%;
+    margin: 8px 0; font-size: 10px;
+    page-break-inside: auto;
+  }
+  th, td {
+    border: 1px solid #cbd2d9; padding: 5px 7px;
+    text-align: left; vertical-align: top;
+  }
+  th { background: #0b5394; color: #fff; font-weight: 600; }
+  tr { page-break-inside: avoid; }
+  tr:nth-child(even) td { background: #f5f7fa; }
+  td code, th code { font-size: 9.5px; padding: 0 3px; }
+
+  blockquote {
+    background: #fff8e1; border-left: 4px solid #f0a500;
+    padding: 8px 12px; margin: 10px 0; border-radius: 4px;
+    color: #1f2933;
+  }
+  blockquote p { margin: 3px 0; }
+
+  ul, ol { margin: 6px 0; padding-left: 22px; }
+  li { margin: 3px 0; }
+  li input[type="checkbox"] {
+    margin-right: 6px; transform: translateY(1px);
+    accent-color: #0b5394;
+  }
+  ul:has(input[type="checkbox"]) { list-style: none; padding-left: 4px; }
+
+  strong { color: #11333f; }
+  .footer {
+    margin-top: 30px; padding-top: 8px;
+    border-top: 1px solid #cbd2d9; color: #7b8794; font-size: 10px;
+  }
+</style>
+</head>
+<body>
+<h1>HR &amp; Payroll — Lean Rebuild Plan (Plan B)</h1>
+<p><strong>Project:</strong> Easy School Management System
+<strong>Supersedes:</strong> <code>HR-Payroll-Module-Plan.md</code> (Plan A — the Dropware-shaped port)
+<strong>Date:</strong> 2026-08-25</p>
+<hr>
+<h2>1. The finding that changes everything</h2>
+<p>I checked what the existing HR code actually does. It does nothing:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Reality</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Repositories/Implementations/HR/EmployeeRepository.cs</code></td>
+<td>233 lines, <strong>202 commented out</strong> — zero methods, empty class</td>
+</tr>
+<tr>
+<td><code>Repositories/Interfaces/HR/IEmployeeRepository.cs</code></td>
+<td><strong>Empty interface</strong></td>
+</tr>
+<tr>
+<td><code>Controllers/EmployeeController.cs</code></td>
+<td><strong>Zero endpoints</strong> — only a constructor</td>
+</tr>
+<tr>
+<td><code>Services/Implementations/HR/EmployeeService.cs</code></td>
+<td>132 lines, <strong>109 commented out</strong></td>
+</tr>
+<tr>
+<td><code>Controllers/SalaryController.cs</code></td>
+<td><strong>Zero endpoints</strong></td>
+</tr>
+<tr>
+<td><code>Services/Implementations/HR/SalaryService.cs</code></td>
+<td>67 lines, <strong>41 commented out</strong></td>
+</tr>
+</tbody></table>
+<p><strong>There is no working HR module to preserve.</strong> Employee and Salary are dead scaffolding — not reachable
+from the API at all. Only Designation, HRGrade and Teacher are live.</p>
+<p>This is good news. It means: <strong>no migration burden, no compatibility constraints, green field.</strong> Plan A was
+written as if we were extending a working module. We aren&#39;t. So Plan B deletes the scaffolding and builds
+small and correct instead of large and ported.</p>
+<hr>
+<h2>2. Why Plan A was too big</h2>
+<p>Dropware&#39;s HRM is a <strong>corporate ERP</strong> — 13 setup forms, 39 transaction forms, 9 reports, built for
+thousands of employees with EOBI, tax slabs, medical claims, loan disbursement queues, provident fund and
+multi-company scoping.</p>
+<p>Sir Syed Model School has on the order of <strong>100–200 staff</strong>. Sizing reality:</p>
+<pre><code>200 staff x 31 days      =   6,200 attendance rows / month
+                         =    ~74,000 rows / year
+Payroll run              =     200 payslips / month
+</code></pre>
+<p>SQL Server does not notice this. <strong>Data volume is a non-issue.</strong> Every complexity in Dropware that exists
+to handle scale is dead weight here. What actually matters is that the school clerk can enter a month of
+attendance quickly and that payroll is correct.</p>
+<p>So Plan B optimises for <strong>fewer moving parts</strong>, not for throughput.</p>
+<hr>
+<h2>3. Five design decisions</h2>
+<h3>D1. Compute on save — no &quot;posting&quot; runs</h3>
+<p>Dropware needs three manual steps: enter attendance → run Attendance Posting → run Salary Posting.
+Late/early/worked minutes is <em>arithmetic on two times against a shift</em>. Do it in the service when the row
+is saved.</p>
+<p><strong>Kills:</strong> the Attendance Posting screen, the <code>AttClosingDay</code> intermediate table, and one stored procedure.
+<strong>Also kills</strong> the single biggest support-call category in systems like this — &quot;I entered attendance but
+the salary is wrong&quot; (because someone forgot to re-post).</p>
+<h3>D2. Rules in C#, reports in SQL</h3>
+<p>Dropware buries payroll logic in <code>SPHRAttClosingMonth</code>. Stored procedures can&#39;t be unit-tested,
+code-reviewed, or diffed properly in git.</p>
+<ul>
+<li><strong>Payroll calculation → C#</strong> (<code>PayrollCalculator</code>, pure function, no DB access)</li>
+<li><strong>Reports → raw SQL / SPs</strong> (set-based, already the house pattern in <code>School.API/Scripts/</code>)</li>
+</ul>
+<p>The repo currently has <strong>zero test projects</strong>. Add one — <code>School.Tests</code> — covering <code>PayrollCalculator</code>
+only. That single class is where money is computed; everything else is CRUD.</p>
+<h3>D3. JSON columns instead of child tables</h3>
+<p>EF Core 8.0.8 (already referenced) supports <code>OwnsMany(...).ToJson()</code>. Use it for data that is always
+loaded as a whole and never queried across rows:</p>
+<ul>
+<li>Rule slabs → <code>SlabsJson</code> on the component (kills a table + a child grid form)</li>
+<li>Salary structure lines → <code>ComponentsJson</code> (kills a table)</li>
+<li>Payslip breakdown → <code>BreakdownJson</code> (kills a table)</li>
+</ul>
+<h3>D4. One flag beats one module</h3>
+<p>Late exemption in Dropware is a table, a setup form, a lookup SP and a join. Here it is a boolean
+<code>IgnoreLate</code> on the attendance row, toggled from the attendance grid. <strong>Kills a table and a form.</strong></p>
+<h3>D5. Aggregate, don&#39;t paginate punches</h3>
+<p>Hikvision export has many punches per person per day. Aggregate to first-in / last-out <strong>at import time</strong>
+and write straight to <code>HrAttendance</code>. Keep the uploaded file + a batch id for audit/reversal.</p>
+<p><strong>Kills the raw punch table entirely.</strong> (This also replaces Plan A section 4.2&#39;s shared raw table — a
+shared <em>import service</em> with two writers is cleaner than a shared table with a <code>PersonType</code> discriminator.)</p>
+<hr>
+<h2>4. Schema — 9 tables (Plan A had ~30)</h2>
+<pre><code>HrShift            TimeIn, TimeOut, GraceMinutes, WorkHours, HalfDayMinutes, OffDay1, OffDay2
+HrHoliday          Date, Name, Type
+HrLeaveType        Name, IsPaid, DeductDays, MaxPerYear          (seeded, no CRUD screen)
+HrAttendance   *   EmployeeId, AttDate, TimeIn, TimeOut, ShiftId, Status,
+                   LateMinutes, EarlyMinutes, WorkedMinutes, LeaveTypeId,
+                   IgnoreLate, Source, Remarks          &lt;- computed on save
+HrLeave            EmployeeId, LeaveTypeId, FromDate, ToDate, Days, Status, Reason
+HrPayComponent *   the whole rule engine, one table      &lt;- see section 5
+HrEmployeePay      EmployeeId, EffectiveFrom, Basic, ComponentsJson, IsActive
+HrPayrollRun       Year, Month, Status (Draft|Locked|Paid), LockedBy, LockedAt
+HrPayslip          RunId, EmployeeId, Gross, Deductions, Net, BreakdownJson,
+                   PaidDate, PaymentMethod, Reference
+
+(+2 later, Phase 4 only)   HrLoan, HrLoanInstallment
+</code></pre>
+<p><code>Employee</code> gets four new columns and nothing else: <code>ShiftId</code>, <code>MachineCardNo</code>, <code>OffDay1</code>, <code>OffDay2</code>.
+Its existing flat <code>BasicSalary</code> / <code>Allowances</code> / <code>Deductions</code> fields are dropped in favour of
+<code>HrEmployeePay</code> (they&#39;re unused today — nothing reads them).</p>
+<p><strong>Indexes (all three matter):</strong></p>
+<pre><code class="language-sql">UNIQUE (EmployeeId, AttDate)                                   -- HrAttendance, prevents double entry
+INDEX  (AttDate) INCLUDE (EmployeeId, Status, LateMinutes)     -- HrAttendance, drives every report
+UNIQUE (RunId, EmployeeId)                                     -- HrPayslip, prevents double payslip
+</code></pre>
+<hr>
+<h2>5. The rule engine — one table, still fully generic</h2>
+<p>Requirement stands: Sir Syed deducts <strong>per minute late</strong>; other schools differ; formula must be data.
+Plan A used 3 tables and ~20 columns. Same capability in <strong>one</strong> table:</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Values</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Kind</code></td>
+<td><code>Earning</code> / <code>Deduction</code></td>
+</tr>
+<tr>
+<td><code>CalcType</code></td>
+<td><code>Fixed</code>, <code>PercentOf</code>, <code>PerLateMinute</code>, <code>PerAbsentDay</code>, <code>PerOvertimeHour</code>, <code>Slab</code>, <code>Formula</code></td>
+</tr>
+<tr>
+<td><code>Rate</code></td>
+<td>the amount, percent, or per-unit rate</td>
+</tr>
+<tr>
+<td><code>RateSource</code></td>
+<td><code>Fixed</code> (typed in) / <code>Derived</code> (computed from salary)</td>
+</tr>
+<tr>
+<td><code>BaseOn</code></td>
+<td><code>Basic</code> / <code>Gross</code> — base for <code>PercentOf</code> and <code>Derived</code></td>
+</tr>
+<tr>
+<td><code>DivisorDays</code></td>
+<td><code>30</code> / <code>Calendar</code> / <code>WorkingDays</code></td>
+</tr>
+<tr>
+<td><code>DivisorHours</code></td>
+<td>null = take from the shift</td>
+</tr>
+<tr>
+<td><code>GraceMinutes</code>, <code>FreeUnitsPerMonth</code></td>
+<td>forgiveness</td>
+</tr>
+<tr>
+<td><code>CapPerDay</code>, <code>CapPerMonth</code></td>
+<td>limits</td>
+</tr>
+<tr>
+<td><code>SlabsJson</code></td>
+<td>slab bands, JSON</td>
+</tr>
+<tr>
+<td><code>Formula</code></td>
+<td>NCalc escape hatch</td>
+</tr>
+<tr>
+<td><code>ScopeType</code> + <code>ScopeId</code>, <code>Priority</code></td>
+<td><code>Global</code>/<code>Grade</code>/<code>Designation</code>/<code>Employee</code>, most-specific wins</td>
+</tr>
+<tr>
+<td><code>EffectiveFrom</code>, <code>EffectiveTo</code></td>
+<td>history stays reproducible</td>
+</tr>
+</tbody></table>
+<p><strong>Sir Syed = one row:</strong></p>
+<pre><code>Kind=Deduction  CalcType=PerLateMinute  RateSource=Derived  BaseOn=Basic
+DivisorDays=30  DivisorHours=null(from shift)  GraceMinutes=10  CapPerDay=500
+</code></pre>
+<pre><code>rate      = Basic / 30 / ShiftHours / 60
+deduction = MIN((LateMinutes - 10) * rate, 500)
+</code></pre>
+<p>Flat Rs 20/min school → <code>RateSource=Fixed, Rate=20</code>. Half-day-after-3-lates school → <code>CalcType=Slab</code>,
+<code>FreeUnitsPerMonth=3</code>. <strong>No code change in any case.</strong></p>
+<hr>
+<h2>6. Screens — 10 (Plan A had 43)</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Screen</th>
+<th>Replaces in Plan A</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td><strong>Payroll Setup</strong> — one page, 4 tabs: Shifts · Holidays · Leave Types · Pay Components (with a live &quot;25 min late → Rs X&quot; preview)</td>
+<td>S4, S6, S7, S9, S10, S11, S12, S13</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Employee</strong> (rebuild) — existing tabs + a Payroll tab (shift, card no, salary structure)</td>
+<td>T1, T2, T15</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Attendance</strong> — one month grid, employee × day; click a cell to set time/status; bulk fill; <code>IgnoreLate</code> toggle</td>
+<td>T3, T4, T5, T6</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>Leave</strong> — one list, apply + approve via status actions</td>
+<td>T7, T8</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>Payroll Run</strong> — generate → review grid → adjust → lock → mark paid, one page</td>
+<td>T9, T12, T13, T14, S14</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>Payslip</strong> — print PDF + send WhatsApp</td>
+<td>R7</td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>Salary Sheet</strong> — grid + Excel export (bank advice = an export option here)</td>
+<td>R6, R8</td>
+</tr>
+<tr>
+<td>8</td>
+<td><strong>Attendance Report</strong> — one page, report-type dropdown (daily / monthly / late / absent)</td>
+<td>R1, R2, R3, R4</td>
+</tr>
+<tr>
+<td>9</td>
+<td><strong>Loans &amp; Advances</strong> (Phase 4)</td>
+<td>T10, T11, R9</td>
+</tr>
+<tr>
+<td>10</td>
+<td><strong>Attendance Import</strong> (Phase 4)</td>
+<td>Hikvision</td>
+</tr>
+</tbody></table>
+<p>Everything else in Plan A — departments, employee shift assignment, leave entitlement ledgers, EOBI/PF,
+tax slabs, final settlement, card printing, bank setup, month-days setup — is <strong>cut</strong>. See section 9.</p>
+<hr>
+<h2>7. Performance plan</h2>
+<p>The bottleneck is round trips, not rows. Concrete targets:</p>
+<p><strong>Payroll run — exactly 4 queries, one transaction:</strong></p>
+<pre><code>1. employees + active pay structures   (1 query, AsNoTracking, projected)
+2. attendance aggregate for the month  (1 query, GROUP BY EmployeeId)
+3. approved leave aggregate            (1 query, GROUP BY EmployeeId)
+4. due loan installments               (1 query)
+   -&gt; PayrollCalculator in memory (pure C#, no DB)
+   -&gt; AddRange(payslips) + one SaveChanges inside one transaction
+</code></pre>
+<p>Target: <strong>under 2 seconds for 200 employees.</strong> The failure mode to avoid is a <code>foreach (employee)</code> loop
+that queries per person — that turns 4 queries into 800.</p>
+<p><strong>Other measures:</strong></p>
+<ul>
+<li><code>AsNoTracking()</code> on every read. The Academic and Fee repos already do this consistently; the HR ones
+don&#39;t — rebuild them to match.</li>
+<li><code>IMemoryCache</code> for shifts, holidays and pay components (they change monthly at most).
+<code>AddMemoryCache()</code> is <strong>already registered</strong> in <code>Program.cs:44</code> and unused for this.</li>
+<li>Attendance month grid: <strong>one</strong> projected query, no <code>Include()</code>. 200 × 31 cells is fine to send at once;
+no paging needed at this size.</li>
+<li>Add <strong>response compression</strong> to <code>Program.cs</code> — currently not configured. The attendance grid and salary
+sheet are the largest JSON payloads in the app and compress ~80%.</li>
+<li>Add <code>EnableRetryOnFailure()</code> to the SQL Server connection — also currently not configured.</li>
+<li>Reports as raw SQL only. Never materialise a report through EF entities.</li>
+</ul>
+<hr>
+<h2>8. Phases — 12–16 days (Plan A was 24–34)</h2>
+<h3>Phase 1 — Foundation + Attendance (5–6 days) — <em>usable on its own</em></h3>
+<ul>
+<li><input disabled="" type="checkbox"> Delete the dead HR scaffolding (Employee/Salary controller, service, repo, interfaces)</li>
+<li><input disabled="" type="checkbox"> <code>HrShift</code>, <code>HrHoliday</code>, <code>HrLeaveType</code>, <code>HrAttendance</code> + indexes; one idempotent
+<code>Scripts/HrPayroll.sql</code></li>
+<li><input disabled="" type="checkbox"> Employee rebuild: working CRUD + the 4 new columns</li>
+<li><input disabled="" type="checkbox"> Screen 1 (Setup: Shifts + Holidays tabs), Screen 2 (Employee), Screen 3 (Attendance grid)</li>
+<li><input disabled="" type="checkbox"> <code>AttendanceCalculator</code> — late/early/worked on save</li>
+<li><input disabled="" type="checkbox"> Screen 8 (Attendance Report)</li>
+</ul>
+<p><strong>Ships:</strong> the school runs staff attendance end-to-end. No payroll yet.</p>
+<h3>Phase 2 — Payroll engine (4–5 days)</h3>
+<ul>
+<li><input disabled="" type="checkbox"> <code>HrPayComponent</code>, <code>HrEmployeePay</code>, <code>HrPayrollRun</code>, <code>HrPayslip</code></li>
+<li><input disabled="" type="checkbox"> <code>School.Tests</code> project + <code>PayrollCalculator</code> unit tests (late deduction, grace, caps, slabs, prorata)</li>
+<li><input disabled="" type="checkbox"> Setup screen: Pay Components tab with live preview</li>
+<li><input disabled="" type="checkbox"> Screen 5 (Payroll Run), Screen 6 (Payslip PDF), Screen 7 (Salary Sheet + Excel)</li>
+<li><input disabled="" type="checkbox"> The 4-query run + response compression + EF retry</li>
+</ul>
+<p><strong>Ships:</strong> full monthly payroll for Sir Syed&#39;s per-minute rule.</p>
+<h3>Phase 3 — Leave (2 days)</h3>
+<ul>
+<li><input disabled="" type="checkbox"> <code>HrLeave</code> + Screen 4; feed approved leave into attendance status</li>
+</ul>
+<h3>Phase 4 — Optional extras (3–4 days, only if asked)</h3>
+<ul>
+<li><input disabled="" type="checkbox"> Loans &amp; advances (Screen 9)</li>
+<li><input disabled="" type="checkbox"> Hikvision import (Screen 10) — shared <code>AttendanceImportService</code>, aggregate at import,
+two writers: staff → <code>HrAttendance</code>, students → existing <code>StdAttendence</code></li>
+<li><input disabled="" type="checkbox"> Payslip over WhatsApp via the existing WAHA sender</li>
+</ul>
+<hr>
+<h2>9. What I cut, and why</h2>
+<table>
+<thead>
+<tr>
+<th>Cut</th>
+<th>Why it&#39;s safe</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Department table</td>
+<td><code>Designation</code> already groups staff. Add later if the client asks — it&#39;s a lookup + FK.</td>
+</tr>
+<tr>
+<td>Employee Shift Assignment screen</td>
+<td>One <code>ShiftId</code> on Employee covers a school. Per-day rosters are a factory problem.</td>
+</tr>
+<tr>
+<td>Leave entitlement ledger</td>
+<td>Schools track leave informally. Ship <code>HrLeave</code> first; add balances only if requested.</td>
+</tr>
+<tr>
+<td>Attendance Posting screen</td>
+<td>D1 — computed on save.</td>
+</tr>
+<tr>
+<td>Raw punch table</td>
+<td>D5 — aggregated at import.</td>
+</tr>
+<tr>
+<td>Late Exemption table + form</td>
+<td>D4 — a flag on the attendance row.</td>
+</tr>
+<tr>
+<td>Rule slab child table + form</td>
+<td>D3 — JSON.</td>
+</tr>
+<tr>
+<td>Salary detail + structure line tables</td>
+<td>D3 — JSON.</td>
+</tr>
+<tr>
+<td>EOBI / PF / tax slabs / advance tax</td>
+<td>Not applicable to a private school payroll. Add a fixed-amount <code>HrPayComponent</code> if any is ever needed.</td>
+</tr>
+<tr>
+<td>Final settlement, card print, employee hierarchy, medical claims</td>
+<td>Genuine ERP features with no school use case.</td>
+</tr>
+<tr>
+<td>Salary Month Lock as a table+screen</td>
+<td>It&#39;s a <code>Status</code> column on <code>HrPayrollRun</code>.</td>
+</tr>
+<tr>
+<td>Bank setup</td>
+<td>A text field on the employee is enough for a bank advice export.</td>
+</tr>
+</tbody></table>
+<p>Everything cut is <strong>additive later</strong> — none of it requires reshaping the 9 core tables.</p>
+<hr>
+<h2>10. Decisions needed before Phase 1</h2>
+<ol>
+<li><strong>Teachers</strong> — <code>SMSTeacher</code> and <code>Employees</code> are separate tables. Do teachers draw salary through this
+module? If yes, merge teachers into <code>Employees</code> <strong>now</strong>; retrofitting later is painful.
+<em>(This is the one open question that can&#39;t be deferred.)</em></li>
+<li>Grace minutes, daily cap, and month-days basis (30 vs calendar) for Sir Syed.</li>
+<li>Weekly off — Sunday only, or Friday half-day + Sunday?</li>
+<li>Do summer/winter timings differ? (If yes, <code>HrShift</code> gets a date range and employees get a shift
+<em>per period</em> — a small change, but cheaper to know now.)</li>
+</ol>
+<p>Questions 2–4 have safe defaults (10 min grace, no cap, 30 days, Sunday off, single shift) and can be
+changed from the Setup screen afterwards without a migration. <strong>Only question 1 blocks.</strong></p>
+
+<div class="footer">Easy School Management System &mdash; HR &amp; Payroll Lean Rebuild Plan (Plan B) &mdash; generated 2026-08-25</div>
+</body>
+</html>

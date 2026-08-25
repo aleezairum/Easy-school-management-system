@@ -1,0 +1,277 @@
+@model School.Web.Controllers.ExamController.TeacherWiseResultViewModel
+@{
+    Layout = null;
+    ViewBag.Title = "Teacher Wise Result";
+
+    var teachers = Model?.Teachers ?? new List<School.Web.Controllers.ExamController.TeacherWiseTeacher>();
+    var maxCells = Model?.MaxCells ?? 0;
+    if (maxCells < 1) maxCells = 1;   // always render at least one result column
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Teacher Wise Result - Sir Syed Model High School</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            background: #fff;
+            color: #000;
+            padding: 0 10px 10px;
+        }
+
+        .page-wrapper {
+            padding: 0 10px 10px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* ── Header ── */
+        .school-header {
+            text-align: center;
+            border: 1.5px solid #aaa;
+            padding: 4px 4px;
+            margin-bottom: 4px;
+        }
+
+        .school-name {
+            font-size: 18px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+
+        /* ── Meta row ── */
+        .meta-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            flex-wrap: wrap;
+            gap: 4px;
+            background-color: #000;
+            color: #fff;
+            padding: 4px 12px;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .meta-row span { white-space: nowrap; }
+
+        .meta-row .title {
+            font-size: 18px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        /* ── Table ── */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;          /* keep all columns inside the page so the right border always prints */
+            font-size: 11.5px;
+        }
+
+        thead tr th,
+        tbody tr td {
+            border: 1px solid #555;
+            text-align: center;
+            padding: 3px 5px;
+            vertical-align: middle;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        thead tr th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+
+        /* First two columns: serial no. + teacher name; last: average */
+        th.col-sr, td.col-sr { width: 32px; }
+        th.col-teacher, td.col-teacher {
+            width: 150px;
+            text-align: left;
+            padding-left: 8px;
+            background-color: #f9f9f9;
+            font-weight: 600;
+        }
+        th.col-avg, td.col-avg {
+            width: 70px;
+            font-weight: bold;
+            background-color: #f4f4f4;
+        }
+        th.col-pos, td.col-pos {
+            width: 60px;
+            font-weight: bold;
+            background-color: #eef4ff;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        th.col-sign, td.col-sign { width: 60px; }
+
+        /* A subject-result cell: small label on top, percentage below */
+        td.col-cell .cell-label {
+            display: block;
+            font-size: 9.5px;
+            color: #444;
+            line-height: 1.15;
+            margin-bottom: 1px;
+        }
+        td.col-cell .cell-pct { display: block; font-weight: 600; }
+
+        /* Alternate row shading on data columns */
+        tbody tr:nth-child(even) td:not(.col-teacher):not(.col-avg) { background-color: #fafafa; }
+
+        tfoot .avg-row td {
+            font-weight: bold;
+            background-color: #eef4ff;
+            border-top: 2px solid #333;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        tfoot .avg-row td.avg-label { text-align: center; }
+
+        .empty-msg {
+            text-align: center;
+            padding: 24px;
+            color: #777;
+            font-style: italic;
+        }
+
+        /* Print toolbar (hidden when printing) */
+        .print-toolbar {
+            max-width: 1200px;
+            margin: 0 auto 8px;
+            text-align: right;
+        }
+
+        .print-toolbar .btn-print {
+            background: #1a7a3e;
+            color: #fff;
+            border: none;
+            padding: 8px 22px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .print-toolbar .btn-close-win {
+            background: #555;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+
+        @@page {
+            size: A4 landscape;
+            /* margin 0 removes the browser-added date/title header and URL footer */
+            margin: 0;
+        }
+
+        /* Print styles */
+        @@media print {
+            body { padding: 3mm 8mm 6mm; }
+            .page-wrapper { border: none; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+<div class="print-toolbar no-print">
+    <button type="button" class="btn-print" onclick="window.print()">
+        Print
+    </button>
+    <button type="button" class="btn-close-win" onclick="window.close()">
+        Close
+    </button>
+</div>
+
+<div class="page-wrapper">
+
+    <!-- School Header -->
+    <div class="school-header">
+        <div class="school-name">SIR SYED MODEL HIGH SCHOOL (Boys&amp;Girls), Hasilpur</div>
+    </div>
+
+    <!-- Meta Row -->
+    <div class="meta-row">
+        <span><strong>Scope:</strong> @(string.IsNullOrWhiteSpace(Model?.Scope) ? "Whole School" : Model.Scope)</span>
+        <span class="title">TEACHER WISE RESULT</span>
+        <span><strong>Exam:</strong> @(string.IsNullOrWhiteSpace(Model?.Examination) ? "-" : Model.Examination)</span>
+    </div>
+
+    @if (teachers.Count == 0)
+    {
+        <div class="empty-msg">No result data found for this Exam / Scope.</div>
+    }
+    else
+    {
+        var overallAvg = teachers.Count > 0 ? teachers.Average(t => t.Average) : 0;
+        <table>
+            <thead>
+                <tr>
+                    <th class="col-sr">Sr.</th>
+                    <th class="col-teacher">Name of Teacher</th>
+                    <th colspan="@maxCells">Subject-wise Result&nbsp;(%)</th>
+                    <th class="col-avg">Average %</th>
+                    <th class="col-pos">Position</th>
+                    <th class="col-sign">Sign.</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (var i = 0; i < teachers.Count; i++)
+                {
+                    var t = teachers[i];
+                    <tr>
+                        <td class="col-sr">@(i + 1)</td>
+                        <td class="col-teacher">@t.TeacherName</td>
+                        @for (var c = 0; c < maxCells; c++)
+                        {
+                            if (c < t.Cells.Count)
+                            {
+                                var cell = t.Cells[c];
+                                <td class="col-cell">
+                                    <span class="cell-label">@cell.Label</span>
+                                    <span class="cell-pct">@cell.Percent.ToString("0.##")</span>
+                                </td>
+                            }
+                            else
+                            {
+                                <td class="col-cell">&nbsp;</td>
+                            }
+                        }
+                        <td class="col-avg">@t.Average.ToString("0.##")</td>
+                        <td class="col-pos">@t.Position</td>
+                        <td class="col-sign">&nbsp;</td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr class="avg-row">
+                    <td class="col-teacher avg-label" colspan="@(2 + maxCells)"><strong>Average Result</strong></td>
+                    <td class="col-avg"><strong>@overallAvg.ToString("0.##")</strong></td>
+                    <td class="col-pos"></td>
+                    <td class="col-sign"></td>
+                </tr>
+            </tfoot>
+        </table>
+    }
+
+</div>
+</body>
+</html>

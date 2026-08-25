@@ -68,8 +68,18 @@ namespace School.API.Services.Implementations.Academic
         public Task<ExamExecutiveDto> GetExecutiveReportAsync(int examId, int classId, int sectionId)
             => _repo.GetExecutiveReportAsync(examId, classId, sectionId);
 
-        public Task<ExamAnnouncementDto> GetAnnouncementReportAsync(int examId)
-            => _repo.GetAnnouncementReportAsync(examId);
+        public Task<List<ExamSubjectWiseRowDto>> GetSubjectWiseReportAsync(int examId, string? classIds, string? sectionIds)
+            => _repo.GetSubjectWiseReportAsync(examId, classIds, sectionIds);
+
+        public Task<List<ExamTeacherWiseRowDto>> GetTeacherWiseReportAsync(int examId, int teacherId)
+            => _repo.GetTeacherWiseReportAsync(examId, teacherId);
+
+        public Task<List<ExamTeacherComparisonRowDto>> GetTeacherComparisonReportAsync(
+            int examId, string? lClassIds, string? lSectionIds, string? rClassIds, string? rSectionIds)
+            => _repo.GetTeacherComparisonReportAsync(examId, lClassIds, lSectionIds, rClassIds, rSectionIds);
+
+        public Task<ExamAnnouncementDto> GetAnnouncementReportAsync(int examId, string? classIds = null, string? sectionIds = null)
+            => _repo.GetAnnouncementReportAsync(examId, classIds, sectionIds);
 
         public Task<ResponseDto?> DeleteByIdAsync(int id)
             => _repo.DeleteByIdAsync(id);

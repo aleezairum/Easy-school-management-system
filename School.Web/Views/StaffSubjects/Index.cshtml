@@ -3,409 +3,481 @@
     Layout = "~/Views/Shared/_DashboardLayout.cshtml";
 }
 
-<div class="card" style="border-radius: 16px; border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
-    <div class="card-body p-4">
-        <!-- Header Section: Staff Member Selection -->
-        <div class="form-section mb-4">
-            <h6 class="mb-3">Select Staff Member</h6>
-            <div class="row">
-                <div class="col-lg-4 col-md-6 col-12">
-                    <label for="staffMemberId" class="form-label">Staff Member <span class="text-danger">*</span></label>
-                    <select class="form-select" id="staffMemberId" required>
-                        <option value="">-- Select Staff Member --</option>
-                    </select>
+<style>
+    /* ── Toast ── */
+    .toast-container-custom { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+    .toast-custom { min-width: 280px; max-width: 380px; padding: 14px 18px; border-radius: 12px; font-size: 14px; font-weight: 500; color: #fff; box-shadow: 0 4px 20px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 10px; animation: slideIn 0.3s ease; }
+        .toast-custom.toast-success { background: #008649; }
+        .toast-custom.toast-error { background: #ef4444; }
+        .toast-custom.toast-warning { background: #f59e0b; }
+        .toast-custom.toast-info { background: #3b82f6; }
+        .toast-custom .toast-close { margin-left: auto; cursor: pointer; background: none; border: none; color: #fff; font-size: 16px; padding: 0; }
+    @@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+    /* ── Buttons ── */
+    .btn-save { background: linear-gradient(135deg, #008649 0%, #006d3b 100%); border: none; border-radius: 10px; padding: 10px 20px; font-weight: 600; font-size: 14px; color: #fff; cursor: pointer; transition: all 0.2s; }
+        .btn-save:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,134,73,0.4); }
+    .btn-clear { background: #f1f5f9; border: 2px solid #e2e8f0; border-radius: 10px; padding: 10px 20px; font-weight: 600; font-size: 14px; color: #64748b; cursor: pointer; transition: all 0.2s; }
+        .btn-clear:hover { background: #e2e8f0; color: #475569; }
+    .btn-edit { background: linear-gradient(135deg, #008649 0%, #006d3b 100%); border: none; border-radius: 8px; padding: 5px 11px; font-size: 13px; color: #fff; cursor: pointer; transition: all 0.2s; }
+        .btn-edit:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,134,73,0.4); }
+    .btn-delete { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); border: none; border-radius: 8px; padding: 5px 11px; font-size: 13px; color: #fff; cursor: pointer; transition: all 0.2s; }
+        .btn-delete:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(239,68,68,0.4); }
+
+    .table tbody tr.selected { background: #ecfdf5; border-left: 3px solid #008649; }
+
+    /* ── Loading ── */
+    .loading-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; z-index: 100; border-radius: 16px; }
+    .spinner-border { width: 3rem; height: 3rem; border-width: 0.3rem; }
+
+    /* ── Sections ── */
+    .form-section { background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+    .section-title { font-size: 13px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #e2e8f0; }
+    .filter-section { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; }
+    .filter-section-title { font-size: 13px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0; padding-bottom: 8px; border-bottom: 2px solid #bbf7d0; cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none; }
+        .filter-section-title:hover { color: #008649; }
+        .filter-section-title .chevron-icon { transition: transform 0.3s ease; }
+        .filter-section-title.expanded .chevron-icon { transform: rotate(180deg); }
+    .filter-collapse-body { padding-top: 16px; }
+    .grid-section { margin-top: 24px; }
+</style>
+
+<!-- Toast Container -->
+<div class="toast-container-custom" id="toastContainer"></div>
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-body position-relative">
+
+            <!-- Loading Overlay -->
+            <div id="loadingOverlay" class="loading-overlay" style="display:none;">
+                <div class="spinner-border text-success" role="status">
+                    <span class="visually-hidden">Loading...</span>
                 </div>
             </div>
-        </div>
 
-        <hr />
+            <!-- ── Entry Form (2 rows) ── -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="bi bi-pencil-square me-2"></i>
+                    <span id="formTitle">Add Subject Assignment</span>
+                </div>
 
-        <!-- Assignment Input Section -->
-        <div class="form-section mb-4">
-            <h6 class="mb-3">Add Subject Assignment</h6>
-            <div class="row g-3 align-items-end">
-                <div class="col-lg-2 col-md-4 col-sm-6 col-12">
-                    <label for="classId" class="form-label">Class <span class="text-danger">*</span></label>
-                    <select class="form-select" id="classId" required onchange="loadSections()">
-                        <option value="">-- Select Class --</option>
-                    </select>
+                <input type="hidden" id="hdnVID" value="0" />
+
+                <!-- Row 1 -->
+                <div class="row g-3">
+                    <div class="col-lg-4 col-md-6 col-12">
+                        <label for="staffMemberId" class="form-label">Staff Member <span class="text-danger">*</span></label>
+                        <select class="form-select" id="staffMemberId">
+                            <option value="">-- Select Staff Member --</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-12">
+                        <label for="classId" class="form-label">Class <span class="text-danger">*</span></label>
+                        <select class="form-select" id="classId">
+                            <option value="">-- Select Class --</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-12">
+                        <label for="sectionId" class="form-label">Section <span class="text-danger">*</span></label>
+                        <select class="form-select" id="sectionId" disabled>
+                            <option value="">-- Select Section --</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="col-lg-2 col-md-4 col-sm-6 col-12">
-                    <label for="sectionId" class="form-label">Section <span class="text-danger">*</span></label>
-                    <select class="form-select" id="sectionId" required disabled>
-                        <option value="">-- Select Section --</option>
-                    </select>
-                </div>
-                <div class="col-lg-3 col-md-4 col-sm-6 col-12">
-                    <label for="subjectId" class="form-label">Subject <span class="text-danger">*</span></label>
-                    <select class="form-select" id="subjectId" required>
-                        <option value="">-- Select Subject --</option>
-                    </select>
-                </div>
-                <div class="col-lg-2 col-md-4 col-sm-6 col-12">
-                    <label for="lectureNo" class="form-label">Lecture No <span class="text-danger">*</span></label>
-                    <select class="form-select" id="lectureNo" required>
-                        <option value="">-- Select --</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                        <option value="6">6</option>
-                        <option value="7">7</option>
-                        <option value="8">8</option>
-                    </select>
-                </div>
-                <div class="col-lg-2 col-md-4 col-sm-6 col-12">
-                    <button type="button" class="btn btn-primary w-100" id="btnAddAssignment" onclick="addAssignment()" disabled>
-                        <i class="bi bi-plus-lg me-1"></i> Add
-                    </button>
+
+                <!-- Row 2 -->
+                <div class="row g-3 mt-0 align-items-end">
+                    <div class="col-lg-4 col-md-6 col-12">
+                        <label for="subjectId" class="form-label">Subject <span class="text-danger">*</span></label>
+                        <select class="form-select" id="subjectId" disabled>
+                            <option value="">-- Select Subject --</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-12">
+                        <label for="lectureNo" class="form-label">Lecture No</label>
+                        <select class="form-select" id="lectureNo">
+                            <option value="">-- Select --</option>
+                            <option value="1">1</option><option value="2">2</option>
+                            <option value="3">3</option><option value="4">4</option>
+                            <option value="5">5</option><option value="6">6</option>
+                            <option value="7">7</option><option value="8">8</option>
+                            <option value="9">9</option><option value="10">10</option>
+                            <option value="11">11</option><option value="12">12</option>
+                            <option value="13">13</option><option value="14">14</option>
+                            <option value="15">15</option><option value="16">16</option>
+                            <option value="17">17</option><option value="18">18</option>
+                            <option value="19">19</option><option value="20">20</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-5 col-12 d-flex justify-content-end gap-2">
+                        <button type="button" class="btn-clear" onclick="resetForm()">
+                            <i class="bi bi-x-lg me-1"></i> Clear
+                        </button>
+                        <button type="button" class="btn-save" onclick="saveRecord()">
+                            <i class="bi bi-check-lg me-1"></i> Save
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <hr />
-
-        <!-- Assigned Subjects Grid -->
-        <div class="grid-section">
-            <h6 class="mb-3">Assigned Subjects</h6>
-            <div class="table-responsive">
-                <table class="table table-hover" id="assignmentsTable">
-                    <thead>
-                        <tr>
-                            <th style="width: 60px;">Sr#</th>
-                            <th>Class</th>
-                            <th>Section</th>
-                            <th>Subject</th>
-                            <th>Lecture No</th>
-                            <th class="text-center" style="width: 100px;">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="assignmentsBody">
-                        <tr id="emptyRow">
-                            <td colspan="6" class="text-center text-muted py-4">No subjects assigned yet. Use the form above to add assignments.</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <!-- ── Filter (collapsible) ── -->
+            <div class="filter-section">
+                <div class="filter-section-title" data-bs-toggle="collapse" data-bs-target="#filterCollapseBody">
+                    <span><i class="bi bi-funnel me-2"></i>Search Filters</span>
+                    <i class="bi bi-chevron-down chevron-icon"></i>
+                </div>
+                <div class="collapse" id="filterCollapseBody">
+                    <div class="filter-collapse-body">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-lg-3 col-md-4 col-sm-6 col-12">
+                                <label for="filterStaff" class="form-label">Staff Member</label>
+                                <select class="form-select" id="filterStaff">
+                                    <option value="">All Staff</option>
+                                </select>
+                            </div>
+                            <div class="col-lg-3 col-md-4 col-sm-6 col-12">
+                                <label for="filterClass" class="form-label">Class</label>
+                                <select class="form-select" id="filterClass" onchange="onFilterClassChange()">
+                                    <option value="">All Classes</option>
+                                </select>
+                            </div>
+                            <div class="col-lg-3 col-md-4 col-sm-6 col-12">
+                                <label for="filterSection" class="form-label">Section</label>
+                                <select class="form-select" id="filterSection">
+                                    <option value="">All Sections</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-12 d-flex gap-2">
+                                <button type="button" class="btn-save" onclick="applyFilter()">
+                                    <i class="bi bi-search me-1"></i> Search
+                                </button>
+                                <button type="button" class="btn-clear" onclick="resetFilter()">
+                                    <i class="bi bi-x-lg me-1"></i> Clear
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <!-- Action Buttons -->
-        <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
-            <button type="button" class="btn btn-secondary" onclick="resetForm()">
-                <i class="bi bi-x-lg me-1"></i> Reset
-            </button>
-            <button type="button" class="btn btn-primary" id="btnSave" onclick="saveAssignments()" disabled>
-                <i class="bi bi-check-lg me-1"></i> Save
-            </button>
+            <!-- ── Grid ── -->
+            <div class="grid-section">
+                <div class="section-title"><i class="bi bi-table me-2"></i>Assigned Subjects</div>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th style="width:60px;">Sr#</th>
+                                <th>Staff Member</th>
+                                <th>Class</th>
+                                <th>Section</th>
+                                <th>Subject</th>
+                                <th>Lecture No</th>
+                                <th class="text-center" style="width:130px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="assignmentsBody">
+                            <tr><td colspan="7" class="text-center text-muted py-4">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
 
 @section Scripts {
 <script>
-    ////const API_BASE = 'http://localhost:5266/api';
+    const BASE_URL = (typeof API_BASE !== 'undefined' ? API_BASE : '/api');
 
-    // In-memory store for assignments
-    let assignments = [];
-    let assignmentCounter = 0;
+    let editingVID = 0;
+    let allRows = [];
 
-    // On page load
+    function rid(o)   { return o.vID ?? o.vid ?? o.viD ?? o.VID ?? o.id ?? 0; }
+    function rname(o) { return o.vName ?? o.vname ?? o.VName ?? o.name ?? o.fullName ?? ''; }
+
     $(document).ready(function () {
-        loadStaffMembers();
-        loadClasses();
-        loadSubjects();
+        Promise.all([loadStaff(), loadClasses()]).then(loadAll);
+        $('#classId').on('change', onClassChange);
 
-        // Enable/disable Add button based on field values
-        $('#classId, #sectionId, #subjectId, #lectureNo').on('change', validateAddButton);
+        // Collapsible filter chevron
+        $('#filterCollapseBody').on('show.bs.collapse', function () {
+            $('.filter-section-title').addClass('expanded');
+        }).on('hide.bs.collapse', function () {
+            $('.filter-section-title').removeClass('expanded');
+        });
     });
 
-    // Load staff members dropdown
-    async function loadStaffMembers() {
+    /* ── Dropdown loaders (shared by entry + filter) ── */
+    async function loadStaff() {
         try {
-            const response = await fetch(`${API_BASE}/Employee`);
-            if (response.ok) {
-                const staff = await response.json();
-                const select = $('#staffMemberId');
-                select.find('option:not(:first)').remove();
-                staff.forEach(s => {
-                    select.append(`<option value="${s.id}">${s.fullName || s.name}</option>`);
-                });
+            const res = await fetch(`${BASE_URL}/teacher`);
+            if (res.ok) {
+                const staff = await res.json();
+                const opts = staff.map(s => `<option value="${rid(s)}">${rname(s)}</option>`).join('');
+                $('#staffMemberId').append(opts);
+                $('#filterStaff').append(opts);
             }
-        } catch (error) {
-            console.error('Error loading staff members:', error);
-        }
+        } catch (e) { console.error('staff', e); }
     }
 
-    // Load classes dropdown
     async function loadClasses() {
         try {
-            const response = await fetch(`${API_BASE}/SMSClass`);
-            if (response.ok) {
-                const classes = await response.json();
-                const select = $('#classId');
-                select.find('option:not(:first)').remove();
-                classes.forEach(c => {
-                    select.append(`<option value="${c.viD}">${c.vName}</option>`);
-                });
+            const res = await fetch(`${BASE_URL}/Class`);
+            if (res.ok) {
+                const classes = await res.json();
+                const opts = classes.map(c => `<option value="${rid(c)}">${rname(c)}</option>`).join('');
+                $('#classId').append(opts);
+                $('#filterClass').append(opts);
             }
-        } catch (error) {
-            console.error('Error loading classes:', error);
-        }
+        } catch (e) { console.error('classes', e); }
     }
 
-    // Load sections based on selected class
-    async function loadSections() {
-        const classId = $('#classId').val();
-        const sectionSelect = $('#sectionId');
-
-        sectionSelect.find('option:not(:first)').remove();
-        sectionSelect.prop('disabled', true);
-
-        if (!classId) {
-            validateAddButton();
-            return;
-        }
-
+    async function loadSectionsInto(selector, classId, keepFirstLabel) {
+        const sel = $(selector);
+        sel.find('option:not(:first)').remove();
+        if (!classId) { sel.prop('disabled', selector === '#sectionId'); return; }
         try {
-            const response = await fetch(`${API_BASE}/SMSSection/byClass/${classId}`);
-            if (response.ok) {
-                const sections = await response.json();
-                sections.forEach(s => {
-                    sectionSelect.append(`<option value="${s.viD}">${s.vName}</option>`);
-                });
-                sectionSelect.prop('disabled', false);
+            const res = await fetch(`${BASE_URL}/Section/byClass/${classId}`);
+            if (res.ok) {
+                (await res.json()).forEach(s => sel.append(`<option value="${rid(s)}">${rname(s)}</option>`));
+                if (selector === '#sectionId') sel.prop('disabled', false);
             }
-        } catch (error) {
-            console.error('Error loading sections:', error);
-        }
-
-        validateAddButton();
+        } catch (e) { console.error('sections', e); }
     }
 
-    // Load subjects dropdown
-    async function loadSubjects() {
+    async function loadSubjectsInto(selector, classId) {
+        const sel = $(selector);
+        sel.find('option:not(:first)').remove();
+        if (!classId) { sel.prop('disabled', true); return; }
         try {
-            const response = await fetch(`${API_BASE}/Subject`);
-            if (response.ok) {
-                const subjects = await response.json();
-                const select = $('#subjectId');
-                select.find('option:not(:first)').remove();
-                subjects.forEach(s => {
-                    select.append(`<option value="${s.id}">${s.name}</option>`);
-                });
+            const res = await fetch(`${BASE_URL}/Subject/byClass/${classId}`);
+            if (res.ok) {
+                (await res.json()).forEach(s => sel.append(`<option value="${rid(s)}">${rname(s)}</option>`));
+                sel.prop('disabled', false);
             }
-        } catch (error) {
-            console.error('Error loading subjects:', error);
+        } catch (e) { console.error('subjects', e); }
+    }
+
+    async function onClassChange() {
+        const classId = $('#classId').val();
+        $('#sectionId').val('');
+        $('#subjectId').val('');
+        await Promise.all([loadSectionsInto('#sectionId', classId), loadSubjectsInto('#subjectId', classId)]);
+    }
+
+    async function onFilterClassChange() {
+        const classId = $('#filterClass').val();
+        $('#filterSection').val('');
+        await loadSectionsInto('#filterSection', classId);
+    }
+
+    /* ── Load all records, then filter client-side ── */
+    async function loadAll() {
+        showLoading();
+        try {
+            const res = await fetch(`${BASE_URL}/staffsubject`);
+            if (res.ok) {
+                allRows = await res.json() || [];
+                applyFilter();
+            } else {
+                const err = await safeJson(res);
+                showToast(err.message || 'Failed to load records', 'error');
+            }
+        } catch (e) {
+            showToast('Network error: ' + e.message, 'error');
+        } finally {
+            hideLoading();
         }
     }
 
-    // Validate if Add button should be enabled
-    function validateAddButton() {
-        const classId = $('#classId').val();
-        const sectionId = $('#sectionId').val();
-        const subjectId = $('#subjectId').val();
-        const lectureNo = $('#lectureNo').val();
+    function val(r, a, b) { return r[a] ?? r[b]; }
+    function rowId(r) { return r.vid ?? r.Vid ?? r.VID ?? 0; }
 
-        const isValid = classId && sectionId && subjectId && lectureNo;
-        $('#btnAddAssignment').prop('disabled', !isValid);
+    function applyFilter() {
+        const fStaff   = $('#filterStaff').val();
+        const fClass   = $('#filterClass').val();
+        const fSection = $('#filterSection').val();
+
+        const rows = allRows.filter(r => {
+            const tId = String(val(r, 'teacherId', 'TeacherId') ?? '');
+            const cId = String(val(r, 'classId', 'ClassId') ?? '');
+            const sId = String(val(r, 'sectionId', 'SectionId') ?? '');
+            return (!fStaff   || tId === fStaff)
+                && (!fClass   || cId === fClass)
+                && (!fSection || sId === fSection);
+        });
+        renderList(rows);
     }
 
-    // Check for duplicate assignment
-    function isDuplicate(classId, sectionId, subjectId, lectureNo) {
-        return assignments.some(a =>
-            a.classId === classId &&
-            a.sectionId === sectionId &&
-            a.subjectId === subjectId &&
-            a.lectureNo === lectureNo
-        );
-    }
-
-    // Add assignment to the grid
-    function addAssignment() {
-        const classId = $('#classId').val();
-        const sectionId = $('#sectionId').val();
-        const subjectId = $('#subjectId').val();
-        const lectureNo = $('#lectureNo').val();
-
-        // Get display text
-        const className = $('#classId option:selected').text();
-        const sectionName = $('#sectionId option:selected').text();
-        const subjectName = $('#subjectId option:selected').text();
-
-        // Check for duplicates
-        if (isDuplicate(classId, sectionId, subjectId, lectureNo)) {
-            toastWarning('This combination of Class, Section, Subject, and Lecture No already exists.', 'Duplicate Entry');
-            return;
-        }
-
-        // Add to assignments array
-        const assignment = {
-            id: ++assignmentCounter,
-            classId: classId,
-            className: className,
-            sectionId: sectionId,
-            sectionName: sectionName,
-            subjectId: subjectId,
-            subjectName: subjectName,
-            lectureNo: lectureNo
-        };
-        assignments.push(assignment);
-
-        // Render the grid
-        renderAssignmentsGrid();
-
-        // Clear input fields
-        clearInputFields();
-
-        // Enable save button
-        updateSaveButton();
-
-        toastSuccess('Assignment added successfully.');
-    }
-
-    // Remove assignment from the grid
-    function removeAssignment(id) {
-        assignments = assignments.filter(a => a.id !== id);
-        renderAssignmentsGrid();
-        updateSaveButton();
-        toastInfo('Assignment removed.');
-    }
-
-    // Render the assignments grid
-    function renderAssignmentsGrid() {
+    function renderList(rows) {
         const tbody = $('#assignmentsBody');
         tbody.empty();
-
-        if (assignments.length === 0) {
-            tbody.html('<tr id="emptyRow"><td colspan="6" class="text-center text-muted py-4">No subjects assigned yet. Use the form above to add assignments.</td></tr>');
+        if (!rows || rows.length === 0) {
+            tbody.html('<tr><td colspan="7" class="text-center text-muted py-4">No records found.</td></tr>');
             return;
         }
+        rows.forEach((r, i) => {
+            const vid = rowId(r);
+            const staffName   = val(r, 'teacherName', 'TeacherName') || '-';
+            const className   = val(r, 'className', 'ClassName')     || '-';
+            const sectionName = val(r, 'sectionName', 'SectionName') || '-';
+            const subjectName = val(r, 'subjectName', 'SubjectName') || '-';
+            const lectureNo   = val(r, 'lectureNo', 'LectureNo');
 
-        assignments.forEach((assignment, index) => {
-            const row = `
-                <tr data-id="${assignment.id}">
-                    <td>${index + 1}</td>
-                    <td>${assignment.className}</td>
-                    <td>${assignment.sectionName}</td>
-                    <td>${assignment.subjectName}</td>
-                    <td>${assignment.lectureNo}</td>
+            tbody.append(`
+                <tr data-vid="${vid}" ${editingVID === vid ? 'class="selected"' : ''}>
+                    <td>${i + 1}</td>
+                    <td>${esc(staffName)}</td>
+                    <td>${esc(className)}</td>
+                    <td>${esc(sectionName)}</td>
+                    <td>${esc(subjectName)}</td>
+                    <td>${lectureNo ?? '-'}</td>
                     <td class="text-center">
+                        <button class="btn-edit me-1" onclick="editRow(${vid})" title="Edit"><i class="bi bi-pencil"></i></button>
+                        <button class="btn-delete" onclick="deleteRow(${vid})" title="Delete"><i class="bi bi-trash"></i></button>
                     </td>
-                </tr>
-            `;
-            tbody.append(row);
+                </tr>`);
         });
     }
 
-    // Clear input fields after adding
-    function clearInputFields() {
-        $('#classId').val('');
-        $('#sectionId').val('').prop('disabled', true);
-        $('#subjectId').val('');
-        $('#lectureNo').val('');
-        validateAddButton();
+    /* ── Edit / Save / Delete ── */
+    async function editRow(vid) {
+        const r = allRows.find(x => rowId(x) === vid);
+        if (!r) return;
+
+        const staffId   = val(r, 'teacherId', 'TeacherId');
+        const classId   = val(r, 'classId', 'ClassId');
+        const sectionId = val(r, 'sectionId', 'SectionId');
+        const subjectId = val(r, 'subjectId', 'SubjectId');
+        const lectureNo = val(r, 'lectureNo', 'LectureNo');
+
+        // NOTE: trigger 'change.select2' (NOT 'change') so the Select2 widget repaints
+        // the selected value WITHOUT firing onClassChange (which would wipe section/subject).
+        $('#staffMemberId').val(String(staffId)).trigger('change.select2');
+        $('#classId').val(String(classId)).trigger('change.select2');
+        await Promise.all([loadSectionsInto('#sectionId', classId), loadSubjectsInto('#subjectId', classId)]);
+        $('#sectionId').val(String(sectionId)).trigger('change.select2');
+        $('#subjectId').val(String(subjectId)).trigger('change.select2');
+        $('#lectureNo').val(lectureNo != null ? String(lectureNo) : '').trigger('change.select2');
+        $('#hdnVID').val(vid);
+        editingVID = vid;
+        $('#formTitle').text('Edit Subject Assignment');
+
+        $('#assignmentsBody tr').removeClass('selected');
+        $(`#assignmentsBody tr[data-vid="${vid}"]`).addClass('selected');
+        document.querySelector('.card-body').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
-    // Update save button state
-    function updateSaveButton() {
-        const staffMemberId = $('#staffMemberId').val();
-        const hasAssignments = assignments.length > 0;
-        $('#btnSave').prop('disabled', !(staffMemberId && hasAssignments));
-    }
+    async function saveRecord() {
+        const staffId   = parseInt($('#staffMemberId').val()) || 0;
+        const classId   = parseInt($('#classId').val())   || 0;
+        const sectionId = parseInt($('#sectionId').val()) || 0;
+        const subjectId = parseInt($('#subjectId').val()) || 0;
+        const lectVal   = $('#lectureNo').val();
 
-    // Staff member change handler
-    $('#staffMemberId').on('change', function () {
-        updateSaveButton();
-        // Optionally load existing assignments for the selected staff member
-        loadExistingAssignments($(this).val());
-    });
-
-    // Load existing assignments for a staff member
-    async function loadExistingAssignments(staffId) {
-        if (!staffId) {
-            assignments = [];
-            assignmentCounter = 0;
-            renderAssignmentsGrid();
-            return;
-        }
-
-        try {
-            const response = await fetch(`${API_BASE}/StaffSubject/byStaff/${staffId}`);
-            if (response.ok) {
-                const existingAssignments = await response.json();
-                assignments = existingAssignments.map((a, index) => ({
-                    id: ++assignmentCounter,
-                    classId: a.classId,
-                    className: a.className,
-                    sectionId: a.sectionId,
-                    sectionName: a.sectionName,
-                    subjectId: a.subjectId,
-                    subjectName: a.subjectName,
-                    lectureNo: a.lectureNo
-                }));
-                renderAssignmentsGrid();
-                updateSaveButton();
-            }
-        } catch (error) {
-            console.error('Error loading existing assignments:', error);
-        }
-    }
-
-    // Reset entire form
-    function resetForm() {
-        $('#staffMemberId').val('');
-        assignments = [];
-        assignmentCounter = 0;
-        renderAssignmentsGrid();
-        clearInputFields();
-        updateSaveButton();
-        toastInfo('Form has been reset.');
-    }
-
-    // Save all assignments
-    async function saveAssignments() {
-        const staffMemberId = $('#staffMemberId').val();
-
-        if (!staffMemberId) {
-            toastError('Please select a staff member.');
-            return;
-        }
-
-        if (assignments.length === 0) {
-            toastError('Please add at least one subject assignment.');
-            return;
-        }
+        if (!staffId)   { showToast('Please select a Staff Member', 'warning'); return; }
+        if (!classId)   { showToast('Please select a Class', 'warning');   return; }
+        if (!sectionId) { showToast('Please select a Section', 'warning'); return; }
+        if (!subjectId) { showToast('Please select a Subject', 'warning'); return; }
 
         const payload = {
-            staffId: staffMemberId,
-            assignments: assignments.map(a => ({
-                classId: a.classId,
-                sectionId: a.sectionId,
-                subjectId: a.subjectId,
-                lectureNo: parseInt(a.lectureNo)
-            }))
+            VID:       parseInt($('#hdnVID').val()) || 0,
+            StaffId:   staffId,
+            ClassId:   classId,
+            SectionId: sectionId,
+            SubjectId: subjectId,
+            LectureNo: lectVal === '' ? null : (parseInt(lectVal) || null),
+            IsActive:  true
         };
 
+        showLoading();
         try {
-            const response = await fetch(`${API_BASE}/StaffSubject`, {
+            const res = await fetch(`${BASE_URL}/staffsubject`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-
-            if (response.ok) {
-                toastSuccess('Staff subject assignments saved successfully.');
+            if (res.ok) {
+                showToast(payload.VID === 0 ? 'Assignment saved successfully!' : 'Assignment updated successfully!', 'success');
+                resetForm();
+                await loadAll();
             } else {
-                const error = await response.text();
-                toastError(error || 'Failed to save assignments.');
+                const err = await safeJson(res);
+                showToast(err.message || 'Failed to save assignment', 'error');
             }
-        } catch (error) {
-            console.error('Error saving assignments:', error);
-            toastError('An error occurred while saving assignments.');
+        } catch (e) {
+            showToast('Network error: ' + e.message, 'error');
+        } finally {
+            hideLoading();
         }
+    }
+
+    async function deleteRow(vid) {
+        if (!await confirmDelete('Are you sure you want to delete this assignment?')) return;
+        showLoading();
+        try {
+            const res = await fetch(`${BASE_URL}/staffsubject/${vid}`, { method: 'DELETE' });
+            if (res.ok) {
+                showToast('Assignment deleted successfully!', 'success');
+                if (editingVID === vid) resetForm();
+                await loadAll();
+            } else {
+                const err = await safeJson(res);
+                showToast(err.message || 'Failed to delete assignment', 'error');
+            }
+        } catch (e) {
+            showToast('Network error: ' + e.message, 'error');
+        } finally {
+            hideLoading();
+        }
+    }
+
+    function resetForm() {
+        $('#hdnVID').val('0');
+        $('#staffMemberId').val('').trigger('change');
+        $('#classId').val('').trigger('change');
+        $('#sectionId').val('').prop('disabled', true).find('option:not(:first)').remove();
+        $('#subjectId').val('').prop('disabled', true).find('option:not(:first)').remove();
+        $('#lectureNo').val('').trigger('change');
+        $('#formTitle').text('Add Subject Assignment');
+        editingVID = 0;
+        $('#assignmentsBody tr').removeClass('selected');
+    }
+
+    function resetFilter() {
+        $('#filterStaff').val('').trigger('change');
+        $('#filterClass').val('').trigger('change');
+        $('#filterSection').val('').find('option:not(:first)').remove();
+        applyFilter();
+    }
+
+    /* ── Helpers ── */
+    function showLoading() { document.getElementById('loadingOverlay').style.display = 'flex'; }
+    function hideLoading() { document.getElementById('loadingOverlay').style.display = 'none'; }
+    async function safeJson(res) { try { return await res.json(); } catch (_) { return {}; } }
+
+    function showToast(message, type) {
+        if (type === 'success' && typeof toastSuccess === 'function') return toastSuccess(message);
+        if (type === 'error'   && typeof toastError   === 'function') return toastError(message);
+        if (type === 'warning' && typeof toastWarning === 'function') return toastWarning(message);
+        if (type === 'info'    && typeof toastInfo    === 'function') return toastInfo(message);
+        const icons = { success: 'bi-check-circle-fill', error: 'bi-x-circle-fill', warning: 'bi-exclamation-triangle-fill', info: 'bi-info-circle-fill' };
+        const el = document.createElement('div');
+        el.className = `toast-custom toast-${type}`;
+        el.innerHTML = `<i class="bi ${icons[type] || 'bi-info-circle-fill'}"></i><span>${esc(message)}</span><button class="toast-close" onclick="this.parentElement.remove()">&#x2715;</button>`;
+        document.getElementById('toastContainer').appendChild(el);
+        setTimeout(() => el.remove(), 4000);
+    }
+
+    function esc(str) {
+        if (str === null || str === undefined) return '';
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 </script>
 }

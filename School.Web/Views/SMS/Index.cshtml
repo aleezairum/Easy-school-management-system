@@ -14,8 +14,13 @@
             <span class="fw-semibold text-secondary">SMS Queue:</span>
             <span class="badge bg-warning text-dark ms-1" id="queuePendingBadge">0 pending</span>
             <span class="text-muted ms-2" id="queueStatusText">idle</span>
+            <span class="ms-3">
+                <i class="bi bi-whatsapp text-success me-1"></i>
+                <span class="fw-semibold text-secondary">WAHA (free):</span>
+                <span class="badge bg-secondary ms-1" id="wahaStatusBadge" title="Absent &amp; Fee notifications use this when connected">checking...</span>
+            </span>
         </div>
-        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="refreshQueueStatus()" title="Refresh queue status">
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="refreshQueueStatus(); refreshWahaStatus();" title="Refresh status">
             <i class="bi bi-arrow-clockwise"></i>
         </button>
     </div>
@@ -202,7 +207,6 @@
                                 <div class="mb-3" id="resultClassField"><label class="form-label">Class</label><select class="form-select" id="resultClassId" onchange="loadResultSections()"><option value="">-- Select Class --</option></select></div>
                                 <div class="mb-3" id="resultSectionField"><label class="form-label">Section</label><select class="form-select" id="resultSectionId" onchange="loadResultStudents()"><option value="">-- Select Section --</option></select></div>
                                 <div class="mb-3" id="resultStudentField"><label class="form-label">Student</label><select class="form-select" id="resultStudentId"><option value="">-- Select Student --</option></select></div>
-                                <div class="mb-3"><label class="form-label">Result Status</label><select class="form-select" id="resultStatus"><option value="">-- All --</option><option value="pass">Pass</option><option value="fail">Fail</option></select></div>
                                 <div class="mb-3"><label class="form-label">Message</label><textarea class="form-control" id="resultMessage" rows="4" placeholder="Optional custom message..." onkeyup="updateCharCount('resultMessage','resultCharCount')"></textarea><small class="text-muted">Characters: <span id="resultCharCount">0</span></small></div>
                                 <div class="d-flex gap-2"><button type="button" class="btn btn-primary" onclick="sendResultSMS()"><i class="bi bi-send me-1"></i>Send</button><button type="button" class="btn btn-secondary" onclick="clearResultForm()"><i class="bi bi-x-lg me-1"></i>Clear</button></div>
                             </div>
@@ -382,6 +386,7 @@
 
             // Start global queue-status widget polling.
             startQueueStatusPolling();
+            startWahaStatusPolling();
         });
 
         // ── DROPDOWNS ─────────────────────────────────────────────────
@@ -398,8 +403,13 @@
                 });
                 ['resultExamId','rcardExamId'].forEach(id => {
                     const s = $(`#${id}`); s.find('option:not(:first)').remove();
-                    exams.forEach(e => s.append(`<option value="${e.id}">${e.examName}</option>`));
+                    exams.forEach(e => s.append(`<option value="${e.vid}">${e.vName}</option>`));
                 });
+                // Default-select the latest exam (highest VID = most recently created)
+                if (exams && exams.length > 0) {
+                    const latest = exams.reduce((a, b) => (a.vid >= b.vid ? a : b));
+                    $('#resultExamId, #rcardExamId').val(String(latest.vid));
+                }
             } catch (e) { console.error(e); }
         }
 
@@ -509,6 +519,32 @@
             refreshQueueStatus();
             if (queueStatusTimer) clearInterval(queueStatusTimer);
             queueStatusTimer = setInterval(refreshQueueStatus, 5000);
+        }
+
+        // WAHA connection badge — polls /Sms/waha-status every 15 sec
+        // (server-side response is itself cached ~20s, so this stays cheap).
+        let wahaStatusTimer = null;
+        async function refreshWahaStatus() {
+            const badge = $('#wahaStatusBadge');
+            try {
+                const r = await fetch(`${API_BASE}/Sms/waha-status`);
+                if (!r.ok) { badge.text('unknown').removeClass('bg-success bg-danger').addClass('bg-secondary'); return; }
+                const j = await r.json();
+                if (j.connected) {
+                    badge.text('Connected').removeClass('bg-secondary bg-danger').addClass('bg-success');
+                    badge.attr('title', 'Absent & Fee notifications are going out free through WAHA');
+                } else {
+                    badge.text('Disconnected (using paid)').removeClass('bg-secondary bg-success').addClass('bg-danger');
+                    badge.attr('title', `WAHA status: ${j.status}${j.error ? ' — ' + j.error : ''}. Absent & Fee notifications are falling back to the paid provider.`);
+                }
+            } catch (e) {
+                badge.text('unknown').removeClass('bg-success bg-danger').addClass('bg-secondary');
+            }
+        }
+        function startWahaStatusPolling() {
+            refreshWahaStatus();
+            if (wahaStatusTimer) clearInterval(wahaStatusTimer);
+            wahaStatusTimer = setInterval(refreshWahaStatus, 15000);
         }
 
         // Replaces the LAST line of the textarea (or appends one) so the
@@ -715,11 +751,56 @@
             }
         }
 
+        // Result: sends each matched student's result as a WhatsApp TEXT summary.
+        // The API resolves recipients (Father→Guardian→Student) and the background
+        // queue composes + sends each result text (works without WAHA Plus).
         async function sendResultSMS() {
-            const examId=$('#resultExamId').val(); if(!examId){toastWarning('Please select an exam');return;}
-            const msg=$('#resultMessage').val()||"Dear Parent, your child's exam results are available.";
-            const phone=$('#resultStudentId option:selected').data('phone'); if(!phone){toastWarning('Please select a student with a phone number');return;}
-            await sendSmsViaApi([{phone,name:$('#resultStudentId option:selected').text()}],msg,6,'resultSendingLog','resultSentCount');
+            const examId = $('#resultExamId').val();
+            if (!examId) { toastWarning('Please select an exam'); return; }
+
+            const scope = $('input[name="resultChoose"]:checked').val(); // student|section|class|all
+            const classId   = $('#resultClassId').val();
+            const sectionId = $('#resultSectionId').val();
+            const studentId = $('#resultStudentId').val();
+
+            if ((scope === 'class' || scope === 'section' || scope === 'student') && !classId) { toastWarning('Please select a Class'); return; }
+            if ((scope === 'section' || scope === 'student') && !sectionId) { toastWarning('Please select a Section'); return; }
+            if (scope === 'student' && !studentId) { toastWarning('Please select a Student'); return; }
+
+            const logId = 'resultSendingLog', countId = 'resultSentCount';
+            const jobId = newJobId();
+            const payload = {
+                examId: parseInt(examId),
+                examName: $('#resultExamId option:selected').text(),
+                scope,
+                classId:   classId   ? parseInt(classId)   : null,
+                sectionId: sectionId ? parseInt(sectionId) : null,
+                studentId: studentId ? parseInt(studentId) : null,
+                message: $('#resultMessage').val() || '',
+                jobId
+            };
+
+            logSMS(logId, countId, `📤 Preparing result texts (${scope})...`);
+            saveActiveJob(logId, jobId, `Result Text (${scope})`);
+            try {
+                const r = await fetch(`${API_BASE}/Sms/result`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!r.ok) {
+                    const e = await r.json().catch(() => ({ message: 'Send failed' }));
+                    toastError(e.message || 'Failed');
+                    clearActiveJob(logId);
+                    return;
+                }
+                toastInfo('Results are being sent in background...');
+                startProgressPoll(jobId, logId);
+            } catch (ex) {
+                console.error(ex);
+                toastError('Network error');
+                clearActiveJob(logId);
+            }
         }
 
         async function sendFromToSMS() {
@@ -730,11 +811,56 @@
             await sendSmsViaApi([{phone,name:$('#fromtoStudentId option:selected').text()}],msg,7,'fromtoSendingLog','fromtoSentCount');
         }
 
+        // Result Card: generates a PDF per matched student and sends it as a
+        // WhatsApp document. The API resolves recipients (Father→Guardian→Student)
+        // and the background queue builds+sends each PDF (throttled).
         async function sendRcardSMS() {
-            const examId=$('#rcardExamId').val(); if(!examId){toastWarning('Please select an exam');return;}
-            const msg="Dear Parent, your child's report card is ready. Please collect from school.";
-            const phone=$('#rcardStudentId option:selected').data('phone'); if(!phone){toastWarning('Please select a student with a phone number');return;}
-            await sendSmsViaApi([{phone,name:$('#rcardStudentId option:selected').text()}],msg,9,'rcardSendingLog','rcardSentCount');
+            const examId = $('#rcardExamId').val();
+            if (!examId) { toastWarning('Please select an exam'); return; }
+
+            const scope = $('input[name="rcardChoose"]:checked').val(); // student|section|class|all
+            const classId   = $('#rcardClassId').val();
+            const sectionId = $('#rcardSectionId').val();
+            const studentId = $('#rcardStudentId').val();
+
+            if ((scope === 'class' || scope === 'section' || scope === 'student') && !classId) { toastWarning('Please select a Class'); return; }
+            if ((scope === 'section' || scope === 'student') && !sectionId) { toastWarning('Please select a Section'); return; }
+            if (scope === 'student' && !studentId) { toastWarning('Please select a Student'); return; }
+
+            const logId = 'rcardSendingLog', countId = 'rcardSentCount';
+            const jobId = newJobId();
+            const payload = {
+                examId: parseInt(examId),
+                examName: $('#rcardExamId option:selected').text(),
+                scope,
+                classId:   classId   ? parseInt(classId)   : null,
+                sectionId: sectionId ? parseInt(sectionId) : null,
+                studentId: studentId ? parseInt(studentId) : null,
+                message: $('#rcardMessage').val() || '',
+                jobId
+            };
+
+            logSMS(logId, countId, `📤 Preparing result-card PDFs (${scope})...`);
+            saveActiveJob(logId, jobId, `Result Cards (${scope})`);
+            try {
+                const r = await fetch(`${API_BASE}/Sms/rcard`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!r.ok) {
+                    const e = await r.json().catch(() => ({ message: 'Send failed' }));
+                    toastError(e.message || 'Failed');
+                    clearActiveJob(logId);
+                    return;
+                }
+                toastInfo('Result cards are being generated & sent in background...');
+                startProgressPoll(jobId, logId);
+            } catch (ex) {
+                console.error(ex);
+                toastError('Network error');
+                clearActiveJob(logId);
+            }
         }
 
         // ── EXCEL SMS ─────────────────────────────────────────────────
@@ -836,7 +962,7 @@
             $('#feeSmsUrdu').prop('checked',false);
             $('input[name="feeChoose"][value="student"]').prop('checked',true); toggleFeeFields();
         }
-        function clearResultForm()  { $('#resultExamId,#resultClassId,#resultSectionId,#resultStudentId,#resultStatus,#resultMessage').val(''); $('#resultCharCount').text('0'); $('#resultSmsUrdu').prop('checked',false); }
+        function clearResultForm()  { $('#resultExamId,#resultClassId,#resultSectionId,#resultStudentId,#resultMessage').val(''); $('#resultCharCount').text('0'); $('#resultSmsUrdu').prop('checked',false); }
         function clearFromToForm()  { $('#fromtoFromDate,#fromtoToDate,#fromtoFilterType,#fromtoClassId,#fromtoSectionId,#fromtoStudentId,#fromtoMessage').val(''); $('#fromtoCharCount').text('0'); $('#fromtoSmsUrdu').prop('checked',false); }
         function clearRcardForm()   { $('#rcardExamId,#rcardClassId,#rcardSectionId,#rcardStudentId,#rcardMessage').val(''); $('#rcardIncludeLink').prop('checked',false); $('#rcardCharCount').text('0'); $('#rcardSmsUrdu').prop('checked',false); }
 

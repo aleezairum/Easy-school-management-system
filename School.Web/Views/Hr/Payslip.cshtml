@@ -1,0 +1,68 @@
+@{
+    ViewData["Title"] = "Payslip";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    var payslipId = ViewData["PayslipId"];
+}
+
+<style>
+    .payslip-box { max-width: 800px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; padding: 30px; }
+    .payslip-header { text-align: center; border-bottom: 2px solid #008649; padding-bottom: 16px; margin-bottom: 20px; }
+    .payslip-table th, .payslip-table td { padding: 6px 10px; }
+    @@media print { .no-print { display: none !important; } }
+</style>
+
+<div class="container-fluid">
+    <div id="alertContainer"></div>
+    <div class="d-flex justify-content-between mb-3 no-print">
+        <a href="javascript:history.back()" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+        <div>
+            <button class="btn btn-outline-success me-2" onclick="window.print()"><i class="bi bi-printer"></i> Print</button>
+            <button class="btn btn-success" onclick="payThis()"><i class="bi bi-cash-coin"></i> Mark Paid</button>
+        </div>
+    </div>
+
+    <div class="payslip-box" id="payslipBox">Loading...</div>
+</div>
+
+@section Scripts {
+<script>
+    const payslipId = @payslipId;
+
+    $(document).ready(function () { loadPayslip(); });
+
+    async function loadPayslip() {
+        const res = await fetch(`${API_BASE}/hr/payroll/payslip/${payslipId}`);
+        if (!res.ok) { $('#payslipBox').html('<p class="text-danger">Payslip not found.</p>'); return; }
+        const p = await res.json();
+        const earnings = p.breakdown.filter(b => b.kind === 1);
+        const deductions = p.breakdown.filter(b => b.kind === 2);
+
+        $('#payslipBox').html(`
+            <div class="payslip-header">
+                <h4 class="mb-1">Salary Slip</h4>
+                <div class="text-muted">${p.employeeCode} — ${p.employeeName} ${p.designationName ? '(' + p.designationName + ')' : ''}</div>
+            </div>
+            <table class="table table-sm payslip-table">
+                <tr><th style="width:50%">Basic Salary</th><td>Rs ${Number(p.basic).toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
+                ${earnings.map(e => `<tr><th>${e.name}</th><td>Rs ${Number(e.amount).toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>`).join('')}
+                <tr class="table-light"><th>Gross Earning</th><td><strong>Rs ${Number(p.grossEarning).toLocaleString(undefined,{minimumFractionDigits:2})}</strong></td></tr>
+                ${deductions.map(d => `<tr><th>${d.name}</th><td class="text-danger">- Rs ${Number(d.amount).toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>`).join('')}
+                <tr class="table-light"><th>Total Deduction</th><td><strong>Rs ${Number(p.totalDeduction).toLocaleString(undefined,{minimumFractionDigits:2})}</strong></td></tr>
+                <tr class="table-success"><th>Net Pay</th><td><strong>Rs ${Number(p.netPay).toLocaleString(undefined,{minimumFractionDigits:2})}</strong></td></tr>
+            </table>
+            <div class="row text-muted small mt-3">
+                <div class="col-4">Present Days: ${p.presentDays}</div>
+                <div class="col-4">Absent Days: ${p.absentDays}</div>
+                <div class="col-4">Late Minutes: ${p.lateMinutes}</div>
+            </div>
+            ${p.paidDate ? `<div class="alert alert-success mt-3 mb-0">Paid on ${new Date(p.paidDate).toLocaleDateString()} via ${p.paymentMethod || '-'}</div>` : '<div class="alert alert-warning mt-3 mb-0">Not yet paid</div>'}
+        `);
+    }
+
+    async function payThis() {
+        const dto = { PaidDate: new Date().toISOString().split('T')[0], PaymentMethod: 'Cash', Reference: null };
+        const res = await fetch(`${API_BASE}/hr/payroll/payslip/${payslipId}/pay`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(dto) });
+        if (res.ok) { toastSuccess('Marked as paid'); loadPayslip(); } else toastError('Failed to mark as paid');
+    }
+</script>
+}

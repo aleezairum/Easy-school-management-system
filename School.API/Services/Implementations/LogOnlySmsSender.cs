@@ -16,5 +16,13 @@ namespace School.API.Services.Implementations
             _logger.LogInformation("[SMS-LOG] To: {Phone} | Message: {Message}", phoneNumber, message);
             return Task.FromResult(true);
         }
+
+        public Task<bool> SendFileAsync(string phoneNumber, byte[] fileBytes, string fileName, string mimeType, string? caption)
+        {
+            _logger.LogInformation(
+                "[SMS-LOG] To: {Phone} | File: {File} ({Size} bytes, {Mime}) | Caption: {Caption}",
+                phoneNumber, fileName, fileBytes?.Length ?? 0, mimeType, caption);
+            return Task.FromResult(true);
+        }
     }
 }
