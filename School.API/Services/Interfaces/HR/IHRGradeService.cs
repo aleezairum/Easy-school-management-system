@@ -10,5 +10,7 @@ namespace School.API.Services.Interfaces.HR
         Task<HRGradeDto?> UpdateAsync(int id, UpdateHRGradeDto dto);
         Task<bool> DeleteAsync(int id);
         Task<IEnumerable<HRGradeDropdownDto>> GetDropdownAsync();
+        Task<bool> CodeExistsAsync(string code, int? excludeId = null);
+        Task<bool> IsInUseAsync(int id);
     }
 }

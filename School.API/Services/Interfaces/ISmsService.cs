@@ -18,8 +18,30 @@ namespace School.API.Services.Interfaces
         // The result text is composed by the background queue at send time.
         Task<SmsQueueStatusDto> EnqueueResultTextAsync(ResultTextSendDto dto);
 
+        // ── Preview ("Show List") ────────────────────────────────────
+        // Runs exactly the same recipient resolution and message composition as
+        // the matching Enqueue* call, but queues nothing. Lets the user see how
+        // many messages a filter produces before committing to the send.
+        Task<SmsPreviewDto> PreviewBulkAsync(SmsSendDto dto);
+        Task<SmsPreviewDto> PreviewFeeReminderAsync(FeeSmsSendDto dto);
+        Task<SmsPreviewDto> PreviewRcardAsync(RcardSendDto dto);
+        Task<SmsPreviewDto> PreviewResultTextAsync(ResultTextSendDto dto);
+
         Task<SmsQueueStatusDto> GetJobStatusAsync(string jobId);
         Task<int> GetOverallPendingCountAsync();
+
+        // ── Hold / resume ────────────────────────────────────────────
+        // Releases rows parked because WAHA (free) was disconnected.
+        // jobId null/empty = every held row. Returns how many were released.
+        Task<int> ResumeHeldFreeAsync(string? jobId);
+        Task<int> ResumeHeldPaidAsync(string? jobId);
+        Task<int> GetHeldCountAsync(string? jobId);
+
+        // ── Reject ───────────────────────────────────────────────────
+        // Cancels every unsent message (Pending or Held) immediately so the
+        // queue never picks them up. jobId null/empty = the whole queue.
+        Task<int> RejectUnsentAsync(string? jobId);
+        Task<int> GetUnsentCountAsync(string? jobId);
 
         Task<IEnumerable<SmsHistoryDto>> GetHistoryAsync(SmsHistoryFilterDto filter);
         Task<int> GetHistoryCountAsync(SmsHistoryFilterDto filter);

@@ -13,6 +13,9 @@
             <i class="bi bi-inbox-fill text-primary me-2"></i>
             <span class="fw-semibold text-secondary">SMS Queue:</span>
             <span class="badge bg-warning text-dark ms-1" id="queuePendingBadge">0 pending</span>
+            <span class="badge bg-danger ms-1" id="queueHeldBadge" style="display:none;cursor:pointer;"
+                  onclick="openGlobalResume()"
+                  title="Messages parked because WhatsApp (free) is disconnected. Nothing was sent and nothing is lost — click to resume.">0 held</span>
             <span class="text-muted ms-2" id="queueStatusText">idle</span>
             <span class="ms-3">
                 <i class="bi bi-whatsapp text-success me-1"></i>
@@ -20,9 +23,31 @@
                 <span class="badge bg-secondary ms-1" id="wahaStatusBadge" title="Absent &amp; Fee notifications use this when connected">checking...</span>
             </span>
         </div>
-        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="refreshQueueStatus(); refreshWahaStatus();" title="Refresh status">
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="refreshQueueStatus(); refreshWahaStatus(true);" title="Refresh status">
             <i class="bi bi-arrow-clockwise"></i>
         </button>
+    </div>
+
+    <!-- ── WAHA DISCONNECTED BAR ──
+         Stays visible for as long as the session is down, so the reconnect
+         link is always one click away after the load-time alert is dismissed. -->
+    <div id="wahaConnectBar" class="d-flex flex-wrap align-items-center gap-2 px-3 py-2 mb-3"
+         style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;font-size:13px;display:none;">
+        <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+        <span class="fw-semibold text-dark">WhatsApp (free) is disconnected</span>
+        <span class="text-muted">— session status: <span id="wahaConnectBarStatus">unknown</span>.
+            Free-routed messages will be held instead of sent.</span>
+        <div class="ms-auto d-flex flex-wrap gap-2">
+            <button type="button" class="btn btn-sm btn-primary" onclick="openWahaServer()">
+                <i class="bi bi-box-arrow-up-right me-1"></i>Connect to WAHA
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="checkWahaNow(this)">
+                <i class="bi bi-arrow-clockwise me-1"></i>Check again
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="rejectAllUnsent(null)">
+                <i class="bi bi-x-octagon me-1"></i>Reject all
+            </button>
+        </div>
     </div>
 
     <div class="card" style="border-radius: 16px; border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
@@ -58,7 +83,7 @@
                                 <div class="mb-3"><label class="form-label">To</label><select class="form-select" id="staffTo" onchange="updateStaffContact()"><option value="">-- Select Staff --</option></select></div>
                                 <div class="mb-3"><label class="form-label">Contact No</label><input type="text" class="form-control" id="staffContactNo" placeholder="Enter contact number" /></div>
                                 <div class="mb-3"><label class="form-label">Message</label><textarea class="form-control" id="staffMessage" rows="5" placeholder="Type your message here..." onkeyup="updateCharCount('staffMessage','staffCharCount')"></textarea><small class="text-muted">Characters: <span id="staffCharCount">0</span></small></div>
-                                <div class="d-flex gap-2"><button type="button" class="btn btn-primary" onclick="sendStaffSMS()"><i class="bi bi-send me-1"></i>Send</button><button type="button" class="btn btn-secondary" onclick="clearStaffForm()"><i class="bi bi-x-lg me-1"></i>Clear</button></div>
+                                <div class="d-flex gap-2"><button type="button" class="btn btn-primary" onclick="sendStaffSMS()"><i class="bi bi-send me-1"></i>Send</button><button type="button" class="btn btn-outline-primary" onclick="previewStaffSMS()"><i class="bi bi-list-check me-1"></i>Show List</button><button type="button" class="btn btn-outline-danger" onclick="rejectAllUnsent(null)"><i class="bi bi-x-octagon me-1"></i>Reject All</button><button type="button" class="btn btn-secondary" onclick="clearStaffForm()"><i class="bi bi-x-lg me-1"></i>Clear</button></div>
                             </div>
                         </div>
                         <div class="col-lg-6 col-12"><div class="p-3" style="background:#f8fafc;border-radius:12px;height:100%;"><h6 class="mb-3 fw-semibold text-secondary">Sending Detail - Message Sent (<span id="staffSentCount">0</span>)</h6><textarea class="form-control" id="staffSendingLog" rows="10" readonly style="background:#fff;"></textarea></div></div>
@@ -79,7 +104,7 @@
                                 <div class="mb-3" id="generalSectionField"><label class="form-label">Section</label><select class="form-select" id="generalSectionId" onchange="loadGeneralStudents()"><option value="">-- Select Section --</option></select></div>
                                 <div class="mb-3" id="generalStudentField"><label class="form-label">Student</label><select class="form-select" id="generalStudentId"><option value="">-- Select Student --</option></select></div>
                                 <div class="mb-3"><label class="form-label">Message</label><textarea class="form-control" id="generalMessage" rows="5" placeholder="Type your message here..." onkeyup="updateCharCount('generalMessage','generalCharCount')"></textarea><small class="text-muted">Characters: <span id="generalCharCount">0</span></small></div>
-                                <div class="d-flex gap-2"><button type="button" class="btn btn-primary" onclick="sendGeneralSMS()"><i class="bi bi-send me-1"></i>Send</button><button type="button" class="btn btn-secondary" onclick="clearGeneralForm()"><i class="bi bi-x-lg me-1"></i>Clear</button></div>
+                                <div class="d-flex gap-2"><button type="button" class="btn btn-primary" onclick="sendGeneralSMS()"><i class="bi bi-send me-1"></i>Send</button><button type="button" class="btn btn-outline-primary" onclick="previewGeneralSMS()"><i class="bi bi-list-check me-1"></i>Show List</button><button type="button" class="btn btn-outline-danger" onclick="rejectAllUnsent(null)"><i class="bi bi-x-octagon me-1"></i>Reject All</button><button type="button" class="btn btn-secondary" onclick="clearGeneralForm()"><i class="bi bi-x-lg me-1"></i>Clear</button></div>
                             </div>
                         </div>
                         <div class="col-lg-6 col-12"><div class="p-3" style="background:#f8fafc;border-radius:12px;height:100%;"><h6 class="mb-3 fw-semibold text-secondary">Sending Detail - Message Sent (<span id="generalSentCount">0</span>)</h6><textarea class="form-control" id="generalSendingLog" rows="10" readonly style="background:#fff;"></textarea></div></div>
@@ -100,7 +125,7 @@
                                 <div class="mb-3" id="absentClassField"><label class="form-label">Class</label><select class="form-select" id="absentClassId" onchange="loadAbsentSections()"><option value="">-- Select Class --</option></select></div>
                                 <div class="mb-3" id="absentSectionField"><label class="form-label">Section</label><select class="form-select" id="absentSectionId" onchange="loadAbsentStudents()"><option value="">-- Select Section --</option></select></div>
                                 <div class="mb-3" id="absentStudentField"><label class="form-label">Student</label><select class="form-select" id="absentStudentId"><option value="">-- Select Student --</option></select></div>
-                                <div class="d-flex gap-2"><button type="button" class="btn btn-primary" onclick="sendAbsentSMS()"><i class="bi bi-send me-1"></i>Send</button></div>
+                                <div class="d-flex gap-2"><button type="button" class="btn btn-primary" onclick="sendAbsentSMS()"><i class="bi bi-send me-1"></i>Send</button><button type="button" class="btn btn-outline-primary" onclick="previewAbsentSMS()"><i class="bi bi-list-check me-1"></i>Show List</button><button type="button" class="btn btn-outline-danger" onclick="rejectAllUnsent(null)"><i class="bi bi-x-octagon me-1"></i>Reject All</button></div>
                             </div>
                         </div>
                         <div class="col-lg-6 col-12"><div class="p-3" style="background:#f8fafc;border-radius:12px;height:100%;"><h6 class="mb-3 fw-semibold text-secondary">Sending Detail - Message Sent (<span id="absentSentCount">0</span>)</h6><textarea class="form-control" id="absentSendingLog" rows="10" readonly style="background:#fff;"></textarea></div></div>
@@ -121,7 +146,7 @@
                                 <div class="mb-3" id="lateClassField"><label class="form-label">Class</label><select class="form-select" id="lateClassId" onchange="loadLateSections()"><option value="">-- Select Class --</option></select></div>
                                 <div class="mb-3" id="lateSectionField"><label class="form-label">Section</label><select class="form-select" id="lateSectionId" onchange="loadLateStudents()"><option value="">-- Select Section --</option></select></div>
                                 <div class="mb-3" id="lateStudentField"><label class="form-label">Student</label><select class="form-select" id="lateStudentId"><option value="">-- Select Student --</option></select></div>
-                                <div class="d-flex gap-2"><button type="button" class="btn btn-primary" onclick="sendLateSMS()"><i class="bi bi-send me-1"></i>Send</button></div>
+                                <div class="d-flex gap-2"><button type="button" class="btn btn-primary" onclick="sendLateSMS()"><i class="bi bi-send me-1"></i>Send</button><button type="button" class="btn btn-outline-primary" onclick="previewLateSMS()"><i class="bi bi-list-check me-1"></i>Show List</button><button type="button" class="btn btn-outline-danger" onclick="rejectAllUnsent(null)"><i class="bi bi-x-octagon me-1"></i>Reject All</button></div>
                             </div>
                         </div>
                         <div class="col-lg-6 col-12"><div class="p-3" style="background:#f8fafc;border-radius:12px;height:100%;"><h6 class="mb-3 fw-semibold text-secondary">Sending Detail - Message Sent (<span id="lateSentCount">0</span>)</h6><textarea class="form-control" id="lateSendingLog" rows="10" readonly style="background:#fff;"></textarea></div></div>
@@ -142,7 +167,7 @@
                                 <div class="mb-3" id="againClassField"><label class="form-label">Class</label><select class="form-select" id="againClassId" onchange="loadAgainSections()"><option value="">-- Select Class --</option></select></div>
                                 <div class="mb-3" id="againSectionField"><label class="form-label">Section</label><select class="form-select" id="againSectionId" onchange="loadAgainStudents()"><option value="">-- Select Section --</option></select></div>
                                 <div class="mb-3" id="againStudentField"><label class="form-label">Student</label><select class="form-select" id="againStudentId"><option value="">-- Select Student --</option></select></div>
-                                <div class="d-flex gap-2"><button type="button" class="btn btn-primary" onclick="sendAgainSMS()"><i class="bi bi-send me-1"></i>Send</button></div>
+                                <div class="d-flex gap-2"><button type="button" class="btn btn-primary" onclick="sendAgainSMS()"><i class="bi bi-send me-1"></i>Send</button><button type="button" class="btn btn-outline-primary" onclick="previewAgainSMS()"><i class="bi bi-list-check me-1"></i>Show List</button><button type="button" class="btn btn-outline-danger" onclick="rejectAllUnsent(null)"><i class="bi bi-x-octagon me-1"></i>Reject All</button></div>
                             </div>
                         </div>
                         <div class="col-lg-6 col-12"><div class="p-3" style="background:#f8fafc;border-radius:12px;height:100%;"><h6 class="mb-3 fw-semibold text-secondary">Sending Detail - Message Sent (<span id="againSentCount">0</span>)</h6><textarea class="form-control" id="againSendingLog" rows="10" readonly style="background:#fff;"></textarea></div></div>
@@ -169,6 +194,17 @@
                                     <small class="text-muted">Last date for fee submission</small>
                                 </div>
 
+                                <!-- ✅ NEW: Till Date filter — picks WHO gets reminded -->
+                                <div class="mb-3">
+                                    <label class="form-label">Dues Pending Till</label>
+                                    <input type="date" class="form-control" id="feeTillDate" />
+                                    <small class="text-muted">
+                                        Only students who still owe something up to this date are reminded.
+                                        Each of them is then shown <strong>all</strong> their pending dues up to today.
+                                        Leave blank for every current defaulter.
+                                    </small>
+                                </div>
+
                                 <!-- ✅ REMOVED: Fee Type & Fee Status dropdowns -->
 
                                 <div class="mb-3" id="feeClassField"><label class="form-label">Class</label><select class="form-select" id="feeClassId" onchange="loadFeeSections()"><option value="">-- Select Class --</option></select></div>
@@ -185,6 +221,7 @@
 
                                 <div class="d-flex gap-2">
                                     <button type="button" class="btn btn-primary" onclick="sendFeeSMS()"><i class="bi bi-send me-1"></i>Send</button>
+                                    <button type="button" class="btn btn-outline-primary" onclick="previewFeeSMS()"><i class="bi bi-list-check me-1"></i>Show List</button><button type="button" class="btn btn-outline-danger" onclick="rejectAllUnsent(null)"><i class="bi bi-x-octagon me-1"></i>Reject All</button>
                                     <button type="button" class="btn btn-secondary" onclick="clearFeeForm()"><i class="bi bi-x-lg me-1"></i>Clear</button>
                                 </div>
                             </div>
@@ -208,7 +245,7 @@
                                 <div class="mb-3" id="resultSectionField"><label class="form-label">Section</label><select class="form-select" id="resultSectionId" onchange="loadResultStudents()"><option value="">-- Select Section --</option></select></div>
                                 <div class="mb-3" id="resultStudentField"><label class="form-label">Student</label><select class="form-select" id="resultStudentId"><option value="">-- Select Student --</option></select></div>
                                 <div class="mb-3"><label class="form-label">Message</label><textarea class="form-control" id="resultMessage" rows="4" placeholder="Optional custom message..." onkeyup="updateCharCount('resultMessage','resultCharCount')"></textarea><small class="text-muted">Characters: <span id="resultCharCount">0</span></small></div>
-                                <div class="d-flex gap-2"><button type="button" class="btn btn-primary" onclick="sendResultSMS()"><i class="bi bi-send me-1"></i>Send</button><button type="button" class="btn btn-secondary" onclick="clearResultForm()"><i class="bi bi-x-lg me-1"></i>Clear</button></div>
+                                <div class="d-flex gap-2"><button type="button" class="btn btn-primary" onclick="sendResultSMS()"><i class="bi bi-send me-1"></i>Send</button><button type="button" class="btn btn-outline-primary" onclick="previewResultSMS()"><i class="bi bi-list-check me-1"></i>Show List</button><button type="button" class="btn btn-outline-danger" onclick="rejectAllUnsent(null)"><i class="bi bi-x-octagon me-1"></i>Reject All</button><button type="button" class="btn btn-secondary" onclick="clearResultForm()"><i class="bi bi-x-lg me-1"></i>Clear</button></div>
                             </div>
                         </div>
                         <div class="col-lg-6 col-12"><div class="p-3" style="background:#f8fafc;border-radius:12px;height:100%;"><h6 class="mb-3 fw-semibold text-secondary">Sending Detail - Message Sent (<span id="resultSentCount">0</span>)</h6><textarea class="form-control" id="resultSendingLog" rows="10" readonly style="background:#fff;"></textarea></div></div>
@@ -231,7 +268,7 @@
                                 <div class="mb-3" id="fromtoSectionField"><label class="form-label">Section</label><select class="form-select" id="fromtoSectionId" onchange="loadFromToStudents()"><option value="">-- Select Section --</option></select></div>
                                 <div class="mb-3" id="fromtoStudentField"><label class="form-label">Student</label><select class="form-select" id="fromtoStudentId"><option value="">-- Select Student --</option></select></div>
                                 <div class="mb-3"><label class="form-label">Message</label><textarea class="form-control" id="fromtoMessage" rows="4" placeholder="Type your message here..." onkeyup="updateCharCount('fromtoMessage','fromtoCharCount')"></textarea><small class="text-muted">Characters: <span id="fromtoCharCount">0</span></small></div>
-                                <div class="d-flex gap-2"><button type="button" class="btn btn-primary" onclick="sendFromToSMS()"><i class="bi bi-send me-1"></i>Send</button><button type="button" class="btn btn-secondary" onclick="clearFromToForm()"><i class="bi bi-x-lg me-1"></i>Clear</button></div>
+                                <div class="d-flex gap-2"><button type="button" class="btn btn-primary" onclick="sendFromToSMS()"><i class="bi bi-send me-1"></i>Send</button><button type="button" class="btn btn-outline-primary" onclick="previewFromToSMS()"><i class="bi bi-list-check me-1"></i>Show List</button><button type="button" class="btn btn-outline-danger" onclick="rejectAllUnsent(null)"><i class="bi bi-x-octagon me-1"></i>Reject All</button><button type="button" class="btn btn-secondary" onclick="clearFromToForm()"><i class="bi bi-x-lg me-1"></i>Clear</button></div>
                             </div>
                         </div>
                         <div class="col-lg-6 col-12"><div class="p-3" style="background:#f8fafc;border-radius:12px;height:100%;"><h6 class="mb-3 fw-semibold text-secondary">Sending Detail - Message Sent (<span id="fromtoSentCount">0</span>)</h6><textarea class="form-control" id="fromtoSendingLog" rows="10" readonly style="background:#fff;"></textarea></div></div>
@@ -251,7 +288,7 @@
                                 <div class="mb-3"><label class="form-label">Upload Excel File <span class="text-danger">*</span></label><input type="file" class="form-control" id="excelFile" accept=".xlsx,.xls,.csv" onchange="previewExcelFile()" /><small class="text-muted">Accepted: .xlsx, .xls, .csv</small></div>
                                 <div class="mb-3" id="excelPreviewSection" style="display:none;"><div class="p-2 border rounded d-flex justify-content-between align-items-center" style="background:#fff;"><span><i class="bi bi-file-earmark-excel text-success me-1"></i><span id="excelFileName"></span></span><span class="badge bg-success" id="excelRowCount">0 rows</span></div></div>
                                 <div class="mb-3" id="excelColumnsSection" style="display:none;"><label class="form-label fw-semibold">Map Columns</label><div class="row"><div class="col-md-6 mb-3"><label class="form-label">Phone Column <span class="text-danger">*</span></label><select class="form-select" id="excelPhoneColumn"><option value="">-- Select --</option></select></div><div class="col-md-6 mb-3"><label class="form-label">Message Column <span class="text-danger">*</span></label><select class="form-select" id="excelMessageColumn"><option value="">-- Select --</option></select></div></div></div>
-                                <div class="d-flex gap-2"><button type="button" class="btn btn-primary" onclick="sendExcelSMS()"><i class="bi bi-send me-1"></i>Send</button><button type="button" class="btn btn-secondary" onclick="clearExcelForm()"><i class="bi bi-x-lg me-1"></i>Clear</button></div>
+                                <div class="d-flex gap-2"><button type="button" class="btn btn-primary" onclick="sendExcelSMS()"><i class="bi bi-send me-1"></i>Send</button><button type="button" class="btn btn-outline-primary" onclick="previewExcelSMS()"><i class="bi bi-list-check me-1"></i>Show List</button><button type="button" class="btn btn-outline-danger" onclick="rejectAllUnsent(null)"><i class="bi bi-x-octagon me-1"></i>Reject All</button><button type="button" class="btn btn-secondary" onclick="clearExcelForm()"><i class="bi bi-x-lg me-1"></i>Clear</button></div>
                             </div>
                         </div>
                         <div class="col-lg-6 col-12"><div class="p-3" style="background:#f8fafc;border-radius:12px;height:100%;"><h6 class="mb-3 fw-semibold text-secondary">Sending Detail - Message Sent (<span id="excelSentCount">0</span>)</h6><textarea class="form-control" id="excelSendingLog" rows="10" readonly style="background:#fff;"></textarea></div></div>
@@ -274,7 +311,7 @@
                                 <div class="mb-3" id="rcardStudentField"><label class="form-label">Student</label><select class="form-select" id="rcardStudentId"><option value="">-- Select Student --</option></select></div>
                                 <div class="mb-3"><div class="form-check"><input class="form-check-input" type="checkbox" id="rcardIncludeLink"><label class="form-check-label" for="rcardIncludeLink">Include Report Card Download Link</label></div></div>
                                 <div class="mb-3"><label class="form-label">Message</label><textarea class="form-control" id="rcardMessage" rows="4" placeholder="Optional custom message..." onkeyup="updateCharCount('rcardMessage','rcardCharCount')"></textarea><small class="text-muted">Characters: <span id="rcardCharCount">0</span></small></div>
-                                <div class="d-flex gap-2"><button type="button" class="btn btn-primary" onclick="sendRcardSMS()"><i class="bi bi-send me-1"></i>Send</button><button type="button" class="btn btn-secondary" onclick="clearRcardForm()"><i class="bi bi-x-lg me-1"></i>Clear</button></div>
+                                <div class="d-flex gap-2"><button type="button" class="btn btn-primary" onclick="sendRcardSMS()"><i class="bi bi-send me-1"></i>Send</button><button type="button" class="btn btn-outline-primary" onclick="previewRcardSMS()"><i class="bi bi-list-check me-1"></i>Show List</button><button type="button" class="btn btn-outline-danger" onclick="rejectAllUnsent(null)"><i class="bi bi-x-octagon me-1"></i>Reject All</button><button type="button" class="btn btn-secondary" onclick="clearRcardForm()"><i class="bi bi-x-lg me-1"></i>Clear</button></div>
                             </div>
                         </div>
                         <div class="col-lg-6 col-12"><div class="p-3" style="background:#f8fafc;border-radius:12px;height:100%;"><h6 class="mb-3 fw-semibold text-secondary">Sending Detail - Message Sent (<span id="rcardSentCount">0</span>)</h6><textarea class="form-control" id="rcardSendingLog" rows="10" readonly style="background:#fff;"></textarea></div></div>
@@ -306,6 +343,91 @@
                 </div>
 
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- PREVIEW LIST MODAL                                              -->
+<!-- Opened by every tab's "Show List" button. Displays exactly what -->
+<!-- the current filter would send, so the count is known before the -->
+<!-- send is scheduled.                                              -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="smsPreviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content" style="border-radius:14px;">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-list-check me-2"></i>Messages to be sent
+                    <span class="badge bg-primary ms-2" id="previewCountBadge">0</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex flex-wrap gap-3 align-items-center mb-3" id="previewSummary"></div>
+                <div id="previewEmpty" class="text-center text-muted py-5" style="display:none;">
+                    <i class="bi bi-inbox" style="font-size:2rem;"></i>
+                    <div class="mt-2">No messages match the current filter.</div>
+                </div>
+                <div class="table-responsive" id="previewTableWrap">
+                    <table class="table table-sm table-hover align-middle" style="font-size:13px;">
+                        <thead style="background:#e2e8f0;position:sticky;top:0;">
+                            <tr>
+                                <th style="width:44px;">#</th>
+                                <th>Name</th>
+                                <th style="width:110px;">Class</th>
+                                <th style="width:130px;">Phone</th>
+                                <th style="width:110px;" class="text-end">Amount</th>
+                                <th>Message</th>
+                            </tr>
+                        </thead>
+                        <tbody id="previewBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <span class="text-muted me-auto" style="font-size:12px;" id="previewFooterNote"></span>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="previewSendBtn">
+                    <i class="bi bi-send me-1"></i>Send these <span id="previewSendCount">0</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- WHATSAPP (FREE) DISCONNECTED MODAL                              -->
+<!-- Shown before a free-routed send starts, and whenever a running   -->
+<!-- job has messages parked waiting for WAHA.                        -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="wahaGateModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:14px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title text-danger" id="wahaGateTitle">
+                    <i class="bi bi-plug me-2"></i>WhatsApp (free) is disconnected
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-2" id="wahaGateMessage">
+                    These messages are set up to go out free through WAHA, but the WAHA session
+                    is not connected right now.
+                </p>
+                <div class="p-3 mb-3" style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;font-size:13px;">
+                    <div class="mb-1"><strong>Nothing has been sent and nothing is lost.</strong></div>
+                    <div class="text-muted">
+                        Open the WAHA server and connect the session (scan the QR if needed),
+                        then come back and resume. If this cannot wait you can send through the
+                        paid gateway — that one is charged per message — or reject the messages
+                        so nothing goes out at all.
+                    </div>
+                </div>
+                <div id="wahaGateStatus" class="text-muted" style="font-size:12px;"></div>
+            </div>
+            <!-- Buttons are built per situation by openWahaGate(). -->
+            <div class="modal-footer border-0 flex-wrap gap-2" id="wahaGateActions"></div>
         </div>
     </div>
 </div>
@@ -369,12 +491,14 @@
         let excelHeaders    = [];
 
         $(document).ready(function () {
-            const today = new Date().toISOString().split('T')[0];
+            const today = toInputDate();
             $('#absentDate, #lateDate, #againDate').val(today);
             $('#fromtoFromDate, #fromtoToDate, #historyFromDate, #historyToDate').val(today);
             // Default due date = 10 days from today
             const due = new Date(); due.setDate(due.getDate() + 10);
-            $('#feeDueDate').val(due.toISOString().split('T')[0]);
+            $('#feeDueDate').val(toInputDate(due));
+            // Till date defaults to today = every current defaulter.
+            $('#feeTillDate').val(today);
 
             loadAllDropdowns();
             toggleGeneralFields(); toggleAbsentFields(); toggleLateFields();
@@ -387,7 +511,57 @@
             // Start global queue-status widget polling.
             startQueueStatusPolling();
             startWahaStatusPolling();
+
+            // Tell the user straight away if the free gateway is down, rather
+            // than letting them build a batch and only find out on Send.
+            alertIfWahaDisconnectedOnLoad();
         });
+
+        // Load-time check. Only speaks up when WAHA is actually disconnected.
+        async function alertIfWahaDisconnectedOnLoad() {
+            // Forced: a cached "disconnected" from before the user reconnected
+            // would raise a false alarm on every reload.
+            const status = await refreshWahaStatus(true);
+            if (!status || status.connected) return;
+
+            const unsent = await fetch(`${API_BASE}/Sms/unsent`)
+                .then(r => r.ok ? r.json() : null)
+                .then(j => (j ? j.unsent || 0 : 0))
+                .catch(() => 0);
+
+            const actions = [
+                { id: 'recheck', label: 'Check again', icon: 'bi-arrow-clockwise', cls: 'btn-outline-secondary',
+                  handler: async () => {
+                      const again = await refreshWahaStatus(true);
+                      if (again && again.connected) {
+                          toastSuccess('WhatsApp (free) is connected.');
+                          return true;                 // close — all good
+                      }
+                      toastWarning(`WAHA is still disconnected${again ? ' — status ' + again.status : ''}.`);
+                      $('#wahaGateStatus').text(
+                          `WAHA session status: ${(again && again.status) || 'unknown'} (checked ${new Date().toLocaleTimeString()})`);
+                      return false;                    // keep the modal open
+                  } }
+            ];
+
+            // Only worth offering when there is actually something to reject.
+            if (unsent > 0) {
+                actions.push({ id: 'reject', label: `Reject all (${unsent})`, icon: 'bi-x-octagon',
+                               cls: 'btn-outline-danger', handler: () => rejectAllUnsent(null) });
+            }
+
+            await openWahaGate({
+                title: 'WhatsApp (free) is not connected',
+                message: unsent > 0
+                    ? `The WAHA session is not connected, and ${unsent} message(s) are already waiting in the queue. ` +
+                      'Free-routed messages will be held instead of sent.'
+                    : 'The WAHA session is not connected. Anything routed to the free gateway will be held ' +
+                      'instead of sent until you connect it.',
+                status: status.status,
+                cancelLabel: 'Continue anyway',
+                actions
+            });
+        }
 
         // ── DROPDOWNS ─────────────────────────────────────────────────
         async function loadAllDropdowns() {
@@ -505,14 +679,18 @@
                 if (!r.ok) return;
                 const j = await r.json();
                 const pending = j.pending || 0;
+                const held = j.held || 0;
                 $('#queuePendingBadge').text(pending + ' pending');
                 if (pending > 0) {
                     $('#queuePendingBadge').removeClass('bg-success').addClass('bg-warning');
                     $('#queueStatusText').text('processing...');
                 } else {
                     $('#queuePendingBadge').removeClass('bg-warning').addClass('bg-success');
-                    $('#queueStatusText').text('idle');
+                    $('#queueStatusText').text(held > 0 ? 'paused — waiting for WhatsApp (free)' : 'idle');
                 }
+
+                if (held > 0) $('#queueHeldBadge').text(held + ' held').show();
+                else $('#queueHeldBadge').hide();
             } catch (e) { /* ignore */ }
         }
         function startQueueStatusPolling() {
@@ -523,24 +701,56 @@
 
         // WAHA connection badge — polls /Sms/waha-status every 15 sec
         // (server-side response is itself cached ~20s, so this stays cheap).
+        //
+        // forceRefresh bypasses that server-side cache. Background polling must
+        // NOT set it — the cache is what keeps polling cheap — but anything the
+        // user triggers has to, otherwise "check again" right after they
+        // reconnect WAHA just replays the stale "disconnected" answer.
         let wahaStatusTimer = null;
-        async function refreshWahaStatus() {
+        async function refreshWahaStatus(forceRefresh) {
             const badge = $('#wahaStatusBadge');
             try {
-                const r = await fetch(`${API_BASE}/Sms/waha-status`);
-                if (!r.ok) { badge.text('unknown').removeClass('bg-success bg-danger').addClass('bg-secondary'); return; }
+                const r = await fetch(`${API_BASE}/Sms/waha-status${forceRefresh ? '?refresh=true' : ''}`);
+                if (!r.ok) { badge.text('unknown').removeClass('bg-success bg-danger').addClass('bg-secondary'); return null; }
                 const j = await r.json();
+                if (j.gatewayUrl) wahaGatewayUrl = j.gatewayUrl;
                 if (j.connected) {
                     badge.text('Connected').removeClass('bg-secondary bg-danger').addClass('bg-success');
                     badge.attr('title', 'Absent & Fee notifications are going out free through WAHA');
+                    $('#wahaConnectBar').hide();
                 } else {
-                    badge.text('Disconnected (using paid)').removeClass('bg-secondary bg-success').addClass('bg-danger');
-                    badge.attr('title', `WAHA status: ${j.status}${j.error ? ' — ' + j.error : ''}. Absent & Fee notifications are falling back to the paid provider.`);
+                    badge.text('Disconnected').removeClass('bg-secondary bg-success').addClass('bg-danger');
+                    badge.attr('title', `WAHA status: ${j.status}${j.error ? ' — ' + j.error : ''}. Free-routed messages are held until it is reconnected.`);
+                    $('#wahaConnectBarStatus').text(j.status || 'disconnected');
+                    $('#wahaConnectBar').show();
                 }
+                return j;
             } catch (e) {
                 badge.text('unknown').removeClass('bg-success bg-danger').addClass('bg-secondary');
+                return null;
             }
         }
+
+        // The "Check again" button. Forces a real re-probe and always says what
+        // it found — a silent re-check is indistinguishable from a dead button.
+        async function checkWahaNow(btn) {
+            const $btn = btn ? $(btn) : null;
+            const original = $btn ? $btn.html() : null;
+            if ($btn) $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Checking...');
+
+            try {
+                const j = await refreshWahaStatus(true);
+                if (!j) { toastError('Could not reach the server to check WAHA.'); return null; }
+
+                if (j.connected) toastSuccess('WhatsApp (free) is connected.');
+                else toastWarning(`WAHA is still disconnected — status ${j.status}. Open it with "Connect to WAHA" and scan the QR if needed.`);
+
+                return j;
+            } finally {
+                if ($btn) $btn.prop('disabled', false).html(original);
+            }
+        }
+
         function startWahaStatusPolling() {
             refreshWahaStatus();
             if (wahaStatusTimer) clearInterval(wahaStatusTimer);
@@ -576,18 +786,26 @@
             const missing404Limit = opts.missing404Limit || 3;
             let stopped = false;
             let missing = 0;
+            let heldWarned = false;
+            $(`#${logId}`).data('polling', true);
             const run = new Promise((resolve) => {
+                // Single exit point so the poller flag (read by resumeHeld to
+                // decide whether to restart polling) is always cleared.
+                const finish = (value) => {
+                    stopped = true;
+                    $(`#${logId}`).data('polling', false);
+                    resolve(value);
+                };
                 const tick = async () => {
-                    if (stopped) { resolve(null); return; }
+                    if (stopped) { finish(null); return; }
                     try {
                         const r = await fetch(`${API_BASE}/Sms/progress/${jobId}`);
                         if (r.status === 404) {
                             // Not registered yet (first polls) or already purged.
                             if (++missing >= missing404Limit) {
-                                stopped = true;
                                 clearActiveJob(logId);
                                 setStatusLine(logId, `⚠️ Job not found (expired or never started).`);
-                                resolve(null);
+                                finish(null);
                                 return;
                             }
                         } else if (r.ok) {
@@ -597,9 +815,15 @@
                             const processed = p.processed || 0;
                             const sent = p.sent || 0;
                             const failed = p.failed || 0;
+                            const held = p.held || 0;
+                            const pending = p.pending || 0;
                             const totalLabel = total > 0 ? total : '?';
+
+                            // Held rows keep the hold panel (and its two resume
+                            // buttons) on screen; it clears itself once they go.
+                            renderHoldPanel(logId, jobId, held);
+
                             if (p.isComplete) {
-                                stopped = true;
                                 clearActiveJob(logId);
                                 setStatusLine(logId,
                                     `✅ Sent: ${sent} | ❌ Failed: ${failed} | Total: ${total}`);
@@ -607,11 +831,28 @@
                                     if (failed > 0) toastWarning(`${sent} sent, ${failed} failed`);
                                     else if (sent > 0) toastSuccess(`${sent} SMS sent successfully!`);
                                 }
-                                resolve(p);
+                                finish(p);
                                 return;
                             }
+
+                            // Everything left is parked: stop polling and wait
+                            // for the user to resume from the hold panel. The
+                            // job stays in localStorage so a reload comes back
+                            // to the same paused state.
+                            if (held > 0 && pending === 0) {
+                                setStatusLine(logId,
+                                    `⏸️ Paused — ${held} waiting for WhatsApp (free) | ✅ Sent: ${sent} | ❌ Failed: ${failed}`);
+                                if (showToasts && !heldWarned) {
+                                    heldWarned = true;
+                                    toastWarning(`${held} message(s) are on hold — WhatsApp (free) is disconnected.`);
+                                }
+                                finish(p);
+                                return;
+                            }
+
                             setStatusLine(logId,
-                                `⏳ Processing ${processed}/${totalLabel} | ✅ Sent: ${sent} | ❌ Failed: ${failed}`);
+                                `⏳ Processing ${processed}/${totalLabel} | ✅ Sent: ${sent} | ❌ Failed: ${failed}` +
+                                (held > 0 ? ` | ⏸️ Held: ${held}` : ''));
                         }
                     } catch (e) { /* network blip — keep polling */ }
                     if (!stopped) setTimeout(tick, 1500);
@@ -637,16 +878,478 @@
             });
         }
 
-        // ── GENERIC SEND ──────────────────────────────────────────────
-        async function sendSmsViaApi(recipients, message, messageType, logId, countId) {
+        // ══════════════════════════════════════════════════════════════
+        // ROUTE GATE — free (WAHA) vs paid (Meta)
+        // ══════════════════════════════════════════════════════════════
+        // Mirrors SmsMessageType on the API.
+        const SMS_TYPE = {
+            Staff: 1, General: 2, Absent: 3, Late: 4,
+            Fee: 5, Result: 6, FromTo: 7, Excel: 8, Rcard: 9
+        };
+
+        // Asks the API where a message of this type would go right now.
+        // routesFree=false means the type is configured for the paid gateway
+        // anyway, so a disconnected WAHA is irrelevant and nothing is prompted.
+        async function checkRoute(messageType) {
+            try {
+                const r = await fetch(`${API_BASE}/Sms/waha-status?refresh=true&messageType=${messageType}`);
+                if (!r.ok) return { connected: false, routesFree: false, status: 'UNKNOWN' };
+                return await r.json();
+            } catch (e) {
+                return { connected: false, routesFree: false, status: 'UNREACHABLE' };
+            }
+        }
+
+        // The WAHA server's own address, so "Connect to WAHA" can open it.
+        // Filled from /Sms/waha-status; the page never hardcodes it.
+        let wahaGatewayUrl = '';
+
+        function openWahaServer() {
+            if (!wahaGatewayUrl) { toastWarning('The WAHA server address is not configured.'); return; }
+            window.open(wahaGatewayUrl, '_blank', 'noopener');
+            toastInfo('Connect the WhatsApp session in the new tab, then come back and resume.');
+        }
+
+        // Opens the "WhatsApp (free) is disconnected" alert and resolves with
+        // the id of the action the user took (or null if they closed it).
+        //
+        // opts.actions is a list of { id, label, icon, cls, handler }. A handler
+        // returning false keeps the modal open — used when the user asks to
+        // resume free but WAHA is still down, so they can read why and pick
+        // another option. Handlers may also be omitted for a plain close.
+        function openWahaGate(opts) {
+            const modalEl = document.getElementById('wahaGateModal');
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+
+            $('#wahaGateTitle').html('<i class="bi bi-plug me-2"></i>' + (opts.title || 'WhatsApp (free) is disconnected'));
+            $('#wahaGateMessage').text(opts.message ||
+                'These messages are set up to go out free through WAHA, but the WAHA session is not connected right now.');
+            $('#wahaGateStatus').text(opts.status ? `WAHA session status: ${opts.status}` : '');
+
+            // "Connect to WAHA" and a Cancel are offered in every situation.
+            const actions = [
+                { id: 'connect', label: 'Connect to WAHA', icon: 'bi-box-arrow-up-right',
+                  cls: 'btn-primary', keepOpen: true, handler: () => { openWahaServer(); return false; } },
+                ...(opts.actions || [])
+            ];
+
+            const $bar = $('#wahaGateActions').empty();
+            $bar.append(`<button type="button" class="btn btn-outline-secondary me-auto" data-bs-dismiss="modal">${
+                opts.cancelLabel || 'Cancel'}</button>`);
+
+            actions.forEach((a, i) => {
+                $bar.append(`<button type="button" class="btn ${a.cls || 'btn-secondary'}" data-gate-index="${i}">
+                    <i class="bi ${a.icon || 'bi-check2'} me-1"></i>${a.label}</button>`);
+            });
+
+            return new Promise((resolve) => {
+                let settled = false;
+                const finish = (value) => {
+                    if (settled) return;
+                    settled = true;
+                    $bar.off('click.gate');
+                    $(modalEl).off('hidden.bs.modal.gate');
+                    resolve(value);
+                };
+
+                $bar.off('click.gate').on('click.gate', 'button[data-gate-index]', async function () {
+                    const btn = $(this);
+                    const action = actions[parseInt(btn.attr('data-gate-index'), 10)];
+                    if (!action) return;
+
+                    const original = btn.html();
+                    $bar.find('button').prop('disabled', true);
+                    btn.html('<span class="spinner-border spinner-border-sm me-1"></span>Working...');
+
+                    let close = true;
+                    try { close = action.handler ? await action.handler() : true; }
+                    catch (e) { console.error(e); close = false; }
+                    finally {
+                        $bar.find('button').prop('disabled', false);
+                        btn.html(original);
+                    }
+
+                    if (close) { modal.hide(); finish(action.id); }
+                });
+
+                // Cancel / X / Esc.
+                $(modalEl).off('hidden.bs.modal.gate').on('hidden.bs.modal.gate', () => finish(null));
+
+                modal.show();
+            });
+        }
+
+        // Rejects every unsent message (Pending + Held) after confirming the
+        // count. Returns true when something was rejected.
+        async function rejectAllUnsent(jobId) {
+            let unsent = 0;
+            try {
+                const q = jobId ? `?jobId=${encodeURIComponent(jobId)}` : '';
+                const r = await fetch(`${API_BASE}/Sms/unsent${q}`);
+                if (r.ok) unsent = (await r.json()).unsent || 0;
+            } catch (e) { /* fall through — confirm without a count */ }
+
+            if (unsent === 0) {
+                toastInfo('There are no unsent messages to reject.');
+                refreshQueueStatus();
+                return false;
+            }
+
+            if (!confirm(
+                `Reject ${unsent} unsent message${unsent === 1 ? '' : 's'}?\n\n` +
+                `They will be cancelled immediately and will NOT be sent. ` +
+                `Messages already sent are not affected. This cannot be undone.`))
+                return false;
+
+            try {
+                const r = await fetch(`${API_BASE}/Sms/reject`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ jobId: jobId || null })
+                });
+                const j = await r.json().catch(() => ({}));
+                if (!r.ok) { toastError(j.message || 'Could not reject the messages'); return false; }
+
+                toastSuccess(`${j.rejected || 0} message(s) rejected — nothing further will be sent.`);
+                $('[id$=HoldPanel]').remove();
+                refreshQueueStatus();
+                return true;
+            } catch (e) {
+                console.error(e);
+                toastError('Network error while rejecting');
+                return false;
+            }
+        }
+
+        // Call before queueing a batch. Resolves to { proceed, forcePaid }.
+        // proceed=false means the user cancelled and nothing should be sent.
+        async function ensureRoute(messageType) {
+            const route = await checkRoute(messageType);
+
+            // Not a free-routed type, or WAHA is up — nothing to ask.
+            if (!route.routesFree || route.connected)
+                return { proceed: true, forcePaid: false };
+
+            const choice = await openWahaGate({
+                status: route.status,
+                actions: [
+                    {
+                        id: 'free', label: 'Send free (WAHA)', icon: 'bi-arrow-repeat', cls: 'btn-success',
+                        handler: async () => {
+                            // Re-probe. The user was told to connect WAHA first,
+                            // so if it is still down the modal stays open.
+                            const again = await checkRoute(messageType);
+                            if (!again.connected) {
+                                toastWarning('WAHA is still disconnected — connect the WhatsApp session first, then try again.');
+                                $('#wahaGateStatus').text(`WAHA session status: ${again.status} (checked ${new Date().toLocaleTimeString()})`);
+                                return false;   // keep the modal open
+                            }
+                            return true;
+                        }
+                    },
+                    { id: 'paid', label: 'Send via paid gateway', icon: 'bi-credit-card', cls: 'btn-warning' },
+                    // Nothing is queued yet at this point, so this clears
+                    // whatever is already waiting in the queue.
+                    { id: 'reject', label: 'Reject all queued', icon: 'bi-x-octagon', cls: 'btn-outline-danger',
+                      handler: () => rejectAllUnsent(null) }
+                ]
+            });
+
+            if (choice === 'free') return { proceed: true, forcePaid: false };
+            if (choice === 'paid') return { proceed: true, forcePaid: true };
+            return { proceed: false, forcePaid: false };   // cancelled or rejected
+        }
+
+        // ══════════════════════════════════════════════════════════════
+        // HELD JOBS — messages parked because WAHA went down
+        // ══════════════════════════════════════════════════════════════
+        // Rendered under the tab's sending log while a job has held rows.
+        function renderHoldPanel(logId, jobId, held) {
+            const panelId = `${logId}HoldPanel`;
+            let panel = $(`#${panelId}`);
+
+            if (!held) { panel.remove(); return; }
+
+            if (panel.length === 0) {
+                $(`#${logId}`).after(`
+                    <div id="${panelId}" class="mt-3 p-3"
+                         style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-pause-circle-fill text-warning me-2"></i>
+                            <span class="fw-semibold text-dark">Sending paused</span>
+                            <span class="badge bg-warning text-dark ms-2" id="${panelId}Count">0 waiting</span>
+                        </div>
+                        <div class="text-muted mb-3" style="font-size:12.5px;">
+                            WhatsApp (free) is disconnected, so these messages are on hold — none of
+                            them have been sent and none are lost. Connect WAHA and resume free, or
+                            release them through the paid gateway.
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-sm btn-primary" id="${panelId}Connect">
+                                <i class="bi bi-box-arrow-up-right me-1"></i>Connect to WAHA
+                            </button>
+                            <button type="button" class="btn btn-sm btn-success" id="${panelId}Free">
+                                <i class="bi bi-arrow-repeat me-1"></i>Resume free (WAHA)
+                            </button>
+                            <button type="button" class="btn btn-sm btn-warning" id="${panelId}Paid">
+                                <i class="bi bi-credit-card me-1"></i>Send via paid gateway
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger" id="${panelId}Reject">
+                                <i class="bi bi-x-octagon me-1"></i>Reject all
+                            </button>
+                        </div>
+                    </div>`);
+
+                $(`#${panelId}Connect`).on('click', openWahaServer);
+                $(`#${panelId}Free`).on('click', () => resumeHeld(logId, jobId, 'free'));
+                $(`#${panelId}Paid`).on('click', () => resumeHeld(logId, jobId, 'paid'));
+                $(`#${panelId}Reject`).on('click', async () => {
+                    if (await rejectAllUnsent(null)) {
+                        clearActiveJob(logId);
+                        setStatusLine(logId, '🚫 Rejected — the remaining messages were cancelled and will not be sent.');
+                    }
+                });
+            }
+
+            $(`#${panelId}Count`).text(`${held} waiting`);
+        }
+
+        // route: 'free' | 'paid'. The free endpoint refuses (409) while WAHA is
+        // still disconnected, which is exactly the "connect the WAHA first"
+        // case — surfaced as an alert rather than a silent no-op.
+        async function resumeHeld(logId, jobId, route) {
+            const panelId = `${logId}HoldPanel`;
+            const btn = $(`#${panelId}${route === 'free' ? 'Free' : 'Paid'}`);
+            const original = btn.html();
+            btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Working...');
+
+            try {
+                const r = await fetch(`${API_BASE}/Sms/resume-${route}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ jobId })
+                });
+                const j = await r.json().catch(() => ({}));
+
+                if (r.status === 409) {
+                    // Free resume refused — WAHA is still down.
+                    toastError(j.message || 'WAHA is still disconnected. Connect the WhatsApp session first.');
+                    setStatusLine(logId, `⚠️ ${j.message || 'WAHA is still disconnected — connect it, then resume.'}`);
+                    return;
+                }
+                if (!r.ok) { toastError(j.message || 'Could not resume the held messages'); return; }
+
+                const resumed = j.resumed || 0;
+                if (resumed === 0) { toastInfo('There are no held messages left to resume.'); }
+                else if (route === 'free') { toastSuccess(`${resumed} message(s) resumed on the free WhatsApp route.`); }
+                else { toastWarning(`${resumed} message(s) released through the paid gateway.`); }
+
+                setStatusLine(logId, `▶️ Resumed ${resumed} held message(s) on the ${route} route.`);
+                $(`#${panelId}`).remove();
+
+                // The job is running again, so make sure the poller is live —
+                // it stops itself once a job is fully held.
+                if (jobId && !$(`#${logId}`).data('polling')) {
+                    saveActiveJob(logId, jobId, 'Resumed');
+                    startProgressPoll(jobId, logId);
+                }
+                // The user just reconnected WAHA, so the cached status is stale.
+                refreshWahaStatus(true);
+            } catch (e) {
+                console.error(e);
+                toastError('Network error while resuming');
+            } finally {
+                btn.prop('disabled', false).html(original);
+            }
+        }
+
+        // Resume EVERY held message, whichever tab or session queued it —
+        // reached from the "N held" badge in the queue bar. Useful after a
+        // reload, or when the job was started from another machine.
+        async function openGlobalResume() {
+            const info = await fetch(`${API_BASE}/Sms/held`).then(r => r.ok ? r.json() : null).catch(() => null);
+            const held = info ? info.held : 0;
+            if (!held) { toastInfo('There are no held messages.'); refreshQueueStatus(); return; }
+
+            const resumeAll = async (route) => {
+                const r = await fetch(`${API_BASE}/Sms/resume-${route}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})          // no jobId = every held row
+                });
+                const j = await r.json().catch(() => ({}));
+
+                if (r.status === 409) {
+                    toastError(j.message || 'WAHA is still disconnected. Connect the WhatsApp session first.');
+                    $('#wahaGateStatus').text(`WAHA session status: ${j.freeStatus || 'disconnected'} (checked ${new Date().toLocaleTimeString()})`);
+                    return false;                      // keep the modal open
+                }
+                if (!r.ok) { toastError(j.message || 'Could not resume'); return false; }
+
+                const n = j.resumed || 0;
+                if (route === 'free') toastSuccess(`${n} message(s) resumed on the free WhatsApp route.`);
+                else toastWarning(`${n} message(s) released through the paid gateway.`);
+
+                refreshQueueStatus();
+                resumeActiveSmsJobs();
+                return true;
+            };
+
+            await openWahaGate({
+                message: `${held} message(s) are on hold because WhatsApp (free) is disconnected. ` +
+                         'None of them have been sent.',
+                status: info.freeStatus,
+                cancelLabel: 'Close',
+                actions: [
+                    { id: 'free', label: 'Resume free (WAHA)', icon: 'bi-arrow-repeat', cls: 'btn-success',
+                      handler: () => resumeAll('free') },
+                    { id: 'paid', label: 'Release via paid gateway', icon: 'bi-credit-card', cls: 'btn-warning',
+                      handler: () => resumeAll('paid') },
+                    { id: 'reject', label: 'Reject all', icon: 'bi-x-octagon', cls: 'btn-outline-danger',
+                      handler: () => rejectAllUnsent(null) }
+                ]
+            });
+        }
+
+        // ══════════════════════════════════════════════════════════════
+        // PREVIEW LIST ("Show List")
+        // ══════════════════════════════════════════════════════════════
+        // POSTs the same filter payload the send would use to a /preview/*
+        // endpoint and shows what would go out. onConfirm runs the real send.
+        async function showPreview(url, payload, onConfirm) {
+            const modalEl = document.getElementById('smsPreviewModal');
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+
+            $('#previewBody').html('<tr><td colspan="6" class="text-center text-muted py-4">' +
+                '<span class="spinner-border spinner-border-sm me-2"></span>Building the list...</td></tr>');
+            $('#previewSummary, #previewFooterNote').empty();
+            $('#previewCountBadge, #previewSendCount').text('0');
+            $('#previewEmpty').hide();
+            $('#previewTableWrap').show();
+            $('#previewSendBtn').prop('disabled', true);
+            modal.show();
+
+            let data;
+            try {
+                const r = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!r.ok) {
+                    const e = await r.json().catch(() => ({ message: 'Could not build the list' }));
+                    toastError(e.message || 'Could not build the list');
+                    modal.hide();
+                    return;
+                }
+                data = await r.json();
+            } catch (ex) {
+                console.error(ex);
+                toastError('Network error while building the list');
+                modal.hide();
+                return;
+            }
+
+            renderPreview(data);
+
+            $('#previewSendBtn').off('click.preview').on('click.preview', () => {
+                // Wait for this modal to finish closing before running the send:
+                // it may open the WAHA gate modal, and two Bootstrap modals
+                // overlapping leaves a stuck backdrop.
+                $(modalEl).one('hidden.bs.modal', () => onConfirm());
+                modal.hide();
+            });
+        }
+
+        function renderPreview(data) {
+            const items = data.items || [];
+            const total = data.total || 0;
+
+            $('#previewCountBadge').text(total);
+            $('#previewSendCount').text(total);
+            $('#previewSendBtn').prop('disabled', total === 0);
+
+            // Summary chips: how many, how many dropped, which gateway.
+            const chips = [];
+            chips.push(`<span class="badge bg-primary" style="font-size:12px;">${total} message${total === 1 ? '' : 's'}</span>`);
+            if (data.skippedNoPhone > 0)
+                chips.push(`<span class="badge bg-secondary" style="font-size:12px;">${data.skippedNoPhone} skipped — no phone number</span>`);
+
+            if (data.route === 'free')
+                chips.push('<span class="badge bg-success" style="font-size:12px;"><i class="bi bi-whatsapp me-1"></i>Free (WAHA)</span>');
+            else if (data.route === 'hold')
+                chips.push(`<span class="badge bg-danger" style="font-size:12px;"><i class="bi bi-plug me-1"></i>WAHA disconnected (${data.freeStatus || 'unknown'})</span>`);
+            else
+                chips.push('<span class="badge bg-warning text-dark" style="font-size:12px;"><i class="bi bi-credit-card me-1"></i>Paid gateway</span>');
+
+            const amounts = items.filter(i => i.amount != null);
+            if (amounts.length)
+                chips.push(`<span class="badge bg-dark" style="font-size:12px;">Total dues Rs. ${
+                    amounts.reduce((s, i) => s + i.amount, 0).toLocaleString()}</span>`);
+
+            $('#previewSummary').html(chips.join(''));
+
+            if (data.route === 'hold') {
+                $('#previewFooterNote').html(
+                    '<i class="bi bi-info-circle me-1"></i>WAHA is disconnected — you will be asked how to send when you continue.');
+            } else {
+                $('#previewFooterNote').text('Nothing has been queued yet.');
+            }
+
+            if (total === 0) {
+                $('#previewTableWrap').hide();
+                $('#previewEmpty').show();
+                $('#previewBody').empty();
+                return;
+            }
+
+            $('#previewEmpty').hide();
+            $('#previewTableWrap').show();
+
+            const rows = items.map((it, i) => `
+                <tr>
+                    <td class="text-muted">${i + 1}</td>
+                    <td>${escapeHtml(it.name || '-')}</td>
+                    <td>${escapeHtml(it.className || '-')}</td>
+                    <td><code>${escapeHtml(it.phone || '')}</code></td>
+                    <td class="text-end">${it.amount != null ? 'Rs. ' + it.amount.toLocaleString() : '-'}</td>
+                    <td style="max-width:420px;">
+                        <div style="white-space:pre-wrap;font-size:12px;color:#475569;">${escapeHtml(it.message || '')}</div>
+                    </td>
+                </tr>`).join('');
+
+            $('#previewBody').html(rows);
+        }
+
+        function escapeHtml(s) {
+            return String(s ?? '').replace(/[&<>"']/g, c => (
+                { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        // ── GENERIC SEND / PREVIEW ────────────────────────────────────
+        // mode 'preview' shows the list modal (queueing nothing) and wires its
+        // Send button back to mode 'send', so what the user approves is exactly
+        // what goes out.
+        async function sendSmsViaApi(recipients, message, messageType, logId, countId, mode) {
             if (!recipients||recipients.length===0) { toastWarning('No recipients found'); return; }
-            if (!message) { toastWarning('Please enter a message'); return; }
+            if (!message && !recipients.every(r => r.message)) { toastWarning('Please enter a message'); return; }
+
+            if (mode === 'preview') {
+                return showPreview(
+                    `${API_BASE}/Sms/preview/send`,
+                    { recipients, message, messageType },
+                    () => sendSmsViaApi(recipients, message, messageType, logId, countId, 'send'));
+            }
+
+            const route = await ensureRoute(messageType);
+            if (!route.proceed) { toastInfo('Sending cancelled — nothing was queued.'); return; }
+
             const jobId = newJobId();
             logSMS(logId, countId, `📤 Sending to ${recipients.length} recipient(s)...`);
             // Persist immediately so a reload mid-send can still resume.
             saveActiveJob(logId, jobId, `Bulk SMS (${recipients.length})`);
             try {
-                const r=await fetch(`${API_BASE}/Sms/send`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({recipients,message,messageType,jobId})});
+                const r=await fetch(`${API_BASE}/Sms/send`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({recipients,message,messageType,jobId,forcePaid:route.forcePaid})});
                 if(!r.ok){
                     const e=await r.json().catch(()=>({message:'Send failed'}));
                     toastError(e.message||'Failed');
@@ -654,7 +1357,9 @@
                     return;
                 }
                 // Server returned 202 Accepted — send continues in background.
-                toastInfo('Sending started in background...');
+                toastInfo(route.forcePaid
+                    ? 'Sending started in background through the paid gateway...'
+                    : 'Sending started in background...');
                 startProgressPoll(jobId, logId);
             } catch(ex){
                 console.error(ex);
@@ -664,60 +1369,100 @@
         }
 
         // ── SEND FUNCTIONS ────────────────────────────────────────────
-        async function sendStaffSMS() {
+        // Every tab exposes the same pair: previewXxxSMS() opens the list
+        // modal, sendXxxSMS() queues. Both funnel through one runXxx(mode) so
+        // the two can never disagree about which recipients are in scope.
+
+        async function runStaff(mode) {
             const msg=$('#staffMessage').val(); if(!msg){toastWarning('Please enter a message');return;}
             const phone=$('#staffContactNo').val(); if(!phone){toastWarning('Please select staff or enter number');return;}
-            await sendSmsViaApi([{phone,name:$('#staffTo option:selected').text()}],msg,1,'staffSendingLog','staffSentCount');
+            await sendSmsViaApi([{phone,name:$('#staffTo option:selected').text()}],msg,SMS_TYPE.Staff,'staffSendingLog','staffSentCount',mode);
         }
+        function sendStaffSMS()    { return runStaff('send'); }
+        function previewStaffSMS() { return runStaff('preview'); }
 
-        async function sendGeneralSMS() {
+        async function runGeneral(mode) {
             const msg=$('#generalMessage').val(); if(!msg){toastWarning('Please enter a message');return;}
             const phone=$('#generalStudentId option:selected').data('phone'); if(!phone){toastWarning('Please select a student with a phone number');return;}
-            await sendSmsViaApi([{phone,name:$('#generalStudentId option:selected').text()}],msg,2,'generalSendingLog','generalSentCount');
+            await sendSmsViaApi([{phone,name:$('#generalStudentId option:selected').text()}],msg,SMS_TYPE.General,'generalSendingLog','generalSentCount',mode);
         }
+        function sendGeneralSMS()    { return runGeneral('send'); }
+        function previewGeneralSMS() { return runGeneral('preview'); }
 
-        async function sendAbsentSMS() {
+        async function runAbsent(mode) {
             const date=$('#absentDate').val(); if(!date){toastWarning('Please select a date');return;}
             const msg='Dear Parent, your child was marked absent on '+date+'. Please contact the school.';
             try {
                 const resp=await fetch(`${API_BASE}/Sms/absent-students?date=${date}`);
                 const students=await resp.json();
                 if(!students||students.length===0){toastWarning('No absent students found for this date');return;}
-                await sendSmsViaApi(students,msg,3,'absentSendingLog','absentSentCount');
+                await sendSmsViaApi(students,msg,SMS_TYPE.Absent,'absentSendingLog','absentSentCount',mode);
             } catch(ex){console.error(ex); toastError('Failed to fetch absent students');}
         }
+        function sendAbsentSMS()    { return runAbsent('send'); }
+        function previewAbsentSMS() { return runAbsent('preview'); }
 
-        async function sendLateSMS() {
+        async function runLate(mode) {
             const date=$('#lateDate').val(); if(!date){toastWarning('Please select a date');return;}
             const msg='Dear Parent, your child was marked late on '+date+'. Please ensure punctuality.';
             try {
                 const resp=await fetch(`${API_BASE}/Sms/late-students?date=${date}`);
                 const students=await resp.json();
                 if(!students||students.length===0){toastWarning('No late students found for this date');return;}
-                await sendSmsViaApi(students,msg,4,'lateSendingLog','lateSentCount');
+                await sendSmsViaApi(students,msg,SMS_TYPE.Late,'lateSendingLog','lateSentCount',mode);
             } catch(ex){console.error(ex); toastError('Failed to fetch late students');}
         }
+        function sendLateSMS()    { return runLate('send'); }
+        function previewLateSMS() { return runLate('preview'); }
 
-        async function sendAgainSMS() {
+        async function runAgain(mode) {
             const date=$('#againDate').val(); if(!date){toastWarning('Please select a date');return;}
             const msg='Dear Parent, your child was marked absent on '+date+'. This is a reminder.';
             try {
                 const resp=await fetch(`${API_BASE}/Sms/absent-students?date=${date}`);
                 const students=await resp.json();
                 if(!students||students.length===0){toastWarning('No absent students found for this date');return;}
-                await sendSmsViaApi(students,msg,3,'againSendingLog','againSentCount');
+                await sendSmsViaApi(students,msg,SMS_TYPE.Absent,'againSendingLog','againSentCount',mode);
             } catch(ex){console.error(ex); toastError('Failed to fetch absent students');}
         }
+        function sendAgainSMS()    { return runAgain('send'); }
+        function previewAgainSMS() { return runAgain('preview'); }
 
-        // ── FEE SMS — UPDATED (calls new endpoint) ────────────────────
-        async function sendFeeSMS() {
+        // ── FEE SMS ───────────────────────────────────────────────────
+        // tillDate picks WHO is reminded (students still carrying a due dated
+        // on or before it); each of them is then billed for ALL their pending
+        // dues up to today — so a March/April defaulter also gets May onwards
+        // in the same message.
+        function buildFeePayload() {
             const dueDate=$('#feeDueDate').val();
-            if(!dueDate){toastWarning('Please select a due date');return;}
+            if(!dueDate){toastWarning('Please select a due date');return null;}
 
             const feeChoice=$('input[name="feeChoose"]:checked').val();
             const classId   = (feeChoice==='class'||feeChoice==='section'||feeChoice==='student') ? ($('#feeClassId').val()||null)   : null;
             const sectionId = (feeChoice==='section'||feeChoice==='student') ? ($('#feeSectionId').val()||null) : null;
             const studentId = feeChoice==='student' ? ($('#feeStudentId').val()||null) : null;
+            const tillDate  = $('#feeTillDate').val() || null;
+
+            return {
+                dueDate:   dueDate,
+                tillDate:  tillDate,
+                studentId: studentId ? parseInt(studentId) : null,
+                classId:   classId   ? parseInt(classId)   : null,
+                sectionId: sectionId ? parseInt(sectionId) : null,
+                sessionId: null
+            };
+        }
+
+        async function runFee(mode) {
+            const payload = buildFeePayload();
+            if (!payload) return;
+
+            if (mode === 'preview') {
+                return showPreview(`${API_BASE}/Sms/preview/fee-reminder`, payload, () => runFee('send'));
+            }
+
+            const route = await ensureRoute(SMS_TYPE.Fee);
+            if (!route.proceed) { toastInfo('Sending cancelled — nothing was queued.'); return; }
 
             logSMS('feeSendingLog','feeSentCount','📤 Fetching pending fee data...');
 
@@ -727,14 +1472,7 @@
                 const response=await fetch(`${API_BASE}/Sms/fee-reminder`,{
                     method:'POST',
                     headers:{'Content-Type':'application/json'},
-                    body:JSON.stringify({
-                        dueDate:   dueDate,
-                        studentId: studentId ? parseInt(studentId) : null,
-                        classId:   classId   ? parseInt(classId)   : null,
-                        sectionId: sectionId ? parseInt(sectionId) : null,
-                        sessionId: null,
-                        jobId
-                    })
+                    body:JSON.stringify({ ...payload, jobId, forcePaid: route.forcePaid })
                 });
                 if(!response.ok){
                     const e=await response.json().catch(()=>({message:'Failed'}));
@@ -742,7 +1480,9 @@
                     clearActiveJob('feeSendingLog');
                     return;
                 }
-                toastInfo('Fee reminder sending started in background...');
+                toastInfo(route.forcePaid
+                    ? 'Fee reminders queued through the paid gateway...'
+                    : 'Fee reminder sending started in background...');
                 startProgressPoll(jobId, 'feeSendingLog');
             } catch(ex){
                 console.error(ex);
@@ -750,11 +1490,13 @@
                 clearActiveJob('feeSendingLog');
             }
         }
+        function sendFeeSMS()    { return runFee('send'); }
+        function previewFeeSMS() { return runFee('preview'); }
 
         // Result: sends each matched student's result as a WhatsApp TEXT summary.
         // The API resolves recipients (Father→Guardian→Student) and the background
         // queue composes + sends each result text (works without WAHA Plus).
-        async function sendResultSMS() {
+        async function runResult(mode) {
             const examId = $('#resultExamId').val();
             if (!examId) { toastWarning('Please select an exam'); return; }
 
@@ -768,7 +1510,6 @@
             if (scope === 'student' && !studentId) { toastWarning('Please select a Student'); return; }
 
             const logId = 'resultSendingLog', countId = 'resultSentCount';
-            const jobId = newJobId();
             const payload = {
                 examId: parseInt(examId),
                 examName: $('#resultExamId option:selected').text(),
@@ -776,17 +1517,24 @@
                 classId:   classId   ? parseInt(classId)   : null,
                 sectionId: sectionId ? parseInt(sectionId) : null,
                 studentId: studentId ? parseInt(studentId) : null,
-                message: $('#resultMessage').val() || '',
-                jobId
+                message: $('#resultMessage').val() || ''
             };
 
+            if (mode === 'preview') {
+                return showPreview(`${API_BASE}/Sms/preview/result`, payload, () => runResult('send'));
+            }
+
+            const route = await ensureRoute(SMS_TYPE.Result);
+            if (!route.proceed) { toastInfo('Sending cancelled — nothing was queued.'); return; }
+
+            const jobId = newJobId();
             logSMS(logId, countId, `📤 Preparing result texts (${scope})...`);
             saveActiveJob(logId, jobId, `Result Text (${scope})`);
             try {
                 const r = await fetch(`${API_BASE}/Sms/result`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({ ...payload, jobId, forcePaid: route.forcePaid })
                 });
                 if (!r.ok) {
                     const e = await r.json().catch(() => ({ message: 'Send failed' }));
@@ -802,19 +1550,23 @@
                 clearActiveJob(logId);
             }
         }
+        function sendResultSMS()    { return runResult('send'); }
+        function previewResultSMS() { return runResult('preview'); }
 
-        async function sendFromToSMS() {
+        async function runFromTo(mode) {
             const f=$('#fromtoFromDate').val(); const t=$('#fromtoToDate').val();
             if(!f||!t){toastWarning('Please select date range');return;}
             const msg=$('#fromtoMessage').val()||'Dear Parent, attendance notification for period '+f+' to '+t+'.';
             const phone=$('#fromtoStudentId option:selected').data('phone'); if(!phone){toastWarning('Please select a student with a phone number');return;}
-            await sendSmsViaApi([{phone,name:$('#fromtoStudentId option:selected').text()}],msg,7,'fromtoSendingLog','fromtoSentCount');
+            await sendSmsViaApi([{phone,name:$('#fromtoStudentId option:selected').text()}],msg,SMS_TYPE.FromTo,'fromtoSendingLog','fromtoSentCount',mode);
         }
+        function sendFromToSMS()    { return runFromTo('send'); }
+        function previewFromToSMS() { return runFromTo('preview'); }
 
         // Result Card: generates a PDF per matched student and sends it as a
         // WhatsApp document. The API resolves recipients (Father→Guardian→Student)
         // and the background queue builds+sends each PDF (throttled).
-        async function sendRcardSMS() {
+        async function runRcard(mode) {
             const examId = $('#rcardExamId').val();
             if (!examId) { toastWarning('Please select an exam'); return; }
 
@@ -828,7 +1580,6 @@
             if (scope === 'student' && !studentId) { toastWarning('Please select a Student'); return; }
 
             const logId = 'rcardSendingLog', countId = 'rcardSentCount';
-            const jobId = newJobId();
             const payload = {
                 examId: parseInt(examId),
                 examName: $('#rcardExamId option:selected').text(),
@@ -836,17 +1587,24 @@
                 classId:   classId   ? parseInt(classId)   : null,
                 sectionId: sectionId ? parseInt(sectionId) : null,
                 studentId: studentId ? parseInt(studentId) : null,
-                message: $('#rcardMessage').val() || '',
-                jobId
+                message: $('#rcardMessage').val() || ''
             };
 
+            if (mode === 'preview') {
+                return showPreview(`${API_BASE}/Sms/preview/rcard`, payload, () => runRcard('send'));
+            }
+
+            const route = await ensureRoute(SMS_TYPE.Rcard);
+            if (!route.proceed) { toastInfo('Sending cancelled — nothing was queued.'); return; }
+
+            const jobId = newJobId();
             logSMS(logId, countId, `📤 Preparing result-card PDFs (${scope})...`);
             saveActiveJob(logId, jobId, `Result Cards (${scope})`);
             try {
                 const r = await fetch(`${API_BASE}/Sms/rcard`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({ ...payload, jobId, forcePaid: route.forcePaid })
                 });
                 if (!r.ok) {
                     const e = await r.json().catch(() => ({ message: 'Send failed' }));
@@ -862,6 +1620,8 @@
                 clearActiveJob(logId);
             }
         }
+        function sendRcardSMS()    { return runRcard('send'); }
+        function previewRcardSMS() { return runRcard('preview'); }
 
         // ── EXCEL SMS ─────────────────────────────────────────────────
         function previewExcelFile() {
@@ -904,12 +1664,14 @@
             $('#excelColumnsSection').after(h);
         }
 
-        async function sendExcelSMS(){
-            if(!$('#excelFile').val()){toastWarning('Please upload an Excel file');return;}
+        // Turns the parsed sheet into recipients, reporting the rows it had to
+        // drop. Shared by the preview and the send so both see the same list.
+        function buildExcelRecipients(){
+            if(!$('#excelFile').val()){toastWarning('Please upload an Excel file');return null;}
             const pc=$('#excelPhoneColumn').val(); const mc=$('#excelMessageColumn').val();
-            if(!pc){toastWarning('Please select Phone column');return;}
-            if(!mc){toastWarning('Please select Message column');return;}
-            if(!excelParsedData.length){toastWarning('No data found');return;}
+            if(!pc){toastWarning('Please select Phone column');return null;}
+            if(!mc){toastWarning('Please select Message column');return null;}
+            if(!excelParsedData.length){toastWarning('No data found');return null;}
             const recipients=[]; const skipped=[];
             excelParsedData.forEach((row,i)=>{
                 const rp=String(row[pc]??'').trim(); const rm=String(row[mc]??'').trim();
@@ -920,13 +1682,31 @@
                 if(!phone){skipped.push(`Row ${i+2}: invalid phone "${rp}"`);return;}
                 recipients.push({phone,name:nm,message:rm});
             });
-            if(!recipients.length){toastWarning('No valid recipients found');return;}
+            if(!recipients.length){toastWarning('No valid recipients found');return null;}
+            return { recipients, skipped };
+        }
+
+        async function runExcel(mode){
+            const built = buildExcelRecipients();
+            if (!built) return;
+            const { recipients, skipped } = built;
+
+            if (mode === 'preview') {
+                return showPreview(
+                    `${API_BASE}/Sms/preview/send`,
+                    { recipients, message: '', messageType: SMS_TYPE.Excel },
+                    () => runExcel('send'));
+            }
+
+            const route = await ensureRoute(SMS_TYPE.Excel);
+            if (!route.proceed) { toastInfo('Sending cancelled — nothing was queued.'); return; }
+
             if(skipped.length) logSMS('excelSendingLog','excelSentCount',`⚠️ Skipped ${skipped.length} rows`);
             logSMS('excelSendingLog','excelSentCount',`📤 Sending to ${recipients.length} recipients...`);
             const jobId = newJobId();
             saveActiveJob('excelSendingLog', jobId, `Excel SMS (${recipients.length})`);
             try {
-                const r=await fetch(`${API_BASE}/Sms/send`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({recipients,message:'',messageType:8,jobId})});
+                const r=await fetch(`${API_BASE}/Sms/send`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({recipients,message:'',messageType:SMS_TYPE.Excel,jobId,forcePaid:route.forcePaid})});
                 if(!r.ok){
                     const e=await r.json().catch(()=>({message:'Failed'}));
                     toastError(e.message||'Failed');
@@ -941,6 +1721,8 @@
                 clearActiveJob('excelSendingLog');
             }
         }
+        function sendExcelSMS()    { return runExcel('send'); }
+        function previewExcelSMS() { return runExcel('preview'); }
 
         function normalizePhone(raw){
             let d=raw.replace(/\D/g,''); if(!d) return null;
@@ -956,9 +1738,9 @@
         function clearStaffForm()   { $('#staffType,#staffTo,#staffContactNo,#staffMessage').val(''); $('#staffCharCount').text('0'); $('#staffSmsUrdu').prop('checked',false); }
         function clearGeneralForm() { $('#generalClassId,#generalSectionId,#generalStudentId,#generalMessage').val(''); $('#generalCharCount').text('0'); $('#generalSmsUrdu').prop('checked',false); }
         function clearFeeForm()     {
-            $('#feeClassId,#feeSectionId,#feeStudentId').val('');
+            $('#feeClassId,#feeSectionId,#feeStudentId,#feeTillDate').val('');
             const due=new Date(); due.setDate(due.getDate()+10);
-            $('#feeDueDate').val(due.toISOString().split('T')[0]);
+            $('#feeDueDate').val(toInputDate(due));
             $('#feeSmsUrdu').prop('checked',false);
             $('input[name="feeChoose"][value="student"]').prop('checked',true); toggleFeeFields();
         }

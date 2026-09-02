@@ -22,6 +22,11 @@ namespace School.API.DTOs
         public bool UseTemplate { get; set; } = false;
         public string TemplateType { get; set; } = string.Empty;
         public string? JobId { get; set; }   // client-supplied id for live progress tracking
+
+        // true = bypass the free WAHA route for this batch and send through the
+        // paid gateway. The SMS page sets it when the user answers "Send via
+        // Paid" to the WAHA-disconnected prompt.
+        public bool ForcePaid { get; set; }
     }
 
     public class SmsSendResultDto
@@ -71,6 +76,14 @@ namespace School.API.DTOs
         public int? SectionId { get; set; }
         public int? SessionId { get; set; }
         public string? JobId { get; set; }   // client-supplied id for live progress tracking
+
+        // Picks WHO is reminded: only students still carrying a pending due
+        // dated on or before this date. Each of those students is then shown
+        // ALL of their pending dues up to today, not just the ones up to
+        // TillDate. Null = today (every current defaulter).
+        public DateTime? TillDate { get; set; }
+
+        public bool ForcePaid { get; set; }
     }
 
     // ── Result Card (Rcard) WhatsApp PDF request ──────────────────
@@ -85,6 +98,7 @@ namespace School.API.DTOs
         public int? StudentId { get; set; }
         public string? Message { get; set; }           // WhatsApp caption (optional)
         public string? JobId { get; set; }
+        public bool ForcePaid { get; set; }
     }
 
     // Send each matched student's result as a TEXT summary (no PDF attachment).
@@ -99,6 +113,7 @@ namespace School.API.DTOs
         public int? StudentId { get; set; }
         public string? Message { get; set; }           // optional prefix prepended to each result
         public string? JobId { get; set; }
+        public bool ForcePaid { get; set; }
     }
 
     // Resolved recipient for the Rcard report: who gets the PDF and on which number.
@@ -134,8 +149,57 @@ namespace School.API.DTOs
         public int Pending { get; set; }
         public int Sent { get; set; }
         public int Failed { get; set; }
-        public int Processed => Sent + Failed;
-        public bool IsComplete => Total > 0 && Pending == 0;
+
+        // Parked waiting for WAHA to come back (or for the user to release them
+        // through the paid gateway). A job with held rows is NOT complete — it
+        // is paused, and the UI offers the two resume actions.
+        public int Held { get; set; }
+
+        // Cancelled by the user before sending. Terminal, like Sent/Failed.
+        public int Rejected { get; set; }
+
+        public int Processed => Sent + Failed + Rejected;
+        public bool IsHeld => Held > 0;
+        public bool IsComplete => Total > 0 && Pending == 0 && Held == 0;
+    }
+
+    // ── Preview ("Show List") ─────────────────────────────────────
+    // What a send WOULD produce, without queueing anything. Lets the user see
+    // the recipient count and the exact messages before committing.
+    public class SmsPreviewItemDto
+    {
+        public int? StudentId { get; set; }
+        public string? Name { get; set; }
+        public string? ClassName { get; set; }
+        public string Phone { get; set; } = string.Empty;
+        public string Message { get; set; } = string.Empty;
+
+        // Fee preview only — the total pending amount rolled into this message.
+        public decimal? Amount { get; set; }
+    }
+
+    public class SmsPreviewDto
+    {
+        public string MessageType { get; set; } = string.Empty;
+
+        // Messages that would actually be queued (= Items.Count).
+        public int Total { get; set; }
+
+        // Matched by the filter but dropped for want of a usable phone number.
+        public int SkippedNoPhone { get; set; }
+
+        // Which gateway this batch would use as things stand right now.
+        public string Route { get; set; } = "paid";      // free | paid
+        public bool FreeAvailable { get; set; }
+        public string? FreeStatus { get; set; }
+
+        public List<SmsPreviewItemDto> Items { get; set; } = new();
+    }
+
+    // Body of the resume endpoints. JobId null/empty = every held row.
+    public class SmsResumeDto
+    {
+        public string? JobId { get; set; }
     }
 }
 

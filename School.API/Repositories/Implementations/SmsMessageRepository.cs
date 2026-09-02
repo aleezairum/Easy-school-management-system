@@ -173,7 +173,9 @@ namespace School.API.Repositories.Implementations
                 PageSize = pageSize,
                 Pending = statusCounts.FirstOrDefault(s => s.Status == SmsStatus.Pending)?.Count ?? 0,
                 Sent = statusCounts.FirstOrDefault(s => s.Status == SmsStatus.Sent)?.Count ?? 0,
-                Failed = statusCounts.FirstOrDefault(s => s.Status == SmsStatus.Failed)?.Count ?? 0
+                Failed = statusCounts.FirstOrDefault(s => s.Status == SmsStatus.Failed)?.Count ?? 0,
+                Held = statusCounts.FirstOrDefault(s => s.Status == SmsStatus.Held)?.Count ?? 0,
+                Rejected = statusCounts.FirstOrDefault(s => s.Status == SmsStatus.Rejected)?.Count ?? 0
             };
         }
 
@@ -382,12 +384,14 @@ namespace School.API.Repositories.Implementations
             {
                 switch (row.Status)
                 {
-                    case SmsStatus.Pending: dto.Pending = row.Count; break;
-                    case SmsStatus.Sent:    dto.Sent    = row.Count; break;
-                    case SmsStatus.Failed:  dto.Failed  = row.Count; break;
+                    case SmsStatus.Pending:  dto.Pending  = row.Count; break;
+                    case SmsStatus.Sent:     dto.Sent     = row.Count; break;
+                    case SmsStatus.Failed:   dto.Failed   = row.Count; break;
+                    case SmsStatus.Held:     dto.Held     = row.Count; break;
+                    case SmsStatus.Rejected: dto.Rejected = row.Count; break;
                 }
             }
-            dto.Total = dto.Pending + dto.Sent + dto.Failed;
+            dto.Total = dto.Pending + dto.Sent + dto.Failed + dto.Held + dto.Rejected;
             return dto;
         }
 
@@ -396,5 +400,89 @@ namespace School.API.Repositories.Implementations
             return await _context.SmsMessages
                 .CountAsync(m => m.Status == SmsStatus.Pending);
         }
+
+        // ─────────────────────────────────────────────────────────────
+        // Hold / resume
+        // ─────────────────────────────────────────────────────────────
+        public async Task HoldAsync(int vid, string? reason)
+        {
+            var entity = await _context.SmsMessages.FindAsync(vid);
+            if (entity == null) return;
+
+            entity.Status = SmsStatus.Held;
+            entity.ErrorMessage = Truncate(reason, 500);
+            entity.UpdatedDate = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<int> ResumeHeldAsync(string? jobId, bool forcePaid)
+        {
+            var query = _context.SmsMessages.Where(m => m.Status == SmsStatus.Held);
+
+            if (!string.IsNullOrWhiteSpace(jobId))
+                query = query.Where(m => m.JobId == jobId);
+
+            var rows = await query.ToListAsync();
+            if (rows.Count == 0) return 0;
+
+            var now = DateTime.UtcNow;
+            foreach (var row in rows)
+            {
+                row.Status = SmsStatus.Pending;
+                // The hold reason was informational; clear it so a later real
+                // failure isn't confused with "was waiting for WAHA".
+                row.ErrorMessage = null;
+                row.ForcePaid = forcePaid;
+                row.UpdatedDate = now;
+            }
+
+            await _context.SaveChangesAsync();
+            return rows.Count;
+        }
+
+        public async Task<int> GetHeldCountAsync(string? jobId)
+        {
+            var query = _context.SmsMessages.Where(m => m.Status == SmsStatus.Held);
+
+            if (!string.IsNullOrWhiteSpace(jobId))
+                query = query.Where(m => m.JobId == jobId);
+
+            return await query.CountAsync();
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // Reject
+        // ─────────────────────────────────────────────────────────────
+        private IQueryable<SmsMessage> UnsentQuery(string? jobId)
+        {
+            var query = _context.SmsMessages
+                .Where(m => m.Status == SmsStatus.Pending || m.Status == SmsStatus.Held);
+
+            if (!string.IsNullOrWhiteSpace(jobId))
+                query = query.Where(m => m.JobId == jobId);
+
+            return query;
+        }
+
+        public async Task<int> RejectUnsentAsync(string? jobId, string? reason)
+        {
+            var rows = await UnsentQuery(jobId).ToListAsync();
+            if (rows.Count == 0) return 0;
+
+            var now = DateTime.UtcNow;
+            foreach (var row in rows)
+            {
+                row.Status = SmsStatus.Rejected;
+                row.ErrorMessage = Truncate(reason, 500);
+                row.UpdatedDate = now;
+            }
+
+            await _context.SaveChangesAsync();
+            return rows.Count;
+        }
+
+        public Task<int> GetUnsentCountAsync(string? jobId)
+            => UnsentQuery(jobId).CountAsync();
     }
 }

@@ -1,0 +1,718 @@
+@{
+    ViewData["Title"] = "School Timings";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<style>
+    .form-section { background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+    .section-title { font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #e2e8f0; }
+    .preview-box { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 12px 16px; margin-top: 4px; font-size: 14px; }
+    .preview-box.muted { background: #f8fafc; border-color: #e2e8f0; color: #64748b; }
+    .empty-row td { text-align: center; color: #94a3b8; padding: 24px 0; }
+    .loading-overlay { position: absolute; inset: 0; background: rgba(255,255,255,.8); display: flex; align-items: center; justify-content: center; z-index: 100; border-radius: 16px; }
+    .day-pill { display: inline-block; background: #f1f5f9; border-radius: 6px; padding: 3px 8px; margin: 2px; font-size: 12px; color: #475569; }
+    .sticky-head th { position: sticky; top: 0; background: #f8fafc; z-index: 1; }
+    #daysTable td, #daysTable th { font-size: 13px; }
+    #daysTable tr.day-edited { background: #fffbeb; }
+</style>
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-body position-relative">
+
+            <div id="loadingOverlay" class="loading-overlay" style="display:none;">
+                <div class="spinner-border text-success" role="status"><span class="visually-hidden">Loading...</span></div>
+            </div>
+
+            <!-- ── Entry form ── -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="bi bi-clock-history me-2"></i><span id="formTitle">Add School Timing</span>
+                </div>
+
+                <input type="hidden" id="timingId" value="0" />
+
+                <div class="row g-3">
+                    <div class="col-lg-3 col-md-6 col-12">
+                        <label for="timingName" class="form-label">Title</label>
+                        <input class="form-control" id="timingName" maxlength="100" placeholder="e.g. Winter Timings" />
+                    </div>
+                    <div class="col-lg-2 col-md-3 col-6">
+                        <label for="startDate" class="form-label">Start Date <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="startDate" />
+                    </div>
+                    <div class="col-lg-2 col-md-3 col-6">
+                        <label for="endDate" class="form-label">End Date <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="endDate" />
+                    </div>
+                    <div class="col-lg-2 col-md-3 col-6">
+                        <label for="timeIn" class="form-label">School Start Time <span class="text-danger">*</span></label>
+                        <input type="time" class="form-control" id="timeIn" />
+                    </div>
+                    <div class="col-lg-2 col-md-3 col-6">
+                        <label for="timeOut" class="form-label">School End Time <span class="text-danger">*</span></label>
+                        <input type="time" class="form-control" id="timeOut" />
+                    </div>
+                    <div class="col-lg-1 col-md-3 col-6 d-flex align-items-end">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="isActive" checked />
+                            <label class="form-check-label" for="isActive">Active</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Friday: the one weekday that routinely runs to its own clock -->
+                <div class="row g-3 mt-0 align-items-end">
+                    <div class="col-lg-3 col-md-6 col-12">
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" id="hasFriday" onchange="toggleFriday()" />
+                            <label class="form-check-label" for="hasFriday">Different timing on Friday</label>
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-3 col-6">
+                        <label for="fridayTimeIn" class="form-label">Friday Start</label>
+                        <input type="time" class="form-control" id="fridayTimeIn" disabled />
+                    </div>
+                    <div class="col-lg-2 col-md-3 col-6">
+                        <label for="fridayTimeOut" class="form-label">Friday End</label>
+                        <input type="time" class="form-control" id="fridayTimeOut" disabled />
+                    </div>
+                    <div class="col-lg-2 col-md-3 col-6">
+                        <label for="offDay1" class="form-label">Off Day 1</label>
+                        <select class="form-select" id="offDay1"><option value="">None</option></select>
+                    </div>
+                    <div class="col-lg-2 col-md-3 col-6">
+                        <label for="offDay2" class="form-label">Off Day 2</label>
+                        <select class="form-select" id="offDay2"><option value="">None</option></select>
+                    </div>
+                    <div class="col-lg-3 col-12">
+                        <div class="form-text">
+                            Off days drop out of the range entirely &mdash; no timing is set for them.
+                            Any other one-off change is made on the day itself, below.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- One row per day in the range. The range and the Friday times
+                     build this list; from here on it is the list that is saved,
+                     so any single day can simply be typed over. -->
+                <div class="mt-4" id="daysPanel" style="display:none;">
+                    <div class="section-title d-flex align-items-center justify-content-between">
+                        <span><i class="bi bi-calendar3 me-2"></i>Days in this range</span>
+                        <span>
+                            <span class="text-muted me-2" style="text-transform:none; letter-spacing:0;" id="daysSummary"></span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="resetAllDays()">
+                                <i class="bi bi-arrow-counterclockwise me-1"></i> Reset all days
+                            </button>
+                        </span>
+                    </div>
+
+                    <div class="table-responsive" style="max-height:50vh;">
+                        <table class="table table-sm table-hover align-middle mb-0" id="daysTable">
+                            <thead class="sticky-head">
+                                <tr>
+                                    <th style="width:60px;">Sr#</th>
+                                    <th>Date</th>
+                                    <th>Day</th>
+                                    <th style="width:140px;">Start Time</th>
+                                    <th style="width:140px;">End Time</th>
+                                    <th style="width:110px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="daysBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-2 align-items-end">
+                    <div class="col-lg-8 col-12">
+                        <div class="preview-box muted" id="previewBox">
+                            Pick a start and end date &mdash; every day in it will be listed here for you to set individually.
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-12 d-flex justify-content-end gap-2">
+                        <button class="btn btn-secondary" onclick="resetForm()"><i class="bi bi-x-lg me-1"></i> Clear</button>
+                        <button class="btn btn-primary" onclick="saveTiming()"><i class="bi bi-check-lg me-1"></i> Save &amp; Apply</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── List ── -->
+            <div class="section-title"><i class="bi bi-table me-2"></i>School Timings</div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th style="width:60px;">Sr#</th>
+                            <th>Title</th>
+                            <th>From</th>
+                            <th>To</th>
+                            <th>Start Time</th>
+                            <th>End Time</th>
+                            <th>Friday</th>
+                            <th>Off Days</th>
+                            <th class="text-center">Days Applied</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-end" style="width:150px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="timingsBody">
+                        <tr class="empty-row"><td colspan="11">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p class="text-muted mb-0" style="font-size:13px;">
+                <i class="bi bi-info-circle me-1"></i>
+                Saving writes the day list above, one row per day. Off days and holidays
+                never appear in it &mdash; the school is shut, so no timing is set for them
+                and attendance falls back to each employee's own shift.
+                For a one-off change, click the <strong>Days Applied</strong> count and edit that
+                single day; hand-edited days are kept when the range is saved again.
+                If a later timing covers some of the same dates, it wins for those days.
+                Attendance already saved keeps the times it was calculated with; re-save that
+                month in <a href="/EasySchool/hr/attendance">Attendance</a> to recalculate.
+            </p>
+
+        </div>
+    </div>
+</div>
+
+<!-- ── Applied days ── -->
+<div class="modal fade" id="daysModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" style="border-radius:16px;">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-calendar3 me-2"></i><span id="daysModalTitle">Applied Days</span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="daysModalBody"></div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const API = `${API_BASE}/hr/school-timings`;
+    let allTimings = [];
+
+    // The day rows currently on screen, and the ones the user has typed over.
+    // Edits are held by date so that nudging the range or the default times
+    // rebuilds the list without throwing away work already done on a day.
+    let dayRows = [];
+    let dayEdits = {};
+
+    const DOW_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    // 1 = Sunday .. 7 = Saturday, the convention HrShift and Employees use.
+    const WEEKDAYS = DOW_NAMES.map((n, i) => ({ v: i + 1, n }));
+    function dateKey(v) { return String(v).substring(0, 10); }
+
+    $(document).ready(function () {
+        WEEKDAYS.forEach(d => $('#offDay1, #offDay2').append(`<option value="${d.v}">${d.n}</option>`));
+        loadTimings();
+        // Any of these changes the day list, so rebuild it: the range and the off
+        // days decide WHICH dates, the times decide what each one runs on.
+        $('#startDate, #endDate, #timeIn, #timeOut, #fridayTimeIn, #fridayTimeOut, #hasFriday, #offDay1, #offDay2')
+            .on('change', rebuildDays);
+        resetForm();   // starts both dates on today
+    });
+
+    /* ── Build the day list ── */
+    async function rebuildDays() {
+        const from    = $('#startDate').val();
+        const to      = $('#endDate').val();
+        const timeIn  = $('#timeIn').val();
+        const timeOut = $('#timeOut').val();
+        const box     = $('#previewBox');
+
+        if (!from || !to || !timeIn || !timeOut) {
+            dayRows = [];
+            renderDays();
+            box.addClass('muted').text('Fill in the dates and the school start/end time — every day in the range will then be listed below.');
+            return;
+        }
+        if (to < from) {
+            dayRows = [];
+            renderDays();
+            box.addClass('muted').text('End date cannot be before the start date.');
+            return;
+        }
+        if (timeOut <= timeIn) {
+            dayRows = [];
+            renderDays();
+            box.addClass('muted').text('School end time must be after the start time.');
+            return;
+        }
+
+        let url = `${API}/expand?startDate=${from}&endDate=${to}&timeIn=${timeIn}:00&timeOut=${timeOut}:00`;
+        if ($('#hasFriday').is(':checked') && $('#fridayTimeIn').val() && $('#fridayTimeOut').val())
+            url += `&fridayTimeIn=${$('#fridayTimeIn').val()}:00&fridayTimeOut=${$('#fridayTimeOut').val()}:00`;
+        if ($('#offDay1').val()) url += `&offDay1=${$('#offDay1').val()}`;
+        if ($('#offDay2').val()) url += `&offDay2=${$('#offDay2').val()}`;
+
+        try {
+            const res = await fetch(url);
+            if (!res.ok) {
+                box.addClass('muted').text(await apiError(res, 'Could not work out the days for that range.'));
+                dayRows = []; renderDays();
+                return;
+            }
+
+            const expanded = await res.json() || [];
+
+            // Keep whatever the user has already typed for a date that is still
+            // in the range; everything else follows the range and Friday rules.
+            dayRows = expanded.map(d => {
+                const k = dateKey(d.tDate);
+                const edit = dayEdits[k];
+                return edit
+                    ? { ...d, timeIn: edit.timeIn, timeOut: edit.timeOut, isOverridden: true }
+                    : d;
+            });
+
+            const total = Math.round((new Date(to) - new Date(from)) / 86400000) + 1;
+            const skipped = total - expanded.length;
+            box.removeClass('muted').html(
+                `<strong>${expanded.length}</strong> school day(s) listed below`
+                + (skipped > 0 ? ` &mdash; ${skipped} off day(s) / holiday(s) left out.` : '.')
+                + ' Change any single day before saving.');
+
+            renderDays();
+        } catch (e) {
+            console.error('expand', e);
+        }
+    }
+
+    function renderDays() {
+        const body = $('#daysBody').empty();
+        $('#daysPanel').toggle(dayRows.length > 0);
+
+        dayRows.forEach((d, i) => {
+            const isFriday = d.dayOfWeek === 6;
+            body.append(`
+                <tr data-date="${dateKey(d.tDate)}" class="${d.isOverridden ? 'day-edited' : ''}">
+                    <td>${i + 1}</td>
+                    <td>${fmtDate(d.tDate)}</td>
+                    <td>
+                        ${DOW_NAMES[d.dayOfWeek - 1]}
+                        ${isFriday ? '<span class="badge bg-info text-dark ms-1">Fri</span>' : ''}
+                        ${d.isOverridden ? '<span class="badge bg-warning text-dark ms-1">changed</span>' : ''}
+                    </td>
+                    <td><input type="time" class="form-control form-control-sm dy-in" value="${hhmm(d.timeIn)}" /></td>
+                    <td><input type="time" class="form-control form-control-sm dy-out" value="${hhmm(d.timeOut)}" /></td>
+                    <td class="text-end">
+                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                onclick="resetOneDay('${dateKey(d.tDate)}')"
+                                title="Back to the range's timing" ${d.isOverridden ? '' : 'disabled'}>
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </button>
+                    </td>
+                </tr>`);
+        });
+
+        const changed = dayRows.filter(d => d.isOverridden).length;
+        $('#daysSummary').text(changed ? `${changed} day(s) changed` : '');
+
+        $('#daysBody').off('change.dy').on('change.dy', '.dy-in, .dy-out', function () {
+            const $row = $(this).closest('tr');
+            const k = $row.data('date');
+            const row = dayRows.find(d => dateKey(d.tDate) === k);
+            if (!row) return;
+
+            row.timeIn = $row.find('.dy-in').val() + ':00';
+            row.timeOut = $row.find('.dy-out').val() + ':00';
+            row.isOverridden = true;
+            dayEdits[k] = { timeIn: row.timeIn, timeOut: row.timeOut };
+            renderDays();
+        });
+    }
+
+    function resetOneDay(key) {
+        delete dayEdits[key];
+        rebuildDays();
+    }
+
+    function resetAllDays() {
+        dayEdits = {};
+        rebuildDays();
+    }
+
+    /* ── List ── */
+    async function loadTimings() {
+        showLoading();
+        try {
+            const res = await fetch(API);
+            allTimings = res.ok ? (await res.json() || []) : [];
+            renderList();
+        } catch (e) {
+            toastError('Failed to load school timings: ' + e.message);
+        } finally {
+            hideLoading();
+        }
+    }
+
+    function renderList() {
+        const body = $('#timingsBody');
+        body.empty();
+
+        if (!allTimings.length) {
+            body.append('<tr class="empty-row"><td colspan="11">No school timings yet.</td></tr>');
+            return;
+        }
+
+        allTimings.forEach((t, i) => {
+            const overridden = t.daysOverridden > 0
+                ? ` <span class="text-muted" title="Days in this range that a later timing now owns">(${t.daysOverridden} taken over)</span>`
+                : '';
+            const edited = t.daysEdited > 0
+                ? ` <span class="badge bg-warning text-dark" title="Days changed by hand — a re-save of the range leaves these alone">${t.daysEdited} edited</span>`
+                : '';
+            const friday = t.fridayTimeIn
+                ? `${fmtTime(t.fridayTimeIn)} &ndash; ${fmtTime(t.fridayTimeOut)}`
+                : '<span class="text-muted">same</span>';
+            const offNames = [t.offDay1, t.offDay2]
+                .filter(Boolean)
+                .map(v => DOW_NAMES[v - 1])
+                .join(', ');
+            const offDays = offNames || '<span class="text-muted">none</span>';
+
+            body.append(`
+                <tr>
+                    <td>${i + 1}</td>
+                    <td>${esc(t.name || '-')}</td>
+                    <td>${fmtDate(t.startDate)}</td>
+                    <td>${fmtDate(t.endDate)}</td>
+                    <td>${fmtTime(t.timeIn)}</td>
+                    <td>${fmtTime(t.timeOut)}</td>
+                    <td>${friday}</td>
+                    <td>${offDays}</td>
+                    <td class="text-center">
+                        <a href="javascript:void(0)" onclick="showDays(${t.id})">${t.daysApplied}</a>${edited}${overridden}
+                    </td>
+                    <td class="text-center">
+                        <span class="badge ${t.isActive ? 'bg-success' : 'bg-secondary'}">${t.isActive ? 'Active' : 'Inactive'}</span>
+                    </td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-info me-1" onclick="editTiming(${t.id})" title="Edit"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteTiming(${t.id})" title="Delete"><i class="bi bi-trash"></i></button>
+                    </td>
+                </tr>`);
+        });
+    }
+
+    let daysTimingId = 0;
+
+    // Every applied day is editable on its own. A flat range cannot say "this
+    // one Tuesday started an hour late", so the day rows are where that lives.
+    async function showDays(id) {
+        daysTimingId = id;
+        const t = allTimings.find(x => x.id === id);
+        showLoading();
+        try {
+            const res = await fetch(`${API}/${id}/days`);
+            const days = res.ok ? (await res.json() || []) : [];
+
+            $('#daysModalTitle').text(`${t?.name || 'School Timing'} — ${days.length} day(s)`);
+
+            if (!days.length) {
+                $('#daysModalBody').html('<p class="text-muted mb-0">No days applied. The timing may be inactive, or every date in its range is a holiday or owned by a later timing.</p>');
+            } else {
+                $('#daysModalBody').html(`
+                    <p class="text-muted" style="font-size:13px;">
+                        Change any single day here. An edited day is kept as it is when the
+                        range above is saved again &mdash; use Reset to put it back on the
+                        range's timing.
+                    </p>
+                    <div class="table-responsive" style="max-height:55vh;">
+                        <table class="table table-sm table-hover align-middle">
+                            <thead><tr>
+                                <th>Date</th><th>Day</th><th style="width:130px;">Start</th>
+                                <th style="width:130px;">End</th><th style="width:150px;"></th>
+                            </tr></thead>
+                            <tbody>${days.map(dayRow).join('')}</tbody>
+                        </table>
+                    </div>`);
+            }
+
+            new bootstrap.Modal(document.getElementById('daysModal')).show();
+        } catch (e) {
+            toastError('Failed to load days: ' + e.message);
+        } finally {
+            hideLoading();
+        }
+    }
+
+    function dayRow(d) {
+        const dow = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][d.dayOfWeek - 1];
+        const isFriday = d.dayOfWeek === 6;
+        return `
+            <tr data-day="${d.id}" class="${d.isOverridden ? 'table-warning' : ''}">
+                <td>${fmtDate(d.tDate)}</td>
+                <td>
+                    ${dow}
+                    ${isFriday ? '<span class="badge bg-info text-dark ms-1">Fri</span>' : ''}
+                    ${d.isOverridden ? '<span class="badge bg-warning text-dark ms-1">edited</span>' : ''}
+                </td>
+                <td><input type="time" class="form-control form-control-sm dy-in" value="${hhmm(d.timeIn)}" /></td>
+                <td><input type="time" class="form-control form-control-sm dy-out" value="${hhmm(d.timeOut)}" /></td>
+                <td class="text-end">
+                    <button class="btn btn-sm btn-primary me-1" onclick="saveDay(${d.id})" title="Save this day">
+                        <i class="bi bi-check-lg"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="resetDay(${d.id})"
+                            title="Back to the range's timing" ${d.isOverridden ? '' : 'disabled'}>
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </button>
+                </td>
+            </tr>`;
+    }
+
+    async function saveDay(dayId) {
+        const $row = $(`#daysModalBody tr[data-day="${dayId}"]`);
+        const timeIn = $row.find('.dy-in').val();
+        const timeOut = $row.find('.dy-out').val();
+
+        if (!timeIn || !timeOut) { toastWarning('Enter both start and end time'); return; }
+        if (timeOut <= timeIn) { toastWarning('End time must be after the start time'); return; }
+
+        showLoading();
+        try {
+            const res = await fetch(`${API}/days/${dayId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ TimeIn: `${timeIn}:00`, TimeOut: `${timeOut}:00` })
+            });
+            if (res.ok) {
+                toastSuccess('Day updated.');
+                await refreshDays();
+            } else {
+                toastError(await apiError(res, 'Failed to update the day'));
+            }
+        } catch (e) {
+            toastError('Network error: ' + e.message);
+        } finally {
+            hideLoading();
+        }
+    }
+
+    async function resetDay(dayId) {
+        showLoading();
+        try {
+            const res = await fetch(`${API}/days/${dayId}/reset`, { method: 'POST' });
+            if (res.ok) {
+                toastSuccess("Day reset to the range's timing.");
+                await refreshDays();
+            } else {
+                toastError(await apiError(res, 'Failed to reset the day'));
+            }
+        } catch (e) {
+            toastError('Network error: ' + e.message);
+        } finally {
+            hideLoading();
+        }
+    }
+
+    // Rebuild the open day list and the row behind it — the edited-day count in
+    // the grid moves with these edits.
+    async function refreshDays() {
+        const res = await fetch(`${API}/${daysTimingId}/days`);
+        const days = res.ok ? (await res.json() || []) : [];
+        $('#daysModalBody tbody').html(days.map(dayRow).join(''));
+        await loadTimings();
+    }
+
+    /* ── Save / Edit / Delete ── */
+    async function editTiming(id) {
+        const t = allTimings.find(x => x.id === id);
+        if (!t) return;
+
+        $('#timingId').val(t.id);
+        $('#timingName').val(t.name || '');
+        $('#startDate').val((t.startDate || '').substring(0, 10));
+        $('#endDate').val((t.endDate || '').substring(0, 10));
+        $('#timeIn').val(hhmm(t.timeIn));
+        $('#timeOut').val(hhmm(t.timeOut));
+        $('#hasFriday').prop('checked', !!t.fridayTimeIn);
+        $('#fridayTimeIn').val(hhmm(t.fridayTimeIn));
+        $('#fridayTimeOut').val(hhmm(t.fridayTimeOut));
+        toggleFriday();
+        $('#offDay1').val(t.offDay1 || '');
+        $('#offDay2').val(t.offDay2 || '');
+        $('#isActive').prop('checked', !!t.isActive);
+        $('#formTitle').text('Edit School Timing');
+
+        // Load the days as they were actually saved, not a fresh expansion —
+        // a day someone changed should come back showing that change.
+        dayEdits = {};
+        try {
+            const res = await fetch(`${API}/${id}/days`);
+            (res.ok ? (await res.json() || []) : []).forEach(d => {
+                if (d.isOverridden) dayEdits[dateKey(d.tDate)] = { timeIn: d.timeIn, timeOut: d.timeOut };
+            });
+        } catch (e) { console.error('days', e); }
+
+        await rebuildDays();
+        document.querySelector('.card-body').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    async function saveTiming() {
+        const id      = parseInt($('#timingId').val()) || 0;
+        const from    = $('#startDate').val();
+        const to      = $('#endDate').val();
+        const timeIn  = $('#timeIn').val();
+        const timeOut = $('#timeOut').val();
+
+        if (!from)    { toastWarning('Please select a Start Date'); return; }
+        if (!to)      { toastWarning('Please select an End Date'); return; }
+        if (to < from){ toastWarning('End date cannot be before the start date'); return; }
+        if (!timeIn)  { toastWarning('Please enter the School Start Time'); return; }
+        if (!timeOut) { toastWarning('Please enter the School End Time'); return; }
+        if (timeOut <= timeIn) { toastWarning('School end time must be after the start time'); return; }
+
+        const useFriday = $('#hasFriday').is(':checked');
+        const fIn  = $('#fridayTimeIn').val();
+        const fOut = $('#fridayTimeOut').val();
+        if (useFriday) {
+            if (!fIn || !fOut) { toastWarning('Enter both Friday times, or untick Friday'); return; }
+            if (fOut <= fIn)   { toastWarning('Friday end time must be after the Friday start time'); return; }
+        }
+
+        const payload = {
+            Name:          $('#timingName').val() || null,
+            StartDate:     from,
+            EndDate:       to,
+            TimeIn:        `${timeIn}:00`,
+            TimeOut:       `${timeOut}:00`,
+            FridayTimeIn:  useFriday ? `${fIn}:00`  : null,
+            FridayTimeOut: useFriday ? `${fOut}:00` : null,
+            OffDay1:       $('#offDay1').val() ? parseInt($('#offDay1').val()) : null,
+            OffDay2:       $('#offDay2').val() ? parseInt($('#offDay2').val()) : null,
+            IsActive:      $('#isActive').is(':checked'),
+            // The listed days ARE the save: whatever is on screen is what gets
+            // written, one row per day.
+            Days: dayRows.map(d => ({
+                TDate:   dateKey(d.tDate),
+                TimeIn:  hhmm(d.timeIn)  + ':00',
+                TimeOut: hhmm(d.timeOut) + ':00'
+            }))
+        };
+
+        if (!payload.Days.length) { toastWarning('No days to save — check the dates and times'); return; }
+
+        showLoading();
+        try {
+            const res = await fetch(id ? `${API}/${id}` : API, {
+                method: id ? 'PUT' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                const saved = await res.json();
+                toastSuccess(`Saved — applied to ${saved.daysApplied} school day(s).`);
+                resetForm();
+                await loadTimings();
+            } else {
+                toastError(await apiError(res, 'Failed to save school timing'));
+            }
+        } catch (e) {
+            toastError('Network error: ' + e.message);
+        } finally {
+            hideLoading();
+        }
+    }
+
+    async function deleteTiming(id) {
+        const t = allTimings.find(x => x.id === id);
+        if (!await confirmDelete(
+            `Delete this school timing? Its ${t?.daysApplied ?? 0} day(s) go back to each employee's own shift timings.`)) return;
+
+        showLoading();
+        try {
+            const res = await fetch(`${API}/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                toastSuccess('School timing deleted.');
+                if (parseInt($('#timingId').val()) === id) resetForm();
+                await loadTimings();
+            } else {
+                toastError(await apiError(res, 'Failed to delete school timing'));
+            }
+        } catch (e) {
+            toastError('Network error: ' + e.message);
+        } finally {
+            hideLoading();
+        }
+    }
+
+    function resetForm() {
+        $('#timingId').val('0');
+        $('#timingName').val('');
+        // Both dates start on today: new timings almost always run from today
+        // onward, and an empty date box is just one more thing to fill in.
+        $('#startDate').val(todayIso());
+        $('#endDate').val(todayIso());
+        $('#timeIn').val('');
+        $('#timeOut').val('');
+        $('#hasFriday').prop('checked', false);
+        $('#fridayTimeIn').val('');
+        $('#fridayTimeOut').val('');
+        toggleFriday();
+        $('#offDay1, #offDay2').val('');
+        $('#isActive').prop('checked', true);
+        $('#formTitle').text('Add School Timing');
+        dayEdits = {};
+        rebuildDays();
+    }
+
+    // Only enables/clears the fields. The rebuild is left to the change handler
+    // bound on #hasFriday, which runs right after this one — calling it here too
+    // would rebuild the list twice, and would rebuild it from stale edits when
+    // editTiming() calls this before it has loaded the saved days.
+    function toggleFriday() {
+        const on = $('#hasFriday').is(':checked');
+        $('#fridayTimeIn, #fridayTimeOut').prop('disabled', !on);
+        if (!on) $('#fridayTimeIn, #fridayTimeOut').val('');
+    }
+
+    /* ── Helpers ── */
+    // Built from the local date parts, not toISOString() — that converts to UTC
+    // and would show yesterday for anyone east of Greenwich late in the day.
+    function todayIso() {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function showLoading() { document.getElementById('loadingOverlay').style.display = 'flex'; }
+    function hideLoading() { document.getElementById('loadingOverlay').style.display = 'none'; }
+
+    async function apiError(res, fallback) {
+        try {
+            const body = await res.json();
+            if (body && body.message) return body.message;
+        } catch (e) { }
+        return fallback;
+    }
+
+    function fmtDate(v) {
+        if (!v) return '-';
+        const d = (typeof parseCalendarDate === 'function' ? parseCalendarDate(v) : null) || new Date(v);
+        return isNaN(d) ? '-' : d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    // TimeSpan arrives as "08:30:00"; show it as 08:30 AM and feed <input type=time> as 08:30.
+    function hhmm(v) { return v ? String(v).substring(0, 5) : ''; }
+    function fmtTime(v) {
+        const t = hhmm(v);
+        if (!t) return '-';
+        const [h, m] = t.split(':').map(Number);
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        const h12 = h % 12 === 0 ? 12 : h % 12;
+        return `${String(h12).padStart(2, '0')}:${String(m).padStart(2, '0')} ${ampm}`;
+    }
+
+    function esc(str) {
+        if (str === null || str === undefined) return '';
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+</script>
+}

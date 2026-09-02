@@ -17,13 +17,121 @@
     .st-5 { background: #e5e7eb; color: #374151; } /* Holiday */
     .st-6 { background: #f3e8ff; color: #6b21a8; } /* WeeklyOff */
     .st-7 { background: #ffe4e6; color: #9f1239; } /* ShortLeave */
+    .st-8 { background: #cffafe; color: #155e75; } /* Exempt */
     .st-0 { background: #f8fafc; color: #cbd5e1; } /* Unmarked */
     .table-responsive { max-height: 70vh; }
+
+    /* ── Day-wise entry ── */
+    .nav-tabs { border-bottom: 2px solid #e2e8f0; margin-bottom: 16px; }
+    .nav-tabs .nav-link { border: none; color: #64748b; font-weight: 500; }
+    .nav-tabs .nav-link.active { color: #008649; border-bottom: 3px solid #008649; background: transparent; }
+    .timing-banner { border-radius: 10px; padding: 10px 16px; font-size: 14px; }
+    .timing-banner.has-timing { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; }
+    .timing-banner.no-timing { background: #f8fafc; border: 1px solid #e2e8f0; color: #64748b; }
+    .timing-banner.closed { background: #e5e7eb; border: 1px solid #d1d5db; color: #374151; }
+    .timing-banner.prefill { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+    .day-table td, .day-table th { vertical-align: middle; font-size: 13px; }
+    .day-table input[type=time] { min-width: 108px; }
+    .day-table tr.row-dirty { background: #fffbeb; }
+    .day-table tr.row-closed td { background: #f8fafc; }
+    .emp-sub { font-size: 11px; color: #94a3b8; }
+
+    /* Day headers: holidays and weekly offs are tinted so the whole column
+       reads as non-working at a glance, before any attendance is entered. */
+    .att-table thead th.day-head { min-width: 34px; line-height: 1.15; }
+    .att-table thead th.day-head .dow { display: block; font-size: 9px; font-weight: 500; color: #94a3b8; text-transform: uppercase; }
+    .att-table thead th.day-holiday { background: #e5e7eb; color: #374151; }
+    .att-table thead th.day-holiday .dow { color: #6b7280; }
+    .att-table thead th.day-off { background: #f3e8ff; color: #6b21a8; }
+    .att-table thead th.day-off .dow { color: #a78bfa; }
+    .att-table td.col-holiday { background: #f4f5f7; }
+    .att-table td.col-off { background: #faf5ff; }
+    .holiday-strip { font-size: 12px; }
+    .holiday-strip .hol-chip { background: #e5e7eb; color: #374151; border-radius: 999px; padding: 2px 10px; margin: 2px 4px 2px 0; display: inline-block; }
 </style>
 
 <div class="container-fluid">
     <div id="alertContainer"></div>
 
+    <ul class="nav nav-tabs">
+        <li class="nav-item">
+            <button class="nav-link active" id="tabBtnDay" type="button" onclick="switchView('day')">
+                <i class="bi bi-calendar-day me-1"></i> Day Wise
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" id="tabBtnMonth" type="button" onclick="switchView('month')">
+                <i class="bi bi-calendar3 me-1"></i> Month Grid
+            </button>
+        </li>
+    </ul>
+
+    <!-- ══ Day-wise entry ══ -->
+    <div id="dayView">
+        <div class="card mb-3"><div class="card-body">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label">Date</label>
+                    <input type="date" class="form-control" id="dDate" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Designation</label>
+                    <select class="form-select" id="dDesignation"><option value="">All</option></select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-outline-success w-100" onclick="loadDay()"><i class="bi bi-search"></i> Load</button>
+                </div>
+                <div class="col-md-4 d-flex justify-content-end">
+                    <button class="btn btn-success" onclick="saveDay()">
+                        <i class="bi bi-save"></i> Save Changes (<span id="dayDirtyCount">0</span>)
+                    </button>
+                </div>
+            </div>
+
+            <div class="timing-banner no-timing mt-3" id="dayTimingBanner">
+                Pick a date and click Load.
+            </div>
+
+            <div class="timing-banner prefill mt-2" id="dayPrefillNote" style="display:none;"></div>
+
+            <div class="mt-3 d-flex flex-wrap gap-2" id="dayBulkActions" style="display:none !important;">
+                <button class="btn btn-sm btn-outline-secondary" onclick="dayMarkAll(1)">
+                    <i class="bi bi-check2-all me-1"></i> Mark All Present
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="dayMarkAll(8)">
+                    <i class="bi bi-shield-check me-1"></i> Mark All Exempt
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="dayClearAll()">
+                    <i class="bi bi-eraser me-1"></i> Clear Entries
+                </button>
+            </div>
+        </div></div>
+
+        <div class="card"><div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover day-table align-middle">
+                    <thead>
+                        <tr>
+                            <th style="width:50px;">Sr#</th>
+                            <th>Employee</th>
+                            <th style="width:170px;">Day Timing</th>
+                            <th style="width:130px;">Time In</th>
+                            <th style="width:130px;">Time Out</th>
+                            <th style="width:150px;">Status</th>
+                            <th style="width:120px;">Late</th>
+                            <th>Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dayBody">
+                        <tr><td colspan="8" class="text-center text-muted py-4">Choose a date and click Load.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div></div>
+    </div>
+
+    <!-- ══ Month grid ══ -->
+    <div id="monthView" style="display:none;">
     <div class="card mb-3"><div class="card-body">
         <div class="row g-2 align-items-end">
             <div class="col-md-2"><label class="form-label">Year</label><input type="number" class="form-control" id="fYear" /></div>
@@ -49,8 +157,10 @@
             <span class="badge st-4 mx-1">H½</span>Half Day
             <span class="badge st-5 mx-1">Hol</span>Holiday
             <span class="badge st-6 mx-1">Off</span>Weekly Off
+            <span class="badge st-8 mx-1">Ex</span>Exempt
             <span class="badge st-0 mx-1">-</span>Not entered
         </div>
+        <div class="mt-2 holiday-strip" id="holidayStrip"></div>
     </div></div>
 
     <div class="card"><div class="card-body">
@@ -61,6 +171,7 @@
             </table>
         </div>
     </div></div>
+    </div><!-- /monthView -->
 </div>
 
 <!-- Cell editor modal -->
@@ -81,6 +192,7 @@
                             <option value="3">Leave</option>
                             <option value="4">Half Day</option>
                             <option value="7">Short Leave</option>
+                            <option value="8">Exempt</option>
                         </select>
                     </div>
                     <div class="col-12"><div class="form-check"><input class="form-check-input" type="checkbox" id="cellIgnoreLate" /><label class="form-check-label">Ignore late for payroll (minutes still recorded)</label></div></div>
@@ -97,7 +209,13 @@
 
 @section Scripts {
 <script>
-    const STATUS_LABEL = {0:'-',1:'P',2:'A',3:'L',4:'H½',5:'Hol',6:'Off',7:'SL'};
+    const STATUS_LABEL = {0:'-',1:'P',2:'A',3:'L',4:'H½',5:'Hol',6:'Off',7:'SL',8:'Ex'};
+    const DOW_SHORT = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+    // Rows are built as HTML strings, so API values have to be escaped.
+    function esc(v) {
+        if (v === null || v === undefined) return '';
+        return String(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
     let gridData = null;
     let dirty = {}; // key: empId|day -> cell payload
     let editingKey = null;
@@ -106,10 +224,33 @@
         const now = new Date();
         $('#fYear').val(now.getFullYear());
         $('#fMonth').val(now.getMonth() + 1);
+        $('#dDate').val(todayIso());
         fetch(`${API_BASE}/Designation/dropdown`).then(r => r.ok ? r.json() : []).then(list => {
-            list.forEach(d => $('#fDesignation').append(`<option value="${d.id}">${d.name}</option>`));
+            list.forEach(d => {
+                $('#fDesignation').append(`<option value="${d.id}">${esc(d.name)}</option>`);
+                $('#dDesignation').append(`<option value="${d.id}">${esc(d.name)}</option>`);
+            });
         }).catch(() => {});
+
+        loadDay();   // Day Wise is the landing tab — daily marking is the daily job
     });
+
+    // Local date parts, not toISOString() — that converts to UTC and would show
+    // yesterday for anyone east of Greenwich late in the day.
+    function todayIso() {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+
+    function switchView(which) {
+        const isDay = which === 'day';
+        $('#dayView').toggle(isDay);
+        $('#monthView').toggle(!isDay);
+        $('#tabBtnDay').toggleClass('active', isDay);
+        $('#tabBtnMonth').toggleClass('active', !isDay);
+        // The month grid is heavy; only build it when it is actually asked for.
+        if (!isDay && !gridData) loadGrid();
+    }
 
     async function loadGrid() {
         const year = $('#fYear').val(), month = $('#fMonth').val(), desig = $('#fDesignation').val();
@@ -123,35 +264,76 @@
         renderGrid();
     }
 
+    // Day-of-week in the API's convention: 1 = Sunday .. 7 = Saturday.
+    function dowOf(day) {
+        return new Date(gridData.year, gridData.month - 1, day).getDay() + 1;
+    }
+    function isOffDayFor(emp, day) {
+        const dow = dowOf(day);
+        return dow === emp.offDay1 || dow === emp.offDay2;
+    }
+    // A day is shown as a whole non-working column only when every listed
+    // employee is off that day — otherwise it's an individual weekly off.
+    function isOffForEveryone(day) {
+        return gridData.employees.length > 0 && gridData.employees.every(e => isOffDayFor(e, day));
+    }
+
+    function renderHolidayStrip() {
+        const strip = $('#holidayStrip').empty();
+        const holidays = gridData.days.filter(d => d.isHoliday);
+        if (!holidays.length) { strip.append('<span class="text-muted">No holidays configured for this month.</span>'); return; }
+        strip.append('<span class="text-muted me-1"><i class="bi bi-calendar-x me-1"></i>Holidays:</span>');
+        holidays.forEach(d => strip.append(`<span class="hol-chip">${d.day} — ${esc(d.holidayName || 'Holiday')}</span>`));
+    }
+
     function renderGrid() {
         const header = $('#gridHeaderRow'); header.find('th:not(:first)').remove();
         gridData.days.forEach(d => {
-            const cls = d.isHoliday ? 'style="background:#f3f4f6" title="' + (d.holidayName||'') + '"' : '';
-            header.append(`<th ${cls}>${d.day}</th>`);
+            const everyoneOff = !d.isHoliday && isOffForEveryone(d.day);
+            const cls = d.isHoliday ? 'day-holiday' : (everyoneOff ? 'day-off' : '');
+            const title = d.isHoliday
+                ? esc(d.holidayName || 'Holiday')
+                : (everyoneOff ? 'Weekly off' : '');
+            header.append(`<th class="day-head ${cls}" title="${title}">${d.day}<span class="dow">${DOW_SHORT[dowOf(d.day) - 1]}</span></th>`);
         });
+
+        renderHolidayStrip();
 
         const body = $('#gridBody'); body.empty();
         if (!gridData.employees.length) { body.html('<tr><td class="text-center text-muted py-4">No employees found.</td></tr>'); return; }
 
         gridData.employees.forEach(emp => {
-            let row = `<tr><td class="emp-name">${emp.employeeCode} - ${emp.fullName}</td>`;
+            let row = `<tr><td class="emp-name">${esc(emp.employeeCode)} - ${esc(emp.fullName)}</td>`;
             emp.cells.forEach(c => {
                 const key = `${emp.employeeId}|${c.day}`;
                 const dirtyOverride = dirty[key];
                 const status = dirtyOverride ? dirtyOverride._displayStatus : c.status;
                 const isDirty = !!dirtyOverride;
-                row += `<td><span class="att-cell st-${status} ${isDirty?'dirty':''}" onclick="openCellEditor(${emp.employeeId}, ${c.day}, '${emp.employeeCode} - ${emp.fullName}')">${STATUS_LABEL[status] ?? '-'}</span></td>`;
+                const dayInfo = gridData.days.find(d => d.day === c.day);
+                // Tint the cell background for holidays / this employee's weekly
+                // offs so they stay visible even once attendance is marked on them.
+                const bgCls = dayInfo && dayInfo.isHoliday ? 'col-holiday' : (isOffDayFor(emp, c.day) ? 'col-off' : '');
+                const title = dayInfo && dayInfo.isHoliday
+                    ? esc(dayInfo.holidayName || 'Holiday')
+                    : (isOffDayFor(emp, c.day) ? 'Weekly off' : '');
+                row += `<td class="${bgCls}" title="${title}"><span class="att-cell st-${status} ${isDirty?'dirty':''}" onclick="openCellEditor(${emp.employeeId}, ${c.day})">${STATUS_LABEL[status] ?? '-'}</span></td>`;
             });
             row += '</tr>';
             body.append(row);
         });
     }
 
-    function openCellEditor(empId, day, empLabel) {
+    function openCellEditor(empId, day) {
         editingKey = `${empId}|${day}`;
         const emp = gridData.employees.find(e => e.employeeId === empId);
         const cell = emp.cells.find(c => c.day === day);
-        $('#cellEmpLabel').text(`${empLabel} — ${gridData.year}-${String(gridData.month).padStart(2,'0')}-${String(day).padStart(2,'0')}`);
+        const dayInfo = gridData.days.find(d => d.day === day);
+        const dateLabel = `${gridData.year}-${String(gridData.month).padStart(2,'0')}-${String(day).padStart(2,'0')} (${DOW_SHORT[dowOf(day) - 1]})`;
+        // Say up front that this is a non-working day, so marking one is deliberate.
+        const note = dayInfo && dayInfo.isHoliday
+            ? ` — Holiday: ${dayInfo.holidayName || 'Holiday'}`
+            : (isOffDayFor(emp, day) ? ' — Weekly off' : '');
+        $('#cellEmpLabel').text(`${emp.employeeCode} - ${emp.fullName} — ${dateLabel}${note}`);
         $('#cellTimeIn').val(cell.timeIn ? cell.timeIn.substring(0,5) : '');
         $('#cellTimeOut').val(cell.timeOut ? cell.timeOut.substring(0,5) : '');
         $('#cellOverride').val('');
@@ -166,6 +348,10 @@
         const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
         const override = $('#cellOverride').val();
         const timeIn = $('#cellTimeIn').val(), timeOut = $('#cellTimeOut').val();
+        // With no override and no time entered the day keeps whatever it already
+        // showed — clearing an edit must not turn a holiday/off back into '-'.
+        const emp = gridData.employees.find(e => e.employeeId === empId);
+        const baseStatus = emp.cells.find(c => c.day === day).status;
 
         const payload = {
             EmployeeId: empId, AttDate: dateStr,
@@ -173,7 +359,7 @@
             StatusOverride: override ? parseInt(override) : null,
             IgnoreLate: $('#cellIgnoreLate').is(':checked'),
             Remarks: $('#cellRemarks').val().trim() || null,
-            _displayStatus: override ? parseInt(override) : (timeIn ? 1 : 0)
+            _displayStatus: override ? parseInt(override) : (timeIn ? 1 : baseStatus)
         };
         dirty[editingKey] = payload;
         updateDirtyCount();
@@ -191,9 +377,279 @@
         else toastError('Failed to save attendance');
     }
 
+    /* ══════════════════ Day-wise entry ══════════════════ */
+
+    let dayData = null;
+    let dayDirty = {};   // employeeId -> true
+
+    function hhmm(v) { return v ? String(v).substring(0, 5) : ''; }
+    function fmt12(v) {
+        const t = hhmm(v);
+        if (!t) return '';
+        const [h, m] = t.split(':').map(Number);
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        const h12 = h % 12 === 0 ? 12 : h % 12;
+        return `${String(h12).padStart(2,'0')}:${String(m).padStart(2,'0')} ${ampm}`;
+    }
+
+    async function loadDay() {
+        const date = $('#dDate').val();
+        if (!date) { toastWarning('Please choose a date'); return; }
+
+        let url = `${API_BASE}/hr/attendance/day?date=${date}`;
+        const desig = $('#dDesignation').val();
+        if (desig) url += `&designationId=${desig}`;
+
+        const res = await fetch(url);
+        if (!res.ok) { toastError('Failed to load attendance for this date'); return; }
+
+        dayData = await res.json();
+        dayDirty = {};
+        updateDayDirtyCount();
+        renderDayBanner();
+        renderDay();
+    }
+
+    // The banner is the answer to "what time does the school run today" — the
+    // school timing if this date has one, otherwise each employee's own shift.
+    function renderDayBanner() {
+        const b = $('#dayTimingBanner').removeClass('has-timing no-timing closed');
+        const dateLabel = new Date(dayData.date).toLocaleDateString('en-GB',
+            { weekday: 'long', day: '2-digit', month: 'short', year: 'numeric' });
+
+        if (dayData.isHoliday) {
+            b.addClass('closed').html(
+                `<i class="bi bi-calendar-x me-1"></i><strong>${esc(dateLabel)}</strong> &mdash; `
+                + `Holiday: ${esc(dayData.holidayName || 'Holiday')}. School is closed, so no school timing applies.`);
+        } else if (dayData.schoolTimeIn) {
+            b.addClass('has-timing').html(
+                `<i class="bi bi-clock-history me-1"></i><strong>${esc(dateLabel)}</strong> &mdash; `
+                + `School timings <strong>${fmt12(dayData.schoolTimeIn)} &ndash; ${fmt12(dayData.schoolTimeOut)}</strong>. `
+                + `Lateness for every employee is measured against these.`);
+        } else {
+            b.addClass('no-timing').html(
+                `<i class="bi bi-info-circle me-1"></i><strong>${esc(dateLabel)}</strong> &mdash; `
+                + `no school timing set for this date, so each employee's own shift timings apply. `
+                + `Set one under <a href="/EasySchool/hr/school-timing">School Timings</a>.`);
+        }
+
+        $('#dayBulkActions').css('display', dayData.employees.length ? 'flex' : 'none');
+    }
+
+    // Which statuses can only have come from someone forcing them. Showing them
+    // back in the dropdown matters: re-saving a row whose dropdown said "Auto"
+    // would drop an Exempt or Leave and recompute it as Absent.
+    function initialOverride(e) {
+        if (e.status === 3 || e.status === 7 || e.status === 8) return e.status;
+        if (!e.timeIn && (e.status === 2 || e.status === 4)) return e.status;
+        return '';
+    }
+
+    function statusSelect(selected) {
+        const opts = [['', 'Auto (from time)'], [1, 'Present'], [2, 'Absent'], [3, 'Leave'],
+                      [4, 'Half Day'], [7, 'Short Leave'], [8, 'Exempt']];
+        return '<select class="form-select form-select-sm d-status">'
+             + opts.map(([v, n]) =>
+                 `<option value="${v}" ${String(v) === String(selected) ? 'selected' : ''}>${n}</option>`).join('')
+             + '</select>';
+    }
+
+    // A row with nothing recorded yet opens pre-filled with the day's timings —
+    // that is what the day was supposed to run on, so it is the right starting
+    // point and only the exceptions need touching. Rows that already have
+    // attendance keep their saved times; holidays and weekly offs stay blank.
+    //
+    // effectiveTimeIn is the school timing for the date, or the employee's shift
+    // when the date has none — either is enough to judge lateness, so a school
+    // that runs on one bell needs no per-employee shifts at all.
+    function prefillFor(e) {
+        if (dayData.isHoliday || e.isWeeklyOff) return null;
+        if (e.status !== 0) return null;
+        if (!e.effectiveTimeIn) return null;
+        return { timeIn: e.effectiveTimeIn, timeOut: e.effectiveTimeOut };
+    }
+
+    function renderDay() {
+        const body = $('#dayBody').empty();
+        if (!dayData.employees.length) {
+            body.html('<tr><td colspan="8" class="text-center text-muted py-4">No employees found.</td></tr>');
+            return;
+        }
+
+        const prefilled = [];
+
+        dayData.employees.forEach((e, i) => {
+            const closed = dayData.isHoliday || e.isWeeklyOff;
+            const pre = prefillFor(e);
+            if (pre) prefilled.push(e.employeeId);
+            const inVal  = hhmm(pre ? pre.timeIn  : e.timeIn);
+            const outVal = hhmm(pre ? pre.timeOut : e.timeOut);
+            const timing = e.effectiveTimeIn
+                ? `${fmt12(e.effectiveTimeIn)} &ndash; ${fmt12(e.effectiveTimeOut)}`
+                : '<span class="text-muted">&mdash;</span>';
+            // Say where the times came from — a school timing overriding a shift
+            // is exactly the kind of thing that looks like a bug otherwise. Only
+            // a row with neither is a real problem, and that one is called out.
+            const source = dayData.schoolTimeIn
+                ? '<span class="emp-sub">school timing</span>'
+                : e.shiftId ? `<span class="emp-sub">${esc(e.shiftName || 'shift')}</span>`
+                : '<span class="emp-sub text-danger">No school timing or shift</span>';
+
+            body.append(`
+                <tr data-emp="${e.employeeId}" class="${closed ? 'row-closed' : ''}">
+                    <td>${i + 1}</td>
+                    <td>
+                        ${esc(e.employeeCode)} - ${esc(e.fullName)}
+                        ${closed ? `<div class="emp-sub">${dayData.isHoliday ? 'Holiday' : 'Weekly off'}</div>` : ''}
+                    </td>
+                    <td>${timing}<div>${source}</div></td>
+                    <td><input type="time" class="form-control form-control-sm d-in" value="${inVal}" /></td>
+                    <td><input type="time" class="form-control form-control-sm d-out" value="${outVal}" /></td>
+                    <td>${statusSelect(initialOverride(e))}</td>
+                    <td>
+                        <span class="badge st-${e.status}">${STATUS_LABEL[e.status] ?? '-'}</span>
+                        ${e.lateMinutes > 0 ? `<div class="emp-sub text-danger">${e.lateMinutes} min late</div>` : ''}
+                        <div class="form-check form-check-inline mt-1">
+                            <input class="form-check-input d-ignore" type="checkbox" ${e.ignoreLate ? 'checked' : ''}
+                                   title="Ignore late for payroll (minutes still recorded)" />
+                            <label class="form-check-label emp-sub">Ignore late</label>
+                        </div>
+                    </td>
+                    <td><input class="form-control form-control-sm d-remarks" value="${esc(e.remarks || '')}" /></td>
+                </tr>`);
+        });
+
+        // Any edit in a row marks that row for saving — nothing is written that
+        // was not touched, so loading a date never rewrites its existing records.
+        $('#dayBody').off('change.day input.day')
+            .on('change.day input.day', '.d-in, .d-out, .d-status, .d-ignore, .d-remarks', function () {
+                markDayRowDirty($(this).closest('tr'));
+            });
+
+        // The pre-filled rows count as pending too: the Save button's number then
+        // matches what is actually on screen, instead of the times looking entered
+        // while Save quietly ignores them.
+        prefilled.forEach(id => markDayRowDirty($(`#dayBody tr[data-emp="${id}"]`)));
+
+        if (prefilled.length) {
+            const src = dayData.schoolTimeIn ? "today's school timings" : 'each shift';
+            $('#dayPrefillNote').html(
+                `<i class="bi bi-lightning-charge me-1"></i>`
+                + `<strong>${prefilled.length}</strong> unmarked row(s) pre-filled from ${src} and ready to save. `
+                + `Change the ones who were late or absent, then click Save Changes.`).show();
+        } else {
+            $('#dayPrefillNote').hide();
+        }
+    }
+
+    function markDayRowDirty($row) {
+        $row.addClass('row-dirty');
+        dayDirty[$row.data('emp')] = true;
+        updateDayDirtyCount();
+    }
+
+    function updateDayDirtyCount() { $('#dayDirtyCount').text(Object.keys(dayDirty).length); }
+
+    // Fills every open row: Present takes the day's timings, everything else is a
+    // plain status with no times. Holidays and weekly offs are left alone.
+    function dayMarkAll(status) {
+        if (!dayData || !dayData.employees.length) { toastWarning('Load a date first'); return; }
+
+        let touched = 0, noShift = 0;
+        $('#dayBody tr[data-emp]').each(function () {
+            const $row = $(this);
+            const emp = dayData.employees.find(e => e.employeeId === $row.data('emp'));
+            if (!emp || dayData.isHoliday || emp.isWeeklyOff) return;
+
+            if (status === 1) {
+                // A row with neither a school timing nor a shift has no times to
+                // fill and would be refused by the API — skip it rather than
+                // failing the whole save.
+                if (!emp.effectiveTimeIn) { noShift++; return; }
+                $row.find('.d-in').val(hhmm(emp.effectiveTimeIn));
+                $row.find('.d-out').val(hhmm(emp.effectiveTimeOut));
+                $row.find('.d-status').val('');     // let the server compute from the times
+            } else {
+                // Exempt / Absent / Leave carry no times, so they need no shift.
+                $row.find('.d-in').val('');
+                $row.find('.d-out').val('');
+                $row.find('.d-status').val(String(status));
+            }
+            markDayRowDirty($row);
+            touched++;
+        });
+
+        if (!touched && !noShift) {
+            toastWarning('Nothing to mark — this date is a holiday or every row is a weekly off.');
+        } else {
+            if (touched) toastInfo(`${touched} row(s) filled. Click Save Changes to record them.`);
+            if (noShift) toastWarning(`${noShift} employee(s) skipped — no school timing for this date and no shift assigned, so there are no times to fill.`);
+        }
+    }
+
+    function dayClearAll() {
+        $('#dayBody tr[data-emp]').each(function () {
+            const $row = $(this);
+            $row.find('.d-in, .d-out, .d-remarks').val('');
+            $row.find('.d-status').val('');
+            $row.find('.d-ignore').prop('checked', false);
+        });
+        dayDirty = {};
+        $('#dayBody tr').removeClass('row-dirty');
+        updateDayDirtyCount();
+        toastInfo('Entries cleared on screen. Nothing is saved until you click Save Changes.');
+    }
+
+    async function saveDay() {
+        const ids = Object.keys(dayDirty).map(Number);
+        if (!ids.length) { toastWarning('No changes to save'); return; }
+
+        const date = $('#dDate').val();
+        const cells = [];
+
+        ids.forEach(id => {
+            const $row = $(`#dayBody tr[data-emp="${id}"]`);
+            if (!$row.length) return;
+
+            const timeIn  = $row.find('.d-in').val();
+            const timeOut = $row.find('.d-out').val();
+            const status  = $row.find('.d-status').val();
+
+            cells.push({
+                EmployeeId: id,
+                AttDate: date,
+                TimeIn:  timeIn  ? timeIn  + ':00' : null,
+                TimeOut: timeOut ? timeOut + ':00' : null,
+                StatusOverride: status ? parseInt(status) : null,
+                IgnoreLate: $row.find('.d-ignore').is(':checked'),
+                Remarks: $row.find('.d-remarks').val().trim() || null
+            });
+        });
+
+        const res = await fetch(`${API_BASE}/hr/attendance/bulk`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ Cells: cells })
+        });
+
+        if (res.ok) {
+            toastSuccess(`Saved ${cells.length} record(s)`);
+            gridData = null;   // the month grid now holds stale numbers
+            await loadDay();
+        } else {
+            // The API names the employees missing a shift — pass that through
+            // rather than a generic failure.
+            let msg = 'Failed to save attendance';
+            try { const b = await res.json(); if (b && b.message) msg = b.message; } catch (e) { }
+            toastError(msg);
+        }
+    }
+
+    /* ══════════════════ Month grid ══════════════════ */
+
     async function fillAll(status) {
         if (!gridData || !gridData.employees.length) { toastWarning('Load the grid first'); return; }
-        if (!await confirmDelete(`Mark all employees Present for the whole month? Existing entries for other days are not affected unless already marked.`)) return;
+        if (!await confirmDelete(`Mark all employees Present for the whole month? Holidays and weekly off days are skipped.`)) return;
         const year = parseInt($('#fYear').val()), month = parseInt($('#fMonth').val());
         const from = `${year}-${String(month).padStart(2,'0')}-01`;
         const lastDay = new Date(year, month, 0).getDate();

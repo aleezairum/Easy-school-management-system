@@ -245,7 +245,7 @@
 
         $(document).ready(function () {
             loadDropdowns();
-            $('#filterDate').val(new Date().toISOString().split('T')[0]);
+            $('#filterDate').val(toInputDate());
         });
 
         async function loadDropdowns() {
@@ -428,7 +428,7 @@
 
         function formatDate(dateString) {
             if (!dateString) return '-';
-            const date = new Date(dateString);
+            const date = parseCalendarDate(dateString) || new Date(NaN);
             return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
         }
 
@@ -463,7 +463,7 @@
             $('#filterSession').val('');
             $('#filterClass').val('');
             $('#filterSection').val('').prop('disabled', true);
-            $('#filterDate').val(new Date().toISOString().split('T')[0]);
+            $('#filterDate').val(toInputDate());
             $('#filterStatus').val('');
             $('#searchBox').val('');
             loadAttendance();

@@ -10,24 +10,83 @@
     .form-section { background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
     .section-title { font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #e2e8f0; }
     .preview-box { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 12px 16px; margin-top: 10px; }
+    .empty-row td { text-align: center; color: #94a3b8; padding: 24px 0; }
 </style>
 
 <div class="container-fluid">
     <div id="alertContainer"></div>
 
     <ul class="nav nav-tabs">
-        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabShifts" type="button">Shifts</button></li>
+        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabDesignations" type="button">Designations</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabGrades" type="button">Grades</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabShifts" type="button">Shifts</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabHolidays" type="button">Holidays</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabLeaveTypes" type="button">Leave Types</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabComponents" type="button">Pay Components</button></li>
     </ul>
 
     <div class="tab-content">
-        <!-- SHIFTS -->
-        <div class="tab-pane fade show active" id="tabShifts">
+        <!-- DESIGNATIONS -->
+        <div class="tab-pane fade show active" id="tabDesignations">
             <div class="card"><div class="card-body">
                 <div class="form-section">
-                    <div class="section-title"><i class="bi bi-clock me-2"></i>Add / Edit Shift</div>
+                    <div class="section-title"><i class="bi bi-person-badge me-2"></i><span id="desigFormTitle">Add Designation</span></div>
+                    <input type="hidden" id="desigId" value="0" />
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-2"><label class="form-label">Code <span class="text-danger">*</span></label><input class="form-control" id="desigCode" placeholder="e.g. PRIN" /></div>
+                        <div class="col-md-3"><label class="form-label">Name <span class="text-danger">*</span></label><input class="form-control" id="desigName" placeholder="e.g. Principal" /></div>
+                        <div class="col-md-3"><label class="form-label">Description</label><input class="form-control" id="desigDescription" placeholder="Optional" /></div>
+                        <div class="col-md-1"><label class="form-label">Sort</label><input type="number" class="form-control" id="desigSort" value="0" /></div>
+                        <div class="col-md-1"><div class="form-check"><input class="form-check-input" type="checkbox" id="desigActive" checked /><label class="form-check-label">Active</label></div></div>
+                        <div class="col-md-2 d-flex gap-2">
+                            <button class="btn btn-primary" onclick="saveDesignation()"><i class="bi bi-check-lg"></i> Save</button>
+                            <button class="btn btn-secondary" onclick="resetDesignationForm()"><i class="bi bi-x-lg"></i> Clear</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead><tr><th>Code</th><th>Name</th><th>Description</th><th>Sort</th><th>Employees</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+                        <tbody id="designationsBody"></tbody>
+                    </table>
+                </div>
+            </div></div>
+        </div>
+
+        <!-- GRADES -->
+        <div class="tab-pane fade" id="tabGrades">
+            <div class="card"><div class="card-body">
+                <div class="form-section">
+                    <div class="section-title"><i class="bi bi-bar-chart-steps me-2"></i><span id="gradeFormTitle">Add Grade</span></div>
+                    <input type="hidden" id="gradeId" value="0" />
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-2"><label class="form-label">Code <span class="text-danger">*</span></label><input class="form-control" id="gradeCode" placeholder="e.g. BPS-17" /></div>
+                        <div class="col-md-3"><label class="form-label">Name <span class="text-danger">*</span></label><input class="form-control" id="gradeName" placeholder="e.g. Senior Teacher" /></div>
+                        <div class="col-md-3"><label class="form-label">Description</label><input class="form-control" id="gradeDescription" placeholder="Optional" /></div>
+                        <div class="col-md-2"><label class="form-label">Min Salary</label><input type="number" step="0.01" class="form-control" id="gradeMinSalary" /></div>
+                        <div class="col-md-2"><label class="form-label">Max Salary</label><input type="number" step="0.01" class="form-control" id="gradeMaxSalary" /></div>
+                        <div class="col-md-1"><label class="form-label">Sort</label><input type="number" class="form-control" id="gradeSort" value="0" /></div>
+                        <div class="col-md-1"><div class="form-check"><input class="form-check-input" type="checkbox" id="gradeActive" checked /><label class="form-check-label">Active</label></div></div>
+                        <div class="col-md-3 d-flex gap-2">
+                            <button class="btn btn-primary" onclick="saveGrade()"><i class="bi bi-check-lg"></i> Save</button>
+                            <button class="btn btn-secondary" onclick="resetGradeForm()"><i class="bi bi-x-lg"></i> Clear</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead><tr><th>Code</th><th>Name</th><th class="text-end">Min Salary</th><th class="text-end">Max Salary</th><th>Sort</th><th>Employees</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+                        <tbody id="gradesBody"></tbody>
+                    </table>
+                </div>
+            </div></div>
+        </div>
+
+        <!-- SHIFTS -->
+        <div class="tab-pane fade" id="tabShifts">
+            <div class="card"><div class="card-body">
+                <div class="form-section">
+                    <div class="section-title"><i class="bi bi-clock me-2"></i><span id="shiftFormTitle">Add Shift</span></div>
                     <input type="hidden" id="shiftId" value="0" />
                     <div class="row g-3">
                         <div class="col-md-2"><label class="form-label">Code</label><input class="form-control" id="shiftCode" /></div>
@@ -47,10 +106,12 @@
                         </div>
                     </div>
                 </div>
-                <table class="table table-hover">
-                    <thead><tr><th>Code</th><th>Name</th><th>Time In</th><th>Time Out</th><th>Grace</th><th>Hours</th><th>Status</th><th></th></tr></thead>
-                    <tbody id="shiftsBody"></tbody>
-                </table>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead><tr><th>Code</th><th>Name</th><th>Time In</th><th>Time Out</th><th>Grace</th><th>Hours</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+                        <tbody id="shiftsBody"></tbody>
+                    </table>
+                </div>
             </div></div>
         </div>
 
@@ -58,7 +119,7 @@
         <div class="tab-pane fade" id="tabHolidays">
             <div class="card"><div class="card-body">
                 <div class="form-section">
-                    <div class="section-title"><i class="bi bi-calendar-x me-2"></i>Add Holiday</div>
+                    <div class="section-title"><i class="bi bi-calendar-x me-2"></i><span id="holidayFormTitle">Add Holiday</span></div>
                     <input type="hidden" id="holidayId" value="0" />
                     <div class="row g-3 align-items-end">
                         <div class="col-md-3"><label class="form-label">Date</label><input type="date" class="form-control" id="holidayDate" /></div>
@@ -85,21 +146,41 @@
                     <div class="col-md-2"><input type="number" class="form-control" id="holidayFilterYear" placeholder="Year filter" /></div>
                     <div class="col-md-2"><button class="btn btn-outline-secondary" onclick="loadHolidays()">Filter</button></div>
                 </div>
-                <table class="table table-hover">
-                    <thead><tr><th>Date</th><th>Name</th><th>Type</th><th></th></tr></thead>
-                    <tbody id="holidaysBody"></tbody>
-                </table>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead><tr><th>Date</th><th>Name</th><th>Type</th><th class="text-end">Actions</th></tr></thead>
+                        <tbody id="holidaysBody"></tbody>
+                    </table>
+                </div>
             </div></div>
         </div>
 
         <!-- LEAVE TYPES -->
         <div class="tab-pane fade" id="tabLeaveTypes">
             <div class="card"><div class="card-body">
-                <p class="text-muted">Leave types are seeded from setup and shared across all schools using this system. Contact support to add new ones.</p>
-                <table class="table table-hover">
-                    <thead><tr><th>Code</th><th>Name</th><th>Paid</th><th>Deduct Days</th><th>Max/Year</th></tr></thead>
-                    <tbody id="leaveTypesBody"></tbody>
-                </table>
+                <div class="form-section">
+                    <div class="section-title"><i class="bi bi-calendar-check me-2"></i><span id="leaveTypeFormTitle">Add Leave Type</span></div>
+                    <input type="hidden" id="ltId" value="0" />
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-2"><label class="form-label">Code <span class="text-danger">*</span></label><input class="form-control" id="ltCode" placeholder="e.g. CL" /></div>
+                        <div class="col-md-3"><label class="form-label">Name <span class="text-danger">*</span></label><input class="form-control" id="ltName" placeholder="e.g. Casual Leave" /></div>
+                        <div class="col-md-2"><label class="form-label">Deduct Days</label><input type="number" step="0.25" min="0" class="form-control" id="ltDeductDays" value="0" /></div>
+                        <div class="col-md-2"><label class="form-label">Max / Year</label><input type="number" min="0" class="form-control" id="ltMaxPerYear" placeholder="Unlimited" /></div>
+                        <div class="col-md-1"><div class="form-check"><input class="form-check-input" type="checkbox" id="ltIsPaid" checked /><label class="form-check-label">Paid</label></div></div>
+                        <div class="col-md-1"><div class="form-check"><input class="form-check-input" type="checkbox" id="ltActive" checked /><label class="form-check-label">Active</label></div></div>
+                        <div class="col-md-3 d-flex gap-2">
+                            <button class="btn btn-primary" onclick="saveLeaveType()"><i class="bi bi-check-lg"></i> Save</button>
+                            <button class="btn btn-secondary" onclick="resetLeaveTypeForm()"><i class="bi bi-x-lg"></i> Clear</button>
+                        </div>
+                    </div>
+                    <div class="form-text mt-2">Deduct days is how much unpaid salary one day of this leave costs &mdash; 0 for fully paid leave, 1 for fully unpaid, 0.5 for half.</div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead><tr><th>Code</th><th>Name</th><th>Paid</th><th>Deduct Days</th><th>Max/Year</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+                        <tbody id="leaveTypesBody"></tbody>
+                    </table>
+                </div>
             </div></div>
         </div>
 
@@ -107,7 +188,7 @@
         <div class="tab-pane fade" id="tabComponents">
             <div class="card"><div class="card-body">
                 <div class="form-section">
-                    <div class="section-title"><i class="bi bi-calculator me-2"></i>Add / Edit Pay Component</div>
+                    <div class="section-title"><i class="bi bi-calculator me-2"></i><span id="compFormTitle">Add Pay Component</span></div>
                     <input type="hidden" id="compId" value="0" />
                     <div class="row g-3">
                         <div class="col-md-2"><label class="form-label">Code</label><input class="form-control" id="compCode" /></div>
@@ -128,13 +209,14 @@
                         </div>
                         <div class="col-md-3"><label class="form-label">Scope</label>
                             <div class="d-flex gap-2">
-                                <select class="form-select" id="compScopeType">
+                                <select class="form-select" id="compScopeType" onchange="toggleScopeFields()">
                                     <option value="1">Global</option>
                                     <option value="2">Grade</option>
                                     <option value="3">Designation</option>
                                     <option value="4">Employee</option>
                                 </select>
-                                <input type="number" class="form-control" id="compScopeId" placeholder="Scope Id" style="max-width:110px;" />
+                                <select class="form-select" id="compScopeRef" style="display:none;"></select>
+                                <input type="number" class="form-control" id="compScopeId" placeholder="Employee Id" style="max-width:130px; display:none;" />
                             </div>
                         </div>
 
@@ -157,7 +239,7 @@
                         <div class="col-md-6" id="fldSlabs" style="display:none;">
                             <label class="form-label">Slabs (one per line: from,to,amount|days|percent)</label>
                             <textarea class="form-control" id="compSlabsText" rows="2" placeholder="0,2,,0,\n3,,,0.5,"></textarea>
-                            <div class="form-text">Format: from,to,amount,days,percent — leave a field blank if unused. Example: 3,, , 0.5, means "3 and above -> 0.5 days".</div>
+                            <div class="form-text">Format: from,to,amount,days,percent &mdash; leave a field blank if unused. Example: 3,, , 0.5, means "3 and above -> 0.5 days".</div>
                         </div>
                         <div class="col-md-2"><label class="form-label">Effective From</label><input type="date" class="form-control" id="compEffFrom" /></div>
                         <div class="col-md-2"><label class="form-label">Effective To</label><input type="date" class="form-control" id="compEffTo" /></div>
@@ -181,10 +263,12 @@
                     <div class="preview-box" id="previewResult" style="display:none;"></div>
                 </div>
 
-                <table class="table table-hover">
-                    <thead><tr><th>Code</th><th>Name</th><th>Kind</th><th>Calc</th><th>Scope</th><th>Status</th><th></th></tr></thead>
-                    <tbody id="componentsBody"></tbody>
-                </table>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead><tr><th>Code</th><th>Name</th><th>Kind</th><th>Calc</th><th>Scope</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+                        <tbody id="componentsBody"></tbody>
+                    </table>
+                </div>
             </div></div>
         </div>
     </div>
@@ -195,37 +279,187 @@
     const KIND_NAMES = {1:'Earning',2:'Deduction'};
     const CALC_NAMES = {1:'Fixed',2:'Percent Of',3:'Per Late Minute',4:'Per Absent Day',5:'Per Overtime Hour',6:'Slab',7:'Formula'};
     const SCOPE_NAMES = {1:'Global',2:'Grade',3:'Designation',4:'Employee'};
+    const HOLIDAY_TYPE_NAMES = {1:'Gazetted',2:'Vacation',3:'Half Day'};
     const WEEKDAYS = [{v:1,n:'Sunday'},{v:2,n:'Monday'},{v:3,n:'Tuesday'},{v:4,n:'Wednesday'},{v:5,n:'Thursday'},{v:6,n:'Friday'},{v:7,n:'Saturday'}];
+
+    // Rows are built as HTML strings, so anything coming back from the API has to be escaped.
+    function esc(v) {
+        if (v === null || v === undefined) return '';
+        return String(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    function statusBadge(isActive) {
+        return `<span class="badge ${isActive ? 'bg-success' : 'bg-secondary'}">${isActive ? 'Active' : 'Inactive'}</span>`;
+    }
+    function rowActions(editFn, deleteFn, id) {
+        return `<td class="text-end">
+            <button class="btn btn-sm btn-info me-1" onclick="${editFn}(${id})" title="Edit"><i class="bi bi-pencil"></i></button>
+            <button class="btn btn-sm btn-danger" onclick="${deleteFn}(${id})" title="Delete"><i class="bi bi-trash"></i></button>
+        </td>`;
+    }
+    function emptyRow(body, colspan, text) {
+        body.append(`<tr class="empty-row"><td colspan="${colspan}">${text}</td></tr>`);
+    }
+    function money(v) {
+        return (v === null || v === undefined) ? '-' : Number(v).toLocaleString(undefined, { minimumFractionDigits: 0 });
+    }
+    // API validation failures come back as { message } — show that rather than a generic error.
+    async function apiError(res, fallback) {
+        try {
+            const body = await res.json();
+            if (body && body.message) return body.message;
+        } catch (e) { }
+        return fallback;
+    }
 
     $(document).ready(function () {
         WEEKDAYS.forEach(d => { $('#shiftOff1').append(`<option value="${d.v}">${d.n}</option>`); $('#shiftOff2').append(`<option value="${d.v}">${d.n}</option>`); });
-        loadShifts(); loadHolidays(); loadLeaveTypes(); loadComponents();
+        // Designations and grades load first — the pay-component scope picker reads them.
+        Promise.all([loadDesignations(), loadGrades()]).then(loadComponents);
+        loadShifts(); loadHolidays(); loadLeaveTypes();
         toggleCalcFields();
+        toggleScopeFields();
     });
+
+    // ---- Designations ----
+    async function loadDesignations() {
+        const res = await fetch(`${API_BASE}/Designation`);
+        const data = res.ok ? await res.json() : [];
+        window._designations = data;
+        const body = $('#designationsBody'); body.empty();
+        if (!data.length) { emptyRow(body, 7, 'No designations yet.'); return; }
+        data.forEach(d => {
+            body.append(`<tr>
+                <td>${esc(d.code)}</td><td>${esc(d.name)}</td><td>${esc(d.description) || '-'}</td>
+                <td>${d.sortOrder ?? 0}</td><td>${d.employeeCount ?? 0}</td>
+                <td>${statusBadge(d.isActive)}</td>
+                ${rowActions('editDesignation', 'deleteDesignation', d.id)}
+            </tr>`);
+        });
+        refreshScopeRefOptions();
+    }
+    function editDesignation(id) {
+        const d = (window._designations || []).find(x => x.id === id);
+        if (!d) return;
+        $('#desigFormTitle').text('Edit Designation');
+        $('#desigId').val(d.id); $('#desigCode').val(d.code); $('#desigName').val(d.name);
+        $('#desigDescription').val(d.description || ''); $('#desigSort').val(d.sortOrder ?? 0);
+        $('#desigActive').prop('checked', d.isActive);
+    }
+    function resetDesignationForm() {
+        $('#desigFormTitle').text('Add Designation');
+        $('#desigId').val(0); $('#desigCode,#desigName,#desigDescription').val('');
+        $('#desigSort').val(0); $('#desigActive').prop('checked', true);
+    }
+    async function saveDesignation() {
+        const id = parseInt($('#desigId').val()) || 0;
+        const dto = {
+            Code: $('#desigCode').val().trim(), Name: $('#desigName').val().trim(),
+            Description: $('#desigDescription').val().trim() || null,
+            SortOrder: parseInt($('#desigSort').val()) || 0,
+            IsActive: $('#desigActive').is(':checked')
+        };
+        if (!dto.Code || !dto.Name) { toastError('Code and name are required'); return; }
+        const res = await fetch(`${API_BASE}/Designation${id ? '/' + id : ''}`, { method: id ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(dto) });
+        if (res.ok) { toastSuccess('Designation saved'); resetDesignationForm(); loadDesignations(); }
+        else toastError(await apiError(res, 'Failed to save designation'));
+    }
+    async function deleteDesignation(id) {
+        const d = (window._designations || []).find(x => x.id === id);
+        if (!await confirmDelete(`Delete designation "${d ? esc(d.name) : id}"?`)) return;
+        const res = await fetch(`${API_BASE}/Designation/${id}`, { method: 'DELETE' });
+        if (res.ok) { toastSuccess('Designation deleted'); resetDesignationForm(); loadDesignations(); }
+        else toastError(await apiError(res, 'Failed to delete designation'));
+    }
+
+    // ---- Grades ----
+    async function loadGrades() {
+        const res = await fetch(`${API_BASE}/HRGrade`);
+        const data = res.ok ? await res.json() : [];
+        window._grades = data;
+        const body = $('#gradesBody'); body.empty();
+        if (!data.length) { emptyRow(body, 8, 'No grades yet.'); return; }
+        data.forEach(g => {
+            body.append(`<tr>
+                <td>${esc(g.code)}</td><td>${esc(g.name)}</td>
+                <td class="text-end">${money(g.minSalary)}</td><td class="text-end">${money(g.maxSalary)}</td>
+                <td>${g.sortOrder ?? 0}</td><td>${g.employeeCount ?? 0}</td>
+                <td>${statusBadge(g.isActive)}</td>
+                ${rowActions('editGrade', 'deleteGrade', g.id)}
+            </tr>`);
+        });
+        refreshScopeRefOptions();
+    }
+    async function editGrade(id) {
+        const g = (window._grades || []).find(x => x.id === id);
+        if (!g) return;
+        // The list DTO leaves out Description, so pull the full record for editing.
+        const res = await fetch(`${API_BASE}/HRGrade/${id}`);
+        const full = res.ok ? await res.json() : g;
+        $('#gradeFormTitle').text('Edit Grade');
+        $('#gradeId').val(full.id); $('#gradeCode').val(full.code); $('#gradeName').val(full.name);
+        $('#gradeDescription').val(full.description || '');
+        $('#gradeMinSalary').val(full.minSalary ?? ''); $('#gradeMaxSalary').val(full.maxSalary ?? '');
+        $('#gradeSort').val(full.sortOrder ?? 0); $('#gradeActive').prop('checked', full.isActive);
+    }
+    function resetGradeForm() {
+        $('#gradeFormTitle').text('Add Grade');
+        $('#gradeId').val(0); $('#gradeCode,#gradeName,#gradeDescription,#gradeMinSalary,#gradeMaxSalary').val('');
+        $('#gradeSort').val(0); $('#gradeActive').prop('checked', true);
+    }
+    async function saveGrade() {
+        const id = parseInt($('#gradeId').val()) || 0;
+        const min = $('#gradeMinSalary').val(), max = $('#gradeMaxSalary').val();
+        const dto = {
+            Code: $('#gradeCode').val().trim(), Name: $('#gradeName').val().trim(),
+            Description: $('#gradeDescription').val().trim() || null,
+            MinSalary: min !== '' ? parseFloat(min) : null,
+            MaxSalary: max !== '' ? parseFloat(max) : null,
+            SortOrder: parseInt($('#gradeSort').val()) || 0,
+            IsActive: $('#gradeActive').is(':checked')
+        };
+        if (!dto.Code || !dto.Name) { toastError('Code and name are required'); return; }
+        if (dto.MinSalary !== null && dto.MaxSalary !== null && dto.MinSalary > dto.MaxSalary) { toastError('Min salary cannot be greater than max salary'); return; }
+        const res = await fetch(`${API_BASE}/HRGrade${id ? '/' + id : ''}`, { method: id ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(dto) });
+        if (res.ok) { toastSuccess('Grade saved'); resetGradeForm(); loadGrades(); }
+        else toastError(await apiError(res, 'Failed to save grade'));
+    }
+    async function deleteGrade(id) {
+        const g = (window._grades || []).find(x => x.id === id);
+        if (!await confirmDelete(`Delete grade "${g ? esc(g.name) : id}"?`)) return;
+        const res = await fetch(`${API_BASE}/HRGrade/${id}`, { method: 'DELETE' });
+        if (res.ok) { toastSuccess('Grade deleted'); resetGradeForm(); loadGrades(); }
+        else toastError(await apiError(res, 'Failed to delete grade'));
+    }
 
     // ---- Shifts ----
     async function loadShifts() {
         const res = await fetch(`${API_BASE}/hr/shifts`);
         const data = res.ok ? await res.json() : [];
+        window._shifts = data;
         const body = $('#shiftsBody'); body.empty();
+        if (!data.length) { emptyRow(body, 8, 'No shifts yet.'); return; }
         data.forEach(s => {
             body.append(`<tr>
-                <td>${s.code}</td><td>${s.name}</td><td>${s.timeIn}</td><td>${s.timeOut}</td>
+                <td>${esc(s.code)}</td><td>${esc(s.name)}</td><td>${esc(s.timeIn)}</td><td>${esc(s.timeOut)}</td>
                 <td>${s.graceMinutes}</td><td>${s.workHours}</td>
-                <td><span class="badge ${s.isActive?'bg-success':'bg-secondary'}">${s.isActive?'Active':'Inactive'}</span></td>
-                <td><button class="btn btn-sm btn-info" onclick='editShift(${JSON.stringify(s)})'><i class="bi bi-pencil"></i></button></td>
+                <td>${statusBadge(s.isActive)}</td>
+                ${rowActions('editShift', 'deleteShift', s.id)}
             </tr>`);
         });
     }
-    function editShift(s) {
+    function editShift(id) {
+        const s = (window._shifts || []).find(x => x.id === id);
+        if (!s) return;
+        $('#shiftFormTitle').text('Edit Shift');
         $('#shiftId').val(s.id); $('#shiftCode').val(s.code); $('#shiftName').val(s.name);
-        $('#shiftTimeIn').val(s.timeIn?.substring(0,5)); $('#shiftTimeOut').val(s.timeOut?.substring(0,5));
+        $('#shiftTimeIn').val(s.timeIn ? s.timeIn.substring(0,5) : ''); $('#shiftTimeOut').val(s.timeOut ? s.timeOut.substring(0,5) : '');
         $('#shiftGrace').val(s.graceMinutes); $('#shiftWorkHours').val(s.workHours);
         $('#shiftHalfDayMin').val(s.halfDayMinutes); $('#shiftFullDayMin').val(s.fullDayMinutes);
         $('#shiftOff1').val(s.offDay1 || ''); $('#shiftOff2').val(s.offDay2 || '');
         $('#shiftActive').prop('checked', s.isActive);
     }
     function resetShiftForm() {
+        $('#shiftFormTitle').text('Add Shift');
         $('#shiftId').val(0); $('#shiftCode,#shiftName').val('');
         $('#shiftTimeIn,#shiftTimeOut').val(''); $('#shiftGrace').val(10); $('#shiftWorkHours').val(8);
         $('#shiftHalfDayMin').val(180); $('#shiftFullDayMin').val(360);
@@ -242,8 +476,17 @@
             OffDay2: $('#shiftOff2').val() ? parseInt($('#shiftOff2').val()) : null,
             IsActive: $('#shiftActive').is(':checked')
         };
+        if (!dto.Code || !dto.Name || !$('#shiftTimeIn').val() || !$('#shiftTimeOut').val()) { toastError('Code, name, time in and time out are required'); return; }
         const res = await fetch(`${API_BASE}/hr/shifts${id ? '/'+id : ''}`, { method: id ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(dto) });
-        if (res.ok) { toastSuccess('Shift saved'); resetShiftForm(); loadShifts(); } else toastError('Failed to save shift');
+        if (res.ok) { toastSuccess('Shift saved'); resetShiftForm(); loadShifts(); }
+        else toastError(await apiError(res, 'Failed to save shift'));
+    }
+    async function deleteShift(id) {
+        const s = (window._shifts || []).find(x => x.id === id);
+        if (!await confirmDelete(`Delete shift "${s ? esc(s.name) : id}"?`)) return;
+        const res = await fetch(`${API_BASE}/hr/shifts/${id}`, { method: 'DELETE' });
+        if (res.ok) { toastSuccess('Shift deleted'); resetShiftForm(); loadShifts(); }
+        else toastError(await apiError(res, 'Failed to delete shift'));
     }
 
     // ---- Holidays ----
@@ -252,25 +495,41 @@
         const url = year ? `${API_BASE}/hr/holidays?year=${year}` : `${API_BASE}/hr/holidays`;
         const res = await fetch(url);
         const data = res.ok ? await res.json() : [];
+        window._holidays = data;
         const body = $('#holidaysBody'); body.empty();
+        if (!data.length) { emptyRow(body, 4, 'No holidays for this filter.'); return; }
         data.forEach(h => {
-            const typeName = h.hType === 1 ? 'Gazetted' : h.hType === 2 ? 'Vacation' : 'Half Day';
             body.append(`<tr>
-                <td>${new Date(h.hDate).toLocaleDateString()}</td><td>${h.name}</td><td>${typeName}</td>
-                <td><button class="btn btn-sm btn-info" onclick='editHoliday(${JSON.stringify(h)})'><i class="bi bi-pencil"></i></button></td>
+                <td>${fmtDate(h.hDate)}</td><td>${esc(h.name)}</td>
+                <td>${HOLIDAY_TYPE_NAMES[h.hType] || '-'}</td>
+                ${rowActions('editHoliday', 'deleteHoliday', h.id)}
             </tr>`);
         });
     }
-    function editHoliday(h) {
+    function editHoliday(id) {
+        const h = (window._holidays || []).find(x => x.id === id);
+        if (!h) return;
+        $('#holidayFormTitle').text('Edit Holiday');
         $('#holidayId').val(h.id); $('#holidayDate').val(h.hDate.split('T')[0]); $('#holidayName').val(h.name); $('#holidayType').val(h.hType);
     }
-    function resetHolidayForm() { $('#holidayId').val(0); $('#holidayDate,#holidayName').val(''); $('#holidayType').val(1); }
+    function resetHolidayForm() {
+        $('#holidayFormTitle').text('Add Holiday');
+        $('#holidayId').val(0); $('#holidayDate,#holidayName').val(''); $('#holidayType').val(1);
+    }
     async function saveHoliday() {
         const id = parseInt($('#holidayId').val()) || 0;
         const dto = { Id: id, HDate: $('#holidayDate').val(), Name: $('#holidayName').val().trim(), HType: parseInt($('#holidayType').val()), IsActive: true };
         if (!dto.HDate || !dto.Name) { toastError('Enter date and name'); return; }
         const res = await fetch(`${API_BASE}/hr/holidays${id ? '/'+id : ''}`, { method: id ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(dto) });
-        if (res.ok) { toastSuccess('Holiday saved'); resetHolidayForm(); loadHolidays(); } else toastError('Failed to save holiday');
+        if (res.ok) { toastSuccess('Holiday saved'); resetHolidayForm(); loadHolidays(); }
+        else toastError(await apiError(res, 'Failed to save holiday'));
+    }
+    async function deleteHoliday(id) {
+        const h = (window._holidays || []).find(x => x.id === id);
+        if (!await confirmDelete(`Delete holiday "${h ? esc(h.name) : id}"?`)) return;
+        const res = await fetch(`${API_BASE}/hr/holidays/${id}`, { method: 'DELETE' });
+        if (res.ok) { toastSuccess('Holiday deleted'); resetHolidayForm(); loadHolidays(); }
+        else toastError(await apiError(res, 'Failed to delete holiday'));
     }
     async function copyHolidayYear() {
         const fromYear = parseInt($('#copyFromYear').val()), toYear = parseInt($('#copyToYear').val());
@@ -281,10 +540,58 @@
 
     // ---- Leave Types ----
     async function loadLeaveTypes() {
-        const res = await fetch(`${API_BASE}/hr/leave-types`);
+        const res = await fetch(`${API_BASE}/hr/leave-types?includeInactive=true`);
         const data = res.ok ? await res.json() : [];
+        window._leaveTypes = data;
         const body = $('#leaveTypesBody'); body.empty();
-        data.forEach(l => body.append(`<tr><td>${l.code}</td><td>${l.name}</td><td>${l.isPaid?'Yes':'No'}</td><td>${l.deductDays}</td><td>${l.maxPerYear ?? '-'}</td></tr>`));
+        if (!data.length) { emptyRow(body, 7, 'No leave types yet.'); return; }
+        data.forEach(l => {
+            body.append(`<tr>
+                <td>${esc(l.code)}</td><td>${esc(l.name)}</td><td>${l.isPaid ? 'Yes' : 'No'}</td>
+                <td>${l.deductDays}</td><td>${l.maxPerYear ?? '-'}</td>
+                <td>${statusBadge(l.isActive)}</td>
+                ${rowActions('editLeaveType', 'deleteLeaveType', l.id)}
+            </tr>`);
+        });
+    }
+    function editLeaveType(id) {
+        const l = (window._leaveTypes || []).find(x => x.id === id);
+        if (!l) return;
+        $('#leaveTypeFormTitle').text('Edit Leave Type');
+        $('#ltId').val(l.id); $('#ltCode').val(l.code); $('#ltName').val(l.name);
+        $('#ltDeductDays').val(l.deductDays); $('#ltMaxPerYear').val(l.maxPerYear ?? '');
+        $('#ltIsPaid').prop('checked', l.isPaid); $('#ltActive').prop('checked', l.isActive);
+    }
+    function resetLeaveTypeForm() {
+        $('#leaveTypeFormTitle').text('Add Leave Type');
+        $('#ltId').val(0); $('#ltCode,#ltName,#ltMaxPerYear').val(''); $('#ltDeductDays').val(0);
+        $('#ltIsPaid,#ltActive').prop('checked', true);
+    }
+    async function saveLeaveType() {
+        const id = parseInt($('#ltId').val()) || 0;
+        const maxPerYear = $('#ltMaxPerYear').val();
+        const dto = {
+            Code: $('#ltCode').val().trim(), Name: $('#ltName').val().trim(),
+            IsPaid: $('#ltIsPaid').is(':checked'),
+            DeductDays: parseFloat($('#ltDeductDays').val()) || 0,
+            MaxPerYear: maxPerYear !== '' ? parseInt(maxPerYear) : null,
+            IsActive: $('#ltActive').is(':checked')
+        };
+        if (!dto.Code || !dto.Name) { toastError('Code and name are required'); return; }
+        const res = await fetch(`${API_BASE}/hr/leave-types${id ? '/' + id : ''}`, { method: id ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(dto) });
+        if (res.ok) { toastSuccess('Leave type saved'); resetLeaveTypeForm(); loadLeaveTypes(); }
+        else toastError(await apiError(res, 'Failed to save leave type'));
+    }
+    async function deleteLeaveType(id) {
+        const l = (window._leaveTypes || []).find(x => x.id === id);
+        if (!await confirmDelete(`Delete leave type "${l ? esc(l.name) : id}"?`)) return;
+        const res = await fetch(`${API_BASE}/hr/leave-types/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+            // 204 = removed; 200 carries the "in use, deactivated instead" message.
+            const note = res.status === 204 ? 'Leave type deleted' : await apiError(res, 'Leave type deleted');
+            toastSuccess(note); resetLeaveTypeForm(); loadLeaveTypes();
+        }
+        else toastError(await apiError(res, 'Failed to delete leave type'));
     }
 
     // ---- Pay Components ----
@@ -297,6 +604,35 @@
         $('#fldBaseOn').toggle(t === 2 || t === 3 || t === 4 || t === 6);
         $('#fldDivisorDays').toggle(t === 3 || t === 4);
         $('#fldGrace').toggle(t === 3);
+    }
+    // Grade/Designation scopes pick from the lists on this page; Employee stays a raw id.
+    function toggleScopeFields() {
+        const s = parseInt($('#compScopeType').val());
+        refreshScopeRefOptions();
+        $('#compScopeRef').toggle(s === 2 || s === 3);
+        $('#compScopeId').toggle(s === 4);
+    }
+    function refreshScopeRefOptions() {
+        const s = parseInt($('#compScopeType').val());
+        if (s !== 2 && s !== 3) return;
+        const list = s === 2 ? (window._grades || []) : (window._designations || []);
+        const current = $('#compScopeRef').val();
+        const sel = $('#compScopeRef').empty().append('<option value="">-- select --</option>');
+        list.forEach(x => sel.append(`<option value="${x.id}">${esc(x.code)} - ${esc(x.name)}</option>`));
+        if (current) sel.val(current);
+    }
+    function scopeIdFromForm() {
+        const s = parseInt($('#compScopeType').val());
+        if (s === 2 || s === 3) return $('#compScopeRef').val() ? parseInt($('#compScopeRef').val()) : null;
+        if (s === 4) return $('#compScopeId').val() ? parseInt($('#compScopeId').val()) : null;
+        return null;
+    }
+    function scopeLabel(c) {
+        const name = SCOPE_NAMES[c.scopeType] || '-';
+        if (!c.scopeId) return name;
+        const list = c.scopeType === 2 ? (window._grades || []) : c.scopeType === 3 ? (window._designations || []) : [];
+        const match = list.find(x => x.id === c.scopeId);
+        return match ? `${name}: ${esc(match.code)} - ${esc(match.name)}` : `${name} #${c.scopeId}`;
     }
     function parseSlabs() {
         const text = $('#compSlabsText').val().trim();
@@ -317,21 +653,26 @@
         const data = res.ok ? await res.json() : [];
         window._components = data;
         const body = $('#componentsBody'); body.empty();
+        if (!data.length) { emptyRow(body, 7, 'No pay components yet.'); return; }
         data.forEach(c => {
             body.append(`<tr>
-                <td>${c.code}</td><td>${c.name}</td><td>${KIND_NAMES[c.kind]}</td><td>${CALC_NAMES[c.calcType]}</td>
-                <td>${SCOPE_NAMES[c.scopeType]}${c.scopeId ? ' #'+c.scopeId : ''}</td>
-                <td><span class="badge ${c.isActive?'bg-success':'bg-secondary'}">${c.isActive?'Active':'Inactive'}</span></td>
-                <td><button class="btn btn-sm btn-info" onclick="editComponent(${c.id})"><i class="bi bi-pencil"></i></button></td>
+                <td>${esc(c.code)}</td><td>${esc(c.name)}</td><td>${KIND_NAMES[c.kind]}</td><td>${CALC_NAMES[c.calcType]}</td>
+                <td>${scopeLabel(c)}</td>
+                <td>${statusBadge(c.isActive)}</td>
+                ${rowActions('editComponent', 'deleteComponent', c.id)}
             </tr>`);
         });
     }
     function editComponent(id) {
         const c = (window._components || []).find(x => x.id === id);
         if (!c) return;
+        $('#compFormTitle').text('Edit Pay Component');
         $('#compId').val(c.id); $('#compCode').val(c.code); $('#compName').val(c.name);
         $('#compKind').val(c.kind); $('#compCalcType').val(c.calcType);
-        $('#compScopeType').val(c.scopeType); $('#compScopeId').val(c.scopeId || '');
+        $('#compScopeType').val(c.scopeType);
+        toggleScopeFields();
+        if (c.scopeType === 2 || c.scopeType === 3) $('#compScopeRef').val(c.scopeId || '');
+        else $('#compScopeId').val(c.scopeId || '');
         $('#compRate').val(c.rate); $('#compRateSource').val(c.rateSource || 1); $('#compBaseOn').val(c.baseOn || 1);
         $('#compDivisorDays').val(c.divisorDays ?? 30); $('#compGrace').val(c.graceMinutes || 0);
         $('#compFreeUnits').val(c.freeUnitsPerMonth || ''); $('#compCapDay').val(c.capPerDay || '');
@@ -344,12 +685,15 @@
         toggleCalcFields();
     }
     function resetComponentForm() {
+        $('#compFormTitle').text('Add Pay Component');
         $('#compId').val(0); $('#compCode,#compName,#compRate,#compFormula,#compSlabsText,#compScopeId,#compFreeUnits,#compCapDay,#compCapMonth').val('');
         $('#compKind,#compCalcType,#compScopeType,#compRateSource,#compBaseOn').val(1);
+        $('#compScopeRef').val('');
         $('#compDivisorDays').val(30); $('#compGrace,#compPriority').val(0);
-        $('#compEffFrom').val(new Date().toISOString().split('T')[0]); $('#compEffTo').val('');
+        $('#compEffFrom').val(toInputDate()); $('#compEffTo').val('');
         $('#compShowSlip,#compActive').prop('checked', true);
         toggleCalcFields();
+        toggleScopeFields();
     }
     async function saveComponent() {
         const id = parseInt($('#compId').val()) || 0;
@@ -364,15 +708,24 @@
             CapPerDay: $('#compCapDay').val() ? parseFloat($('#compCapDay').val()) : null,
             CapPerMonth: $('#compCapMonth').val() ? parseFloat($('#compCapMonth').val()) : null,
             Slabs: parseSlabs(), Formula: $('#compFormula').val().trim() || null,
-            ScopeType: parseInt($('#compScopeType').val()), ScopeId: $('#compScopeId').val() ? parseInt($('#compScopeId').val()) : null,
+            ScopeType: parseInt($('#compScopeType').val()), ScopeId: scopeIdFromForm(),
             Priority: parseInt($('#compPriority').val()) || 0,
             ShowOnPayslip: $('#compShowSlip').is(':checked'),
             EffectiveFrom: $('#compEffFrom').val(), EffectiveTo: $('#compEffTo').val() || null,
             IsActive: $('#compActive').is(':checked')
         };
         if (!dto.Code || !dto.Name || !dto.EffectiveFrom) { toastError('Code, name and effective-from date are required'); return; }
+        if (dto.ScopeType !== 1 && !dto.ScopeId) { toastError('Select what this component is scoped to'); return; }
         const res = await fetch(`${API_BASE}/hr/pay-components${id ? '/'+id : ''}`, { method: id ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(dto) });
-        if (res.ok) { toastSuccess('Pay component saved'); resetComponentForm(); loadComponents(); } else toastError('Failed to save component');
+        if (res.ok) { toastSuccess('Pay component saved'); resetComponentForm(); loadComponents(); }
+        else toastError(await apiError(res, 'Failed to save component'));
+    }
+    async function deleteComponent(id) {
+        const c = (window._components || []).find(x => x.id === id);
+        if (!await confirmDelete(`Delete pay component "${c ? esc(c.name) : id}"?`)) return;
+        const res = await fetch(`${API_BASE}/hr/pay-components/${id}`, { method: 'DELETE' });
+        if (res.ok) { toastSuccess('Pay component deleted'); resetComponentForm(); loadComponents(); }
+        else toastError(await apiError(res, 'Failed to delete pay component'));
     }
 
     async function runPreview() {
@@ -391,7 +744,7 @@
         const res = await fetch(`${API_BASE}/hr/pay-components/preview`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(dto) });
         if (res.ok) {
             const r = await res.json();
-            $('#previewResult').show().html(`<strong>Amount: Rs ${Number(r.amount).toLocaleString(undefined,{minimumFractionDigits:2})}</strong><br/><span class="text-muted">${r.explanation}</span>`);
+            $('#previewResult').show().html(`<strong>Amount: Rs ${Number(r.amount).toLocaleString(undefined,{minimumFractionDigits:2})}</strong><br/><span class="text-muted">${esc(r.explanation)}</span>`);
         } else toastError('Preview failed');
     }
 </script>

@@ -4,6 +4,22 @@ using School.API.Models;
 
 namespace School.API.Data.DBModels.HR
 {
+    /// <summary>
+    /// The one staff record. HR and academics both hang off it.
+    /// </summary>
+    /// <remarks>
+    /// This table IS the old SMSTeacher, renamed with its keys intact
+    /// (RenameTeacherToEmployee.sql) — so <see cref="Id"/> is the value that
+    /// SMSStaffSubject.TeacherID, SMSClassTimetable.TeacherID and every
+    /// SpRPT_SMSExam* report already join on. There is no second teacher row to
+    /// keep in sync any more; <see cref="IsTeachingStaff"/> is the only thing
+    /// separating a teacher from any other employee.
+    ///
+    /// The database also carries a persisted computed column, VName, equal to
+    /// "FirstName LastName". It is deliberately not mapped here — it exists so
+    /// the legacy stored procedures can keep selecting the name they always
+    /// selected, and it is derived, so nothing writes to it.
+    /// </remarks>
     [Table("Employees")]
     public class Employee
     {
@@ -29,6 +45,9 @@ namespace School.API.Data.DBModels.HR
 
         [NotMapped]
         public string FullName => $"{FirstName} {LastName}".Trim();
+
+        [MaxLength(200)]
+        public string? FatherName { get; set; }
 
         [MaxLength(20)]
         public string? CNIC { get; set; }
@@ -60,7 +79,9 @@ namespace School.API.Data.DBModels.HR
         [MaxLength(255)]
         public string? Photo { get; set; }
 
-        [MaxLength(100)]
+        // 500, not 100: the column came over from SMSTeacher, where qualifications
+        // were free text and several rows use the length.
+        [MaxLength(500)]
         public string? Qualification { get; set; }
 
         [MaxLength(100)]
@@ -88,10 +109,10 @@ namespace School.API.Data.DBModels.HR
         public byte? OffDay1 { get; set; }
         public byte? OffDay2 { get; set; }
 
-        // Links to the academic SMSTeacher record for staff who also teach.
-        // Payroll runs off Employees; academic reports keep running off
-        // SMSTeacher untouched (D6 — see HR-Payroll-Final-Plan.md section 2).
-        public int? TeacherId { get; set; }
+        // Makes this person available to subject assignment, the timetable and
+        // the exam reports. Nothing else distinguishes teaching staff — they are
+        // rows in this same table, addressed by this same Id.
+        public bool IsTeachingStaff { get; set; }
 
         [MaxLength(100)]
         public string? BankName { get; set; }
@@ -117,9 +138,21 @@ namespace School.API.Data.DBModels.HR
 
         public bool IsActive { get; set; } = true;
 
+        // Audit — the InsertedBy/InsertedDate/InsertedIp set the teacher screen
+        // maintained, under the names the rest of the HR model uses.
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        public int? CreatedBy { get; set; }
+
+        [MaxLength(200)]
+        public string? CreatedIp { get; set; }
+
         public DateTime? UpdatedAt { get; set; }
+
+        public int? UpdatedBy { get; set; }
+
+        [MaxLength(200)]
+        public string? UpdatedIp { get; set; }
 
         // Navigation properties
         [ForeignKey("DesignationId")]
@@ -130,9 +163,6 @@ namespace School.API.Data.DBModels.HR
 
         [ForeignKey("ShiftId")]
         public virtual HrShift? Shift { get; set; }
-
-        [ForeignKey("TeacherId")]
-        public virtual Teacher? Teacher { get; set; }
 
         // User navigation property for bidirectional relationship
         public virtual User? User { get; set; }

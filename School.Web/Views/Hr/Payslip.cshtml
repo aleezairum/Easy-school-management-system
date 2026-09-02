@@ -55,12 +55,12 @@
                 <div class="col-4">Absent Days: ${p.absentDays}</div>
                 <div class="col-4">Late Minutes: ${p.lateMinutes}</div>
             </div>
-            ${p.paidDate ? `<div class="alert alert-success mt-3 mb-0">Paid on ${new Date(p.paidDate).toLocaleDateString()} via ${p.paymentMethod || '-'}</div>` : '<div class="alert alert-warning mt-3 mb-0">Not yet paid</div>'}
+            ${p.paidDate ? `<div class="alert alert-success mt-3 mb-0">Paid on ${fmtDate(p.paidDate)} via ${p.paymentMethod || '-'}</div>` : '<div class="alert alert-warning mt-3 mb-0">Not yet paid</div>'}
         `);
     }
 
     async function payThis() {
-        const dto = { PaidDate: new Date().toISOString().split('T')[0], PaymentMethod: 'Cash', Reference: null };
+        const dto = { PaidDate: toInputDate(), PaymentMethod: 'Cash', Reference: null };
         const res = await fetch(`${API_BASE}/hr/payroll/payslip/${payslipId}/pay`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(dto) });
         if (res.ok) { toastSuccess('Marked as paid'); loadPayslip(); } else toastError('Failed to mark as paid');
     }

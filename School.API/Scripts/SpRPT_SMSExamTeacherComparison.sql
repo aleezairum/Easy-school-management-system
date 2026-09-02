@@ -17,7 +17,8 @@ GO
        - Pass % by Pass Marks      (Passed   / Appeared   * 100)
        - Pass % by Obtained Marks  (Obtained / TotalMarks * 100)
    over the appeared students (IsAbsent = 0) of that Subject/Class/Section,
-   driven by the active teacher -> subject assignments (dbo.SMSStaffSubject).
+   driven by the active teacher -> subject assignments OF THIS EXAM
+   (dbo.SMSStaffSubject is per-exam).
    Teachers are then ranked into Positions within their own scope (highest
    avg = 1; ties share a position).
 
@@ -125,7 +126,8 @@ BEGIN
     (
         SELECT DISTINCT TeacherID, ClassID, SectionID, SubjectID
         FROM   SMSStaffSubject
-        WHERE  IsActive = 1
+        WHERE  ExamID   = @ExamID
+          AND  IsActive = 1
     )
     SELECT
         SS.TeacherID,
@@ -167,7 +169,7 @@ BEGIN
     INSERT INTO #Res (Side, TeacherId, TeacherName, ResultPercent)
     SELECT 'L', T.TeacherID, TC.VName, CAST(AVG(T.Pct) AS DECIMAL(5,2))
     FROM        #TS T
-    INNER JOIN  SMSTeacher TC ON TC.VID = T.TeacherID
+    INNER JOIN  Employees  TC ON TC.Id  = T.TeacherID
     WHERE       (@hasLClass = 0 OR T.ClassID   IN (SELECT Id FROM @LClass))
       AND       (@hasLSec   = 0 OR T.SectionID IN (SELECT Id FROM @LSec))
     GROUP BY    T.TeacherID, TC.VName;
@@ -176,7 +178,7 @@ BEGIN
     INSERT INTO #Res (Side, TeacherId, TeacherName, ResultPercent)
     SELECT 'R', T.TeacherID, TC.VName, CAST(AVG(T.Pct) AS DECIMAL(5,2))
     FROM        #TS T
-    INNER JOIN  SMSTeacher TC ON TC.VID = T.TeacherID
+    INNER JOIN  Employees  TC ON TC.Id  = T.TeacherID
     WHERE       (@hasRClass = 0 OR T.ClassID   IN (SELECT Id FROM @RClass))
       AND       (@hasRSec   = 0 OR T.SectionID IN (SELECT Id FROM @RSec))
     GROUP BY    T.TeacherID, TC.VName;

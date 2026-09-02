@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using School.API.Data.DBModels.SMS;
 using School.API.DTOs;
 using School.API.Services.Interfaces;
 
@@ -12,17 +13,20 @@ namespace School.API.Controllers
         private readonly IWhatsAppChatService _chatService;
         private readonly IConfiguration _configuration;
         private readonly IWahaSessionStatusService _wahaStatus;
+        private readonly ISmsRoutingPolicy _routingPolicy;
 
         public SmsController(
             ISmsService smsService,
             IWhatsAppChatService chatService,
             IConfiguration configuration,
-            IWahaSessionStatusService wahaStatus)
+            IWahaSessionStatusService wahaStatus,
+            ISmsRoutingPolicy routingPolicy)
         {
             _smsService = smsService;
             _chatService = chatService;
             _configuration = configuration;
             _wahaStatus = wahaStatus;
+            _routingPolicy = routingPolicy;
         }
 
         // ── DB-BACKED PROGRESS — survives server restart ──────────────
@@ -40,13 +44,129 @@ namespace School.API.Controllers
         public async Task<ActionResult> GetQueueStatus()
         {
             var pending = await _smsService.GetOverallPendingCountAsync();
-            return Ok(new { pending });
+            var held = await _smsService.GetHeldCountAsync(null);
+            return Ok(new { pending, held });
+        }
+
+        // ── HOLD / RESUME ────────────────────────────────────────────
+        // Rows parked because WAHA (free) was disconnected. Nothing has been
+        // spent on them and nothing is lost: the user either reconnects WAHA
+        // and resumes free, or releases the batch through the paid gateway.
+
+        [HttpGet("held")]
+        public async Task<ActionResult> GetHeld([FromQuery] string? jobId)
+        {
+            var held = await _smsService.GetHeldCountAsync(jobId);
+            var unsent = await _smsService.GetUnsentCountAsync(jobId);
+            var status = await _routingPolicy.GetFreeStatusAsync();
+            return Ok(new
+            {
+                held,
+                unsent,
+                jobId,
+                freeAvailable = status.Connected,
+                freeStatus = status.Status,
+                gatewayUrl = _routingPolicy.FreeGatewayUrl
+            });
+        }
+
+        // Resume on the free route. Refused while WAHA is still disconnected —
+        // releasing the rows now would only have the queue park them again, so
+        // the user is told to connect WAHA first (or choose the paid route).
+        [HttpPost("resume-free")]
+        public async Task<ActionResult> ResumeFree([FromBody] SmsResumeDto? dto)
+        {
+            // forceRefresh: the user has just reconnected WAHA and is asking us
+            // to look again, so the ~20s status cache must not answer this.
+            var status = await _routingPolicy.GetFreeStatusAsync(forceRefresh: true);
+            if (!status.Connected)
+            {
+                return Conflict(new
+                {
+                    message = $"WhatsApp (free) is still disconnected — status {status.Status}. " +
+                              "Connect WAHA and try again, or send this batch through the paid gateway.",
+                    freeAvailable = false,
+                    freeStatus = status.Status
+                });
+            }
+
+            var resumed = await _smsService.ResumeHeldFreeAsync(dto?.JobId);
+            return Ok(new { resumed, route = "free", freeAvailable = true, freeStatus = status.Status });
+        }
+
+        // Resume on the paid gateway. The rows are stamped ForcePaid so the
+        // queue never routes them back to WAHA.
+        [HttpPost("resume-paid")]
+        public async Task<ActionResult> ResumePaid([FromBody] SmsResumeDto? dto)
+        {
+            var resumed = await _smsService.ResumeHeldPaidAsync(dto?.JobId);
+            return Ok(new { resumed, route = "paid" });
+        }
+
+        // ── REJECT ───────────────────────────────────────────────────
+        // Cancels every unsent message (Pending or Held) at once, so nothing
+        // else goes out. Terminal — rejected rows are never picked up again,
+        // but they stay in the log so it is clear what was dropped.
+        [HttpPost("reject")]
+        public async Task<ActionResult> Reject([FromBody] SmsResumeDto? dto)
+        {
+            var rejected = await _smsService.RejectUnsentAsync(dto?.JobId);
+            return Ok(new { rejected });
+        }
+
+        // Backs the "reject N messages?" confirmation on the SMS page.
+        [HttpGet("unsent")]
+        public async Task<ActionResult> GetUnsent([FromQuery] string? jobId)
+        {
+            var unsent = await _smsService.GetUnsentCountAsync(jobId);
+            return Ok(new { unsent, jobId });
+        }
+
+        // ── PREVIEW ("Show List") ────────────────────────────────────
+        // Resolves recipients and composes messages exactly as the matching
+        // send would, but queues nothing — so the user can check the count and
+        // the content before committing.
+
+        [HttpPost("preview/send")]
+        public async Task<ActionResult<SmsPreviewDto>> PreviewSend([FromBody] SmsSendDto dto)
+            => Ok(await _smsService.PreviewBulkAsync(dto));
+
+        [HttpPost("preview/fee-reminder")]
+        public async Task<ActionResult<SmsPreviewDto>> PreviewFeeReminder([FromBody] FeeSmsSendDto dto)
+        {
+            if (dto.DueDate == default)
+                return BadRequest(new { message = "Due date is required" });
+
+            return Ok(await _smsService.PreviewFeeReminderAsync(dto));
+        }
+
+        [HttpPost("preview/result")]
+        public async Task<ActionResult<SmsPreviewDto>> PreviewResult([FromBody] ResultTextSendDto dto)
+        {
+            if (dto.ExamId <= 0)
+                return BadRequest(new { message = "Exam is required" });
+
+            return Ok(await _smsService.PreviewResultTextAsync(dto));
+        }
+
+        [HttpPost("preview/rcard")]
+        public async Task<ActionResult<SmsPreviewDto>> PreviewRcard([FromBody] RcardSendDto dto)
+        {
+            if (dto.ExamId <= 0)
+                return BadRequest(new { message = "Exam is required" });
+
+            return Ok(await _smsService.PreviewRcardAsync(dto));
         }
 
         // WAHA connection badge on the Send SMS page — cached ~20s server-side
         // (see WahaSessionStatusService), so this is safe to poll frequently.
+        // messageType (optional) also reports whether that type is configured to
+        // go out free — the page only has to warn about a disconnected WAHA for
+        // the tabs that actually use it.
         [HttpGet("waha-status")]
-        public async Task<ActionResult> GetWahaStatus([FromQuery] bool refresh = false)
+        public async Task<ActionResult> GetWahaStatus(
+            [FromQuery] bool refresh = false,
+            [FromQuery] SmsMessageType? messageType = null)
         {
             var status = await _wahaStatus.GetStatusAsync(refresh);
             return Ok(new
@@ -54,7 +174,10 @@ namespace School.API.Controllers
                 connected = status.Connected,
                 status = status.Status,
                 error = status.Error,
-                checkedAt = status.CheckedAtUtc
+                checkedAt = status.CheckedAtUtc,
+                routesFree = messageType.HasValue && _routingPolicy.PrefersFree(messageType),
+                // Where to go to bring the session back up (scan the QR).
+                gatewayUrl = _routingPolicy.FreeGatewayUrl
             });
         }
 

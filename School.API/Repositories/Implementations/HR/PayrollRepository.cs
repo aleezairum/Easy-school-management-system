@@ -210,6 +210,8 @@ namespace School.API.Repositories.Implementations.HR
                     ShiftWorkHours = e.Shift != null ? e.Shift.WorkHours : (decimal?)null,
                     e.OffDay1,
                     e.OffDay2,
+                    ShiftOffDay1 = e.Shift != null ? e.Shift.OffDay1 : null,
+                    ShiftOffDay2 = e.Shift != null ? e.Shift.OffDay2 : null,
                     e.JoiningDate,
                     e.LeavingDate,
                     Pay = _context.Set<HrEmployeePay>()
@@ -219,21 +221,28 @@ namespace School.API.Repositories.Implementations.HR
                 })
                 .ToListAsync();
 
-            return rows.Select(r => new PayrollEmployeeRow
+            // Effective off days: the employee's own pair when either is set,
+            // otherwise the shift's — the same rule the attendance grid applies,
+            // so working-day counts here can't drift from what the grid shows.
+            return rows.Select(r =>
             {
-                EmployeeId = r.Id,
-                EmployeeCode = r.EmployeeCode,
-                FullName = r.FullName,
-                DesignationId = r.DesignationId,
-                DesignationName = r.DesignationName,
-                HRGradeId = r.HRGradeId,
-                ShiftId = r.ShiftId,
-                ShiftWorkHours = r.ShiftWorkHours ?? 8,
-                OffDay1 = r.OffDay1,
-                OffDay2 = r.OffDay2,
-                JoiningDate = r.JoiningDate,
-                LeavingDate = r.LeavingDate,
-                Pay = r.Pay
+                var hasOwnOffDays = r.OffDay1.HasValue || r.OffDay2.HasValue;
+                return new PayrollEmployeeRow
+                {
+                    EmployeeId = r.Id,
+                    EmployeeCode = r.EmployeeCode,
+                    FullName = r.FullName,
+                    DesignationId = r.DesignationId,
+                    DesignationName = r.DesignationName,
+                    HRGradeId = r.HRGradeId,
+                    ShiftId = r.ShiftId,
+                    ShiftWorkHours = r.ShiftWorkHours ?? 8,
+                    OffDay1 = hasOwnOffDays ? r.OffDay1 : r.ShiftOffDay1,
+                    OffDay2 = hasOwnOffDays ? r.OffDay2 : r.ShiftOffDay2,
+                    JoiningDate = r.JoiningDate,
+                    LeavingDate = r.LeavingDate,
+                    Pay = r.Pay
+                };
             }).ToList();
         }
 

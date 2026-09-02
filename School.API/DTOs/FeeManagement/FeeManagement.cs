@@ -138,7 +138,15 @@ namespace School.API.DTOs.FeeManagement
         public string StudentName { get; set; } = string.Empty;
         public string? FatherName { get; set; }
         public string? ContactNo { get; set; }
+
+        // The report groups by class and section, and orders by them. Ordering on
+        // the NAME cannot work here: "Montessori", "Prep" and "New Admission"
+        // carry no number at all, and "Private Students 2026-27" carries one that
+        // means nothing. The ids are the school's own ordering.
+        public int? ClassID { get; set; }
         public string ClassName { get; set; } = string.Empty;
+        public int? SectionID { get; set; }
+
         public string SessionName { get; set; } = string.Empty;
         public string SectionName { get; set; } = string.Empty;
         public string GradeName { get; set; } = string.Empty;

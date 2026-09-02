@@ -156,10 +156,11 @@ namespace School.API.Controllers
                         {
                             new MenuItemDto { Id = 40, Title = "Employee", Icon = "bi-person-vcard-fill", Url = "/Employee", Order = 1, Section = "HR Payroll" },
                             new MenuItemDto { Id = 41, Title = "Payroll Setup", Icon = "bi-sliders", Url = "/hr/setup", Order = 2, Section = "HR Payroll" },
-                            new MenuItemDto { Id = 42, Title = "Attendance", Icon = "bi-calendar2-check-fill", Url = "/hr/attendance", Order = 3, Section = "HR Payroll" },
-                            new MenuItemDto { Id = 43, Title = "Leave", Icon = "bi-calendar-minus-fill", Url = "/hr/leave", Order = 4, Section = "HR Payroll" },
-                            new MenuItemDto { Id = 44, Title = "Payroll Run", Icon = "bi-cash-stack", Url = "/hr/payroll", Order = 5, Section = "HR Payroll" },
-                            new MenuItemDto { Id = 45, Title = "Attendance Reports", Icon = "bi-bar-chart-fill", Url = "/hr/reports/attendance", Order = 6, Section = "HR Payroll" }
+                            new MenuItemDto { Id = 46, Title = "School Timings", Icon = "bi-clock-history", Url = "/hr/school-timing", Order = 3, Section = "HR Payroll" },
+                            new MenuItemDto { Id = 42, Title = "Attendance", Icon = "bi-calendar2-check-fill", Url = "/hr/attendance", Order = 4, Section = "HR Payroll" },
+                            new MenuItemDto { Id = 43, Title = "Leave", Icon = "bi-calendar-minus-fill", Url = "/hr/leave", Order = 5, Section = "HR Payroll" },
+                            new MenuItemDto { Id = 44, Title = "Payroll Run", Icon = "bi-cash-stack", Url = "/hr/payroll", Order = 6, Section = "HR Payroll" },
+                            new MenuItemDto { Id = 45, Title = "Attendance Reports", Icon = "bi-bar-chart-fill", Url = "/hr/reports/attendance", Order = 7, Section = "HR Payroll" }
                         }
                     },
                     // 4. Fee Management

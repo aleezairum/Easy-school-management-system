@@ -23,6 +23,8 @@
         .btn-edit:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,134,73,0.4); }
     .btn-delete { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); border: none; border-radius: 8px; padding: 5px 11px; font-size: 13px; color: #fff; cursor: pointer; transition: all 0.2s; }
         .btn-delete:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(239,68,68,0.4); }
+    .btn-copy { background: #fff; border: 2px solid #008649; border-radius: 10px; padding: 6px 14px; font-weight: 600; font-size: 13px; color: #008649; cursor: pointer; text-transform: none; letter-spacing: 0; transition: all 0.2s; }
+        .btn-copy:hover { background: #008649; color: #fff; }
 
     .table tbody tr.selected { background: #ecfdf5; border-left: 3px solid #008649; }
 
@@ -58,28 +60,39 @@
 
             <!-- ── Entry Form (2 rows) ── -->
             <div class="form-section">
-                <div class="section-title">
-                    <i class="bi bi-pencil-square me-2"></i>
-                    <span id="formTitle">Add Subject Assignment</span>
+                <div class="section-title d-flex align-items-center justify-content-between">
+                    <span>
+                        <i class="bi bi-pencil-square me-2"></i>
+                        <span id="formTitle">Add Subject Assignment</span>
+                    </span>
+                    <button type="button" class="btn-copy" data-bs-toggle="modal" data-bs-target="#copyExamModal">
+                        <i class="bi bi-files me-1"></i> Copy from Previous Exam
+                    </button>
                 </div>
 
                 <input type="hidden" id="hdnVID" value="0" />
 
                 <!-- Row 1 -->
                 <div class="row g-3">
-                    <div class="col-lg-4 col-md-6 col-12">
+                    <div class="col-lg-3 col-md-6 col-12">
+                        <label for="examId" class="form-label">Exam <span class="text-danger">*</span></label>
+                        <select class="form-select" id="examId">
+                            <option value="">-- Select Exam --</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-12">
                         <label for="staffMemberId" class="form-label">Staff Member <span class="text-danger">*</span></label>
                         <select class="form-select" id="staffMemberId">
                             <option value="">-- Select Staff Member --</option>
                         </select>
                     </div>
-                    <div class="col-lg-4 col-md-6 col-12">
+                    <div class="col-lg-3 col-md-6 col-12">
                         <label for="classId" class="form-label">Class <span class="text-danger">*</span></label>
                         <select class="form-select" id="classId">
                             <option value="">-- Select Class --</option>
                         </select>
                     </div>
-                    <div class="col-lg-4 col-md-6 col-12">
+                    <div class="col-lg-3 col-md-6 col-12">
                         <label for="sectionId" class="form-label">Section <span class="text-danger">*</span></label>
                         <select class="form-select" id="sectionId" disabled>
                             <option value="">-- Select Section --</option>
@@ -132,6 +145,12 @@
                     <div class="filter-collapse-body">
                         <div class="row g-3 align-items-end">
                             <div class="col-lg-3 col-md-4 col-sm-6 col-12">
+                                <label for="filterExam" class="form-label">Exam</label>
+                                <select class="form-select" id="filterExam">
+                                    <option value="">All Exams</option>
+                                </select>
+                            </div>
+                            <div class="col-lg-3 col-md-4 col-sm-6 col-12">
                                 <label for="filterStaff" class="form-label">Staff Member</label>
                                 <select class="form-select" id="filterStaff">
                                     <option value="">All Staff</option>
@@ -172,6 +191,7 @@
                         <thead>
                             <tr>
                                 <th style="width:60px;">Sr#</th>
+                                <th>Exam</th>
                                 <th>Staff Member</th>
                                 <th>Class</th>
                                 <th>Section</th>
@@ -181,12 +201,53 @@
                             </tr>
                         </thead>
                         <tbody id="assignmentsBody">
-                            <tr><td colspan="7" class="text-center text-muted py-4">Loading...</td></tr>
+                            <tr><td colspan="8" class="text-center text-muted py-4">Loading...</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
+        </div>
+    </div>
+</div>
+
+<!-- ── Copy from previous exam ── -->
+<div class="modal fade" id="copyExamModal" tabindex="-1" aria-labelledby="copyExamModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:16px;">
+            <div class="modal-header">
+                <h5 class="modal-title" id="copyExamModalLabel">
+                    <i class="bi bi-files me-2"></i>Copy Subject Assignments
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted" style="font-size:13px;">
+                    Takes every subject assignment from one exam and adds it to another.
+                    Nothing is removed &mdash; assignments the target exam already has are
+                    skipped, so running this twice changes nothing.
+                </p>
+                <div class="mb-3">
+                    <label for="copyFromExam" class="form-label">Copy from <span class="text-danger">*</span></label>
+                    <select class="form-select" id="copyFromExam">
+                        <option value="">-- Select Exam --</option>
+                    </select>
+                    <div class="form-text" id="copyFromCount"></div>
+                </div>
+                <div class="mb-2">
+                    <label for="copyToExam" class="form-label">Copy into <span class="text-danger">*</span></label>
+                    <select class="form-select" id="copyToExam">
+                        <option value="">-- Select Exam --</option>
+                    </select>
+                    <div class="form-text" id="copyToCount"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-clear" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn-save" onclick="copyAssignments()">
+                    <i class="bi bi-files me-1"></i> Copy
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -197,12 +258,13 @@
 
     let editingVID = 0;
     let allRows = [];
+    let allExams = [];
 
     function rid(o)   { return o.vID ?? o.vid ?? o.viD ?? o.VID ?? o.id ?? 0; }
     function rname(o) { return o.vName ?? o.vname ?? o.VName ?? o.name ?? o.fullName ?? ''; }
 
     $(document).ready(function () {
-        Promise.all([loadStaff(), loadClasses()]).then(loadAll);
+        Promise.all([loadExams(), loadStaff(), loadClasses()]).then(loadAll);
         $('#classId').on('change', onClassChange);
 
         // Collapsible filter chevron
@@ -211,9 +273,36 @@
         }).on('hide.bs.collapse', function () {
             $('.filter-section-title').removeClass('expanded');
         });
+
+        // Opening the copy dialog: the exam being worked on is the obvious
+        // target, so pre-select it and show how many rows each side holds.
+        $('#copyExamModal').on('show.bs.modal', function () {
+            $('#copyToExam').val($('#examId').val() || '').trigger('change.select2');
+            $('#copyFromExam').val('').trigger('change.select2');
+            renderCopyCounts();
+        });
+        $('#copyFromExam, #copyToExam').on('change', renderCopyCounts);
     });
 
     /* ── Dropdown loaders (shared by entry + filter) ── */
+    async function loadExams() {
+        try {
+            const res = await fetch(`${BASE_URL}/exam`);
+            if (!res.ok) return;
+            allExams = await res.json() || [];
+
+            const opts = allExams.map(e => `<option value="${rid(e)}">${esc(rname(e))}</option>`).join('');
+            $('#examId, #filterExam, #copyFromExam, #copyToExam').append(opts);
+
+            // Default the entry form to the newest exam (highest VID) — the one
+            // being set up is almost always the one just created.
+            if (allExams.length > 0) {
+                const latest = allExams.reduce((a, b) => (rid(a) >= rid(b) ? a : b));
+                $('#examId').val(String(rid(latest))).trigger('change.select2');
+            }
+        } catch (e) { console.error('exams', e); }
+    }
+
     async function loadStaff() {
         try {
             const res = await fetch(`${BASE_URL}/teacher`);
@@ -300,15 +389,18 @@
     function rowId(r) { return r.vid ?? r.Vid ?? r.VID ?? 0; }
 
     function applyFilter() {
+        const fExam    = $('#filterExam').val();
         const fStaff   = $('#filterStaff').val();
         const fClass   = $('#filterClass').val();
         const fSection = $('#filterSection').val();
 
         const rows = allRows.filter(r => {
+            const eId = String(val(r, 'examId', 'ExamId') ?? '');
             const tId = String(val(r, 'teacherId', 'TeacherId') ?? '');
             const cId = String(val(r, 'classId', 'ClassId') ?? '');
             const sId = String(val(r, 'sectionId', 'SectionId') ?? '');
-            return (!fStaff   || tId === fStaff)
+            return (!fExam    || eId === fExam)
+                && (!fStaff   || tId === fStaff)
                 && (!fClass   || cId === fClass)
                 && (!fSection || sId === fSection);
         });
@@ -319,11 +411,12 @@
         const tbody = $('#assignmentsBody');
         tbody.empty();
         if (!rows || rows.length === 0) {
-            tbody.html('<tr><td colspan="7" class="text-center text-muted py-4">No records found.</td></tr>');
+            tbody.html('<tr><td colspan="8" class="text-center text-muted py-4">No records found.</td></tr>');
             return;
         }
         rows.forEach((r, i) => {
             const vid = rowId(r);
+            const examName    = val(r, 'examName', 'ExamName')       || '-';
             const staffName   = val(r, 'teacherName', 'TeacherName') || '-';
             const className   = val(r, 'className', 'ClassName')     || '-';
             const sectionName = val(r, 'sectionName', 'SectionName') || '-';
@@ -333,6 +426,7 @@
             tbody.append(`
                 <tr data-vid="${vid}" ${editingVID === vid ? 'class="selected"' : ''}>
                     <td>${i + 1}</td>
+                    <td><span class="badge bg-light text-dark">${esc(examName)}</span></td>
                     <td>${esc(staffName)}</td>
                     <td>${esc(className)}</td>
                     <td>${esc(sectionName)}</td>
@@ -351,6 +445,7 @@
         const r = allRows.find(x => rowId(x) === vid);
         if (!r) return;
 
+        const examId    = val(r, 'examId', 'ExamId');
         const staffId   = val(r, 'teacherId', 'TeacherId');
         const classId   = val(r, 'classId', 'ClassId');
         const sectionId = val(r, 'sectionId', 'SectionId');
@@ -359,6 +454,7 @@
 
         // NOTE: trigger 'change.select2' (NOT 'change') so the Select2 widget repaints
         // the selected value WITHOUT firing onClassChange (which would wipe section/subject).
+        $('#examId').val(String(examId)).trigger('change.select2');
         $('#staffMemberId').val(String(staffId)).trigger('change.select2');
         $('#classId').val(String(classId)).trigger('change.select2');
         await Promise.all([loadSectionsInto('#sectionId', classId), loadSubjectsInto('#subjectId', classId)]);
@@ -375,12 +471,14 @@
     }
 
     async function saveRecord() {
+        const examId    = parseInt($('#examId').val())    || 0;
         const staffId   = parseInt($('#staffMemberId').val()) || 0;
         const classId   = parseInt($('#classId').val())   || 0;
         const sectionId = parseInt($('#sectionId').val()) || 0;
         const subjectId = parseInt($('#subjectId').val()) || 0;
         const lectVal   = $('#lectureNo').val();
 
+        if (!examId)    { showToast('Please select an Exam', 'warning');   return; }
         if (!staffId)   { showToast('Please select a Staff Member', 'warning'); return; }
         if (!classId)   { showToast('Please select a Class', 'warning');   return; }
         if (!sectionId) { showToast('Please select a Section', 'warning'); return; }
@@ -388,6 +486,7 @@
 
         const payload = {
             VID:       parseInt($('#hdnVID').val()) || 0,
+            ExamId:    examId,
             StaffId:   staffId,
             ClassId:   classId,
             SectionId: sectionId,
@@ -440,6 +539,8 @@
 
     function resetForm() {
         $('#hdnVID').val('0');
+        // Exam is deliberately left as-is: assignments are entered a whole exam
+        // at a time, so clearing it after every save would mean re-picking it.
         $('#staffMemberId').val('').trigger('change');
         $('#classId').val('').trigger('change');
         $('#sectionId').val('').prop('disabled', true).find('option:not(:first)').remove();
@@ -451,10 +552,62 @@
     }
 
     function resetFilter() {
+        $('#filterExam').val('').trigger('change');
         $('#filterStaff').val('').trigger('change');
         $('#filterClass').val('').trigger('change');
         $('#filterSection').val('').find('option:not(:first)').remove();
         applyFilter();
+    }
+
+    /* ── Copy a whole exam's assignments into another exam ── */
+    function countFor(examId) {
+        if (!examId) return null;
+        return allRows.filter(r => String(val(r, 'examId', 'ExamId') ?? '') === String(examId)).length;
+    }
+
+    function renderCopyCounts() {
+        const from = $('#copyFromExam').val();
+        const to   = $('#copyToExam').val();
+        const f = countFor(from);
+        const t = countFor(to);
+        $('#copyFromCount').text(f === null ? '' : `${f} assignment(s) in this exam.`);
+        $('#copyToCount').text(t === null ? '' : `${t} assignment(s) already in this exam.`);
+    }
+
+    async function copyAssignments() {
+        const fromExamId = parseInt($('#copyFromExam').val()) || 0;
+        const toExamId   = parseInt($('#copyToExam').val())   || 0;
+
+        if (!fromExamId) { showToast('Please select the exam to copy from', 'warning'); return; }
+        if (!toExamId)   { showToast('Please select the exam to copy into', 'warning'); return; }
+        if (fromExamId === toExamId) {
+            showToast('Source and target exam cannot be the same', 'warning');
+            return;
+        }
+
+        showLoading();
+        try {
+            const res = await fetch(`${BASE_URL}/staffsubject/copy`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ FromExamId: fromExamId, ToExamId: toExamId })
+            });
+            const body = await safeJson(res);
+
+            if (res.ok) {
+                showToast(body.message || 'Assignments copied.', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('copyExamModal'))?.hide();
+                // Show what was just built: switch the grid to the target exam.
+                $('#filterExam').val(String(toExamId)).trigger('change.select2');
+                await loadAll();
+            } else {
+                showToast(body.message || 'Failed to copy assignments', 'error');
+            }
+        } catch (e) {
+            showToast('Network error: ' + e.message, 'error');
+        } finally {
+            hideLoading();
+        }
     }
 
     /* ── Helpers ── */

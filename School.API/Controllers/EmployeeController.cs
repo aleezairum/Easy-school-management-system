@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using School.API.DTOs.HR;
+using School.API.Extensions;
 using School.API.Services.Interfaces.HR;
 
 namespace School.API.Controllers
@@ -33,7 +34,7 @@ namespace School.API.Controllers
         {
             try
             {
-                var result = await _service.CreateAsync(dto);
+                var result = await _service.CreateAsync(dto, Request.GetUserId(), CallerIp());
                 return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
             }
             catch (InvalidOperationException ex)
@@ -47,7 +48,7 @@ namespace School.API.Controllers
         {
             try
             {
-                var result = await _service.UpdateAsync(id, dto);
+                var result = await _service.UpdateAsync(id, dto, Request.GetUserId(), CallerIp());
                 return result == null ? NotFound() : Ok(result);
             }
             catch (InvalidOperationException ex)
@@ -55,6 +56,9 @@ namespace School.API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        private string CallerIp() =>
+            HttpContext.Connection.RemoteIpAddress?.ToString() ?? "0.0.0.0";
 
         [HttpDelete("{id}")]
         public async Task<ActionResult> Delete(int id)

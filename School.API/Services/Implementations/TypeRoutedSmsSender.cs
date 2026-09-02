@@ -1,21 +1,21 @@
-using School.API.Data.DBModels.SMS;
 using School.API.Services.Interfaces;
 
 namespace School.API.Services.Implementations
 {
     // Routes each send by SmsMessageType: types listed in SmsRouting:WahaMessageTypes
-    // (default just Absent) go out free through WAHA; everything else goes
-    // through Meta's paid Cloud API. If WAHA is known to be disconnected, or a
-    // WAHA send fails, the message automatically falls back to Meta so nothing
-    // is silently dropped.
+    // go out free through WAHA; everything else goes through Meta's paid Cloud API.
+    //
+    // When a free-routed message finds WAHA disconnected it is NOT quietly
+    // upgraded to the paid gateway — that would spend money the user never
+    // agreed to. It comes back as a hold instead, and the queue processor parks
+    // the row until the user reconnects WAHA (resume free) or explicitly
+    // releases the job through the paid gateway (ForcePaid).
     public class TypeRoutedSmsSender : ISmsSender
     {
         private readonly ISmsSender _waha;
         private readonly ISmsSender _meta;
-        private readonly IWahaSessionStatusService _wahaStatus;
+        private readonly ISmsRoutingPolicy _policy;
         private readonly ILogger<TypeRoutedSmsSender> _logger;
-        private readonly HashSet<SmsMessageType> _wahaTypes;
-        private readonly bool _routingEnabled;
 
         // Reflects whichever provider actually handled the most recent send —
         // read by SmsQueueProcessor right after SendTemplateAsync returns.
@@ -24,55 +24,59 @@ namespace School.API.Services.Implementations
         public TypeRoutedSmsSender(
             WahaSmsSender waha,
             MetaWhatsAppSender meta,
-            IWahaSessionStatusService wahaStatus,
-            ILogger<TypeRoutedSmsSender> logger,
-            IConfiguration configuration)
+            ISmsRoutingPolicy policy,
+            ILogger<TypeRoutedSmsSender> logger)
         {
             _waha = waha;
             _meta = meta;
-            _wahaStatus = wahaStatus;
+            _policy = policy;
             _logger = logger;
-
-            _routingEnabled = configuration.GetValue<bool?>("SmsRouting:Enabled") ?? true;
-
-            var configuredTypes = configuration.GetSection("SmsRouting:WahaMessageTypes").Get<string[]>()
-                ?? new[] { nameof(SmsMessageType.Absent) };
-
-            _wahaTypes = configuredTypes
-                .Select(t => Enum.TryParse<SmsMessageType>(t, ignoreCase: true, out var v) ? (SmsMessageType?)v : null)
-                .Where(v => v.HasValue)
-                .Select(v => v!.Value)
-                .ToHashSet();
         }
 
         public async Task<SmsSendOutcome> SendTemplateAsync(string phoneNumber, SmsTemplateRequest request)
         {
-            bool wantsWaha = _routingEnabled
-                && request.MessageType.HasValue
-                && _wahaTypes.Contains(request.MessageType.Value);
+            var route = await _policy.DecideAsync(request.MessageType, request.ForcePaid);
 
-            if (wantsWaha)
+            if (route == SmsRoute.Hold)
             {
-                var status = await _wahaStatus.GetStatusAsync();
-                if (status.Connected)
-                {
-                    var outcome = await _waha.SendTemplateAsync(phoneNumber, request);
-                    if (outcome.Success)
-                    {
-                        ProviderName = _waha.ProviderName;
-                        return outcome;
-                    }
+                var status = await _policy.GetFreeStatusAsync();
+                _logger.LogInformation(
+                    "[TypeRouted] Holding {Type} for {Phone}: WAHA not connected (status={Status})",
+                    request.MessageType, phoneNumber, status.Status);
 
-                    _logger.LogWarning(
-                        "[TypeRouted] WAHA send failed for {Phone} ({Type}); falling back to Meta. Error: {Error}",
-                        phoneNumber, request.MessageType, outcome.Error);
+                return SmsSendOutcome.Hold(
+                    $"WhatsApp (free) is disconnected — status {status.Status}. Held until resumed.");
+            }
+
+            if (route == SmsRoute.Free)
+            {
+                var outcome = await _waha.SendTemplateAsync(phoneNumber, request);
+                if (outcome.Success)
+                {
+                    ProviderName = _waha.ProviderName;
+                    return outcome;
                 }
-                else
+
+                // The send failed. If WAHA dropped out between the routing check
+                // and now, that's a hold, not a failure — re-probe rather than
+                // burning the row (or silently paying for it).
+                var status = await _policy.GetFreeStatusAsync(forceRefresh: true);
+                if (!status.Connected)
                 {
                     _logger.LogWarning(
-                        "[TypeRouted] WAHA not connected (status={Status}); routing {Type} to Meta instead.",
-                        status.Status, request.MessageType);
+                        "[TypeRouted] WAHA send failed for {Phone} and the session is now {Status}; holding.",
+                        phoneNumber, status.Status);
+
+                    return SmsSendOutcome.Hold(
+                        $"WhatsApp (free) went offline mid-send — status {status.Status}. Held until resumed.");
                 }
+
+                _logger.LogWarning(
+                    "[TypeRouted] WAHA send failed for {Phone} ({Type}) while connected. Error: {Error}",
+                    phoneNumber, request.MessageType, outcome.Error);
+
+                ProviderName = _waha.ProviderName;
+                return outcome;
             }
 
             var metaOutcome = await _meta.SendTemplateAsync(phoneNumber, request);

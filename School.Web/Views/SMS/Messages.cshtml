@@ -7,28 +7,42 @@
 
     <!-- ── SUMMARY TILES ── -->
     <div class="row g-3 mb-3">
-        <div class="col-6 col-lg-3">
+        <div class="col-6 col-lg-2">
             <div class="p-3" style="background:#eef2ff;border:1px solid #c7d2fe;border-radius:12px;">
                 <div class="text-secondary" style="font-size:12px;">Total</div>
                 <div class="fw-bold" style="font-size:22px;" id="tileTotal">0</div>
             </div>
         </div>
-        <div class="col-6 col-lg-3">
+        <div class="col-6 col-lg-2">
             <div class="p-3" style="background:#fefce8;border:1px solid #fde68a;border-radius:12px;">
                 <div class="text-secondary" style="font-size:12px;">Pending</div>
                 <div class="fw-bold text-warning" style="font-size:22px;" id="tilePending">0</div>
             </div>
         </div>
-        <div class="col-6 col-lg-3">
+        <div class="col-6 col-lg-2">
             <div class="p-3" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;">
                 <div class="text-secondary" style="font-size:12px;">Sent</div>
                 <div class="fw-bold text-success" style="font-size:22px;" id="tileSent">0</div>
             </div>
         </div>
-        <div class="col-6 col-lg-3">
+        <div class="col-6 col-lg-2">
             <div class="p-3" style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;">
                 <div class="text-secondary" style="font-size:12px;">Failed</div>
                 <div class="fw-bold text-danger" style="font-size:22px;" id="tileFailed">0</div>
+            </div>
+        </div>
+        <!-- Parked because WhatsApp (free) was disconnected — not sent, not failed. -->
+        <div class="col-6 col-lg-2">
+            <div class="p-3" style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;">
+                <div class="text-secondary" style="font-size:12px;">Held</div>
+                <div class="fw-bold" style="font-size:22px;color:#c2410c;" id="tileHeld">0</div>
+            </div>
+        </div>
+        <!-- Cancelled by the user before sending. -->
+        <div class="col-6 col-lg-2">
+            <div class="p-3" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;">
+                <div class="text-secondary" style="font-size:12px;">Rejected</div>
+                <div class="fw-bold text-secondary" style="font-size:22px;" id="tileRejected">0</div>
             </div>
         </div>
     </div>
@@ -68,6 +82,8 @@
                         <option value="0">Pending</option>
                         <option value="1">Sent</option>
                         <option value="2">Failed</option>
+                        <option value="3">Held</option>
+                        <option value="4">Rejected</option>
                     </select>
                 </div>
                 <div class="col-6 col-lg-2">
@@ -183,7 +199,7 @@
         }
 
         function statusBadge(s) {
-            const map = { Sent: 'bg-success', Failed: 'bg-danger', Pending: 'bg-warning text-dark' };
+            const map = { Sent: 'bg-success', Failed: 'bg-danger', Pending: 'bg-warning text-dark', Held: 'bg-warning text-dark', Rejected: 'bg-secondary' };
             return `<span class="badge ${map[s] || 'bg-secondary'}">${esc(s)}</span>`;
         }
 
@@ -225,6 +241,8 @@
                 $('#tilePending').text(result.pending || 0);
                 $('#tileSent').text(result.sent || 0);
                 $('#tileFailed').text(result.failed || 0);
+                $('#tileHeld').text(result.held || 0);
+                $('#tileRejected').text(result.rejected || 0);
 
                 const rows = result.data || [];
                 if (rows.length === 0) {
@@ -355,7 +373,7 @@
             // Default to the last 7 days so the page opens on recent traffic.
             const today = new Date();
             const weekAgo = new Date(today.getTime() - 6 * 24 * 60 * 60 * 1000);
-            const iso = d => d.toISOString().substring(0, 10);
+            const iso = d => toInputDate(d);
             $('#fFromDate').val(iso(weekAgo));
             $('#fToDate').val(iso(today));
 

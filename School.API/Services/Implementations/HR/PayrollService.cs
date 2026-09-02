@@ -69,7 +69,11 @@ namespace School.API.Services.Implementations.HR
                 var workingDays = CountWorkingDays(periodStart, monthDays, holidayDates, emp.OffDay1, emp.OffDay2);
 
                 var empAttendance = attendanceByEmployee[emp.EmployeeId].ToList();
+                // Exempt is a worked day: the employee was excused from marking
+                // attendance (official duty, training), not away from the job — so
+                // it counts here and never below in absentDays.
                 var presentDays = empAttendance.Count(a => a.Status == HrAttendanceStatus.Present)
+                                 + empAttendance.Count(a => a.Status == HrAttendanceStatus.Exempt)
                                  + 0.5m * empAttendance.Count(a => a.Status == HrAttendanceStatus.HalfDay);
                 var absentDays = empAttendance.Count(a => a.Status == HrAttendanceStatus.Absent)
                                 + 0.5m * empAttendance.Count(a => a.Status == HrAttendanceStatus.HalfDay);

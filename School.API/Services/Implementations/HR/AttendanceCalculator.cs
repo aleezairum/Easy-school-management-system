@@ -17,6 +17,34 @@ namespace School.API.Services.Implementations.HR
             public int FullDayMinutes { get; set; }
         }
 
+        /// <summary>
+        /// A shift derived from the school timings alone, for staff who have no
+        /// shift of their own. A school that runs on one bell for everyone does
+        /// not need per-employee shifts, and requiring one just to record a
+        /// time-in would make the School Timings screen useless on its own.
+        /// </summary>
+        /// <remarks>
+        /// Grace is 0 — the school timing is the bell, and anyone wanting a
+        /// grace period assigns a shift, which then supplies it.
+        ///
+        /// The day-length thresholds keep the proportions the Shift form itself
+        /// defaults to: an 8-hour (480-minute) shift defaults to 180 minutes for
+        /// a half day and 360 for a full one, i.e. 37.5% and 75% of the span.
+        /// </remarks>
+        public static ShiftInfo FromSchoolTiming(TimeSpan timeIn, TimeSpan timeOut)
+        {
+            var spanMinutes = (int)(timeOut - timeIn).TotalMinutes;
+
+            return new ShiftInfo
+            {
+                TimeIn = timeIn,
+                TimeOut = timeOut,
+                GraceMinutes = 0,
+                HalfDayMinutes = (int)Math.Round(spanMinutes * 0.375),
+                FullDayMinutes = (int)Math.Round(spanMinutes * 0.75)
+            };
+        }
+
         public class Input
         {
             public ShiftInfo? Shift { get; set; }

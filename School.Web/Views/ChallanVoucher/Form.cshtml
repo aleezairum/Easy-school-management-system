@@ -227,11 +227,11 @@
         $(document).ready(function () {
             // Set default dates
             const today = new Date();
-            $('#issueDate').val(today.toISOString().split('T')[0]);
+            $('#issueDate').val(toInputDate(today));
 
             const dueDate = new Date();
             dueDate.setDate(dueDate.getDate() + 15);
-            $('#dueDate').val(dueDate.toISOString().split('T')[0]);
+            $('#dueDate').val(toInputDate(dueDate));
 
             $('#forYear').val(today.getFullYear());
 

@@ -122,7 +122,9 @@
                             <th style="width: 60px;">Photo</th>
                             <th>Employee Code</th>
                             <th>Full Name</th>
+                            <th>Father Name</th>
                             <th>Designation</th>
+                            <th>Role</th>
                             <th>Phone/Mobile</th>
                             <th>Joining Date</th>
                             <th class="text-center" style="width: 100px;">Status</th>
@@ -207,7 +209,7 @@
             tbody.empty();
 
             if (items.length === 0) {
-                tbody.html('<tr><td colspan="9" class="text-center text-muted py-4">No employees found.</td></tr>');
+                tbody.html('<tr><td colspan="11" class="text-center text-muted py-4">No employees found.</td></tr>');
                 return;
             }
 
@@ -222,7 +224,11 @@
                         <td>${photoHtml}</td>
                         <td><strong>${item.employeeCode || '-'}</strong></td>
                         <td>${item.fullName || (item.firstName + ' ' + item.lastName)}</td>
+                        <td>${item.fatherName || '-'}</td>
                         <td>${item.designationName || '-'}</td>
+                        <td>${item.isTeachingStaff
+                                ? '<span class="badge bg-primary">Teaching</span>'
+                                : '<span class="badge bg-light text-dark">Non-teaching</span>'}</td>
                         <td>${item.mobile || item.phone || '-'}</td>
                         <td>${formatDate(item.joiningDate)}</td>
                         <td class="text-center">
@@ -243,7 +249,7 @@
 
         function formatDate(dateString) {
             if (!dateString) return '-';
-            const date = new Date(dateString);
+            const date = parseCalendarDate(dateString) || new Date(NaN);
             return date.toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'short',

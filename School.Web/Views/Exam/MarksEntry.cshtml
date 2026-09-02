@@ -112,7 +112,7 @@
     const ATT = { PRESENT: 1, ABSENT: 0, LEAVE: 2 };
 
     $(document).ready(function () {
-        $('#examDate').val(new Date().toISOString().split('T')[0]);
+        $('#examDate').val(toInputDate());
         loadDropdowns();
 
         // When class changes, reload sections and subjects for that class

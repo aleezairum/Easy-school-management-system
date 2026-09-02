@@ -10,4 +10,14 @@ namespace School.API.DTOs.HR
         public int? MaxPerYear { get; set; }
         public bool IsActive { get; set; }
     }
+
+    public class SaveLeaveTypeDto
+    {
+        public string Code { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public bool IsPaid { get; set; } = true;
+        public decimal DeductDays { get; set; }
+        public int? MaxPerYear { get; set; }
+        public bool IsActive { get; set; } = true;
+    }
 }

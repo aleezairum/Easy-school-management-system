@@ -25,7 +25,8 @@ BEGIN
     BEGIN
         -- ===== UNPAID =====
         SELECT F.VID, F.VDate, S.RollNo, S.Name AS StudentName, P.FatherName, P.FatherMobile AS ContactNo,
-               C.VName AS ClassName, SY.VName AS SessionName, SEC.VName AS SectionName, G.VName AS GradeName,
+               C.VID AS ClassID, C.VName AS ClassName, SEC.VID AS SectionID,
+               SY.VName AS SessionName, SEC.VName AS SectionName, G.VName AS GradeName,
                FT.VName AS FeeTypeName, F.FeeAmount, F.ClearedAmount, F.FeeAmount - F.ClearedAmount AS PendingAmount,
                F.Remarks, F.IsClear
         FROM SMSStudentFee F
@@ -65,7 +66,8 @@ BEGIN
     BEGIN
         -- ===== PAID (from vouchers) =====
         SELECT F.VID, F.VDate, S.RollNo, S.Name AS StudentName, P.FatherName, P.FatherMobile AS ContactNo,
-               C.VName AS ClassName, SY.VName AS SessionName, SEC.VName AS SectionName, G.VName AS GradeName,
+               C.VID AS ClassID, C.VName AS ClassName, SEC.VID AS SectionID,
+               SY.VName AS SessionName, SEC.VName AS SectionName, G.VName AS GradeName,
                FT.VName AS FeeTypeName, D.PaidAmount FeeAmount, D.PaidAmount ClearedAmount, D.PendingBalance AS PendingAmount,
                F.Remarks, F.IsClear
         FROM SMSStudentFee F
@@ -105,7 +107,8 @@ BEGIN
     BEGIN
         -- ===== ALL (pending rows UNION paid rows) =====
         SELECT F.VID, F.VDate, S.RollNo, S.Name AS StudentName, P.FatherName, P.FatherMobile AS ContactNo,
-               C.VName AS ClassName, SY.VName AS SessionName, SEC.VName AS SectionName, G.VName AS GradeName,
+               C.VID AS ClassID, C.VName AS ClassName, SEC.VID AS SectionID,
+               SY.VName AS SessionName, SEC.VName AS SectionName, G.VName AS GradeName,
                FT.VName AS FeeTypeName, 0 FeeAmount, 0 ClearedAmount, F.FeeAmount - F.ClearedAmount AS PendingAmount,
                F.Remarks, F.IsClear
         FROM SMSStudentFee F
@@ -139,7 +142,8 @@ BEGIN
         UNION ALL
 
         SELECT F.VID, F.VDate, S.RollNo, S.Name AS StudentName, P.FatherName, P.FatherMobile AS ContactNo,
-               C.VName AS ClassName, SY.VName AS SessionName, SEC.VName AS SectionName, G.VName AS GradeName,
+               C.VID AS ClassID, C.VName AS ClassName, SEC.VID AS SectionID,
+               SY.VName AS SessionName, SEC.VName AS SectionName, G.VName AS GradeName,
                FT.VName AS FeeTypeName, D.PaidAmount FeeAmount, D.PaidAmount ClearedAmount, 0 AS PendingAmount,
                F.Remarks, F.IsClear
         FROM SMSStudentFee F

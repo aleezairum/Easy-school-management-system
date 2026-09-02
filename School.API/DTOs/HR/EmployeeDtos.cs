@@ -5,15 +5,18 @@ namespace School.API.DTOs.HR
         public int Id { get; set; }
         public string EmployeeCode { get; set; } = string.Empty;
         public string FullName { get; set; } = string.Empty;
+        public string? FatherName { get; set; }
         public string? CNIC { get; set; }
         public string? Mobile { get; set; }
         public string? Photo { get; set; }
         public string? Department { get; set; }
+        public int? DesignationId { get; set; }
         public string? DesignationName { get; set; }
         public string? HRGradeName { get; set; }
         public string? EmployeeType { get; set; }
         public string? Status { get; set; }
         public DateTime? JoiningDate { get; set; }
+        public bool IsTeachingStaff { get; set; }
         public bool IsActive { get; set; }
     }
 
@@ -26,6 +29,7 @@ namespace School.API.DTOs.HR
         public string? FirstNameUrdu { get; set; }
         public string? LastNameUrdu { get; set; }
         public string FullName { get; set; } = string.Empty;
+        public string? FatherName { get; set; }
         public string? CNIC { get; set; }
         public string? Email { get; set; }
         public string? Phone { get; set; }
@@ -54,8 +58,10 @@ namespace School.API.DTOs.HR
         public string? MachineCardNo { get; set; }
         public byte? OffDay1 { get; set; }
         public byte? OffDay2 { get; set; }
-        public int? TeacherId { get; set; }
-        public string? TeacherName { get; set; }
+
+        // Teaching staff are rows in this same table; there is no separate
+        // academic record and no separate id to carry.
+        public bool IsTeachingStaff { get; set; }
 
         public string? BankName { get; set; }
         public string? BankAccountNo { get; set; }
@@ -68,7 +74,9 @@ namespace School.API.DTOs.HR
         public string? Status { get; set; }
         public bool IsActive { get; set; }
         public DateTime CreatedAt { get; set; }
+        public int? CreatedBy { get; set; }
         public DateTime? UpdatedAt { get; set; }
+        public int? UpdatedBy { get; set; }
     }
 
     public class SaveEmployeeDto
@@ -79,6 +87,7 @@ namespace School.API.DTOs.HR
         public string? LastName { get; set; }
         public string? FirstNameUrdu { get; set; }
         public string? LastNameUrdu { get; set; }
+        public string? FatherName { get; set; }
         public string? CNIC { get; set; }
         public string? Email { get; set; }
         public string? Phone { get; set; }
@@ -103,7 +112,11 @@ namespace School.API.DTOs.HR
         public string? MachineCardNo { get; set; }
         public byte? OffDay1 { get; set; }
         public byte? OffDay2 { get; set; }
-        public int? TeacherId { get; set; }
+
+        // Ticking this is the whole of "is a teacher": it makes the employee
+        // available to subject assignment, the timetable and the exam reports,
+        // all of which join this employee's own Id.
+        public bool IsTeachingStaff { get; set; }
 
         public string? BankName { get; set; }
         public string? BankAccountNo { get; set; }

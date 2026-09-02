@@ -22,6 +22,7 @@ namespace School.API.Services.Implementations
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly Repositories.Interfaces.Academic.ISMSExamResultRepository _examResultRepository;
         private readonly ISmsTemplateCatalog _templateCatalog;
+        private readonly ISmsRoutingPolicy _routingPolicy;
 
         public SmsService(
             ISmsMessageRepository repository,
@@ -29,7 +30,8 @@ namespace School.API.Services.Implementations
             ILogger<SmsService> logger,
             IHttpContextAccessor httpContextAccessor,
             Repositories.Interfaces.Academic.ISMSExamResultRepository examResultRepository,
-            ISmsTemplateCatalog templateCatalog)
+            ISmsTemplateCatalog templateCatalog,
+            ISmsRoutingPolicy routingPolicy)
         {
             _repository = repository;
             _context = context;
@@ -37,6 +39,45 @@ namespace School.API.Services.Implementations
             _httpContextAccessor = httpContextAccessor;
             _examResultRepository = examResultRepository;
             _templateCatalog = templateCatalog;
+            _routingPolicy = routingPolicy;
+        }
+
+        // What a send resolved to, before anything is written. Enqueue* persists
+        // it; Preview* renders it. Both go through the same Prepare* method so
+        // the list the user approves is the list that actually goes out.
+        private sealed class PreparedBatch
+        {
+            public List<SmsMessage> Messages { get; } = new();
+            public List<SmsPreviewItemDto> Items { get; } = new();
+            public int SkippedNoPhone { get; set; }
+
+            public void Add(SmsMessage message, SmsPreviewItemDto item)
+            {
+                Messages.Add(message);
+                Items.Add(item);
+            }
+        }
+
+        // Turns a prepared batch into the preview payload, stamping which
+        // gateway it would use as things stand right now.
+        private async Task<SmsPreviewDto> ToPreviewAsync(
+            PreparedBatch batch, SmsMessageType messageType, bool forcePaid)
+        {
+            var route = await _routingPolicy.DecideAsync(messageType, forcePaid);
+            var status = await _routingPolicy.GetFreeStatusAsync();
+
+            return new SmsPreviewDto
+            {
+                MessageType = messageType.ToString(),
+                Total = batch.Items.Count,
+                SkippedNoPhone = batch.SkippedNoPhone,
+                // Hold means it wanted the free route and cannot have it — the
+                // page turns that into the reconnect/pay prompt.
+                Route = route == SmsRoute.Free ? "free" : route == SmsRoute.Hold ? "hold" : "paid",
+                FreeAvailable = status.Connected,
+                FreeStatus = status.Status,
+                Items = batch.Items
+            };
         }
 
         // Stamps the approved Meta template, its parameters and the fully
@@ -93,13 +134,9 @@ namespace School.API.Services.Implementations
         // ─────────────────────────────────────────────────────────────
         // Bulk Enqueue (General / Absent / Late / Excel / Staff etc.)
         // ─────────────────────────────────────────────────────────────
-        public async Task<SmsQueueStatusDto> EnqueueBulkAsync(SmsSendDto dto)
+        private PreparedBatch PrepareBulk(SmsSendDto dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.JobId))
-                dto.JobId = Guid.NewGuid().ToString();
-
-            var (userId, userIp) = GetAuditContext();
-            var messages = new List<SmsMessage>(dto.Recipients.Count);
+            var batch = new PreparedBatch();
 
             foreach (var recipient in dto.Recipients)
             {
@@ -107,8 +144,13 @@ namespace School.API.Services.Implementations
                     ? recipient.Message
                     : dto.Message;
 
-                if (string.IsNullOrWhiteSpace(recipient.Phone) ||
-                    string.IsNullOrWhiteSpace(messageText))
+                if (string.IsNullOrWhiteSpace(recipient.Phone))
+                {
+                    batch.SkippedNoPhone++;
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(messageText))
                     continue;
 
                 var message = new SmsMessage
@@ -118,14 +160,32 @@ namespace School.API.Services.Implementations
                     MessageText = Preview(messageText),
                     MessageType = dto.MessageType,
                     Status = SmsStatus.Pending,
-                    JobId = dto.JobId
+                    JobId = dto.JobId,
+                    ForcePaid = dto.ForcePaid
                 };
 
                 // Absent/late lists arrive with their placeholder values already
                 // resolved server-side; free-form tabs post none.
                 ApplyTemplate(message, dto.MessageType, recipient.Params, messageText);
-                messages.Add(message);
+
+                batch.Add(message, new SmsPreviewItemDto
+                {
+                    Name = recipient.Name,
+                    Phone = recipient.Phone,
+                    Message = messageText
+                });
             }
+
+            return batch;
+        }
+
+        public async Task<SmsQueueStatusDto> EnqueueBulkAsync(SmsSendDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.JobId))
+                dto.JobId = Guid.NewGuid().ToString();
+
+            var (userId, userIp) = GetAuditContext();
+            var messages = PrepareBulk(dto).Messages;
 
             if (messages.Count > 0)
                 await _repository.EnqueueAsync(messages, userId, userIp);
@@ -142,16 +202,16 @@ namespace School.API.Services.Implementations
             };
         }
 
+        public Task<SmsPreviewDto> PreviewBulkAsync(SmsSendDto dto)
+            => ToPreviewAsync(PrepareBulk(dto), dto.MessageType, dto.ForcePaid);
+
         // ─────────────────────────────────────────────────────────────
         // Result Card (Rcard) — ONE PDF per student, enqueued. The queue
         // processor regenerates each PDF at send time (see SmsQueueProcessor)
         // and delivers it as a WhatsApp document.
         // ─────────────────────────────────────────────────────────────
-        public async Task<SmsQueueStatusDto> EnqueueRcardAsync(RcardSendDto dto)
+        private async Task<PreparedBatch> PrepareRcardAsync(RcardSendDto dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.JobId))
-                dto.JobId = Guid.NewGuid().ToString();
-
             // Resolve scope -> filter ids (0 = no filter).
             int classId   = (dto.Scope is "class" or "section" or "student") ? (dto.ClassId   ?? 0) : 0;
             int sectionId = (dto.Scope is "section" or "student")            ? (dto.SectionId ?? 0) : 0;
@@ -164,13 +224,11 @@ namespace School.API.Services.Implementations
                 ? "Dear Parent, please find attached your child's result card."
                 : dto.Message;
 
-            var (userId, userIp) = GetAuditContext();
-            var messages = new List<SmsMessage>();
-            int skipped = 0;
+            var batch = new PreparedBatch();
 
             foreach (var r in recipients)
             {
-                if (string.IsNullOrWhiteSpace(r.Phone)) { skipped++; continue; }
+                if (string.IsNullOrWhiteSpace(r.Phone)) { batch.SkippedNoPhone++; continue; }
 
                 var message = new SmsMessage
                 {
@@ -180,6 +238,7 @@ namespace School.API.Services.Implementations
                     MessageType    = SmsMessageType.Rcard,
                     Status         = SmsStatus.Pending,
                     JobId          = dto.JobId,
+                    ForcePaid      = dto.ForcePaid,
                     RefExamId      = dto.ExamId,
                     RefExamName    = dto.ExamName,
                     RefStudentId   = r.StudentId,
@@ -195,15 +254,36 @@ namespace School.API.Services.Implementations
                     new[] { r.StudentName ?? string.Empty, r.ClassName ?? string.Empty },
                     caption);
 
-                messages.Add(message);
+                batch.Add(message, new SmsPreviewItemDto
+                {
+                    StudentId = r.StudentId,
+                    Name      = r.StudentName,
+                    ClassName = r.ClassName,
+                    Phone     = r.Phone!,
+                    // The PDF is rendered at send time, so the preview shows the
+                    // caption that will accompany it.
+                    Message   = caption
+                });
             }
+
+            return batch;
+        }
+
+        public async Task<SmsQueueStatusDto> EnqueueRcardAsync(RcardSendDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.JobId))
+                dto.JobId = Guid.NewGuid().ToString();
+
+            var (userId, userIp) = GetAuditContext();
+            var batch = await PrepareRcardAsync(dto);
+            var messages = batch.Messages;
 
             if (messages.Count > 0)
                 await _repository.EnqueueAsync(messages, userId, userIp);
 
             _logger.LogInformation(
                 "Enqueued {Count} result-card PDFs for job {JobId} (exam {ExamId}, scope {Scope}); {Skipped} skipped (no phone)",
-                messages.Count, dto.JobId, dto.ExamId, dto.Scope, skipped);
+                messages.Count, dto.JobId, dto.ExamId, dto.Scope, batch.SkippedNoPhone);
 
             return new SmsQueueStatusDto
             {
@@ -213,16 +293,16 @@ namespace School.API.Services.Implementations
             };
         }
 
+        public async Task<SmsPreviewDto> PreviewRcardAsync(RcardSendDto dto)
+            => await ToPreviewAsync(await PrepareRcardAsync(dto), SmsMessageType.Rcard, dto.ForcePaid);
+
         // ─────────────────────────────────────────────────────────────
         // Result as TEXT — ONE message per student, enqueued. The queue
         // processor composes each student's result summary at send time and
         // delivers it as a plain WhatsApp text (works without WAHA Plus).
         // ─────────────────────────────────────────────────────────────
-        public async Task<SmsQueueStatusDto> EnqueueResultTextAsync(ResultTextSendDto dto)
+        private async Task<PreparedBatch> PrepareResultTextAsync(ResultTextSendDto dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.JobId))
-                dto.JobId = Guid.NewGuid().ToString();
-
             int classId   = (dto.Scope is "class" or "section" or "student") ? (dto.ClassId   ?? 0) : 0;
             int sectionId = (dto.Scope is "section" or "student")            ? (dto.SectionId ?? 0) : 0;
             int studentId = (dto.Scope == "student")                         ? (dto.StudentId ?? 0) : 0;
@@ -230,13 +310,11 @@ namespace School.API.Services.Implementations
             var recipients = await _examResultRepository
                 .GetRcardRecipientsAsync(dto.ExamId, classId, sectionId, studentId);
 
-            var (userId, userIp) = GetAuditContext();
-            var messages = new List<SmsMessage>();
-            int skipped = 0;
+            var batch = new PreparedBatch();
 
             foreach (var r in recipients)
             {
-                if (string.IsNullOrWhiteSpace(r.Phone)) { skipped++; continue; }
+                if (string.IsNullOrWhiteSpace(r.Phone)) { batch.SkippedNoPhone++; continue; }
 
                 var message = new SmsMessage
                 {
@@ -248,6 +326,7 @@ namespace School.API.Services.Implementations
                     MessageType    = SmsMessageType.Result,
                     Status         = SmsStatus.Pending,
                     JobId          = dto.JobId,
+                    ForcePaid      = dto.ForcePaid,
                     RefExamId      = dto.ExamId,
                     RefExamName    = dto.ExamName,
                     RefStudentId   = r.StudentId,
@@ -260,15 +339,38 @@ namespace School.API.Services.Implementations
                 // queue processor fills TemplateParams and FullMessage.
                 ApplyTemplate(message, SmsMessageType.Result, parameters: null, fullMessage: null);
 
-                messages.Add(message);
+                batch.Add(message, new SmsPreviewItemDto
+                {
+                    StudentId = r.StudentId,
+                    Name      = r.StudentName,
+                    ClassName = r.ClassName,
+                    Phone     = r.Phone!,
+                    // The result summary is composed at send time from live
+                    // marks, so the preview shows the prefix plus a placeholder.
+                    Message = string.IsNullOrWhiteSpace(dto.Message)
+                        ? "(result summary composed at send time)"
+                        : dto.Message + "\n(result summary composed at send time)"
+                });
             }
+
+            return batch;
+        }
+
+        public async Task<SmsQueueStatusDto> EnqueueResultTextAsync(ResultTextSendDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.JobId))
+                dto.JobId = Guid.NewGuid().ToString();
+
+            var (userId, userIp) = GetAuditContext();
+            var batch = await PrepareResultTextAsync(dto);
+            var messages = batch.Messages;
 
             if (messages.Count > 0)
                 await _repository.EnqueueAsync(messages, userId, userIp);
 
             _logger.LogInformation(
                 "Enqueued {Count} result texts for job {JobId} (exam {ExamId}, scope {Scope}); {Skipped} skipped (no phone)",
-                messages.Count, dto.JobId, dto.ExamId, dto.Scope, skipped);
+                messages.Count, dto.JobId, dto.ExamId, dto.Scope, batch.SkippedNoPhone);
 
             return new SmsQueueStatusDto
             {
@@ -278,27 +380,23 @@ namespace School.API.Services.Implementations
             };
         }
 
+        public async Task<SmsPreviewDto> PreviewResultTextAsync(ResultTextSendDto dto)
+            => await ToPreviewAsync(await PrepareResultTextAsync(dto), SmsMessageType.Result, dto.ForcePaid);
+
         // ─────────────────────────────────────────────────────────────
         // Fee Reminder — ONE message per student, enqueued
         // ─────────────────────────────────────────────────────────────
-        public async Task<SmsQueueStatusDto> EnqueueFeeReminderAsync(FeeSmsSendDto dto)
+        private async Task<PreparedBatch> PrepareFeeReminderAsync(FeeSmsSendDto dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.JobId))
-                dto.JobId = Guid.NewGuid().ToString();
-
-            var (userId, userIp) = GetAuditContext();
+            var batch = new PreparedBatch();
 
             var feeRows = await GetPendingFeeRowsAsync(
-                dto.StudentId, dto.SessionId, dto.ClassId, dto.SectionId);
+                dto.StudentId, dto.SessionId, dto.ClassId, dto.SectionId, dto.TillDate);
 
-            if (!feeRows.Any())
-            {
-                return new SmsQueueStatusDto { JobId = dto.JobId };
-            }
+            if (!feeRows.Any()) return batch;
 
             // Group by StudentId — one message per student, aggregating all fees.
             var grouped = feeRows.GroupBy(f => f.StudentId).ToList();
-            var messages = new List<SmsMessage>(grouped.Count);
 
             foreach (var group in grouped)
             {
@@ -310,7 +408,7 @@ namespace School.API.Services.Implementations
                     first.IsMotherSMS, first.MotherMobile,
                     first.IsSMS, first.MobileNo);
 
-                if (string.IsNullOrEmpty(phone)) continue;
+                if (string.IsNullOrEmpty(phone)) { batch.SkippedNoPhone++; continue; }
 
                 var feeLines = group
                     .OrderBy(f => f.VDate)
@@ -337,7 +435,9 @@ namespace School.API.Services.Implementations
                     MessageText = Preview(text),
                     MessageType = SmsMessageType.Fee,
                     Status = SmsStatus.Pending,
-                    JobId = dto.JobId
+                    JobId = dto.JobId,
+                    ForcePaid = dto.ForcePaid,
+                    RefStudentId = first.StudentId
                 };
 
                 // fee_reminder: {{1}} Student Name, {{2}} Class, {{3}} Fee Detail,
@@ -359,15 +459,35 @@ namespace School.API.Services.Implementations
                     },
                     text);
 
-                messages.Add(message);
+                batch.Add(message, new SmsPreviewItemDto
+                {
+                    StudentId = first.StudentId,
+                    Name      = first.StudentName,
+                    ClassName = classWithSection,
+                    Phone     = phone,
+                    Message   = text,
+                    Amount    = total
+                });
             }
+
+            return batch;
+        }
+
+        public async Task<SmsQueueStatusDto> EnqueueFeeReminderAsync(FeeSmsSendDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.JobId))
+                dto.JobId = Guid.NewGuid().ToString();
+
+            var (userId, userIp) = GetAuditContext();
+            var batch = await PrepareFeeReminderAsync(dto);
+            var messages = batch.Messages;
 
             if (messages.Count > 0)
                 await _repository.EnqueueAsync(messages, userId, userIp);
 
             _logger.LogInformation(
-                "Enqueued {Count} fee reminders for job {JobId}",
-                messages.Count, dto.JobId);
+                "Enqueued {Count} fee reminders for job {JobId} (till {Till}); {Skipped} skipped (no phone)",
+                messages.Count, dto.JobId, dto.TillDate, batch.SkippedNoPhone);
 
             return new SmsQueueStatusDto
             {
@@ -377,6 +497,9 @@ namespace School.API.Services.Implementations
             };
         }
 
+        public async Task<SmsPreviewDto> PreviewFeeReminderAsync(FeeSmsSendDto dto)
+            => await ToPreviewAsync(await PrepareFeeReminderAsync(dto), SmsMessageType.Fee, dto.ForcePaid);
+
         // ─────────────────────────────────────────────────────────────
         // Queue status — DB-backed, survives server restarts
         // ─────────────────────────────────────────────────────────────
@@ -385,6 +508,54 @@ namespace School.API.Services.Implementations
 
         public Task<int> GetOverallPendingCountAsync()
             => _repository.GetOverallPendingCountAsync();
+
+        // ─────────────────────────────────────────────────────────────
+        // Hold / resume
+        // ─────────────────────────────────────────────────────────────
+
+        // Free resume. The caller (SmsController) is responsible for refusing
+        // this while WAHA is still disconnected — otherwise the queue would
+        // just park the rows again on the next tick.
+        public async Task<int> ResumeHeldFreeAsync(string? jobId)
+        {
+            var released = await _repository.ResumeHeldAsync(jobId, forcePaid: false);
+            _logger.LogInformation(
+                "Resumed {Count} held message(s) on the free route (job {JobId})",
+                released, jobId ?? "<all>");
+            return released;
+        }
+
+        // Paid resume: stamps ForcePaid so the queue skips WAHA entirely for
+        // these rows, whatever their message type is routed to.
+        public async Task<int> ResumeHeldPaidAsync(string? jobId)
+        {
+            var released = await _repository.ResumeHeldAsync(jobId, forcePaid: true);
+            _logger.LogInformation(
+                "Resumed {Count} held message(s) on the paid route (job {JobId})",
+                released, jobId ?? "<all>");
+            return released;
+        }
+
+        public Task<int> GetHeldCountAsync(string? jobId)
+            => _repository.GetHeldCountAsync(jobId);
+
+        // ─────────────────────────────────────────────────────────────
+        // Reject
+        // ─────────────────────────────────────────────────────────────
+        public async Task<int> RejectUnsentAsync(string? jobId)
+        {
+            var rejected = await _repository.RejectUnsentAsync(
+                jobId, "Rejected by the user before sending.");
+
+            _logger.LogInformation(
+                "Rejected {Count} unsent message(s) (job {JobId})",
+                rejected, jobId ?? "<all>");
+
+            return rejected;
+        }
+
+        public Task<int> GetUnsentCountAsync(string? jobId)
+            => _repository.GetUnsentCountAsync(jobId);
 
         // ─────────────────────────────────────────────────────────────
         // History
@@ -585,8 +756,12 @@ namespace School.API.Services.Implementations
         // ─────────────────────────────────────────────────────────────
         // SpGetPending_SMSStudentFee_Msg
         // ─────────────────────────────────────────────────────────────
+        // tillDate selects WHICH students are reminded (those still carrying a
+        // due dated on or before it). The SP then returns ALL of those
+        // students' pending dues up to today, so a March/April defaulter is
+        // also billed for May onwards in the same message.
         private async Task<List<StudentFeeDetailDto>> GetPendingFeeRowsAsync(
-            int? studentId, int? sessionId, int? classId, int? sectionId)
+            int? studentId, int? sessionId, int? classId, int? sectionId, DateTime? tillDate)
         {
             var result = new List<StudentFeeDetailDto>();
             var connStr = _context.Database.GetConnectionString();
@@ -605,6 +780,8 @@ namespace School.API.Services.Implementations
                 classId.HasValue ? (object)classId.Value : DBNull.Value);
             cmd.Parameters.AddWithValue("@SectionID",
                 sectionId.HasValue ? (object)sectionId.Value : DBNull.Value);
+            cmd.Parameters.AddWithValue("@TillDate",
+                tillDate.HasValue ? (object)tillDate.Value.Date : DBNull.Value);
 
             await using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())

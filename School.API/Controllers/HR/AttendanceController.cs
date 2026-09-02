@@ -26,11 +26,32 @@ namespace School.API.Controllers.HR
             return Ok(await _service.GetMonthGridAsync(year, month, designationId));
         }
 
+        // One date, every employee — with that date's school timings attached.
+        [HttpGet("day")]
+        public async Task<ActionResult<AttendanceDayGridDto>> GetDay(
+            [FromQuery] DateTime date, [FromQuery] int? designationId)
+        {
+            if (date == default)
+                return BadRequest(new { message = "Please provide a date." });
+
+            return Ok(await _service.GetDayGridAsync(date, designationId));
+        }
+
         [HttpPost("bulk")]
         public async Task<ActionResult> SaveBulk(SaveAttendanceBulkDto dto)
         {
             var userId = Request.GetUserId();
-            await _service.SaveBulkAsync(dto, userId == 0 ? null : userId);
+            try
+            {
+                await _service.SaveBulkAsync(dto, userId == 0 ? null : userId);
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Most often "this employee has no shift" — a setup problem the
+                // user can fix, so say so instead of returning a bare 500.
+                return BadRequest(new { message = ex.Message });
+            }
+
             return Ok(new { saved = dto.Cells.Count });
         }
 

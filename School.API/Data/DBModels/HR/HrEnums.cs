@@ -10,7 +10,12 @@ namespace School.API.Data.DBModels.HR
         HalfDay = 4,
         Holiday = 5,
         WeeklyOff = 6,
-        ShortLeave = 7
+        ShortLeave = 7,
+
+        // Excused from marking attendance that day — official duty, training, a
+        // field visit. Payroll treats it as a worked day: it never counts as
+        // absent, and it carries no times so there is no lateness to charge.
+        Exempt = 8
     }
 
     public enum HrAttendanceSource : byte

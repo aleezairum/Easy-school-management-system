@@ -23,6 +23,7 @@ namespace School.API.DTOs.HR
         public int AbsentDays { get; set; }
         public int LeaveDays { get; set; }
         public int HalfDays { get; set; }
+        public int ExemptDays { get; set; }
         public int LateCount { get; set; }
         public int TotalLateMinutes { get; set; }
     }

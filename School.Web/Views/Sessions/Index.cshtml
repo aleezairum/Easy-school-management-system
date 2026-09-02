@@ -254,7 +254,7 @@
 
         // Format date for display
         function formatDate(dateString) {
-            const date = new Date(dateString);
+            const date = parseCalendarDate(dateString) || new Date(NaN);
             return date.toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'short',
@@ -264,9 +264,8 @@
 
         // Format date for input field
         function formatDateForInput(dateString) {
-            const date = new Date(dateString);
-            date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
-            return date.toISOString().split('T')[0];
+            const date = parseCalendarDate(dateString) || new Date(NaN);
+            return toInputDate(date);
         }
 
 

@@ -92,7 +92,7 @@ function buildReportHTML(sections, dateFrom, dateTo) {
         const groupMap = new Map();
 
         sec.data.forEach(r => {
-            const gk   = `${r.className || ''}||${r.sectionName || ''}`;
+            const gk   = `${r.classID ?? r.classId ?? r.className ?? ''}||${r.sectionID ?? r.sectionId ?? r.sectionName ?? ''}`;
             const sk   = String(r.studentId || r.studentName || 'unknown');
             const d    = new Date(r.vDate);
             const mKey = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
@@ -102,7 +102,8 @@ function buildReportHTML(sections, dateFrom, dateTo) {
             if (!groupMap.has(gk)) groupMap.set(gk, {
                 className:   r.className   || '-',
                 sectionName: r.sectionName || '',
-                sortKey:     (r.className || '') + (r.sectionName || ''),
+                classId:     r.classID   ?? r.classId   ?? null,
+                sectionId:   r.sectionID ?? r.sectionId ?? null,
                 students: new Map()
             });
 
@@ -142,12 +143,26 @@ function buildReportHTML(sections, dateFrom, dateTo) {
         let groupsHtml    = '';
         let secGrandTotal = 0;
 
-        // Sort groups by class (numeric) then section
+        // Order by the school's own class order (SMSClass.VID), then section.
+        //
+        // This used to scrape digits out of the class NAME, which cannot work on
+        // a real class list: "Montessori", "Play Group", "Nursery", "Prep" and
+        // "New Admission" all scraped to 0 and landed in arbitrary order, "9" and
+        // "9 Junior" tied, and "Private Students 2026-27" scraped to 202627 and
+        // sorted after Class 10. The name is a label; the id is the order.
         const sortedGroups = [...groupMap.entries()].sort((a, b) => {
-            const numA = parseInt(a[1].className.replace(/\D/g, '')) || 0;
-            const numB = parseInt(b[1].className.replace(/\D/g, '')) || 0;
-            if (numA !== numB) return numA - numB;
-            return (a[1].sectionName || '').localeCompare(b[1].sectionName || '');
+            const ca = a[1].classId, cb = b[1].classId;
+            if (ca != null && cb != null && ca !== cb) return ca - cb;
+            // Only rows with no id fall back to the name, so a report from an
+            // older API build still comes out in a sensible order.
+            if (ca == null || cb == null) {
+                const byName = (a[1].className || '').localeCompare(b[1].className || '', undefined, { numeric: true });
+                if (byName !== 0) return byName;
+            }
+
+            const sa = a[1].sectionId, sb = b[1].sectionId;
+            if (sa != null && sb != null && sa !== sb) return sa - sb;
+            return (a[1].sectionName || '').localeCompare(b[1].sectionName || '', undefined, { numeric: true });
         });
 
         sortedGroups.forEach(([, grp]) => {

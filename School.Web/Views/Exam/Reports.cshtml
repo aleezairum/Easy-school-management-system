@@ -284,15 +284,21 @@
                 $(`#prevExamId option[value="${examId}"]`).prop('disabled', true);
                 if ($('#prevExamId').val() === examId) $('#prevExamId').val('');
             }
+            // Subject assignments are per-exam, so the Teacher filter has to
+            // follow the exam — otherwise you can pick a teacher who has nothing
+            // assigned in it and get an empty report with no explanation.
+            loadTeachersForExam(examId);
         });
     });
 
     async function loadDropdowns() {
         try {
-            const [classes, exams, teachers] = await Promise.all([
+            // Teachers are NOT loaded here: the list depends on the exam, and
+            // renderExamDropdowns' default selection fires the change handler
+            // that loads them.
+            const [classes, exams] = await Promise.all([
                 fetch(`${API_BASE}/class`).then(r => r.ok ? r.json() : []).catch(() => []),
-                fetch(`${API_BASE}/exam`).then(r => r.ok ? r.json() : []).catch(() => []),
-                fetch(`${API_BASE}/teacher`).then(r => r.ok ? r.json() : []).catch(() => [])
+                fetch(`${API_BASE}/exam`).then(r => r.ok ? r.json() : []).catch(() => [])
             ]);
 
             allExams = exams || [];
@@ -304,12 +310,6 @@
                 classSelect.append(`<option value="${c.vid}">${c.vName}</option>`);
             });
 
-            const teacherSelect = $('#teacherId');
-            teacherSelect.find('option:not(:first)').remove();
-            (teachers || []).forEach(t => {
-                teacherSelect.append(`<option value="${t.vid}">${t.vName}</option>`);
-            });
-
             renderAnnClassCheckboxes();   // build the Announcement scope class list
             renderSwClassCheckboxes();    // build the Subject Wise scope class list
             renderCmpClassCheckboxes('L');   // Comparison scope — left class list
@@ -317,6 +317,35 @@
             renderExamDropdowns(allExams);
         } catch (error) {
             console.error('Error loading dropdowns:', error);
+        }
+    }
+
+    // Only the staff who actually hold a subject assignment in this exam — the
+    // Teacher Wise report is driven by those assignments, so anyone else would
+    // simply produce an empty report. No exam selected = no teachers to offer.
+    async function loadTeachersForExam(examId) {
+        const teacherSelect = $('#teacherId');
+        const previous = teacherSelect.val();
+
+        teacherSelect.find('option:not(:first)').remove();
+
+        if (!examId) {
+            teacherSelect.val('').trigger('change.select2');
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_BASE}/teacher?examId=${examId}`);
+            const teachers = res.ok ? await res.json() : [];
+            (teachers || []).forEach(t => {
+                teacherSelect.append(`<option value="${t.vid}">${t.vName}</option>`);
+            });
+
+            // Keep the current pick if this exam also has them assigned.
+            const stillThere = (teachers || []).some(t => String(t.vid) === String(previous));
+            teacherSelect.val(stillThere ? previous : '').trigger('change.select2');
+        } catch (e) {
+            console.error('teachers', e);
         }
     }
 
@@ -656,10 +685,9 @@
     function resetFilters() {
         $('#classId').val('');
         $('#sectionId').val('').prop('disabled', true).find('option:not(:first)').remove();
-        $('#examId').val('');
+        $('#examId').val('').trigger('change');   // also empties the exam's teacher list
         $('#prevExamId').val('');
         $('#prevExamId option').prop('disabled', false);
-        $('#teacherId').val('');
         resetStudents();
         annClearClasses();   // also clears sections (they depend on classes)
         swClearClasses();    // Subject Wise scope — also clears its sections

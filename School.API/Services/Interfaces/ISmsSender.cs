@@ -20,11 +20,20 @@ namespace School.API.Services.Interfaces
         // Raw response body, truncated by the caller before storing.
         public string? RawResponse { get; set; }
 
+        // Nothing was sent and nothing is wrong with the message — the free
+        // gateway is simply unavailable. The queue processor parks the row
+        // (SmsStatus.Held) instead of failing it, so no credit is spent and
+        // the user can resume it later.
+        public bool ShouldHold { get; set; }
+
         public static SmsSendOutcome Ok(string? messageId = null, string? raw = null)
             => new() { Success = true, ProviderMessageId = messageId, RawResponse = raw };
 
         public static SmsSendOutcome Fail(string error, string? errorCode = null, string? raw = null)
             => new() { Success = false, Error = error, ErrorCode = errorCode, RawResponse = raw };
+
+        public static SmsSendOutcome Hold(string reason)
+            => new() { Success = false, ShouldHold = true, Error = reason };
     }
 
     // A pre-approved WhatsApp template plus the ordered values for its
@@ -43,6 +52,10 @@ namespace School.API.Services.Interfaces
         // without the sender needing to know about SmsMessage itself. Null
         // for callers outside the queue (e.g. a manual chat reply).
         public SmsMessageType? MessageType { get; set; }
+
+        // Skip the free WAHA route for this message even when its type is
+        // configured for it — the user has explicitly chosen to pay.
+        public bool ForcePaid { get; set; }
 
         // Body parameters in placeholder order.
         public IReadOnlyList<string> BodyParams { get; set; } = Array.Empty<string>();

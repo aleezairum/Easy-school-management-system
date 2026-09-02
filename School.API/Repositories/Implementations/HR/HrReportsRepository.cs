@@ -87,6 +87,7 @@ namespace School.API.Repositories.Implementations.HR
                     AbsentDays = g.Count(x => x.A.Status == HrAttendanceStatus.Absent),
                     LeaveDays = g.Count(x => x.A.Status == HrAttendanceStatus.Leave),
                     HalfDays = g.Count(x => x.A.Status == HrAttendanceStatus.HalfDay),
+                    ExemptDays = g.Count(x => x.A.Status == HrAttendanceStatus.Exempt),
                     LateCount = g.Count(x => x.A.LateMinutes > 0),
                     TotalLateMinutes = g.Sum(x => x.A.LateMinutes)
                 })

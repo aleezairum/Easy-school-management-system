@@ -56,7 +56,7 @@
 
     async function payRun() {
         if (!await confirmDelete('Mark the entire run as paid via cash today?')) return;
-        const dto = { PaidDate: new Date().toISOString().split('T')[0], PaymentMethod: 'Cash', Reference: null };
+        const dto = { PaidDate: toInputDate(), PaymentMethod: 'Cash', Reference: null };
         const res = await fetch(`${API_BASE}/hr/payroll/runs/${runId}/pay`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(dto) });
         if (res.ok) { toastSuccess('Run marked as paid'); loadPayslips(); } else toastError('Failed to mark as paid');
     }

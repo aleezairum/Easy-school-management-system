@@ -666,7 +666,7 @@
             const fmtMoney  = n => (n == null ? 'PKR 0' : 'PKR ' + Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 }));
             const fmtDate   = s => {
                 if (!s) return '—';
-                const d = new Date(s);
+                const d = parseCalendarDate(s) || new Date(NaN);
                 if (isNaN(d.getTime())) return '—';
                 return d.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
             };
@@ -723,7 +723,7 @@
                     return;
                 }
                 list.innerHTML = rows.map(v => {
-                    const d = v.paymentDate ? new Date(v.paymentDate) : null;
+                    const d = v.paymentDate ? parseCalendarDate(v.paymentDate) : null;
                     const day = d && !isNaN(d) ? String(d.getDate()).padStart(2, '0') : '--';
                     const mon = d && !isNaN(d) ? d.toLocaleDateString('en-US', { month: 'short' }) : '---';
                     return `

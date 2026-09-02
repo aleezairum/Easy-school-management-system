@@ -258,7 +258,7 @@
         let sessionId = null;
 
         $(document).ready(function () {
-            $('#attendanceDate').val(new Date().toISOString().split('T')[0]);
+            $('#attendanceDate').val(toInputDate());
             loadClasses();
             loadActiveSession();
         });
@@ -631,7 +631,7 @@
             $('#classId').val('').trigger('change');
             $('#sectionId').find('option:not(:first)').remove();
             $('#sectionId').prop('disabled', true);
-            $('#attendanceDate').val(new Date().toISOString().split('T')[0]);
+            $('#attendanceDate').val(toInputDate());
             $('#searchBox').val('');
             $('#statusFilter').val('');
             allStudents = [];

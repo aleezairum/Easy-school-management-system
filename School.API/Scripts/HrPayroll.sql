@@ -219,14 +219,24 @@ IF COL_LENGTH('Employees','ShiftId')       IS NULL ALTER TABLE Employees ADD Shi
 IF COL_LENGTH('Employees','MachineCardNo') IS NULL ALTER TABLE Employees ADD MachineCardNo NVARCHAR(50) NULL;
 IF COL_LENGTH('Employees','OffDay1')       IS NULL ALTER TABLE Employees ADD OffDay1 TINYINT NULL;
 IF COL_LENGTH('Employees','OffDay2')       IS NULL ALTER TABLE Employees ADD OffDay2 TINYINT NULL;
-IF COL_LENGTH('Employees','TeacherId')     IS NULL ALTER TABLE Employees ADD TeacherId INT NULL;  -- links to SMSTeacher.VID, D6
+
+-- Employees.TeacherId linked the HR row to its SMSTeacher row (D6). It only
+-- makes sense while SMSTeacher is still a separate TABLE: once
+-- RenameTeacherToEmployee.sql has folded the two together, Employees.Id IS the
+-- academic id and this column has nothing left to point at — so on a migrated
+-- database both the column and its FK are skipped.
+IF OBJECT_ID('SMSTeacher','U') IS NOT NULL AND COL_LENGTH('Employees','TeacherId') IS NULL
+    ALTER TABLE Employees ADD TeacherId INT NULL;  -- links to SMSTeacher.VID, D6
+GO
+
+IF OBJECT_ID('SMSTeacher','U') IS NOT NULL
+   AND COL_LENGTH('Employees','TeacherId') IS NOT NULL
+   AND NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_Employees_SMSTeacher')
+    ALTER TABLE Employees ADD CONSTRAINT FK_Employees_SMSTeacher FOREIGN KEY (TeacherId) REFERENCES SMSTeacher(VID);
 GO
 
 IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_Employees_HrShift')
     ALTER TABLE Employees ADD CONSTRAINT FK_Employees_HrShift FOREIGN KEY (ShiftId) REFERENCES HrShift(Id);
-GO
-IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_Employees_SMSTeacher')
-    ALTER TABLE Employees ADD CONSTRAINT FK_Employees_SMSTeacher FOREIGN KEY (TeacherId) REFERENCES SMSTeacher(VID);
 GO
 
 ------------------------------------------------------------------ Employees: drop the dead flat salary columns

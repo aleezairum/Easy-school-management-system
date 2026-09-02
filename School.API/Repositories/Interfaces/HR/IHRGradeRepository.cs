@@ -13,5 +13,6 @@ namespace School.API.Repositories.Interfaces.HR
         Task<IEnumerable<HRGradeDropdownDto>> GetDropdownAsync();
         Task<bool> ExistsAsync(int id);
         Task<bool> CodeExistsAsync(string code, int? excludeId = null);
+        Task<bool> IsInUseAsync(int id);
     }
 }

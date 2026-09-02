@@ -355,7 +355,9 @@
                             return;
                         }
 
-                        // ── Sort: ClassID then SectionID (use IDs if SP returns them, else natural-sort by names) ──
+                        // ── Sort: ClassID then SectionID — the SP now returns both, so this
+                        //    is the school's own class order. The name fallback below only
+                        //    fires for rows an older API build left without ids. ──
                         const naturalKey = s => {
                             // Splits "Class 10-A" → ["Class ", 10, "-A"] for numeric-aware compare
                             return String(s || '').toLowerCase().split(/(\d+)/).map(p => /^\d+$/.test(p) ? parseInt(p, 10) : p);

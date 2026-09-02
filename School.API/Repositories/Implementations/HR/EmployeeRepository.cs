@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using School.API.Data;
 using School.API.Data.DBModels.HR;
+using School.API.DTOs;
 using School.API.DTOs.HR;
 using School.API.Repositories.Interfaces.HR;
 
@@ -27,14 +28,17 @@ namespace School.API.Repositories.Implementations.HR
                     Id = e.Id,
                     EmployeeCode = e.EmployeeCode,
                     FullName = e.FirstName + (e.LastName != null ? " " + e.LastName : ""),
+                    FatherName = e.FatherName,
                     CNIC = e.CNIC,
                     Mobile = e.Mobile,
                     Photo = e.Photo,
                     Department = e.Department,
+                    DesignationId = e.DesignationId,
                     DesignationName = e.Designation != null ? e.Designation.Name : null,
                     HRGradeName = e.HRGrade != null ? e.HRGrade.Name : null,
                     EmployeeType = e.EmployeeType,
                     Status = e.Status,
+                    IsTeachingStaff = e.IsTeachingStaff,
                     JoiningDate = e.JoiningDate,
                     IsActive = e.IsActive
                 })
@@ -48,7 +52,6 @@ namespace School.API.Repositories.Implementations.HR
                 .Include(e => e.Designation)
                 .Include(e => e.HRGrade)
                 .Include(e => e.Shift)
-                .Include(e => e.Teacher)
                 .Where(e => e.Id == id)
                 .Select(e => new EmployeeDto
                 {
@@ -59,6 +62,7 @@ namespace School.API.Repositories.Implementations.HR
                     FirstNameUrdu = e.FirstNameUrdu,
                     LastNameUrdu = e.LastNameUrdu,
                     FullName = e.FirstName + (e.LastName != null ? " " + e.LastName : ""),
+                    FatherName = e.FatherName,
                     CNIC = e.CNIC,
                     Email = e.Email,
                     Phone = e.Phone,
@@ -84,8 +88,6 @@ namespace School.API.Repositories.Implementations.HR
                     MachineCardNo = e.MachineCardNo,
                     OffDay1 = e.OffDay1,
                     OffDay2 = e.OffDay2,
-                    TeacherId = e.TeacherId,
-                    TeacherName = e.Teacher != null ? e.Teacher.VName : null,
                     BankName = e.BankName,
                     BankAccountNo = e.BankAccountNo,
                     EmergencyContactName = e.EmergencyContactName,
@@ -93,12 +95,69 @@ namespace School.API.Repositories.Implementations.HR
                     EmergencyContactRelation = e.EmergencyContactRelation,
                     EmployeeType = e.EmployeeType,
                     Status = e.Status,
+                    IsTeachingStaff = e.IsTeachingStaff,
                     IsActive = e.IsActive,
                     CreatedAt = e.CreatedAt,
-                    UpdatedAt = e.UpdatedAt
+                    CreatedBy = e.CreatedBy,
+                    UpdatedAt = e.UpdatedAt,
+                    UpdatedBy = e.UpdatedBy
                 })
                 .FirstOrDefaultAsync();
         }
+
+        /// <summary>
+        /// The teaching staff, in the shape the old SMSTeacher screens expect.
+        /// Pass an <paramref name="examId"/> to narrow it to the staff who
+        /// actually hold a subject assignment in that exam.
+        /// </summary>
+        /// <remarks>
+        /// VID is the employee's own Id — the same value SMSStaffSubject and the
+        /// exam reports join on, because this table IS the old SMSTeacher.
+        ///
+        /// Subject assignments are per-exam, so an exam-report filter that
+        /// offered every teacher would happily produce an empty report for
+        /// someone who has nothing assigned in the exam being reported on.
+        /// SMSStaffSubject has no EF entity, hence the raw id lookup.
+        /// </remarks>
+        public async Task<List<TeacherDto>> GetTeachingStaffAsync(int examId = 0)
+        {
+            var query = TeachingStaff();
+
+            if (examId > 0)
+            {
+                var assigned = await _context.Database
+                    .SqlQueryRaw<int>(
+                        "SELECT DISTINCT TeacherID AS Value FROM dbo.SMSStaffSubject WHERE ExamID = {0} AND IsActive = 1",
+                        examId)
+                    .ToListAsync();
+
+                query = query.Where(t => assigned.Contains(t.VID));
+            }
+
+            return await query
+                .OrderBy(t => t.VName)
+                .ToListAsync();
+        }
+
+        public Task<TeacherDto?> GetTeachingStaffByIdAsync(int id) =>
+            TeachingStaff().FirstOrDefaultAsync(t => t.VID == id);
+
+        private IQueryable<TeacherDto> TeachingStaff() =>
+            _context.Employees
+                .AsNoTracking()
+                .Where(e => e.IsTeachingStaff)
+                .Select(e => new TeacherDto
+                {
+                    VID = e.Id,
+                    VName = e.FirstName + (e.LastName != null ? " " + e.LastName : ""),
+                    FatherName = e.FatherName,
+                    CNIC = e.CNIC,
+                    Mobile = e.Mobile,
+                    Email = e.Email,
+                    Address = e.Address,
+                    Qualification = e.Qualification,
+                    IsActive = e.IsActive
+                });
 
         public async Task<List<EmployeeDropdownDto>> GetDropdownAsync()
         {
@@ -115,24 +174,28 @@ namespace School.API.Repositories.Implementations.HR
                 .ToListAsync();
         }
 
-        public async Task<Employee> CreateAsync(SaveEmployeeDto dto)
+        public async Task<Employee> CreateAsync(SaveEmployeeDto dto, int userId, string userIp)
         {
             var entity = new Employee();
             ApplyDto(entity, dto);
             entity.CreatedAt = DateTime.UtcNow;
+            entity.CreatedBy = userId;
+            entity.CreatedIp = userIp;
 
             _context.Employees.Add(entity);
             await _context.SaveChangesAsync();
             return entity;
         }
 
-        public async Task<Employee?> UpdateAsync(int id, SaveEmployeeDto dto)
+        public async Task<Employee?> UpdateAsync(int id, SaveEmployeeDto dto, int userId, string userIp)
         {
             var entity = await _context.Employees.FindAsync(id);
             if (entity == null) return null;
 
             ApplyDto(entity, dto);
             entity.UpdatedAt = DateTime.UtcNow;
+            entity.UpdatedBy = userId;
+            entity.UpdatedIp = userIp;
 
             await _context.SaveChangesAsync();
             return entity;
@@ -155,6 +218,24 @@ namespace School.API.Repositories.Implementations.HR
         public Task<bool> CodeExistsAsync(string code, int? excludeId = null) =>
             _context.Employees.AnyAsync(e => e.EmployeeCode.ToLower() == code.ToLower() && (!excludeId.HasValue || e.Id != excludeId.Value));
 
+        // Codes look like PREFIX + 3 digits (T001, EMP007). Takes the highest
+        // numeric suffix in use for the prefix and adds one.
+        public async Task<string> NextEmployeeCodeAsync(string prefix)
+        {
+            var codes = await _context.Employees
+                .AsNoTracking()
+                .Where(e => e.EmployeeCode.StartsWith(prefix))
+                .Select(e => e.EmployeeCode)
+                .ToListAsync();
+
+            var next = codes
+                .Select(c => int.TryParse(c.Substring(prefix.Length), out var n) ? n : 0)
+                .DefaultIfEmpty(0)
+                .Max() + 1;
+
+            return $"{prefix}{next:D3}";
+        }
+
         private static void ApplyDto(Employee e, SaveEmployeeDto dto)
         {
             e.EmployeeCode = dto.EmployeeCode;
@@ -162,6 +243,7 @@ namespace School.API.Repositories.Implementations.HR
             e.LastName = dto.LastName;
             e.FirstNameUrdu = dto.FirstNameUrdu;
             e.LastNameUrdu = dto.LastNameUrdu;
+            e.FatherName = dto.FatherName;
             e.CNIC = dto.CNIC;
             e.Email = dto.Email;
             e.Phone = dto.Phone;
@@ -184,7 +266,7 @@ namespace School.API.Repositories.Implementations.HR
             e.MachineCardNo = dto.MachineCardNo;
             e.OffDay1 = dto.OffDay1;
             e.OffDay2 = dto.OffDay2;
-            e.TeacherId = dto.TeacherId;
+            e.IsTeachingStaff = dto.IsTeachingStaff;
             e.BankName = dto.BankName;
             e.BankAccountNo = dto.BankAccountNo;
             e.EmergencyContactName = dto.EmergencyContactName;

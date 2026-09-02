@@ -20,9 +20,11 @@ GO
      TotalObtainedMarks           (SUM of obtained marks,    appeared only),
      PassPercentByObtainedMarks   (Obtained / AggregateTotal      * 100),
      Average                      (Obtained / Appeared),
-     TeacherName                  (from SMSStaffSubject -> SMSTeacher, the
-                                   teacher assigned to that Class/Section/Subject;
-                                   NULL until Staff Subjects are assigned)
+     TeacherName                  (from SMSStaffSubject -> Employees, the
+                                   teacher assigned to that Class/Section/Subject
+                                   FOR THIS EXAM; assignments are per-exam, so it
+                                   is NULL until Staff Subjects are entered or
+                                   copied into @ExamID)
 
    A student "appears" when IsAbsent = 0; "passes" when IsAbsent = 0 and
    IsPassed = 1; "fails" when IsAbsent = 0 and IsPassed = 0 (absentees are
@@ -106,8 +108,9 @@ BEGIN
                   ELSE 0 END AS DECIMAL(9,2)) AS Average,
         (SELECT TOP 1 T.VName
          FROM   SMSStaffSubject SS
-         INNER JOIN SMSTeacher  T ON T.VID = SS.TeacherID
-         WHERE  SS.ClassID   = R.ClassID
+         INNER JOIN Employees   T ON T.Id  = SS.TeacherID
+         WHERE  SS.ExamID    = @ExamID
+           AND  SS.ClassID   = R.ClassID
            AND  SS.SectionID = R.SectionID
            AND  SS.SubjectID = SU.VID
            AND  SS.IsActive  = 1

@@ -29,9 +29,11 @@ GO
                      same "Average%" definition used by SpRPT_SMSExamSubjectWise.
 
    A student "appears" when IsAbsent = 0 (same rule as the other exam reports).
-   Only ACTIVE assignments (SMSStaffSubject.IsActive = 1) are considered, and an
-   assignment only shows up when that Subject/Class/Section was actually examined
-   in @ExamID (INNER JOIN on the result aggregate — no empty 0% cells).
+   Only ACTIVE assignments BELONGING TO @ExamID are considered — assignments are
+   per-exam (Staff Subjects screen), so an exam with none entered or copied into
+   it reports no teachers. An assignment only shows up when that
+   Subject/Class/Section was actually examined in @ExamID (INNER JOIN on the
+   result aggregate — no empty 0% cells).
 
    Parameters:
      @ExamID    INT - the exam                          (required)
@@ -81,7 +83,8 @@ BEGIN
     (
         SELECT DISTINCT TeacherID, ClassID, SectionID, SubjectID
         FROM   SMSStaffSubject
-        WHERE  IsActive = 1
+        WHERE  ExamID   = @ExamID
+          AND  IsActive = 1
           AND  (@TeacherID IS NULL OR TeacherID = @TeacherID)
     )
     SELECT
@@ -116,7 +119,7 @@ BEGIN
     INNER JOIN  SubjAgg    A  ON A.ClassID   = SS.ClassID
                              AND A.SectionID = SS.SectionID
                              AND A.SubjectID = SS.SubjectID
-    INNER JOIN  SMSTeacher T  ON T.VID  = SS.TeacherID
+    INNER JOIN  Employees  T  ON T.Id   = SS.TeacherID
     INNER JOIN  SMSSubject SU ON SU.VID = A.SubjectID
     LEFT  JOIN  SMSClass   CL ON CL.VID = A.ClassID
     LEFT  JOIN  SMSSection SE ON SE.VID = A.SectionID

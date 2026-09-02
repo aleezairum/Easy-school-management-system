@@ -585,7 +585,7 @@
                 let total = 0;
 
                 pending.forEach(f => {
-                    const month = new Date(f.vDate)
+                    const month = (parseCalendarDate(f.vDate) || new Date(NaN))
                         .toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
                     total += (f.pendingAmount || 0);
                     rows  += `

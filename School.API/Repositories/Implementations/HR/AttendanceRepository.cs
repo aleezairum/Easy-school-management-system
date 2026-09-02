@@ -29,7 +29,9 @@ namespace School.API.Repositories.Implementations.HR
                     FullName = e.FirstName + (e.LastName != null ? " " + e.LastName : ""),
                     ShiftId = e.ShiftId,
                     OffDay1 = e.OffDay1,
-                    OffDay2 = e.OffDay2
+                    OffDay2 = e.OffDay2,
+                    ShiftOffDay1 = e.Shift != null ? e.Shift.OffDay1 : null,
+                    ShiftOffDay2 = e.Shift != null ? e.Shift.OffDay2 : null
                 })
                 .ToListAsync();
         }

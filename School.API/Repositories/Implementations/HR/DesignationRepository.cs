@@ -28,7 +28,7 @@ namespace School.API.Repositories.Implementations.HR
                     Description = d.Description,
                     SortOrder = d.SortOrder,
                     IsActive = d.IsActive,
-                    //EmployeeCount = d.Employees != null ? d.Employees.Count : 0
+                    EmployeeCount = _context.Employees.Count(e => e.DesignationId == d.Id)
                 })
                 .ToListAsync();
         }
@@ -118,6 +118,17 @@ namespace School.API.Repositories.Implementations.HR
         {
             return await _context.Designations
                 .AnyAsync(d => d.Name.ToLower() == name.ToLower() && (!excludeId.HasValue || d.Id != excludeId.Value));
+        }
+
+        public async Task<bool> CodeExistsAsync(string code, int? excludeId = null)
+        {
+            return await _context.Designations
+                .AnyAsync(d => d.Code.ToLower() == code.ToLower() && (!excludeId.HasValue || d.Id != excludeId.Value));
+        }
+
+        public async Task<bool> IsInUseAsync(int id)
+        {
+            return await _context.Employees.AnyAsync(e => e.DesignationId == id);
         }
     }
 }

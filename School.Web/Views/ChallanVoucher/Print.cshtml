@@ -144,8 +144,18 @@
             document.getElementById('totalAmount').textContent = data.totalAmount.toFixed(2);
         }
 
+        // The API sends a calendar date as a bare "yyyy-MM-dd". new Date() would
+        // parse that as UTC midnight and render the previous day west of UTC, so
+        // the date is rebuilt from its parts at local midnight instead. This page
+        // sets Layout = null and does not load common.js, hence the local copy of
+        // what parseCalendarDate() does there.
         function formatDate(dateStr) {
-            return new Date(dateStr).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            if (!dateStr) return '';
+
+            const parts = String(dateStr).match(/^([0-9]{4})-([0-9]{2})-([0-9]{2})/);
+            const d = parts ? new Date(+parts[1], +parts[2] - 1, +parts[3]) : new Date(dateStr);
+
+            return isNaN(d) ? '' : d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
         }
     </script>
 </body>

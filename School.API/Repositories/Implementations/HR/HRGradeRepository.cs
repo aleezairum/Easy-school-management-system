@@ -29,7 +29,7 @@ namespace School.API.Repositories.Implementations.HR
                     MaxSalary = h.MaxSalary,
                     SortOrder = h.SortOrder,
                     IsActive = h.IsActive,
-                    //EmployeeCount = h.Employees != null ? h.Employees.Count : 0
+                    EmployeeCount = _context.Employees.Count(e => e.HRGradeId == h.Id)
                 })
                 .ToListAsync();
         }
@@ -125,6 +125,11 @@ namespace School.API.Repositories.Implementations.HR
         {
             return await _context.HRGrades
                 .AnyAsync(h => h.Code.ToLower() == code.ToLower() && (!excludeId.HasValue || h.Id != excludeId.Value));
+        }
+
+        public async Task<bool> IsInUseAsync(int id)
+        {
+            return await _context.Employees.AnyAsync(e => e.HRGradeId == id);
         }
     }
 }

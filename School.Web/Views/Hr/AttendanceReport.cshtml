@@ -48,11 +48,11 @@
 <script>
     $(document).ready(function () {
         const now = new Date();
-        $('#repDate').val(now.toISOString().split('T')[0]);
+        $('#repDate').val(toInputDate(now));
         $('#repYear').val(now.getFullYear());
         $('#repMonth').val(now.getMonth() + 1);
-        $('#repFrom').val(new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]);
-        $('#repTo').val(now.toISOString().split('T')[0]);
+        $('#repFrom').val(toInputDate(new Date(now.getFullYear(), now.getMonth(), 1)));
+        $('#repTo').val(toInputDate(now));
         fetch(`${API_BASE}/Designation/dropdown`).then(r => r.ok ? r.json() : []).then(list => {
             list.forEach(d => $('#repDesignation').append(`<option value="${d.id}">${d.name}</option>`));
         }).catch(() => {});
@@ -93,10 +93,10 @@
             data.forEach(r => body.append(`<tr><td>${r.employeeCode}</td><td>${r.employeeName}</td><td>${r.designationName||'-'}</td><td>${r.presentDays}</td><td>${r.absentDays}</td><td>${r.leaveDays}</td><td>${r.halfDays}</td><td>${r.lateCount}</td><td>${r.totalLateMinutes}</td></tr>`));
         } else if (type === 'late') {
             head.html('<tr><th>Date</th><th>Code</th><th>Employee</th><th>Designation</th><th>Time In</th><th>Late (min)</th><th>Ignored</th></tr>');
-            data.forEach(r => body.append(`<tr><td>${new Date(r.attDate).toLocaleDateString()}</td><td>${r.employeeCode}</td><td>${r.employeeName}</td><td>${r.designationName||'-'}</td><td>${r.timeIn?.substring(0,5)||'-'}</td><td>${r.lateMinutes}</td><td>${r.ignoreLate?'Yes':'No'}</td></tr>`));
+            data.forEach(r => body.append(`<tr><td>${fmtDate(r.attDate)}</td><td>${r.employeeCode}</td><td>${r.employeeName}</td><td>${r.designationName||'-'}</td><td>${r.timeIn?.substring(0,5)||'-'}</td><td>${r.lateMinutes}</td><td>${r.ignoreLate?'Yes':'No'}</td></tr>`));
         } else if (type === 'absent') {
             head.html('<tr><th>Date</th><th>Code</th><th>Employee</th><th>Designation</th><th>Remarks</th></tr>');
-            data.forEach(r => body.append(`<tr><td>${new Date(r.attDate).toLocaleDateString()}</td><td>${r.employeeCode}</td><td>${r.employeeName}</td><td>${r.designationName||'-'}</td><td>${r.remarks||'-'}</td></tr>`));
+            data.forEach(r => body.append(`<tr><td>${fmtDate(r.attDate)}</td><td>${r.employeeCode}</td><td>${r.employeeName}</td><td>${r.designationName||'-'}</td><td>${r.remarks||'-'}</td></tr>`));
         }
 
         if (!data.length) body.html(`<tr><td colspan="10" class="text-center text-muted py-3">No data.</td></tr>`);

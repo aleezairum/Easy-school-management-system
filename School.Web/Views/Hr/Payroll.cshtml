@@ -55,7 +55,7 @@
                 <td><span class="badge ${RUN_BADGE[r.status]}">${RUN_STATUS[r.status]}</span></td>
                 <td>${r.employeeCount}</td>
                 <td>Rs ${Number(r.totalNetPay).toLocaleString(undefined,{minimumFractionDigits:2})}</td>
-                <td>${r.generatedAt ? new Date(r.generatedAt).toLocaleString() : '-'}</td>
+                <td>${r.generatedAt ? fmtDateTime(r.generatedAt) : '-'}</td>
                 <td><a class="btn btn-sm btn-info" href="/hr/payroll/${r.id}"><i class="bi bi-eye"></i> Review</a></td>
             </tr>`);
         });

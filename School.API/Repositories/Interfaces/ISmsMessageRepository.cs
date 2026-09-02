@@ -55,5 +55,26 @@ namespace School.API.Repositories.Interfaces
 
         Task<SmsQueueStatusDto> GetJobStatusAsync(string jobId);
         Task<int> GetOverallPendingCountAsync();
+
+        // ── Hold / resume (free WAHA disconnected) ───────────────────
+        // Parks a row that could not go out free. Nothing is spent; the user
+        // resumes it later through either gateway.
+        Task HoldAsync(int vid, string? reason);
+
+        // Puts held rows back on the queue. jobId null/empty = every held row.
+        // forcePaid stamps the rows so the queue skips WAHA entirely.
+        // Returns how many rows were released.
+        Task<int> ResumeHeldAsync(string? jobId, bool forcePaid);
+
+        // jobId null/empty = every held row.
+        Task<int> GetHeldCountAsync(string? jobId);
+
+        // ── Reject ───────────────────────────────────────────────────
+        // Cancels every unsent row (Pending or Held) so the queue will never
+        // pick them up. jobId null/empty = the whole queue. Returns the count.
+        Task<int> RejectUnsentAsync(string? jobId, string? reason);
+
+        // Unsent = Pending + Held. Backs the "reject N messages?" confirmation.
+        Task<int> GetUnsentCountAsync(string? jobId);
     }
 }

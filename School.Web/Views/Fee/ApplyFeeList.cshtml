@@ -485,7 +485,7 @@
                     ? `<span class="badge-cleared">Cleared</span>`
                     : `<span class="badge-pending">Pending</span>`;
 
-                const vDate = new Date(row.vDate).toLocaleDateString('en-GB', {
+                const vDate = (parseCalendarDate(row.vDate) || new Date(NaN)).toLocaleDateString('en-GB', {
                     day: '2-digit', month: 'short', year: 'numeric'
                 });
 

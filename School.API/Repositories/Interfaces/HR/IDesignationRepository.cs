@@ -13,5 +13,7 @@ namespace School.API.Repositories.Interfaces.HR
         Task<IEnumerable<DesignationDropdownDto>> GetDropdownAsync();
         Task<bool> ExistsAsync(int id);
         Task<bool> NameExistsAsync(string name, int? excludeId = null);
+        Task<bool> CodeExistsAsync(string code, int? excludeId = null);
+        Task<bool> IsInUseAsync(int id);
     }
 }

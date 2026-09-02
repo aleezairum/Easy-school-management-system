@@ -71,3 +71,27 @@ GO
 IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_Employees_HRGrades')
     ALTER TABLE Employees ADD CONSTRAINT FK_Employees_HRGrades FOREIGN KEY (HRGradeId) REFERENCES HRGrades(Id);
 GO
+
+------------------------------------------------------------------ Employees: the merged staff table
+-- Employees is now the ONE staff table: SMSTeacher was folded into it by
+-- RenameTeacherToEmployee.sql, so the columns that used to live only on the
+-- teacher record belong here too.
+IF COL_LENGTH('Employees','FatherName')      IS NULL ALTER TABLE Employees ADD FatherName NVARCHAR(200) NULL;
+IF COL_LENGTH('Employees','IsTeachingStaff') IS NULL ALTER TABLE Employees ADD IsTeachingStaff BIT NOT NULL CONSTRAINT DF_Employees_IsTeachingStaff DEFAULT (0);
+IF COL_LENGTH('Employees','CreatedBy')       IS NULL ALTER TABLE Employees ADD CreatedBy INT           NULL;
+IF COL_LENGTH('Employees','CreatedIp')       IS NULL ALTER TABLE Employees ADD CreatedIp NVARCHAR(200) NULL;
+IF COL_LENGTH('Employees','UpdatedBy')       IS NULL ALTER TABLE Employees ADD UpdatedBy INT           NULL;
+IF COL_LENGTH('Employees','UpdatedIp')       IS NULL ALTER TABLE Employees ADD UpdatedIp NVARCHAR(200) NULL;
+GO
+
+-- VName is what SMSStaffSubject / SpRPT_SMSExam* used to read off SMSTeacher.
+-- Kept as a computed column so those procedures need no special casing and the
+-- name can never disagree with FirstName/LastName.
+IF COL_LENGTH('Employees','VName') IS NULL
+    ALTER TABLE Employees ADD VName AS
+        (LTRIM(RTRIM(ISNULL(FirstName, '') + ' ' + ISNULL(LastName, '')))) PERSISTED;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Employees_Teaching' AND object_id = OBJECT_ID('Employees'))
+    CREATE INDEX IX_Employees_Teaching ON Employees (IsTeachingStaff, IsActive) INCLUDE (FirstName, LastName);
+GO

@@ -124,14 +124,14 @@ builder.Services.AddScoped<IHRGradeRepository, HRGradeRepository>();
 builder.Services.AddScoped<IHRGradeService, HRGradeService>();
 builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
 builder.Services.AddScoped<IEmployeeService, EmployeeService>();
-builder.Services.AddScoped<ITeacherRepository, TeacherRepository>();
-builder.Services.AddScoped<ITeacherService, TeacherService>();
 
 // HR Payroll (HR-Payroll-Final-Plan.md)
 builder.Services.AddScoped<IShiftRepository, ShiftRepository>();
 builder.Services.AddScoped<IShiftService, ShiftService>();
 builder.Services.AddScoped<IHolidayRepository, HolidayRepository>();
 builder.Services.AddScoped<IHolidayService, HolidayService>();
+builder.Services.AddScoped<ISchoolTimingRepository, SchoolTimingRepository>();
+builder.Services.AddScoped<ISchoolTimingService, SchoolTimingService>();
 builder.Services.AddScoped<IAttendanceRepository, AttendanceRepository>();
 builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 builder.Services.AddScoped<ILeaveRepository, LeaveRepository>();
@@ -156,14 +156,18 @@ builder.Services.AddScoped<IPaymentMethodService, PaymentMethodService>();
 
 // SMS
 builder.Services.AddScoped<ISmsMessageRepository, SmsMessageRepository>();
-// Active sender: TypeRoutedSmsSender sends Absent notifications free through
-// WAHA and everything else through Meta's paid Cloud API (falling back to
-// Meta automatically if WAHA is down or a send fails) — see
-// SmsRouting:WahaMessageTypes in appsettings.json. Both concrete senders are
-// registered so the router can use either.
+// Active sender: TypeRoutedSmsSender sends the types listed in
+// SmsRouting:WahaMessageTypes free through WAHA and everything else through
+// Meta's paid Cloud API. When WAHA is disconnected a free-routed message is
+// HELD rather than silently upgraded to the paid gateway — the user resumes it
+// free once WAHA is back, or releases it as paid from the SMS page.
+// Both concrete senders are registered so the router can use either.
 builder.Services.AddScoped<WahaSmsSender>();
 builder.Services.AddScoped<MetaWhatsAppSender>();
 builder.Services.AddSingleton<IWahaSessionStatusService, WahaSessionStatusService>();
+// The free/paid/hold decision, shared by the router, the queue processor and
+// the SMS page's pre-send check.
+builder.Services.AddSingleton<ISmsRoutingPolicy, SmsRoutingPolicy>();
 builder.Services.AddScoped<ISmsSender, TypeRoutedSmsSender>();
 // Other senders still available to swap in directly instead of the router:
 // LogOnlySmsSender (logs only), WasenderSmsSender (WhatsApp via WasenderAPI),
@@ -199,6 +203,15 @@ builder.Services.AddControllers()
     {
         options.JsonSerializerOptions.ReferenceHandler =
             System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+
+        // Stamps UTC instants with a "Z" and writes calendar dates bare, so the
+        // browser converts timestamps to the viewer's timezone while birthdays
+        // and due dates stay put. See DateTimeJsonPolicy for the reasoning.
+        options.JsonSerializerOptions.TypeInfoResolver =
+            new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver
+            {
+                Modifiers = { School.API.Serialization.DateTimeJsonPolicy.Apply }
+            };
     });
 
 // Swagger, CORS & misc

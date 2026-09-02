@@ -14,13 +14,16 @@ namespace School.API.Services.Implementations.Academic
             _repo = repo;
         }
 
-        public Task<List<StaffSubjectRowDto>> GetAsync(int teacherId, int classId, int sectionId)
-            => _repo.GetAsync(teacherId, classId, sectionId);
+        public Task<List<StaffSubjectRowDto>> GetAsync(int teacherId, int classId, int sectionId, int examId)
+            => _repo.GetAsync(teacherId, classId, sectionId, examId);
 
         public Task<ResponseDto> SaveAsync(StaffSubjectDto dto, int userId, string userIp)
             => _repo.SaveAsync(dto, userId, userIp);
 
         public Task<ResponseDto?> DeleteByIdAsync(int id)
             => _repo.DeleteByIdAsync(id);
+
+        public Task<ResponseDto?> CopyAsync(CopyStaffSubjectDto dto, int userId, string userIp)
+            => _repo.CopyAsync(dto, userId, userIp);
     }
 }

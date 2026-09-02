@@ -82,7 +82,7 @@
                 : '';
             body.append(`<tr>
                 <td>${l.employeeName}</td><td>${l.leaveTypeName}</td>
-                <td>${new Date(l.fromDate).toLocaleDateString()}</td><td>${new Date(l.toDate).toLocaleDateString()}</td>
+                <td>${fmtDate(l.fromDate)}</td><td>${fmtDate(l.toDate)}</td>
                 <td>${l.days}</td><td>${l.reason || '-'}</td>
                 <td><span class="badge ${STATUS_BADGE[l.status]}">${STATUS_NAMES[l.status]}</span></td>
                 <td>${actions}</td>

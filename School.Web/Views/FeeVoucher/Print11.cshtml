@@ -681,13 +681,13 @@
         }
         function fmtDate(s) {
             if (!s) return '-';
-            const d = new Date(s);
+            const d = parseCalendarDate(s) || new Date(NaN);
             return d.getDate().toString().padStart(2,'0') + '-' +
                    (d.getMonth()+1).toString().padStart(2,'0') + '-' + d.getFullYear();
         }
         function fmtMonth(s) {
             if (!s) return '';
-            return new Date(s).toLocaleDateString('en-GB', { month:'short', year:'numeric' });
+            return (parseCalendarDate(s) || new Date(NaN)).toLocaleDateString('en-GB', { month:'short', year:'numeric' });
         }
         function showError(msg) {
             document.getElementById('receiptBody').innerHTML =

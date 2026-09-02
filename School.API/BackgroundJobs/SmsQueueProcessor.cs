@@ -89,6 +89,7 @@ namespace School.API.BackgroundJobs
             using var scope = _scopeFactory.CreateScope();
             var repo   = scope.ServiceProvider.GetRequiredService<ISmsMessageRepository>();
             var sender = scope.ServiceProvider.GetRequiredService<ISmsSender>();
+            var policy = scope.ServiceProvider.GetRequiredService<ISmsRoutingPolicy>();
 
             var batch = await repo.GetPendingBatchAsync(_batchSize);
             if (batch.Count == 0) return false;
@@ -100,6 +101,26 @@ namespace School.API.BackgroundJobs
                 if (ct.IsCancellationRequested) break;
 
                 var msg = batch[i];
+
+                // Park before doing any work: a free-routed row must not be
+                // rendered, let alone sent, while WAHA is down. Held rows cost
+                // nothing and are released by the user from the SMS page.
+                var route = await policy.DecideAsync(msg.MessageType, msg.ForcePaid);
+                if (route == SmsRoute.Hold)
+                {
+                    var freeStatus = await policy.GetFreeStatusAsync();
+                    await repo.HoldAsync(
+                        msg.VID,
+                        $"WhatsApp (free) is disconnected — status {freeStatus.Status}. Waiting to be resumed.");
+
+                    _logger.LogInformation(
+                        "[Queue] Held msg {VID} ({Type}) — WAHA status {Status}",
+                        msg.VID, msg.MessageType, freeStatus.Status);
+
+                    // No provider was contacted, so no throttle delay is owed.
+                    continue;
+                }
+
                 try
                 {
                     // Build the outgoing template request. Result cards attach a
@@ -113,9 +134,23 @@ namespace School.API.BackgroundJobs
                     else
                         built = BuildPlain(msg);
 
+                    if (built.Request is not null)
+                        built.Request.ForcePaid = msg.ForcePaid;
+
                     var outcome = built.Error is null
                         ? await sender.SendTemplateAsync(msg.RecipientPhone, built.Request!)
                         : SmsSendOutcome.Fail(built.Error);
+
+                    // WAHA dropped between the routing check above and the send.
+                    // Park the row rather than marking it failed — it is still
+                    // unsent and still free to send once WAHA is back.
+                    if (outcome.ShouldHold)
+                    {
+                        await repo.HoldAsync(msg.VID, outcome.Error);
+                        _logger.LogInformation(
+                            "[Queue] Held msg {VID} mid-batch: {Reason}", msg.VID, outcome.Error);
+                        continue;
+                    }
 
                     await repo.UpdateSendResultAsync(
                         msg.VID,

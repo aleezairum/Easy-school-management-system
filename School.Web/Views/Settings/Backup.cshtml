@@ -683,7 +683,7 @@
                 $('#lastRunInfo').text('No backup has run yet.');
                 return;
             }
-            const when = new Date(lastRunAt).toLocaleString();
+            const when = fmtDateTime(lastRunAt);
             $('#lastRunDateTime').removeClass('text-muted').addClass('last-run-datetime').text(when);
             $badge.text(lastRunSuccess ? 'Success' : 'Failed')
                   .removeClass('pill-success pill-fail')
@@ -789,7 +789,7 @@
                     $body.append(`<tr>
                         <td><i class="bi bi-file-earmark-zip-fill me-1" style="color:#008649;"></i>${f.fileName}</td>
                         <td>${formatBytes(f.sizeBytes)}</td>
-                        <td>${new Date(f.createdDate).toLocaleString()}</td>
+                        <td>${fmtDateTime(f.createdDate)}</td>
                     </tr>`);
                 });
             } catch (err) {

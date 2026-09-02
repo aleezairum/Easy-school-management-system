@@ -73,5 +73,7 @@ namespace School.API.DTOs
         public int Pending { get; set; }
         public int Sent { get; set; }
         public int Failed { get; set; }
+        public int Held { get; set; }
+        public int Rejected { get; set; }
     }
 }

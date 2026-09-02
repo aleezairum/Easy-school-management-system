@@ -46,11 +46,12 @@ namespace School.API.Data
         public DbSet<Designation> Designations { get; set; }
         public DbSet<HRGrade> HRGrades { get; set; }
         public DbSet<Employee> Employees { get; set; }
-        public DbSet<Teacher> Teachers { get; set; }
 
         // HR Payroll (HR-Payroll-Final-Plan.md section 3)
         public DbSet<HrShift> HrShifts { get; set; }
         public DbSet<HrHoliday> HrHolidays { get; set; }
+        public DbSet<HrSchoolTiming> HrSchoolTimings { get; set; }
+        public DbSet<HrSchoolTimingDay> HrSchoolTimingDays { get; set; }
         public DbSet<HrLeaveType> HrLeaveTypes { get; set; }
         public DbSet<HrAttendance> HrAttendances { get; set; }
         public DbSet<HrLeave> HrLeaves { get; set; }

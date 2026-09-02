@@ -10,7 +10,7 @@ GO
                        (a student "passes" only if they passed EVERY subject)
      (2) Subjects   -> SubjectName, FailCount, FailPct, PassCount, PassPct,
                        TeacherName, Obtained, Total, Percent
-                       (TeacherName comes from SMSClassTimetable -> SMSTeacher;
+                       (TeacherName comes from SMSClassTimetable -> Employees;
                         '-'/NULL until the timetable is populated)
 
    Parameters:
@@ -78,7 +78,7 @@ BEGIN
                   ELSE 0 END AS DECIMAL(5,2))                 AS PassPct,
         (SELECT TOP 1 T.VName
          FROM   SMSClassTimetable TT
-         INNER JOIN SMSTeacher    T ON T.VID = TT.TeacherID
+         INNER JOIN Employees     T ON T.Id  = TT.TeacherID
          WHERE  TT.ClassID   = @ClassID
            AND  TT.SectionID = @SectionID
            AND  TT.SubjectID = SU.VID

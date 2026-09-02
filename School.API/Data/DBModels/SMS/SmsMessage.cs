@@ -20,7 +20,18 @@ namespace School.API.Data.DBModels.SMS
     {
         Pending = 0,
         Sent = 1,
-        Failed = 2
+        Failed = 2,
+
+        // Parked, not failed. Set when the row was meant to go out free through
+        // WAHA but WAHA is disconnected. Nothing is spent and nothing is lost:
+        // the user reconnects WAHA and resumes the job free, or chooses to
+        // release it through the paid gateway instead.
+        Held = 3,
+
+        // Cancelled by the user before it went anywhere. Terminal: the queue
+        // never picks these up again. Kept (rather than deleted) so the
+        // messages viewer still shows what was dropped and when.
+        Rejected = 4
     }
 
     [Table("SmsMessages")]
@@ -55,6 +66,11 @@ namespace School.API.Data.DBModels.SMS
         // per job. Nullable for legacy rows inserted before the queue.
         [MaxLength(100)]
         public string? JobId { get; set; }
+
+        // Skip the free WAHA route and go straight to the paid gateway. Set
+        // when the user releases a held job with "Send via Paid", or sends a
+        // fresh batch that way after being warned WAHA is disconnected.
+        public bool ForcePaid { get; set; }
 
         // ── Result-card (Rcard) attachment context ──
         // For MessageType=Rcard the queue processor regenerates the student's

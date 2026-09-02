@@ -14,6 +14,13 @@ namespace School.Web.Controllers
             return View();
         }
 
+        [Route("hr/school-timing")]
+        public IActionResult SchoolTiming()
+        {
+            ViewData["Title"] = "School Timings";
+            return View();
+        }
+
         [Route("hr/attendance")]
         public IActionResult Attendance()
         {

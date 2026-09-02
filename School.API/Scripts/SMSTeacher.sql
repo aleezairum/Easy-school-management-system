@@ -1,122 +1,52 @@
-/* ============================================================
-   SMSTeacher � stored procedures
-   NOTE: ResponseDto.VID is a C# decimal, so every SP that returns
-         a ResponseDto row MUST cast VID to DECIMAL. Returning a
-         plain INT makes EF throw
-         "Unable to cast object of type 'System.Int32' to type 'System.Decimal'"
-         AFTER the insert/update/delete has already committed.
-   ============================================================ */
+/* ============================================================================
+   SMSTeacher — RETIRED.
 
-IF OBJECT_ID('dbo.SpGet_SMSTeacher', 'P') IS NOT NULL
-    DROP PROCEDURE dbo.SpGet_SMSTeacher;
-GO
-CREATE PROCEDURE dbo.SpGet_SMSTeacher
-    @VID INT = 0
-AS
-BEGIN
-    SET NOCOUNT ON;
+   The table was folded into dbo.Employees by RenameTeacherToEmployee.sql:
+   Employees.Id IS the old SMSTeacher.VID, so SMSStaffSubject.TeacherID,
+   SMSClassTimetable.TeacherID and every SpRPT_SMSExam* report still resolve —
+   they just join dbo.Employees now.
 
-    SELECT
-        VID,
-        VName,
-        FatherName,
-        Gender,
-        CNIC,
-        Mobile,
-        Email,
-        Address,
-        Qualification,
-        ExperienceYears,
-        IsActive,
-        InsertedBy, InsertedDate, InsertedIp,
-        UpdatedBy, UpdatedDate, UpdatedIp
-    FROM SMSTeacher
-    WHERE (@VID = 0 OR VID = @VID);
-END
+   Its three stored procedures are gone with it. There is no separate teacher
+   record left to insert, update or delete: staff are created and edited on the
+   Employee screen (EF Core, EmployeeRepository), and ticking "Teaching staff"
+   is what makes someone available to subject assignment and the exam reports.
+
+   Running this script drops the procedures if they are still around. The read
+   -only compatibility VIEW named dbo.SMSTeacher that the rename script leaves
+   behind is NOT dropped here — do that by hand once you have confirmed nothing
+   in the live database still selects from it:
+
+       DROP VIEW dbo.SMSTeacher;
+
+   Target: SQL Server 2019
+   ============================================================================ */
+
+SET NOCOUNT ON;
 GO
 
 IF OBJECT_ID('dbo.SpSave_SMSTeacher', 'P') IS NOT NULL
-    DROP PROCEDURE dbo.SpSave_SMSTeacher;
-GO
-CREATE PROCEDURE dbo.SpSave_SMSTeacher
-    @VID             INT = 0,
-    @VName           VARCHAR(200),
-    @FatherName      VARCHAR(200),
-    @Gender          INT,
-    @CNIC            VARCHAR(20),
-    @Mobile          VARCHAR(20),
-    @Email           VARCHAR(200),
-    @Address         VARCHAR(500),
-    @Qualification   VARCHAR(500),
-    @ExperienceYears INT = NULL,
-    @IsActive        BIT = 1,
-    @UserID          INT,
-    @UserIP          VARCHAR(200)
-AS
 BEGIN
-    SET NOCOUNT ON;
-
-    IF (@VID = 0)
-    BEGIN
-        INSERT INTO SMSTeacher
-        (
-            VName, FatherName, Gender, CNIC, Mobile, Email, Address,
-            Qualification, ExperienceYears, IsActive,
-            InsertedBy, InsertedDate, InsertedIp
-        )
-        VALUES
-        (
-            @VName, @FatherName, @Gender, @CNIC, @Mobile, @Email, @Address,
-            @Qualification, @ExperienceYears, @IsActive,
-            @UserID, GETDATE(), @UserIP
-        );
-
-        SELECT
-            CAST(SCOPE_IDENTITY() AS DECIMAL(18,0)) AS VID,
-            200 AS ReturnCode,
-            'Record inserted successfully.' AS ReturnMessage;
-    END
-    ELSE
-    BEGIN
-        UPDATE SMSTeacher
-        SET
-            VName           = @VName,
-            FatherName      = @FatherName,
-            Gender          = @Gender,
-            CNIC            = @CNIC,
-            Mobile          = @Mobile,
-            Email           = @Email,
-            Address         = @Address,
-            Qualification   = @Qualification,
-            ExperienceYears = @ExperienceYears,
-            IsActive        = @IsActive,
-            UpdatedBy       = @UserID,
-            UpdatedDate     = GETDATE(),
-            UpdatedIp       = @UserIP
-        WHERE VID = @VID;
-
-        SELECT
-            CAST(@VID AS DECIMAL(18,0)) AS VID,
-            200 AS ReturnCode,
-            'Record updated successfully.' AS ReturnMessage;
-    END
+    DROP PROCEDURE dbo.SpSave_SMSTeacher;
+    PRINT '>> SpSave_SMSTeacher dropped.';
 END
 GO
 
 IF OBJECT_ID('dbo.SpDelete_SMSTeacher', 'P') IS NOT NULL
-    DROP PROCEDURE dbo.SpDelete_SMSTeacher;
-GO
-CREATE PROCEDURE dbo.SpDelete_SMSTeacher
-    @VID INT
-AS
 BEGIN
-    SET NOCOUNT ON;
-
-    DELETE FROM SMSTeacher WHERE VID = @VID;
-
-    SELECT
-        CAST(@VID AS DECIMAL(18,0)) AS VID,
-        200 AS ReturnCode,
-        'Record deleted successfully.' AS ReturnMessage;
+    DROP PROCEDURE dbo.SpDelete_SMSTeacher;
+    PRINT '>> SpDelete_SMSTeacher dropped.';
 END
+GO
+
+IF OBJECT_ID('dbo.SpGet_SMSTeacher', 'P') IS NOT NULL
+BEGIN
+    DROP PROCEDURE dbo.SpGet_SMSTeacher;
+    PRINT '>> SpGet_SMSTeacher dropped.';
+END
+GO
+
+IF OBJECT_ID('dbo.SMSTeacher', 'U') IS NOT NULL
+    PRINT '!! dbo.SMSTeacher is still a TABLE — run RenameTeacherToEmployee.sql first.';
+ELSE
+    PRINT '>> dbo.SMSTeacher is no longer a table. Staff live in dbo.Employees.';
 GO

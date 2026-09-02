@@ -66,5 +66,15 @@ namespace School.API.Services.Implementations.HR
         {
             return await _repository.GetDropdownAsync();
         }
+
+        public async Task<bool> CodeExistsAsync(string code, int? excludeId = null)
+        {
+            return await _repository.CodeExistsAsync(code, excludeId);
+        }
+
+        public async Task<bool> IsInUseAsync(int id)
+        {
+            return await _repository.IsInUseAsync(id);
+        }
     }
 }
