@@ -50,43 +50,13 @@ public class FeeVoucherController : ControllerBase
     [HttpGet("ReceiptPdf/{id}")]
     public async Task<IActionResult> GetReceiptPdf(decimal id, [FromQuery] string type = "a4")
     {
-        var receipt = await _service.GetReceiptAsync(id);
-        if (receipt == null) return NotFound();
+        // The RDLC rendering itself now lives in FeeVoucherService, so the
+        // WhatsApp auto-reply sends parents the very same voucher this endpoint
+        // prints — one template, one set of parameters, nothing to drift.
+        var result = await _service.GetReceiptPdfAsync(id, type);
+        if (result is null) return NotFound();
 
-        var totalPaid = receipt.Details.Sum(d => d.PaidAmount);
-        var remaining = Math.Max(0, receipt.BalanceAmount - totalPaid);
-
-        var rdlcFile = type.ToLower() == "thermal" ? "FeeVoucherThermal.rdlc" : "FeeVoucherA4.rdlc";
-        var reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Reports", rdlcFile);
-        using var report = new LocalReport();
-        report.ReportPath = reportPath;
-
-        var dataSource = receipt.Details.Select(d => new
-        {
-            d.StudentName,
-            d.SectionName,
-            d.FeeTypeName,
-            d.FeeMonth,
-            d.FeeAmount,
-            d.PaidAmount,
-            d.PendingBalance
-        }).ToList();
-
-        report.DataSources.Add(new ReportDataSource("FeeDetails", dataSource));
-        report.SetParameters(new[]
-        {
-            new ReportParameter("VNo", receipt.VNo ?? "-"),
-            // VDate is date-only; append the actual save time from InsertedDate.
-            new ReportParameter("VDate", $"{receipt.VDate:dd-MM-yyyy} {receipt.InsertedDate:hh:mm tt}"),
-            new ReportParameter("PaymentMethod", receipt.PaymentMethod ?? "-"),
-            new ReportParameter("ParentName", receipt.ParentName ?? "-"),
-            new ReportParameter("TotalPaid", totalPaid.ToString("N0")),
-            new ReportParameter("RemainingDues", remaining.ToString("N0")),
-            new ReportParameter("ReceivedBy", receipt.UserFullName ?? "-")
-        });
-
-        var pdfBytes = report.Render("PDF");
-        return File(pdfBytes, "application/pdf", $"FeeVoucher_{receipt.VNo}.pdf");
+        return File(result.Value.Pdf, "application/pdf", result.Value.FileName);
     }
     [HttpGet]
     public async Task<IActionResult> GetAll(

@@ -1,0 +1,401 @@
+@{
+    ViewData["Title"] = "Ledger";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<div class="container-fluid">
+    <div id="alertContainer"></div>
+
+    <div class="card" style="border-radius: 10px; border: none; box-shadow: 0 2px 12px rgba(0,0,0,0.08);">
+        <div class="card-body p-3">
+
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 style="font-weight: 600; color: #475569; margin: 0; font-size: 14px;">
+                    <i class="bi bi-journal-text me-1"></i> Ledger
+                </h6>
+            </div>
+
+            <!-- Filter Row 1: Date Range + Ledger Type -->
+            <div class="filter-section" style="background: #f8fafc; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px;">
+                <div class="row g-2 align-items-end">
+                    <div class="col-lg-2 col-md-3 col-sm-6 col-12">
+                        <label for="dateFrom" class="form-label form-label-sm mb-1">Date From</label>
+                        <input type="text" class="form-control form-control-sm" id="dateFrom"
+                               placeholder="Select date" readonly
+                               style="background: white; cursor: pointer;" />
+                    </div>
+                    <div class="col-lg-2 col-md-3 col-sm-6 col-12">
+                        <label for="dateTo" class="form-label form-label-sm mb-1">Date To</label>
+                        <input type="text" class="form-control form-control-sm" id="dateTo"
+                               placeholder="Select date" readonly
+                               style="background: white; cursor: pointer;" />
+                    </div>
+                    <div class="col-lg-5 col-md-6 col-12">
+                        <label class="form-label form-label-sm mb-1">Ledger Type</label>
+                        <div class="d-flex gap-3 flex-wrap">
+                            <div class="form-check form-check-sm">
+                                <input class="form-check-input" type="radio" name="ledgerType" id="typeStudent" value="student" checked onchange="toggleLedgerType()">
+                                <label class="form-check-label" for="typeStudent">Student Ledger</label>
+                            </div>
+                            <div class="form-check form-check-sm">
+                                <input class="form-check-input" type="radio" name="ledgerType" id="typeFamily" value="family" onchange="toggleLedgerType()">
+                                <label class="form-check-label" for="typeFamily">Family Ledger</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-12 col-12">
+                        <div class="form-check form-check-sm">
+                            <input class="form-check-input" type="checkbox" id="wholeHistory" onchange="toggleWholeHistory()">
+                            <label class="form-check-label" for="wholeHistory">Whole history (ignore dates)</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Row 2: Student picker -->
+            <div class="filter-section" id="studentRow" style="background: #f8fafc; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px;">
+                <div class="row g-2 align-items-end">
+                    <div class="col-lg-3 col-md-6 col-sm-6 col-12">
+                        <label for="filterClass" class="form-label form-label-sm mb-1">Class</label>
+                        <select class="form-select form-select-sm" id="filterClass" onchange="loadSections()">
+                            <option value="">-- Select Class --</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-sm-6 col-12">
+                        <label for="filterSection" class="form-label form-label-sm mb-1">Section</label>
+                        <select class="form-select form-select-sm" id="filterSection" onchange="loadStudents()">
+                            <option value="">-- All Sections --</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                        <label for="filterRollNo" class="form-label form-label-sm mb-1">Roll No</label>
+                        <select class="form-select form-select-sm" id="filterRollNo" onchange="selectStudentByRoll()">
+                            <option value="">-- Select Roll --</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-4 col-md-8 col-sm-6 col-12">
+                        <label for="filterStudent" class="form-label form-label-sm mb-1">Student</label>
+                        <select class="form-select form-select-sm" id="filterStudent" onchange="selectRollByStudent()">
+                            <option value="">-- Select Student --</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Row 2 (alt): Family picker. Families have no screen of
+                 their own, so this searches father/guardian name, CNIC, mobile,
+                 or any child's name / roll no. -->
+            <div class="filter-section" id="familyRow" style="background: #f8fafc; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; display: none;">
+                <div class="row g-2 align-items-end">
+                    <div class="col-lg-4 col-md-6 col-12">
+                        <label for="familySearch" class="form-label form-label-sm mb-1">Find Family</label>
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control form-control-sm" id="familySearch"
+                                   placeholder="Father name, CNIC, mobile, or a child's name / roll no" />
+                            <button class="btn btn-outline-secondary" type="button" onclick="searchFamilies()">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-lg-8 col-md-6 col-12">
+                        <label for="familySelect" class="form-label form-label-sm mb-1">Family</label>
+                        <select class="form-select form-select-sm" id="familySelect">
+                            <option value="">-- Search to list families --</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="filter-section" style="background: #f8fafc; border-radius: 8px; padding: 12px 14px;">
+                <div class="row g-2 align-items-end">
+                    <div class="col-12 d-flex gap-2 justify-content-end">
+                        <button type="button" class="btn btn-outline-success btn-sm" onclick="viewLedger()" id="btnView">
+                            <i class="bi bi-eye me-1"></i> View
+                        </button>
+                        <button type="button" class="btn btn-success btn-sm" onclick="printLedger()" id="btnPrint">
+                            <i class="bi bi-printer me-1"></i> Print Ledger
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearFilters()" title="Clear">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="ledgerArea" class="mt-3"></div>
+
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <style>
+        .flatpickr-day.selected,
+        .flatpickr-day.startRange,
+        .flatpickr-day.endRange {
+            background: #008649 !important;
+            border-color: #008649 !important;
+        }
+
+        .form-label-sm { font-size: 12px; }
+
+        .form-check-sm .form-check-label { font-size: 12px; }
+    </style>
+}
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="~/js/ledgerReport.js"></script>
+    <script>
+        let ledgerData = null;
+        let fromPicker = null;
+        let toPicker   = null;
+        let isSyncing  = false;
+
+        $(document).ready(function () {
+            const now       = new Date();
+            // A ledger is normally read for the running session, so the window
+            // opens at the start of the year rather than the month.
+            const yearStart = new Date(now.getFullYear(), 0, 1);
+
+            fromPicker = flatpickr('#dateFrom', {
+                dateFormat: 'Y-m-d',
+                defaultDate: yearStart,
+                onChange: function (selectedDates) {
+                    if (selectedDates[0]) toPicker.set('minDate', selectedDates[0]);
+                }
+            });
+
+            toPicker = flatpickr('#dateTo', {
+                dateFormat: 'Y-m-d',
+                defaultDate: now,
+                minDate: yearStart
+            });
+
+            $('#familySearch').on('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); searchFamilies(); }
+            });
+
+            loadClasses();
+            toggleLedgerType();
+        });
+
+        // ── Ledger type ───────────────────────────────────────────────────
+        function isFamily() {
+            return $('input[name="ledgerType"]:checked').val() === 'family';
+        }
+
+        function toggleLedgerType() {
+            const family = isFamily();
+            $('#familyRow').toggle(family);
+            $('#studentRow').toggle(!family);
+            // The two account types share nothing, so a stale preview from the
+            // other one would be misleading.
+            $('#ledgerArea').empty();
+            ledgerData = null;
+        }
+
+        function toggleWholeHistory() {
+            const on = $('#wholeHistory').is(':checked');
+            $('#dateFrom, #dateTo').prop('disabled', on);
+        }
+
+        // ── Student picker ────────────────────────────────────────────────
+        async function loadClasses() {
+            try {
+                const res = await fetch(`${API_BASE}/class`);
+                if (!res.ok) return;
+                const classes = await res.json();
+                classes.filter(c => c.isActive).forEach(c => {
+                    $('#filterClass').append(`<option value="${c.vid}">${c.vName}</option>`);
+                });
+            } catch (err) {
+                console.error('Error loading classes:', err);
+            }
+        }
+
+        async function loadSections() {
+            const classId = $('#filterClass').val();
+            const sel = $('#filterSection');
+            sel.find('option:not(:first)').remove();
+            $('#filterRollNo, #filterStudent').find('option:not(:first)').remove();
+            if (!classId) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/section/byClass/${classId}`);
+                if (!res.ok) return;
+                const data = await res.json();
+                const sections = Array.isArray(data) ? data : (data.data ?? []);
+                sections.filter(s => s.isActive).forEach(s => {
+                    sel.append(`<option value="${s.vid}">${s.vName}</option>`);
+                });
+                await loadStudents();
+            } catch (err) {
+                console.error('Error loading sections:', err);
+            }
+        }
+
+        async function loadStudents() {
+            const classId   = $('#filterClass').val()   || 0;
+            const sectionId = $('#filterSection').val() || 0;
+            $('#filterRollNo, #filterStudent').find('option:not(:first)').remove();
+            if (!classId) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/Student/students?classId=${classId}&sectionId=${sectionId}`);
+                if (!res.ok) return;
+                const students = await res.json();
+                students.forEach(s => {
+                    const roll = s.classRollNo || s.rollNo || '-';
+                    $('#filterRollNo').append(`<option value="${s.vid}">${roll}</option>`);
+                    $('#filterStudent').append(`<option value="${s.vid}">${s.name || '-'}</option>`);
+                });
+            } catch (err) {
+                console.error('Error loading students:', err);
+            }
+        }
+
+        function selectStudentByRoll() {
+            if (isSyncing) return;
+            isSyncing = true;
+            const val = $('#filterRollNo').val();
+            if (val) $('#filterStudent').val(val);
+            isSyncing = false;
+        }
+
+        function selectRollByStudent() {
+            if (isSyncing) return;
+            isSyncing = true;
+            const val = $('#filterStudent').val();
+            if (val) $('#filterRollNo').val(val);
+            isSyncing = false;
+        }
+
+        // ── Family picker ─────────────────────────────────────────────────
+        async function searchFamilies() {
+            const term = $('#familySearch').val().trim();
+            const sel  = $('#familySelect');
+            sel.html('<option value="">-- Searching... --</option>');
+
+            try {
+                const res = await fetch(`${API_BASE}/fee/ledger/families?search=${encodeURIComponent(term)}&top=50`);
+                if (!res.ok) throw new Error(`Server error ${res.status}`);
+                const families = await res.json();
+
+                sel.empty();
+                if (families.length === 0) {
+                    sel.append('<option value="">-- No family matched --</option>');
+                    toastWarning('No family matched that search.');
+                    return;
+                }
+
+                sel.append('<option value="">-- Select Family --</option>');
+                families.forEach(f => {
+                    // The children are what tell two same-named fathers apart.
+                    const label = `${f.fatherName}${f.fatherCNIC ? ' (' + f.fatherCNIC + ')' : ''}`
+                                + ` — ${f.studentCount} student${f.studentCount === 1 ? '' : 's'}: ${f.studentNames || ''}`;
+                    sel.append($('<option>').val(f.parentID).text(label));
+                });
+                if (families.length === 1) sel.val(families[0].parentID);
+            } catch (err) {
+                sel.html('<option value="">-- Search failed --</option>');
+                toastError('Family search failed: ' + err.message);
+            }
+        }
+
+        // ── Load ──────────────────────────────────────────────────────────
+        function ledgerQuery() {
+            if ($('#wholeHistory').is(':checked')) return '';
+            const from = $('#dateFrom').val();
+            const to   = $('#dateTo').val();
+            const parts = [];
+            if (from) parts.push(`dateFrom=${from}`);
+            if (to)   parts.push(`dateTo=${to}`);
+            return parts.length ? '?' + parts.join('&') : '';
+        }
+
+        async function loadLedger() {
+            const family = isFamily();
+
+            let url;
+            if (family) {
+                const parentId = parseInt($('#familySelect').val()) || 0;
+                if (!parentId) { toastWarning('Search for and select a family first.'); return null; }
+                url = `${API_BASE}/fee/ledger/family/${parentId}`;
+            } else {
+                const studentId = parseInt($('#filterStudent').val()) || 0;
+                if (!studentId) { toastWarning('Please select a student.'); return null; }
+                url = `${API_BASE}/fee/ledger/student/${studentId}`;
+            }
+
+            const res = await fetch(`${url}${ledgerQuery()}`);
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.message || `Server error ${res.status}`);
+            }
+            return await res.json();
+        }
+
+        async function viewLedger() {
+            $('#ledgerArea').html('<div class="text-center py-4"><div class="spinner-border spinner-border-sm text-success"></div></div>');
+            try {
+                const data = await loadLedger();
+                if (!data) { $('#ledgerArea').empty(); return; }
+                ledgerData = data;
+                renderLedgerPreview('ledgerArea', data, { showStudent: isFamily() });
+            } catch (err) {
+                ledgerData = null;
+                $('#ledgerArea').empty();
+                toastError('Could not load the ledger: ' + err.message);
+            }
+        }
+
+        async function printLedger() {
+            try {
+                const data = await loadLedger();
+                if (!data) return;
+                ledgerData = data;
+
+                if (!data.rows || data.rows.length === 0) {
+                    // An account with no movement still has a balance worth
+                    // knowing, so say what it is rather than just "no data".
+                    toastWarning(`No entries in this period. Opening balance: ${ledgerBalance(data.openingBalance)}`);
+                    return;
+                }
+
+                openLedgerPrint(data, {
+                    showStudent: isFamily(),
+                    title: isFamily() ? 'Family Ledger' : 'Student Ledger'
+                });
+            } catch (err) {
+                toastError('Could not load the ledger: ' + err.message);
+            }
+        }
+
+        // ── Clear ─────────────────────────────────────────────────────────
+        function clearFilters() {
+            const now       = new Date();
+            const yearStart = new Date(now.getFullYear(), 0, 1);
+
+            fromPicker.setDate(yearStart, true);
+            toPicker.set('minDate', yearStart);
+            toPicker.setDate(now, true);
+
+            $('#wholeHistory').prop('checked', false);
+            $('#dateFrom, #dateTo').prop('disabled', false);
+
+            $('#filterClass').val('');
+            $('#filterSection').find('option:not(:first)').remove();
+            $('#filterRollNo, #filterStudent').find('option:not(:first)').remove();
+
+            $('#familySearch').val('');
+            $('#familySelect').html('<option value="">-- Search to list families --</option>');
+
+            $('input[name="ledgerType"][value="student"]').prop('checked', true);
+            toggleLedgerType();
+        }
+    </script>
+}

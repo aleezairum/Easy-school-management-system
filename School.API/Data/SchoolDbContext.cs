@@ -135,6 +135,12 @@ namespace School.API.Data
             //  Staff Subjects (joined SP result row)
             modelBuilder.Entity<StaffSubjectRowDto>().HasNoKey();
 
+            //  Account Ledger reports (SpRPT_StudentLedger / SpRPT_FamilyLedger
+            //  / SpGet_FamilyLookup). ToView(null) keeps EF from inventing a
+            //  table for them, the way the other SP-result DTOs above do.
+            modelBuilder.Entity<LedgerRowDto>().HasNoKey().ToView(null);
+            modelBuilder.Entity<FamilyLookupDto>().HasNoKey().ToView(null);
+
             //  Table name mappings 
             modelBuilder.Entity<StdAttendence>().ToTable("StdAttendence");
 

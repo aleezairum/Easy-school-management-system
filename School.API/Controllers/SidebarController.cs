@@ -199,7 +199,10 @@ namespace School.API.Controllers
                         Items = new List<MenuItemDto>
                         {
                             new MenuItemDto { Id = 33, Title = "Fee Reports", Icon = "bi-cash-coin", Url = "/fee-report", Order = 1, Section = "Reports" },
-                            new MenuItemDto { Id = 34, Title = "Certificates", Icon = "bi-award-fill", Url = "/certificates", Order = 2, Section = "Reports" }
+                            // One entry for both statements — the page's Ledger
+                            // Type radio switches between student and family.
+                            new MenuItemDto { Id = 47, Title = "Ledger", Icon = "bi-journal-text", Url = "/ledger", Order = 2, Section = "Reports" },
+                            new MenuItemDto { Id = 34, Title = "Certificates", Icon = "bi-award-fill", Url = "/certificates", Order = 3, Section = "Reports" }
                         }
                     },
                     // 7. Settings

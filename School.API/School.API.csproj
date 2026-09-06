@@ -49,6 +49,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- appsettings.Development.json holds the LOCAL sql credentials. It is
+         only read when ASPNETCORE_ENVIRONMENT is "Development", but publishing
+         it would put a local connection string on the server where a stray
+         environment variable could pick it up. Keep it out of the package. -->
+    <Content Update="appsettings.Development.json" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Include="DTOs\FeeManagement\FeeVoucherSaveDto.cs" />
     <Compile Include="Repositories\Implementations\UserManagement\SecUserRepository.cs" />
     <Compile Include="Services\Interfaces\UserManagement\ISecUserService.cs" />

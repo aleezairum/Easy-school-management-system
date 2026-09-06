@@ -17,17 +17,20 @@ namespace School.API.Services.Implementations
 
         private readonly IWaChatRepository _repository;
         private readonly ISmsSender _sender;
+        private readonly IWhatsAppBotService _bot;
         private readonly ILogger<WhatsAppChatService> _logger;
         private readonly string _countryCode;
 
         public WhatsAppChatService(
             IWaChatRepository repository,
             ISmsSender sender,
+            IWhatsAppBotService bot,
             IConfiguration configuration,
             ILogger<WhatsAppChatService> logger)
         {
             _repository = repository;
             _sender = sender;
+            _bot = bot;
             _logger = logger;
             _countryCode = configuration["MetaWhatsApp:CountryCode"] ?? "92";
         }
@@ -123,10 +126,58 @@ namespace School.API.Services.Implementations
                     _logger.LogInformation(
                         "[WA] Inbound {Kind} from {From} ({Name})",
                         kind, from, conversation.ContactName ?? conversation.ProfileName ?? "unknown");
+
+                    // Auto-reply runs only for text, and only for genuinely new
+                    // messages — AddInboundAsync returns false for a webhook
+                    // retry, so a message Meta sends twice cannot be answered
+                    // twice.
+                    if (kind == "text")
+                        await AutoReplyAsync(from!, message.Body);
                 }
             }
 
             return stored;
+        }
+
+        /// <summary>
+        /// Answers a parent's message with the self-service menu, or with the
+        /// report they picked.
+        /// </summary>
+        /// <remarks>
+        /// Failures here are swallowed. This runs inside the webhook request,
+        /// and letting it throw would turn the response into a 500 — which
+        /// makes Meta retry, and eventually disable the subscription. A parent
+        /// missing an automatic reply is a far smaller problem than the school
+        /// silently losing every incoming message.
+        /// </remarks>
+        private async Task AutoReplyAsync(string waId, string? incomingText)
+        {
+            try
+            {
+                var replies = await _bot.ComposeReplyAsync(waId, incomingText);
+                if (replies.Count == 0) return;
+
+                // Several messages can come back — WhatsApp carries one
+                // attachment per message, so two children asking for their
+                // result cards means two documents. Sent in order, and one
+                // failure does not stop the rest.
+                foreach (var reply in replies)
+                {
+                    // Goes out through the normal reply path, so the 24-hour
+                    // window is respected and the answer is recorded in the
+                    // thread just like one typed by a member of staff.
+                    var (ok, error, _) = await SendReplyAsync(
+                        waId, reply.Text, reply.DocumentBytes, reply.DocumentFileName);
+
+                    if (!ok)
+                        _logger.LogWarning(
+                            "[WA-BOT] Auto-reply to {WaId} not sent: {Error}", waId, error);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[WA-BOT] Auto-reply failed for {WaId}", waId);
+            }
         }
 
         // Pulls the body/media fields for whichever message type arrived. Only
@@ -285,7 +336,8 @@ namespace School.API.Services.Implementations
         // Reply
         // ─────────────────────────────────────────────────────────────
         public async Task<(bool ok, string? error, WaMessageDto? message)> SendReplyAsync(
-            string waId, string text)
+            string waId, string text,
+            byte[]? documentBytes = null, string? documentFileName = null)
         {
             if (string.IsNullOrWhiteSpace(text))
                 return (false, "Message is empty", null);
@@ -308,7 +360,12 @@ namespace School.API.Services.Implementations
                 // No template name — the sender posts this as free-form text,
                 // which is exactly what the service window permits.
                 Name = string.Empty,
-                RenderedText = text
+                RenderedText = text,
+                // With bytes attached the sender uploads the file and posts a
+                // document message carrying this text as its caption.
+                DocumentBytes = documentBytes,
+                DocumentFileName = documentFileName,
+                DocumentMimeType = documentBytes is null ? null : "application/pdf"
             });
 
             var message = new WaMessage
@@ -316,7 +373,9 @@ namespace School.API.Services.Implementations
                 ConversationId = conversation.VID,
                 WaId = normalized,
                 MessageId = outcome.ProviderMessageId,
-                MessageKind = "text",
+                MessageKind = documentBytes is null ? "text" : "document",
+                MediaFileName = documentFileName,
+                MediaMimeType = documentBytes is null ? null : "application/pdf",
                 Body = text,
                 Status = outcome.Success ? "accepted" : "failed",
                 ErrorCode = outcome.ErrorCode,

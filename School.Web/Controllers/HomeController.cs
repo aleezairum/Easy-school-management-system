@@ -18,7 +18,19 @@ namespace School.Web.Controllers
             return View();
         }
 
+        // Public, no login. Both URLs are registered with Meta as the app's
+        // Privacy Policy and Data Deletion links, so they must stay reachable
+        // and must keep these exact paths — changing one means updating it in
+        // the Meta app dashboard too. Program.cs also allows them past the
+        // session guard.
+        [Route("privacy")]
         public IActionResult Privacy()
+        {
+            return View();
+        }
+
+        [Route("data-deletion")]
+        public IActionResult DataDeletion()
         {
             return View();
         }

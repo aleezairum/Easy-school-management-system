@@ -154,6 +154,10 @@ builder.Services.AddScoped<School.API.Services.Interfaces.Accounts.IFeeStructure
 builder.Services.AddScoped<IPaymentMethodRepository, PaymentMethodRepository>();
 builder.Services.AddScoped<IPaymentMethodService, PaymentMethodService>();
 
+// Account Ledger reports — Student Ledger + Family Ledger (Scripts/SpRPT_Ledger.sql)
+builder.Services.AddScoped<ILedgerRepository, LedgerRepository>();
+builder.Services.AddScoped<ILedgerService, LedgerService>();
+
 // SMS
 builder.Services.AddScoped<ISmsMessageRepository, SmsMessageRepository>();
 // Active sender: TypeRoutedSmsSender sends the types listed in
@@ -181,6 +185,10 @@ builder.Services.AddScoped<ISmsService, SmsService>();
 // Two-way WhatsApp chat (inbound webhook + replies)
 builder.Services.AddScoped<IWaChatRepository, WaChatRepository>();
 builder.Services.AddScoped<IWhatsAppChatService, WhatsAppChatService>();
+// Self-service menu: answers a parent's message with dues, voucher, ledger,
+// result or attendance. Turn off with WhatsAppBot:Enabled = false.
+builder.Services.AddScoped<IWaBotRepository, WaBotRepository>();
+builder.Services.AddScoped<IWhatsAppBotService, WhatsAppBotService>();
 builder.Services.AddSingleton<ISmsProgressTracker, SmsProgressTracker>();
 // HTML->PDF renderer (shared headless Chromium) for WhatsApp result cards
 builder.Services.AddSingleton<IPdfRenderer, PuppeteerPdfRenderer>();

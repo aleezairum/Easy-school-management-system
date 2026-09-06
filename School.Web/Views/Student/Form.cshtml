@@ -1715,7 +1715,10 @@
 
             // --- Loading state ---
             const submitBtn = document.querySelector('[onclick="submitStudentForm()"]');
-            const originalHTML = submitBtn.innerHTML;
+            // Not const: a successful create relabels the button to "Update
+            // Student", and the finally-block restores whatever it says then.
+            let originalHTML = submitBtn.innerHTML;
+            if (submitBtn.disabled) return;   // a save is already running
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Saving...';
 
@@ -1743,6 +1746,24 @@
                 }
 
                 const result = await response.json();
+
+                // The save runs through a stored procedure that reports its own
+                // outcome, so a 200 alone doesn't mean the row was written.
+                if (result && result.returnCode !== undefined && result.returnCode !== 200) {
+                    throw new Error(result.returnMessage || 'The student could not be saved.');
+                }
+
+                // A create leaves the form open with Id still 0, so pressing
+                // Save again used to insert a SECOND student. Stamp the new id
+                // so every later save updates that same record instead.
+                if (!isEdit) {
+                    const newId = parseInt(result?.vid) || 0;
+                    if (newId > 0) {
+                        document.getElementById('Id').value = newId;
+                        originalHTML = originalHTML.replace('Save Student', 'Update Student');
+                    }
+                }
+
                 toastSuccess(isEdit ? 'Student updated successfully!' : 'Student saved successfully!');
 
                 // Redirect to student list after short delay

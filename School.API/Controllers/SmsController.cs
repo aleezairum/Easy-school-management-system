@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using School.API.Data.DBModels.SMS;
 using School.API.DTOs;
 using School.API.Services.Interfaces;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace School.API.Controllers
 {
@@ -14,19 +16,26 @@ namespace School.API.Controllers
         private readonly IConfiguration _configuration;
         private readonly IWahaSessionStatusService _wahaStatus;
         private readonly ISmsRoutingPolicy _routingPolicy;
+        private readonly ILogger<SmsController> _logger;
+
+        // Controllers are created per request, so this keeps the "app secret is
+        // missing" warning to one line per process instead of one per webhook.
+        private static bool _warnedAboutMissingAppSecret;
 
         public SmsController(
             ISmsService smsService,
             IWhatsAppChatService chatService,
             IConfiguration configuration,
             IWahaSessionStatusService wahaStatus,
-            ISmsRoutingPolicy routingPolicy)
+            ISmsRoutingPolicy routingPolicy,
+            ILogger<SmsController> logger)
         {
             _smsService = smsService;
             _chatService = chatService;
             _configuration = configuration;
             _wahaStatus = wahaStatus;
             _routingPolicy = routingPolicy;
+            _logger = logger;
         }
 
         // ── DB-BACKED PROGRESS — survives server restart ──────────────
@@ -312,6 +321,16 @@ namespace School.API.Controllers
             using var reader = new StreamReader(Request.Body);
             var payload = await reader.ReadToEndAsync();
 
+            if (!IsSignedByMeta(payload))
+            {
+                _logger.LogWarning(
+                    "[WA] Rejected a webhook POST with a missing or invalid X-Hub-Signature-256");
+
+                // 403, not the usual 200: this did not come from Meta, so there
+                // is nothing to acknowledge and no subscription to protect.
+                return StatusCode(StatusCodes.Status403Forbidden);
+            }
+
             // Meta sends one callback URL for everything, so the payload is
             // offered to both consumers: delivery statuses update the campaign
             // rows, and incoming messages/statuses feed the chat threads.
@@ -321,6 +340,66 @@ namespace School.API.Controllers
             // Always 200 — a non-2xx makes Meta retry and eventually disable
             // the subscription, even when the payload was simply not for us.
             return Ok(new { updated, chat });
+        }
+
+        /// <summary>
+        /// Is this POST really from Meta?
+        /// </summary>
+        /// <remarks>
+        /// The webhook has to be public and unauthenticated — Meta has no other
+        /// way to reach it — so the signature is the only thing separating a
+        /// real message from a forged one. Without this check anyone who learns
+        /// the URL can write straight into a parent's chat thread.
+        ///
+        /// Meta signs the RAW request body with HMAC-SHA256 keyed by the app
+        /// secret and sends it as "X-Hub-Signature-256: sha256=&lt;hex&gt;". The
+        /// body must be hashed exactly as received; re-serialising the JSON
+        /// changes the bytes and the signature will never match.
+        ///
+        /// When MetaWhatsApp:AppSecret is empty the check is SKIPPED and the
+        /// payload accepted, so adding this cannot take a working webhook
+        /// offline — but the hole stays open until the secret is set. Find it
+        /// at App Dashboard → App settings → Basic → App Secret.
+        /// </remarks>
+        private bool IsSignedByMeta(string rawBody)
+        {
+            var appSecret = _configuration["MetaWhatsApp:AppSecret"];
+
+            if (string.IsNullOrWhiteSpace(appSecret))
+            {
+                if (!_warnedAboutMissingAppSecret)
+                {
+                    _warnedAboutMissingAppSecret = true;
+                    _logger.LogWarning(
+                        "[WA] MetaWhatsApp:AppSecret is not set — webhook payloads are being " +
+                        "accepted WITHOUT signature verification. Anyone who knows the callback " +
+                        "URL can inject messages into chat threads. Set the app secret to close this.");
+                }
+                return true;
+            }
+
+            var header = Request.Headers["X-Hub-Signature-256"].ToString();
+            const string prefix = "sha256=";
+
+            if (string.IsNullOrWhiteSpace(header) ||
+                !header.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            var expected = Convert.ToHexString(
+                HMACSHA256.HashData(
+                    Encoding.UTF8.GetBytes(appSecret),
+                    Encoding.UTF8.GetBytes(rawBody)))
+                .ToLowerInvariant();
+
+            var supplied = header[prefix.Length..].Trim().ToLowerInvariant();
+
+            // Fixed-time compare: ordinary string equality returns as soon as
+            // two characters differ, which tells an attacker through timing how
+            // much of a guessed signature was correct. Mismatched lengths give
+            // false rather than throwing.
+            return CryptographicOperations.FixedTimeEquals(
+                Encoding.ASCII.GetBytes(expected),
+                Encoding.ASCII.GetBytes(supplied));
         }
 
         // ── ABSENT STUDENTS ───────────────────────────────────────────

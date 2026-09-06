@@ -13,10 +13,15 @@ namespace School.API.Services.Interfaces
 
         Task<WaThreadDto?> GetThreadAsync(string waId, int? beforeVid, int take);
 
-        // Sends a free-form text reply. Only permitted while the contact's
-        // 24-hour service window is open.
+        /// <summary>
+        /// Free-form reply, only permitted while the contact's 24-hour service
+        /// window is open. Pass document bytes to send a PDF with
+        /// <paramref name="text"/> as its caption — that is how the auto-reply
+        /// delivers the fee voucher and result card.
+        /// </summary>
         Task<(bool ok, string? error, WaMessageDto? message)> SendReplyAsync(
-            string waId, string text);
+            string waId, string text,
+            byte[]? documentBytes = null, string? documentFileName = null);
 
         Task<int> MarkReadAsync(string waId);
 

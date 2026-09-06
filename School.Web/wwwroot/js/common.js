@@ -1,9 +1,40 @@
-// For Live
-const API_BASE = 'http://68.178.166.149:5266/api';
-//const API_BASE = 'http://192.168.1.7:5266/api';
+/* Where the browser finds the API.
+ *
+ * Over HTTPS this MUST be a same-origin path. Cloudflare only proxies a fixed
+ * set of ports and 5266 is not one of them, so "https://host:5266/api" can
+ * never be reached from outside; and a page served over https is not allowed
+ * to call an http address at all — the browser blocks it as mixed content.
+ * IIS therefore proxies /api through to localhost:5266 (URL Rewrite + ARR),
+ * which also means no CORS, one certificate and one open port.
+ *
+ * Over plain HTTP — a developer machine, or a LAN address during the move to
+ * HTTPS — there is no proxy in front, so talk to the API's own port directly.
+ * Once everything is behind https this branch simply stops being used.
+ */
+const isLocalDev = window.location.hostname === 'localhost'
+                || window.location.hostname === '127.0.0.1';
 
-// For Local
-//const API_BASE = 'http://localhost:5266/api';
+// Development: School.API runs as its own process with nothing proxying in
+// front of it, so address it directly on 5266 — which BOTH of its launch
+// profiles bind ("http://localhost:5266" and
+// "https://localhost:7191;http://localhost:5266"), so this holds whichever one
+// is running. Port 7191 does not, which is why it must not be used here.
+//
+// 127.0.0.1 and NOT localhost, deliberately: appsettings.json binds the API to
+// "http://0.0.0.0:5266", which is IPv4 only. On Windows localhost resolves to
+// ::1 first, and Chrome does not fall back to IPv4 — it just reports
+// ERR_CONNECTION_REFUSED. curl does fall back, so the API looks reachable from
+// a terminal while the browser cannot touch it. (Binding the API to
+// "http://*:5266" would cover both families and make localhost work too.)
+//
+// An https dev page may call this without tripping the mixed-content block:
+// 127.0.0.1 counts as a trustworthy origin. CORS is satisfied by the API's
+// AllowAll policy.
+const API_BASE = isLocalDev
+    ? 'http://127.0.0.1:5266/api'
+    : (window.location.protocol === 'https:'
+        ? '/api'
+        : `http://${window.location.hostname}:5266/api`);
 
 // Session values (injected from _DashboardLayout.cshtml)
 let USER_ID = 0;
@@ -98,3 +129,218 @@ function toInputDate(value) {
     const pad = n => String(n).padStart(2, '0');
     return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
 }
+
+/* ---------------------------------------------------------------------------
+   Double-submit guard
+
+   Records were being saved twice because nothing stopped a second click while
+   the first save was still in flight. Every save in the app is a plain
+   `<button onclick="saveX()">` and only a handful of screens had their own
+   disable/re-enable code, so rather than edit ~40 near-identical save
+   functions this hooks the two things they all have in common:
+
+     click  ->  the button that was pressed is "armed" for a moment
+     fetch  ->  a POST/PUT/PATCH/DELETE started while a button is armed
+                belongs to that button
+
+   The button is disabled for as long as its writes are in flight and released
+   a beat after the last one settles — i.e. as the success/error toast appears.
+   A native (non-AJAX) form post disables its button until the page navigates.
+
+   Consequences worth knowing:
+     - A save that fails validation and returns before calling fetch never
+       locks anything, so the user can fix the input and press Save again.
+     - A screen that disabled the button itself keeps ownership of it: the
+       guard re-enables only buttons it disabled, so the two can't fight.
+     - MAX_BUSY_MS is a safety net — a request that never settles releases the
+       button instead of leaving the screen stuck for good.
+     - Opt out with data-no-submit-guard on the button or the form.
+   --------------------------------------------------------------------------- */
+(function () {
+    // How long after a click a write still counts as "started by that click".
+    // Every save calls fetch synchronously, so this only needs to cover the
+    // few that await something first.
+    const ARM_WINDOW_MS = 1000;
+    // Grace after the last write settles, so a save that posts a header then
+    // its details doesn't flicker between the two, and so the button is still
+    // disabled while the toast is being raised.
+    const SETTLE_MS = 400;
+    // Hard release. A hung request must not brick the button forever.
+    const MAX_BUSY_MS = 60000;
+
+    const WRITE_METHOD = /^(POST|PUT|PATCH|DELETE)$/i;
+    const CLICKABLE = 'button, input[type="submit"], input[type="button"], a[role="button"], a.btn';
+
+    let armedEl = null;
+    let armedAt = 0;
+
+    // Injected here rather than in site.css, which the dashboard layout does
+    // not load — this keeps the whole guard in one file.
+    (function injectStyle() {
+        const style = document.createElement('style');
+        style.textContent =
+            '.is-submitting{cursor:progress!important;opacity:.75;}' +
+            'a.is-submitting{pointer-events:none;}';
+        (document.head || document.documentElement).appendChild(style);
+    })();
+
+    function armedTarget() {
+        if (!armedEl) return null;
+        if (Date.now() - armedAt > ARM_WINDOW_MS) { armedEl = null; return null; }
+        return armedEl;
+    }
+
+    function isBusy(el) {
+        return !!el && el.hasAttribute && el.hasAttribute('data-submit-busy');
+    }
+
+    function lock(el) {
+        if (!el || isBusy(el)) return;
+
+        el.setAttribute('data-submit-busy', '1');
+        el._guardPending = 0;
+
+        if ('disabled' in el) {
+            // Only re-enable later what we actually disabled — a screen that
+            // manages the button itself (Student form, FeeVoucher) already set
+            // this, and its own finally-block will clear it.
+            el._guardDisabledByGuard = !el.disabled;
+            el.disabled = true;
+        } else {
+            // <a> has no disabled property.
+            el._guardDisabledByGuard = true;
+            el.setAttribute('aria-disabled', 'true');
+            el.style.pointerEvents = 'none';
+        }
+
+        el.classList.add('is-submitting');
+
+        // Prepend a spinner rather than replacing the label, so the button
+        // keeps its own icon and text and nothing shifts when it is released.
+        // Skipped when the screen already put a spinner there itself.
+        if (el.tagName === 'BUTTON' && !el.querySelector('.spinner-border')) {
+            const spinner = document.createElement('span');
+            spinner.className = 'spinner-border spinner-border-sm me-1 js-submit-spinner';
+            spinner.setAttribute('role', 'status');
+            spinner.setAttribute('aria-hidden', 'true');
+            el.insertBefore(spinner, el.firstChild);
+        }
+
+        el._guardTimer = setTimeout(function () { release(el); }, MAX_BUSY_MS);
+    }
+
+    function release(el) {
+        if (!isBusy(el)) return;
+
+        clearTimeout(el._guardTimer);
+        el.removeAttribute('data-submit-busy');
+        el._guardPending = 0;
+
+        if (el._guardDisabledByGuard) {
+            if ('disabled' in el) {
+                el.disabled = false;
+            } else {
+                el.removeAttribute('aria-disabled');
+                el.style.pointerEvents = '';
+            }
+        }
+        el._guardDisabledByGuard = false;
+
+        el.classList.remove('is-submitting');
+
+        const spinner = el.querySelector && el.querySelector('.js-submit-spinner');
+        if (spinner) spinner.remove();
+    }
+
+    // Arm on the way down, before any onclick handler runs, and swallow a
+    // repeat click on a button that is still saving.
+    document.addEventListener('click', function (e) {
+        const el = e.target && e.target.closest ? e.target.closest(CLICKABLE) : null;
+        if (!el || el.hasAttribute('data-no-submit-guard')) return;
+
+        if (isBusy(el)) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            return;
+        }
+
+        armedEl = el;
+        armedAt = Date.now();
+    }, true);
+
+    function submitterOf(e, form) {
+        return e.submitter || form.querySelector(
+            'button[type="submit"], input[type="submit"], button:not([type])');
+    }
+
+    // Pressing Enter in a field submits the form without ever firing a click,
+    // so arm here too — in the capture phase, before the form's own handler
+    // runs and calls fetch — and drop a repeat submit while one is in flight.
+    document.addEventListener('submit', function (e) {
+        const form = e.target;
+        if (!form || !form.hasAttribute || form.hasAttribute('data-no-submit-guard')) return;
+
+        const btn = submitterOf(e, form);
+        if (!btn || btn.hasAttribute('data-no-submit-guard')) return;
+
+        if (isBusy(btn)) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            return;
+        }
+
+        armedEl = btn;
+        armedAt = Date.now();
+    }, true);
+
+    // Nothing cancelled it, so this form is posting for real: it navigates
+    // away, and the button stays disabled until the new page loads.
+    document.addEventListener('submit', function (e) {
+        if (e.defaultPrevented) return;   // AJAX form — the fetch hook has it
+
+        const form = e.target;
+        if (!form || !form.hasAttribute || form.hasAttribute('data-no-submit-guard')) return;
+
+        const btn = submitterOf(e, form);
+        if (!btn || btn.hasAttribute('data-no-submit-guard')) return;
+
+        lock(btn);
+    });
+
+    // Coming back via the browser's back button restores the page from the
+    // bfcache with the button still mid-save. Clear any leftovers.
+    window.addEventListener('pageshow', function () {
+        document.querySelectorAll('[data-submit-busy]').forEach(release);
+    });
+
+    const _guardedFetch = window.fetch;
+    window.fetch = function (input, init) {
+        const method =
+            (init && init.method) ||
+            (input && typeof input === 'object' && input.method) ||
+            'GET';
+
+        const owner = WRITE_METHOD.test(method) ? armedTarget() : null;
+        if (!owner) return _guardedFetch.apply(this, arguments);
+
+        lock(owner);
+        owner._guardPending = (owner._guardPending || 0) + 1;
+
+        const settled = function () {
+            owner._guardPending = Math.max(0, (owner._guardPending || 0) - 1);
+            if (owner._guardPending > 0) return;
+            setTimeout(function () {
+                if (!owner._guardPending) release(owner);
+            }, SETTLE_MS);
+        };
+
+        return _guardedFetch.apply(this, arguments).then(
+            function (response) { settled(); return response; },
+            function (error) { settled(); throw error; }
+        );
+    };
+
+    // For the rare save that needs to hold or drop the lock by hand.
+    window.SubmitGuard = { lock: lock, release: release, isBusy: isBusy };
+})();

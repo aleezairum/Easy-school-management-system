@@ -24,5 +24,16 @@ namespace School.Web.Controllers
             ViewData["Title"] = "Fee Reports";
             return View();
         }
+
+        // Statements of account: one student, or one family. Both are the same
+        // report over the same columns, so they share a single form and the
+        // Ledger Type radio picks the account.
+        [Route("fee/ledger")]
+        [Route("ledger")]
+        public IActionResult Ledger()
+        {
+            ViewData["Title"] = "Ledger";
+            return View();
+        }
     }
 }
