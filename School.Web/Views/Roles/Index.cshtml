@@ -323,13 +323,17 @@
         let currentRoleData = null;
         let addRoleModal = null;
 
-        $(document).ready(function () {
+        $(document).ready(async function () {
             addRoleModal = new bootstrap.Modal(document.getElementById('addRoleModal'));
             loadRoles();
-            loadMenus();
 
-            // Show dummy data for preview
-            showDummyData();
+            // The real menu list, then the empty grid drawn from it. This used
+            // to draw a made-up list of ten entries ("Dashboard", "User
+            // Management", "Permissions"…) with real checkboxes against ids
+            // 1-10, so ticking a box before choosing a role granted rights on
+            // whichever pages happened to hold those ids.
+            await loadMenus();
+            showEmptyGrid();
         });
 
         // Open add role modal
@@ -338,64 +342,22 @@
             addRoleModal.show();
         }
 
-        // Show dummy data for grid preview
-        function showDummyData() {
-            const dummyMenus = [
-                { id: 1, menuTitle: 'Dashboard', level: 0 },
-                { id: 2, menuTitle: 'User Management', level: 0 },
-                { id: 3, menuTitle: 'Users', level: 1 },
-                { id: 4, menuTitle: 'Roles', level: 1 },
-                { id: 5, menuTitle: 'Permissions', level: 2 },
-                { id: 6, menuTitle: 'Academic', level: 0 },
-                { id: 7, menuTitle: 'Sessions', level: 1 },
-                { id: 8, menuTitle: 'Classes', level: 1 },
-                { id: 9, menuTitle: 'Subjects', level: 2 },
-                { id: 10, menuTitle: 'Reports', level: 0 }
-            ];
+        // The real menu with nothing ticked — what the grid shows before a role
+        // is chosen. Saving is not possible until one is (the Save button stays
+        // hidden), so this is a preview of the pages rights can be granted on.
+        function showEmptyGrid() {
+            renderPermissionsGrid([]);
 
-            const tbody = $('#permissionsBody');
-            tbody.empty();
+            if (allMenus.length === 0) {
+                $('#permissionsContainer').hide();
+                $('#emptyState').show();
+                return;
+            }
 
-            dummyMenus.forEach((menu, index) => {
-                const arrow = getMenuArrow(menu.level);
-                const levelClass = `level-${menu.level}`;
-
-                const row = `
-                    <tr data-menu-id="${menu.id}">
-                        <td>${index + 1}</td>
-                        <td class="menu-title ${levelClass}">
-                            ${arrow ? `<span class="menu-arrow">${arrow}</span>` : ''}${menu.menuTitle}
-                        </td>
-                        <td class="text-center">
-                            <input type="checkbox" class="form-check-input perm-checkbox" data-field="IsView" />
-                        </td>
-                        <td class="text-center">
-                            <input type="checkbox" class="form-check-input perm-checkbox" data-field="IsInsert" />
-                        </td>
-                        <td class="text-center">
-                            <input type="checkbox" class="form-check-input perm-checkbox" data-field="IsUpdate" />
-                        </td>
-                        <td class="text-center">
-                            <input type="checkbox" class="form-check-input perm-checkbox" data-field="IsDelete" />
-                        </td>
-                        <td class="text-center">
-                            <input type="checkbox" class="form-check-input perm-checkbox" data-field="IsActive" />
-                        </td>
-                        <td class="text-center">
-                            <input type="checkbox" class="form-check-input perm-checkbox" data-field="IsBackDate" />
-                        </td>
-                        <td class="text-center">
-                            <input type="checkbox" class="form-check-input perm-checkbox" data-field="IsPrint" />
-                        </td>
-                    </tr>
-                `;
-                tbody.append(row);
-            });
-
-            // Show grid, hide empty state
             $('#emptyState').hide();
             $('#permissionsContainer').show();
         }
+
 
         // Load all roles for the dropdown
         async function loadRoles() {
@@ -496,7 +458,7 @@
                 $('#roleInfo').removeClass('show');
                 $('#btnSavePermissions').hide();
                 currentRoleData = null;
-                showDummyData();
+                showEmptyGrid();
                 return;
             }
 

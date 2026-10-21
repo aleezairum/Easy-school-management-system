@@ -28,8 +28,15 @@
      sqlcmd -S . -U sa -P <pwd> -d EasySchoolDB -i SpRPT_Ledger.sql
    ===================================================================== */
 
-USE [EasySchoolDB]
-GO
+/* Deliberately NO "USE [EasySchoolDB]" here.
+
+   A hard-coded USE overrides sqlcmd's -d and sends the script to whatever
+   database that name resolves to on the machine it runs on. On the live
+   server that is how a script "succeeds" while quietly building its objects
+   in the development database — see the warning in Deploy_HR_To_Live.sql.
+
+   The database comes from -d instead, so the caller decides, and getting it
+   wrong fails loudly rather than silently. */
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON

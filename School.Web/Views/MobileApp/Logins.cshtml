@@ -1,0 +1,76 @@
+@{
+    ViewData["Title"] = "App Logins";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+@*
+    Logins for the EasySchool mobile app. Students: one per child, made for a
+    class or section at a time (login ID = roll number, password = a 6-digit
+    PIN on a printed slip); a parent signs in with any child's login and picks
+    "Parent" to see all their children. Staff: one per member of staff with a
+    role, which decides what they can do in the app (Mobile App Permissions).
+*@
+
+<style>
+    .form-section { background: #f8fafc; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+    .hint { font-size: 12px; color: #64748b; }
+    #stuTable td, #stuTable th, #staffTable td, #staffTable th { font-size: 13px; vertical-align: middle; }
+    .pin { font-family: Consolas, monospace; font-weight: 700; letter-spacing: .08em; }
+    .badge-off { background: #fee2e2; color: #b91c1c; }
+    .badge-none { background: #f1f5f9; color: #64748b; }
+</style>
+
+<div class="container-fluid">
+    <div class="card"><div class="card-body">
+        <ul class="nav nav-tabs mb-3">
+            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabStudents"><i class="bi bi-mortarboard me-1"></i>Students &amp; Parents</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabStaff"><i class="bi bi-person-badge me-1"></i>Staff</button></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="tabStudents">
+                <div class="form-section">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-3"><label class="form-label">Class</label>
+                            <select class="form-select" id="sClass" onchange="alLoadSections()"><option value="">-- Select Class --</option></select></div>
+                        <div class="col-md-3"><label class="form-label">Section</label>
+                            <select class="form-select" id="sSection"><option value="">-- Select Section --</option></select></div>
+                        <div class="col-md-6 d-flex gap-2 flex-wrap">
+                            <button class="btn btn-primary" onclick="alLoadStudents()"><i class="bi bi-search"></i> Load</button>
+                            <button class="btn btn-success" onclick="alGenerate()"><i class="bi bi-key"></i> Create logins</button>
+                            <button class="btn btn-outline-dark" onclick="alPrintSlips('stu')"><i class="bi bi-printer"></i> Print login slips</button>
+                        </div>
+                        <div class="col-12 hint">Create logins makes one for every ticked student who has none (tick none = the whole section). The login ID is the roll number and the password a 6-digit PIN; the slip tells parents how to install the app. Parents sign in with any child's login and choose <b>Parent</b> to see all their children.</div>
+                    </div>
+                </div>
+                <div class="table-responsive"><table class="table table-hover table-sm" id="stuTable">
+                    <thead><tr><th style="width:30px"><input type="checkbox" class="form-check-input" id="stuAll" /></th><th>Roll No</th><th>Student</th><th>Father</th><th>Login ID</th><th>PIN</th><th>Status</th><th>Last sign-in</th><th></th></tr></thead>
+                    <tbody id="stuBody"><tr><td colspan="9" class="text-center text-muted py-4">Choose a class and section, then press Load.</td></tr></tbody>
+                </table></div>
+            </div>
+
+            <div class="tab-pane fade" id="tabStaff">
+                <div class="form-section">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-3"><label class="form-label">Campus</label>
+                            <select class="form-select" id="fCampus"><option value="">All campuses</option></select></div>
+                        <div class="col-md-3"><label class="form-label">Role for new logins</label>
+                            <select class="form-select" id="fRole"></select></div>
+                        <div class="col-md-6 d-flex gap-2 flex-wrap">
+                            <button class="btn btn-primary" onclick="alLoadStaff()"><i class="bi bi-search"></i> Load</button>
+                            <button class="btn btn-outline-dark" onclick="alPrintSlips('staff')"><i class="bi bi-printer"></i> Print login slips</button>
+                        </div>
+                        <div class="col-12 hint">The login ID is the employee code. The role decides what the person can do in the app - set it on <b>Mobile App Permissions</b>. The <b>Admin</b> role can do everything.</div>
+                    </div>
+                </div>
+                <div class="table-responsive"><table class="table table-hover table-sm" id="staffTable">
+                    <thead><tr><th style="width:30px"><input type="checkbox" class="form-check-input" id="staffAll" /></th><th>Code</th><th>Name</th><th>Designation</th><th>Role</th><th>Login ID</th><th>PIN</th><th>Status</th><th>Last sign-in</th><th></th></tr></thead>
+                    <tbody id="staffBody"><tr><td colspan="10" class="text-center text-muted py-4">Press Load.</td></tr></tbody>
+                </table></div>
+            </div>
+        </div>
+    </div></div>
+</div>
+
+@section Scripts {
+<script src="~/js/appLogins.js" asp-append-version="true"></script>
+}

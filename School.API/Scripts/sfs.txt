@@ -1,0 +1,87 @@
+CREATE PROCEDURE SpGet_StudentsForSms
+(
+    @Type  NVARCHAR(20),
+    @Date  DATE = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @Type = 'Absent'
+    BEGIN
+        SELECT
+            s.VID,
+            s.Name,
+            c.VName + ' ' + Sec.VName AS ClassName,
+            s.MobileNo,
+            s.IsSMS,
+            p.FatherMobile,
+            p.IsFatherSMS,
+            p.MotherMobile,
+            p.IsMotherSMS,
+            p.GuardianMobile,
+            p.IsGuardianSMS
+        FROM StdAttendence a
+        INNER JOIN SMSStudent s ON a.StudentID = s.VID
+        INNER JOIN SMSStudentAcademic SA ON a.StudentID = SA.StudentID
+        INNER JOIN SMSSection   Sec ON SA.SectionID   = Sec.VID
+        INNER JOIN SMSClass   c ON Sec.ClassID   = c.VID
+        LEFT  JOIN SMSParent  p ON s.ParentID  = p.VID
+        WHERE a.VDate      = @Date
+          AND a.Attendence = 0
+          AND a.IsActive   = 1
+          AND s.IsActive   = 1
+    END
+
+    ELSE IF @Type = 'Late'
+    BEGIN
+        SELECT
+            s.VID,
+            s.Name,
+            c.VName + ' ' + Sec.VName AS ClassName,
+            s.MobileNo,
+            s.IsSMS,
+            p.FatherMobile,
+            p.IsFatherSMS,
+            p.MotherMobile,
+            p.IsMotherSMS,
+            p.GuardianMobile,
+            p.IsGuardianSMS
+        FROM StdAttendence a
+        INNER JOIN SMSStudent s ON a.StudentID = s.VID
+        INNER JOIN SMSStudentAcademic SA ON a.StudentID = SA.StudentID
+        INNER JOIN SMSSection   Sec ON SA.SectionID   = Sec.VID
+        INNER JOIN SMSClass   c ON Sec.ClassID   = c.VID
+        LEFT  JOIN SMSParent  p ON s.ParentID  = p.VID
+        WHERE a.VDate      = @Date
+          AND a.Attendence = 1
+          AND a.IsLate     = 1
+          AND a.IsActive   = 1
+          AND s.IsActive   = 1
+    END
+
+    ELSE IF @Type = 'FeeDefaulter'
+    BEGIN
+        SELECT
+            s.VID,
+            s.Name,
+            c.VName + ' ' + Sec.VName AS ClassName,
+            s.MobileNo,
+            s.IsSMS,
+            p.FatherMobile,
+            p.IsFatherSMS,
+            p.MotherMobile,
+            p.IsMotherSMS,
+            p.GuardianMobile,
+            p.IsGuardianSMS
+        FROM StdAttendence a
+        INNER JOIN SMSStudent s ON a.StudentID = s.VID
+        INNER JOIN SMSStudentAcademic SA ON a.StudentID = SA.StudentID
+        INNER JOIN SMSSection   Sec ON SA.SectionID   = Sec.VID
+        INNER JOIN SMSClass   c ON Sec.ClassID   = c.VID
+        LEFT  JOIN SMSParent  p ON s.ParentID  = p.VID
+        WHERE s.IsActive = 1
+    END
+
+END
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     

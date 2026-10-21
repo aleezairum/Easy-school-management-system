@@ -85,9 +85,18 @@
                     <input type="hidden" id="classId" value="0" />
 
                     <div class="row g-3 align-items-end">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label for="className" class="form-label">Class Name <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="className" placeholder="e.g., Grade 1, Class 10" required />
+                        </div>
+                        <div class="col-md-3">
+                            <label for="classNameUrdu" class="form-label">
+                                Urdu Name <span class="text-muted">(optional)</span>
+                            </label>
+                            @* dir="rtl" so the box types right-to-left; the Urdu keyboard
+                               is the user's, this only stops the caret fighting them. *@
+                            <input type="text" class="form-control" id="classNameUrdu"
+                                   dir="rtl" lang="ur" placeholder="مثلاً نہم جونیئر" />
                         </div>
                         <div class="col-md-2">
                             <div class="form-check">
@@ -120,6 +129,7 @@
                             <tr>
                                 <th style="width: 60px;">Sr#</th>
                                 <th>Class Name</th>
+                                <th>Urdu Name</th>
                                 <th class="text-center" style="width: 100px;">Status</th>
                                 <th class="text-center" style="width: 120px; white-space: nowrap;">Actions</th>
                             </tr>
@@ -171,7 +181,7 @@
             tbody.empty();
 
             if (classes.length === 0) {
-                tbody.html('<tr><td colspan="4" class="text-center text-muted py-4">No classes found. Add a new class using the form above.</td></tr>');
+                tbody.html('<tr><td colspan="5" class="text-center text-muted py-4">No classes found. Add a new class using the form above.</td></tr>');
                 return;
             }
 
@@ -180,6 +190,7 @@
                     <tr data-id="${cls.viD}" class="${editingClassId === cls.viD ? 'selected' : ''}">
                         <td>${index + 1}</td>
                         <td><strong>${cls.vName}</strong></td>
+                        <td dir="rtl" lang="ur">${cls.vNameUrdu || '<span class="text-muted">&mdash;</span>'}</td>
                         <td class="text-center">
                             <span class="badge ${cls.isActive ? 'bg-success' : 'bg-secondary'}">
                                 ${cls.isActive ? 'Active' : 'Inactive'}
@@ -265,6 +276,7 @@
             $('#classId').val(data.vid);
 
             $('#className').val(data.vName);
+            $('#classNameUrdu').val(data.vNameUrdu || '');
             $('#isActive').prop('checked', data.isActive);
         }
 
@@ -272,6 +284,7 @@
         function resetForm() {
             $('#classId').val('0');
             $('#className').val('');
+            $('#classNameUrdu').val('');
             $('#isActive').prop('checked', true);
             $('#formTitle').text('Add New Class');
             editingClassId = 0;
@@ -294,6 +307,7 @@
             const data = {
                 VID: classId,
                 VName: className,
+                VNameUrdu: $('#classNameUrdu').val().trim() || null,
                 IsActive: $('#isActive').is(':checked')
             };
 

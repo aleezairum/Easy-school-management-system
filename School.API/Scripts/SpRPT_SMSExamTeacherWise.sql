@@ -1,5 +1,3 @@
-USE [EasySchoolDB]
-GO
 /* ============================================================================
    SpRPT_SMSExamTeacherWise
    ----------------------------------------------------------------------------
@@ -27,6 +25,9 @@ GO
                        - Pass % by Obtained Marks  (Obtained / TotalMarks  * 100)
                      i.e. (PassPercentByPassMarks + PassPercentByObtainedMarks) / 2,
                      same "Average%" definition used by SpRPT_SMSExamSubjectWise.
+
+   Students on the exam's Result Exclude List (dbo.SMSExamExclude, created by
+   ExamResultControls.sql) are left out.
 
    A student "appears" when IsAbsent = 0 (same rule as the other exam reports).
    Only ACTIVE assignments BELONGING TO @ExamID are considered — assignments are
@@ -76,6 +77,9 @@ BEGIN
           AND       R.IsActive = 1
           AND       EXISTS (SELECT 1 FROM SMSStudentAcademic SA
                             WHERE SA.StudentID = R.StudentID AND SA.IsActive = 1 AND SA.StatusID = 1)
+          -- Left out of the teachers' result for this exam (Result Exclude List).
+          AND       NOT EXISTS (SELECT 1 FROM SMSExamExclude X
+                                WHERE X.ExamID = @ExamID AND X.StudentID = R.StudentID)
         GROUP BY    R.ClassID, R.SectionID, R.SubjectID
     ),
     -- Distinct teacher → subject assignments (collapse multiple LectureNo rows).

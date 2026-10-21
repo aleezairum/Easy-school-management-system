@@ -6,11 +6,33 @@
 @section Styles {
 <style>
     /* Stats Cards */
+    /* Five to a row, so the ten cards sit as two tidy rows of five.
+       minmax(0, 1fr) rather than 1fr: a grid column's default minimum is its
+       content, so one long figure would push the row wider than the page and
+       the fifth card would fall off. */
     .stats-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-        gap: 24px;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 18px;
         margin-bottom: 32px;
+    }
+
+    /* Five only while there is room for five. Below that they would be
+       slivers, so the count steps down rather than the cards shrinking. */
+    @@media (max-width: 1400px) {
+        .stats-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+
+    @@media (max-width: 1100px) {
+        .stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+
+    @@media (max-width: 820px) {
+        .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @@media (max-width: 540px) {
+        .stats-grid { grid-template-columns: 1fr; }
     }
 
     .stat-card {
@@ -508,9 +530,10 @@
             </div>
         </div>
     </div>
-</div>
-
-<div class="stats-grid">
+    @* One grid, not two. Split into two containers the cards could never fill
+       a row properly: the first grid held four and stopped, so the row ended
+       short and everything after it started again on a new line. All ten in
+       one grid simply flow five and five. *@
     <!-- 5) Class rooms -->
     <div class="stat-card">
         <div class="stat-icon orange">
@@ -572,6 +595,22 @@
             <p>Pending Fees (till today)</p>
             <div class="stat-trend down">
                 <i class="bi bi-people"></i> <span id="statPendingStudents">—</span> student(s)
+            </div>
+        </div>
+    </div>
+    @* 10) Money owed by children who have already left.
+       Invisible on the card above, which counts only students still enrolled,
+       so it was money nobody was looking at. Same figure as the Unpaid Fee
+       report's "students who have left". *@
+    <div class="stat-card">
+        <div class="stat-icon pink">
+            <i class="bi bi-person-dash-fill"></i>
+        </div>
+        <div class="stat-content">
+            <h3 id="statLeftPendingFees">—</h3>
+            <p>Dues of Students Who Left</p>
+            <div class="stat-trend down">
+                <i class="bi bi-people"></i> <span id="statLeftPendingStudents">—</span> student(s)
             </div>
         </div>
     </div>
@@ -668,7 +707,7 @@
                 if (!s) return '—';
                 const d = parseCalendarDate(s) || new Date(NaN);
                 if (isNaN(d.getTime())) return '—';
-                return d.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
+                return `${String(d.getDate()).padStart(2, '0')}-${MONTH_ABBR[d.getMonth()]}-${d.getFullYear()}`;
             };
             const initials = name => {
                 if (!name) return '?';
@@ -725,7 +764,7 @@
                 list.innerHTML = rows.map(v => {
                     const d = v.paymentDate ? parseCalendarDate(v.paymentDate) : null;
                     const day = d && !isNaN(d) ? String(d.getDate()).padStart(2, '0') : '--';
-                    const mon = d && !isNaN(d) ? d.toLocaleDateString('en-US', { month: 'short' }) : '---';
+                    const mon = d && !isNaN(d) ? MONTH_ABBR[d.getMonth()] : '---';
                     return `
                         <div class="event-item">
                             <div class="event-date">
@@ -780,6 +819,8 @@
                         setText('statMonthVouchers',   fmtNumber(f.monthVoucherCount));
                         setText('statPendingFees',     fmtMoney(f.pendingFeeTotal));
                         setText('statPendingStudents', fmtNumber(f.pendingFeeStudents));
+                        setText('statLeftPendingFees',     fmtMoney(f.leftPendingFeeTotal));
+                        setText('statLeftPendingStudents', fmtNumber(f.leftPendingFeeStudents));
 
                         renderStudents(data.recentStudents);
                         renderVouchers(data.recentVouchers);

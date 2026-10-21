@@ -1,0 +1,295 @@
+@{
+    ViewData["Title"] = "Staff Statement";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+@*
+    The Staff Statement the school prints and submits: every employee with
+    qualification, appointment date and monthly salary, oldest appointment
+    first, with a blank Signature column to sign against.
+
+    The "w.e.f." date is a real filter, not a caption — it decides which pay
+    structure is quoted, so a statement dated last April shows last April's
+    salaries.
+*@
+
+@section Styles {
+<style>
+    .print-header { display: none; }
+
+    .pt-title { display: flex; align-items: center; gap: 12px; }
+    .pt-icon {
+        width: 42px; height: 42px; border-radius: 10px; background: #e8f5ee; color: #008649;
+        display: flex; align-items: center; justify-content: center; font-size: 20px;
+    }
+    .pt-title h4 { margin: 0; font-size: 18px; font-weight: 700; }
+    .pt-sub { margin: 0; font-size: 13px; color: #64748b; }
+
+    #staffTable td, #staffTable th { vertical-align: middle; font-size: 13px; }
+    #staffTable .sig-cell { min-width: 90px; }
+
+    /* ============ Print CSS ============ */
+    @@media print {
+        .no-print, .sidebar, .top-header, .topbar, .top-nav, .navbar,
+        .hamburger-btn, .header-actions, .header-search, .header-user-wrapper,
+        .toast-container, #toastContainer, .breadcrumb, .page-title,
+        .page-toolbar, .filter-card, .loading-overlay { display: none !important; }
+
+        .print-header { display: block !important; text-align: center; margin-bottom: 6px; padding: 0; }
+        .print-header .school-name {
+            font-size: 18px; font-weight: 700; margin: 0; padding: 4px 8px 2px 8px; line-height: 1.2;
+            border-top: 2px solid black; border-left: 2px solid black; border-right: 2px solid black;
+        }
+        .print-header .school-address {
+            font-size: 11px; margin: 0; padding: 2px 8px 4px 8px; font-weight: 400;
+            border-bottom: 2px solid black; border-left: 2px solid black; border-right: 2px solid black;
+        }
+        .print-header .sheet-title {
+            font-size: 14px; font-weight: 700; margin: 6px 0 0 0; padding: 5px 16px;
+            background-color: black !important; color: white !important; text-align: center;
+            -webkit-print-color-adjust: exact; print-color-adjust: exact;
+        }
+
+        body { margin: 0 !important; padding: 0 !important; min-height: 0 !important; height: auto !important; }
+        /* Flex wrappers clip multi-page content to ONE page in Chrome print — turn
+           them into plain blocks so the table paginates across as many pages as needed. */
+        .wrapper { display: block !important; min-height: 0 !important; height: auto !important; }
+        .main-content, .main-content.expanded { display: block !important; margin: 0 !important; min-height: 0 !important; height: auto !important; }
+        .content-area { display: block !important; overflow: visible !important; }
+        .main-content, .content-area, .container-fluid { margin: 0 !important; padding: 0 !important; width: 100% !important; max-width: 100% !important; }
+        .card { box-shadow: none !important; border-radius: 0 !important; border: none !important; margin: 0 !important; }
+        .card-body { padding: 0 !important; }
+
+        .table-responsive { overflow: visible !important; border: none !important; border-radius: 0 !important; }
+        #staffTable { table-layout: fixed !important; width: 100% !important; border-collapse: collapse !important; font-size: 10px !important; }
+        #staffTable th, #staffTable td {
+            border: 1px solid black !important; color: #000 !important;
+            padding: 4px 4px !important; word-wrap: break-word !important; overflow: hidden !important;
+        }
+        #staffTable thead th {
+            font-size: 10px !important; font-weight: 700 !important; background: none !important;
+            text-transform: none !important; letter-spacing: 0 !important; position: static !important;
+        }
+        #staffTable tbody tr:hover td { background: none !important; }
+        #staffTable tr { page-break-inside: avoid !important; }
+        #staffTable thead { display: table-header-group !important; }
+
+        #staffTable th:nth-child(1),  #staffTable td:nth-child(1)  { width: 4%;  text-align: center; }
+        #staffTable th:nth-child(2),  #staffTable td:nth-child(2)  { width: 15%; }
+        #staffTable th:nth-child(3),  #staffTable td:nth-child(3)  { width: 10%; }
+        #staffTable th:nth-child(4),  #staffTable td:nth-child(4)  { width: 15%; }
+        #staffTable th:nth-child(5),  #staffTable td:nth-child(5)  { width: 9%;  text-align: center; }
+        #staffTable th:nth-child(6),  #staffTable td:nth-child(6)  { width: 14%; }
+        #staffTable th:nth-child(7),  #staffTable td:nth-child(7)  { width: 9%;  text-align: center; }
+        #staffTable th:nth-child(8),  #staffTable td:nth-child(8)  { width: 8%;  text-align: center; }
+        #staffTable th:nth-child(9),  #staffTable td:nth-child(9)  { width: 9%;  text-align: center; }
+        #staffTable th:nth-child(10), #staffTable td:nth-child(10) { width: 7%; }
+
+        @@page { size: A4 landscape; margin: 8mm 8mm; }
+    }
+</style>
+}
+
+<div class="container-fluid">
+    <div class="print-header">
+        <div class="school-name" id="printSchoolName">SIR SYED MODEL HIGH SCHOOL (BOYS &amp; GIRLS)</div>
+        <div class="school-address">Chhonawala Road, Hasilpur, District Bahawalpur</div>
+        <div class="sheet-title" id="printSheetTitle">Staff Statement</div>
+    </div>
+
+    <div class="page-toolbar no-print d-flex justify-content-between align-items-center mb-3">
+        <div class="pt-title">
+            <div class="pt-icon"><i class="bi bi-people-fill"></i></div>
+            <div>
+                <h4>Staff Statement</h4>
+                <p class="pt-sub">Qualification, appointment date and monthly salary of every employee</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3 no-print filter-card">
+        <div class="card-body">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-2">
+                    <label class="form-label">With effect from</label>
+                    <input type="date" class="form-control" id="asOn" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Campus</label>
+                    <select class="form-select" id="campusId">
+                        <option value="">All campuses</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Designation</label>
+                    <select class="form-select" id="designationId"><option value="">All designations</option></select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Employee</label>
+                    <select class="form-select" id="employeeId"><option value="">All employees</option></select>
+                </div>
+                @* The sheet's date range: staff appointed between these dates. *@
+                <div class="col-md-2">
+                    <label class="form-label">Appointed From</label>
+                    <input type="date" class="form-control" id="joinedFrom" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Appointed To</label>
+                    <input type="date" class="form-control" id="joinedTo" />
+                </div>
+                <div class="col-md-2">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="includeInactive" />
+                        <label class="form-check-label" for="includeInactive">Include inactive staff</label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary" onclick="loadStatement()">
+                            <i class="bi bi-search"></i> Run
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="window.print()">
+                            <i class="bi bi-printer"></i> Print
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @*
+        The printed sheet leaves the salary cell blank when there is no salary
+        record, which is correct for a document that is submitted. On screen
+        that blank looks like a fault, so say plainly whose salary is missing
+        and where it is entered.
+    *@
+    <div class="alert alert-warning py-2 no-print d-none" id="salaryNote"></div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="staffTable">
+                    <thead>
+                        <tr>
+                            <th>Sr.<br />No.</th>
+                            <th>Name</th>
+                            <th>Designation</th>
+                            <th>Father's Name</th>
+                            <th>Date of Birth</th>
+                            <th>Academic Qualification</th>
+                            <th>Appointment Date</th>
+                            <th>Monthly Salary</th>
+                            <th>Contact No.</th>
+                            <th>Signature</th>
+                        </tr>
+                    </thead>
+                    <tbody id="staffBody">
+                        <tr><td colspan="10" class="text-center text-muted py-4">Press Run to load the statement.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script src="~/js/hrFilters.js" asp-append-version="true"></script>
+<script>
+    $(document).ready(function () {
+        $('#asOn').val(toInputDate(new Date()));
+
+        // Campus, designation and employee lists, the employee list narrowed
+        // to the campus and designation picked (wwwroot/js/hrFilters.js).
+        hrInitFilters({ campus: '#campusId', designation: '#designationId', employee: '#employeeId' });
+
+        // Campus is a real filter — staff now carry one (Employees.CampusID).
+        // It also renames the printed heading, because a sheet listing only the
+        // Girls campus must not be headed with the combined school name.
+
+        loadStatement();
+    });
+
+    async function loadStatement() {
+        const asOn = $('#asOn').val();
+        const designationId = $('#designationId').val();
+        const includeInactive = $('#includeInactive').is(':checked');
+
+        const campusId = $('#campusId').val();
+
+        let url = `${API_BASE}/hr/reports/staff-statement?includeInactive=${includeInactive}`;
+        if (asOn) url += `&asOn=${asOn}`;
+        if (designationId) url += `&designationId=${designationId}`;
+        if (campusId) url += `&campusId=${campusId}`;
+        const employeeId = $('#employeeId').val();
+        if (employeeId) url += `&employeeId=${employeeId}`;
+        const joinedFrom = $('#joinedFrom').val(), joinedTo = $('#joinedTo').val();
+        if (joinedFrom) url += `&joinedFrom=${joinedFrom}`;
+        if (joinedTo) url += `&joinedTo=${joinedTo}`;
+
+        const res = await fetch(url);
+        if (!res.ok) { toastError('Failed to load the staff statement'); return; }
+
+        // The heading follows the filter: a sheet listing only one campus must
+        // not be headed with the combined school name.
+        const campusName = campusId ? $('#campusId option:selected').text() : '';
+        $('#printSchoolName').text(campusName
+            ? `SIR SYED MODEL ${campusName.toUpperCase()} HIGH SCHOOL`
+            : 'SIR SYED MODEL HIGH SCHOOL (BOYS & GIRLS)');
+
+        render(await res.json(), asOn);
+    }
+
+    function render(rows, asOn) {
+        const jf = $('#joinedFrom').val(), jt = $('#joinedTo').val();
+        const appointed = jf || jt ? ` (appointed ${jf ? 'from ' + fmtDate(jf) : ''}${jf && jt ? ' ' : ''}${jt ? 'to ' + fmtDate(jt) : ''})` : '';
+        $('#printSheetTitle').text(
+            (asOn ? `Staff Statement w.e.f. ${fmtDate(asOn)}` : 'Staff Statement') + appointed);
+
+        // A salary is quoted from the pay structure in force on the w.e.f. date.
+        // No structure on or before that date means no salary to quote — which
+        // is a data-entry gap, not a report fault, so name it.
+        const missing = rows.filter(r => r.monthlySalary == null).length;
+        const note = $('#salaryNote');
+        if (missing) {
+            note.removeClass('d-none').html(
+                `<i class="bi bi-exclamation-triangle me-1"></i>` +
+                `<b>Monthly Salary is blank for ${missing} of ${rows.length} staff.</b> ` +
+                `No salary record exists on or before ${esc(fmtDate(asOn))}. ` +
+                `Enter it on the Employee form &rarr; Salary Structure &rarr; Add Salary Record, ` +
+                `with an "Effective From" date on or before this one.`);
+        } else {
+            note.addClass('d-none').empty();
+        }
+
+        const body = $('#staffBody');
+        body.empty();
+
+        if (!rows.length) {
+            body.html('<tr><td colspan="10" class="text-center text-muted py-4">No staff found.</td></tr>');
+            return;
+        }
+
+        rows.forEach((r, i) => {
+            body.append(`
+                <tr>
+                    <td class="text-center">${i + 1}</td>
+                    <td>${esc(r.name)}</td>
+                    <td>${esc(r.designation)}</td>
+                    <td>${esc(r.fatherName)}</td>
+                    <td class="text-center">${fmtDate(r.dateOfBirth)}</td>
+                    <td>${esc(r.qualification)}</td>
+                    <td class="text-center">${fmtDate(r.joiningDate)}</td>
+                    <td class="text-center">${r.monthlySalary == null ? '' : Number(r.monthlySalary).toLocaleString('en-US')}</td>
+                    <td class="text-center">${esc(r.contactNo)}</td>
+                    <td class="sig-cell"></td>
+                </tr>`);
+        });
+    }
+
+    // Staff records are typed by hand and carry apostrophes and ampersands.
+    function esc(value) {
+        return (value ?? '').toString()
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+</script>
+}

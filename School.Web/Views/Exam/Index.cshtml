@@ -108,12 +108,17 @@
                 <div class="grid-section-title">
                     <i class="bi bi-table me-2"></i>Exams List
                 </div>
+                <div class="text-muted small mb-2">
+                    <i class="bi bi-info-circle me-1"></i>WhatsApp shows parents and teachers only a <b>finalised</b> result.
+                    Finalise an exam once all its marks are entered; until then its marks stay off WhatsApp.
+                </div>
                 <div class="table-responsive">
                     <table class="table table-hover" id="examsTable">
                         <thead>
                             <tr>
                                 <th style="width: 60px;">Sr#</th>
                                 <th>Exam Name</th>
+                                <th style="width: 260px;">Result</th>
                                 <th class="text-center" style="width: 180px;">Actions</th>
                             </tr>
                         </thead>
@@ -132,6 +137,7 @@
 
         let editingId = 0;
         let allExams = [];
+        let finalized = {};   // examId -> { finalizedDate }
 
         $(document).ready(function () {
             loadExams();
@@ -140,7 +146,12 @@
         async function loadExams() {
             showLoading();
             try {
-                const response = await fetch(`${API_BASE}/exam`);
+                const [response, fin] = await Promise.all([
+                    fetch(`${API_BASE}/exam`),
+                    fetch(`${API_BASE}/exam-control/finalized`).then(r => r.ok ? r.json() : []).catch(() => [])
+                ]);
+                finalized = {};
+                fin.forEach(f => finalized[f.examId] = f);
                 if (response.ok) {
                     allExams = await response.json();
                     renderList(allExams);
@@ -160,7 +171,7 @@
             tbody.empty();
 
             if (!items || items.length === 0) {
-                tbody.html('<tr><td colspan="3" class="text-center text-muted py-4">No exams found. Add a new exam using the form above.</td></tr>');
+                tbody.html('<tr><td colspan="4" class="text-center text-muted py-4">No exams found. Add a new exam using the form above.</td></tr>');
                 return;
             }
 
@@ -169,6 +180,7 @@
                     <tr data-id="${item.vid}" class="${editingId === item.vid ? 'selected' : ''}">
                         <td>${index + 1}</td>
                         <td><strong>${item.vName}</strong></td>
+                        <td>${finalizeCell(item)}</td>
                         <td class="text-center">
                             <button type="button" class="btn btn-sm btn-warning me-1" onclick="viewResults(${item.vid})" title="Results">
                                 <i class="bi bi-clipboard-data"></i>
@@ -181,6 +193,34 @@
                 `;
                 tbody.append(row);
             });
+        }
+
+        function finalizeCell(item) {
+            const f = finalized[item.vid];
+            return f
+                ? `<span class="badge bg-success me-2"><i class="bi bi-lock-fill me-1"></i>Finalised ${fmtDate(f.finalizedDate)}</span>
+                   <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setFinalized(${item.vid}, false)" title="Take it off WhatsApp to correct marks">Undo</button>`
+                : `<span class="badge bg-warning text-dark me-2">Not finalised</span>
+                   <button type="button" class="btn btn-sm btn-success" onclick="setFinalized(${item.vid}, true)"><i class="bi bi-check2-circle me-1"></i>Finalize</button>`;
+        }
+
+        async function setFinalized(examId, on) {
+            const exam = allExams.find(e => e.vid === examId);
+            const name = String(exam ? exam.vName : 'this exam').replace(/[<>&"]/g, '');
+            const question = on
+                ? `Finalise the result of "${name}"? Parents and teachers will then see it on WhatsApp.`
+                : `Undo finalise for "${name}"? Its result will stop showing on WhatsApp until finalised again.`;
+            if (!await confirmDelete({ title: on ? 'Finalise result?' : 'Undo finalise?', html: question, icon: 'question',
+                confirmButtonText: on ? 'Yes, Finalise' : 'Yes, Undo' })) return;
+            showLoading();
+            try {
+                const r = await fetch(`${API_BASE}/exam-control/${examId}/finalize`, { method: on ? 'POST' : 'DELETE' });
+                if (!r.ok) { showAlert('Could not save', 'danger'); return; }
+                showAlert(on ? 'Result finalised - it now shows on WhatsApp.' : 'Finalise undone - the result is off WhatsApp.', 'success');
+                await loadExams();
+            } finally {
+                hideLoading();
+            }
         }
 
         function viewResults(examId) {

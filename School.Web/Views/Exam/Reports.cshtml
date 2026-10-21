@@ -107,6 +107,11 @@
                             Tick one or more <strong>classes</strong> for a class-wise report, or tick one or more
                             <strong>sections</strong> for a section-wise report (sections take precedence over classes).
                         </small>
+                        <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                            <label class="form-label mb-0" for="annPrevExam">Pass % Prev. - compare with</label>
+                            <select class="form-select form-select-sm" id="annPrevExam" style="width:auto; min-width:260px"></select>
+                            <small class="text-muted">Auto takes the previous term of the same kind (e.g. 1st Term for the 2nd Term).</small>
+                        </div>
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <div class="border rounded p-2 bg-white">
@@ -452,6 +457,7 @@
         if (!isTeacherWise) $('#teacherId').val('');
         // Announcement scope (class / section checkbox lists): Announcement only
         $('#annScopeCol').toggle(isAnnouncement);
+        if (isAnnouncement) annFillPrevExams();
         // Subject Wise scope (class / section checkbox lists): Subject Wise only
         $('#swScopeCol').toggle(isSubjectWise);
         // Comparison scope (Left/Right pickers): Comparison report only
@@ -472,6 +478,20 @@
     }
 
     // ── Result Announcement scope helpers ──────────────────────────────
+
+    // The exams to compare with for "Pass % Prev.": Auto, every other exam, or none.
+    function annFillPrevExams() {
+        const keep = $('#annPrevExam').val(), current = $('#examId').val();
+        const sel = $('#annPrevExam').empty()
+            .append('<option value="">Auto - the previous term</option>');
+        $('#examId option').each(function () {
+            const v = $(this).val();
+            if (v && v !== current) sel.append($('<option>').val(v).text($(this).text()));
+        });
+        sel.append('<option value="0">None - no comparison</option>');
+        sel.val(keep && sel.find(`option[value="${keep}"]`).length ? keep : '');
+    }
+    $(document).on('change', '#examId', function () { if ($('#annScopeCol').is(':visible')) annFillPrevExams(); });
     // Build the class checkbox list from the loaded classes.
     function renderAnnClassCheckboxes() {
         const box = $('#annClassList');
@@ -804,6 +824,8 @@
             });
             if (scope.sectionIds) params.append('sectionIds', scope.sectionIds);
             if (scope.classIds)   params.append('classIds', scope.classIds);
+            // Empty = Auto (the API finds the previous term); 0 = no comparison.
+            if ($('#annPrevExam').val() !== '') params.append('prevExamId', $('#annPrevExam').val());
             window.open(`/exam/announcement-report?${params.toString()}`, '_blank', 'width=1000,height=800');
         } else {
             // Result Sheet needs a specific Class + Section

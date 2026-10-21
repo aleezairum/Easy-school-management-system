@@ -9,9 +9,17 @@ namespace School.API.DTOs.HR
         public string? CNIC { get; set; }
         public string? Mobile { get; set; }
         public string? Photo { get; set; }
+        public bool HasPhoto { get; set; }
         public string? Department { get; set; }
+
+        // Null means no campus recorded yet, not "both" — see Employee.CampusId.
+        public int? CampusId { get; set; }
+        public string? CampusName { get; set; }
+
         public int? DesignationId { get; set; }
         public string? DesignationName { get; set; }
+        public int? StaffCategoryId { get; set; }
+        public string? StaffCategoryName { get; set; }
         public string? HRGradeName { get; set; }
         public string? EmployeeType { get; set; }
         public string? Status { get; set; }
@@ -46,15 +54,18 @@ namespace School.API.DTOs.HR
         public string? Experience { get; set; }
         public string? Department { get; set; }
 
+        public int? CampusId { get; set; }
+        public string? CampusName { get; set; }
+
         public int? DesignationId { get; set; }
         public string? DesignationName { get; set; }
+        public int? StaffCategoryId { get; set; }
+        public string? StaffCategoryName { get; set; }
         public int? HRGradeId { get; set; }
         public string? HRGradeName { get; set; }
         public int? AcademicGradeId { get; set; }
 
         // Payroll
-        public int? ShiftId { get; set; }
-        public string? ShiftName { get; set; }
         public string? MachineCardNo { get; set; }
         public byte? OffDay1 { get; set; }
         public byte? OffDay2 { get; set; }
@@ -104,11 +115,14 @@ namespace School.API.DTOs.HR
         public string? Experience { get; set; }
         public string? Department { get; set; }
 
+        /// <summary>Which campus the employee is posted to.</summary>
+        public int? CampusId { get; set; }
+
         public int? DesignationId { get; set; }
         public int? HRGradeId { get; set; }
         public int? AcademicGradeId { get; set; }
+        public int? StaffCategoryId { get; set; }
 
-        public int? ShiftId { get; set; }
         public string? MachineCardNo { get; set; }
         public byte? OffDay1 { get; set; }
         public byte? OffDay2 { get; set; }
@@ -135,5 +149,21 @@ namespace School.API.DTOs.HR
         public int Id { get; set; }
         public string EmployeeCode { get; set; } = string.Empty;
         public string FullName { get; set; } = string.Empty;
+
+        /// <summary>So a report can narrow its employee list to the campus and designation picked.</summary>
+        public int? CampusId { get; set; }
+        public int? DesignationId { get; set; }
+    }
+
+    /// <summary>
+    /// Putting staff into a category, without touching anything else about
+    /// them — see EmployeeController.SetCategory for why that matters.
+    /// </summary>
+    public class SetStaffCategoryDto
+    {
+        public List<int> EmployeeIds { get; set; } = new();
+
+        /// <summary>Null clears the category.</summary>
+        public int? StaffCategoryId { get; set; }
     }
 }

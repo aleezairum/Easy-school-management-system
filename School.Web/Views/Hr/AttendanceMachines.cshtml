@@ -1,0 +1,485 @@
+@{
+    ViewData["Title"] = "Attendance Machines";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+@*
+    Face-attendance machines (Hikvision). Machines: add one per campus and
+    test it. People: send staff and students to a machine, with a face photo
+    and a card number. Punch Log: every punch received and what was done with it.
+    A staff punch becomes the day's time in / time out in Staff Attendance; a
+    student punch marks the student Present unless the teacher marked the day.
+*@
+
+<style>
+    .form-section { background: #f8fafc; border-radius: 12px; padding: 18px; margin-bottom: 18px; }
+    .form-section-title { font-size: 13px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 14px; }
+    .hint { font-size: 12px; color: #64748b; }
+    .mono { font-family: Consolas, monospace; font-size: 12.5px; }
+    #peopleTable td, #logTable td, #devTable td { vertical-align: middle; font-size: 13px; }
+    .face-thumb { width: 36px; height: 36px; border-radius: 6px; object-fit: cover; border: 1px solid #e2e8f0; }
+    .card-input { width: 120px; }
+    .push-box { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 10px 12px; }
+</style>
+
+<div class="container-fluid">
+    <div id="alertContainer"></div>
+
+    <ul class="nav nav-tabs mb-3" role="tablist">
+        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabDevices" type="button" id="btnTabDevices">Machines</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabPeople" type="button" id="btnTabPeople">People on Machine</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabLog" type="button" id="btnTabLog">Punch Log</button></li>
+    </ul>
+
+    <div class="tab-content">
+        @* ── Machines ── *@
+        <div class="tab-pane fade show active" id="tabDevices">
+            <div class="card"><div class="card-body">
+                <div class="form-section">
+                    <div class="form-section-title"><span id="devFormTitle">Add Machine</span></div>
+                    <input type="hidden" id="devId" value="0" />
+                    <div class="row g-3">
+                        <div class="col-md-3"><label class="form-label">Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="devName" maxlength="100" placeholder="e.g. Boys Campus Gate" /></div>
+                        <div class="col-md-3"><label class="form-label">Campus</label>
+                            <select class="form-select" id="devCampus"><option value="">All campuses</option></select></div>
+                        <div class="col-md-2"><label class="form-label">IP address <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control mono" id="devIp" placeholder="192.168.1.64" /></div>
+                        <div class="col-md-1"><label class="form-label">Port</label>
+                            <input type="number" class="form-control" id="devPort" value="80" /></div>
+                        <div class="col-md-1"><label class="form-label">User</label>
+                            <input type="text" class="form-control" id="devUser" value="admin" /></div>
+                        <div class="col-md-2"><label class="form-label">Password</label>
+                            <input type="password" class="form-control" id="devPassword" autocomplete="new-password" placeholder="machine admin password" /></div>
+                        <div class="col-md-12 d-flex gap-4 flex-wrap">
+                            <div class="form-check"><input class="form-check-input" type="checkbox" id="devHttps" /><label class="form-check-label" for="devHttps">HTTPS</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" id="devActive" checked /><label class="form-check-label" for="devActive">Active</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" id="devPull" checked /><label class="form-check-label" for="devPull">Read punches every minute</label></div>
+                        </div>
+                    </div>
+                    <div class="text-end mt-3">
+                        <button class="btn btn-outline-secondary me-2" onclick="resetDevice()">Clear</button>
+                        <button class="btn btn-success" onclick="saveDevice()"><i class="bi bi-check-lg"></i> Save Machine</button>
+                    </div>
+                </div>
+
+                <div id="testResult"></div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover" id="devTable">
+                        <thead><tr><th>Machine</th><th>Campus</th><th>Address</th><th>Status</th><th>Last punch</th><th>Today</th><th>People</th><th></th></tr></thead>
+                        <tbody id="devBody"><tr><td colspan="8" class="text-center text-muted py-4">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+                <div class="hint mt-2">
+                    The machine sends each punch the moment it happens to its <b>push address</b> (set it on the machine: Configuration &rarr; Network &rarr; Advanced &rarr; HTTP Listening).
+                    EasySchool also reads the machine every minute, so a punch made while the network was down still arrives.
+                </div>
+            </div></div>
+        </div>
+
+        @* ── People ── *@
+        <div class="tab-pane fade" id="tabPeople">
+            <div class="card"><div class="card-body">
+                <div class="row g-2 align-items-end mb-3">
+                    <div class="col-md-3"><label class="form-label">Machine</label>
+                        <select class="form-select" id="pDevice"><option value="">-- Select Machine --</option></select></div>
+                    <div class="col-md-2"><label class="form-label">People</label>
+                        <select class="form-select" id="pType"><option value="1">Staff</option><option value="2">Students</option></select></div>
+                    <div class="col-md-2 stu-only"><label class="form-label">Class</label>
+                        <select class="form-select" id="pClass"><option value="">All classes</option></select></div>
+                    <div class="col-md-2 stu-only"><label class="form-label">Section</label>
+                        <select class="form-select" id="pSection"><option value="">All sections</option></select></div>
+                    <div class="col-md-3 d-flex gap-2">
+                        <button class="btn btn-primary" onclick="loadPeople()"><i class="bi bi-search"></i> Load</button>
+                        <button class="btn btn-outline-secondary" onclick="refreshFromDevice()" title="Ask the machine who is on it"><i class="bi bi-arrow-repeat"></i> Read machine</button>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 mb-2 flex-wrap align-items-center">
+                    <button class="btn btn-success btn-sm" onclick="sendSelected()"><i class="bi bi-upload"></i> Send selected to machine</button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="removeSelected()"><i class="bi bi-x-circle"></i> Remove selected from machine</button>
+                    <button class="btn btn-outline-primary btn-sm" onclick="fetchBiometrics()" title="Read the selected people's face and fingerprints from this machine and keep them in EasySchool"><i class="bi bi-fingerprint"></i> Fetch face &amp; finger</button>
+                    <span class="d-inline-flex align-items-center gap-1">
+                        <span class="small text-muted">Copy selected to</span>
+                        <select class="form-select form-select-sm" id="pCopyTo" style="width:auto"><option value="">-- machine --</option></select>
+                        <button class="btn btn-outline-primary btn-sm" onclick="copyToMachine()" title="Read face and fingerprints from this machine and put the people, with them, on the chosen machine"><i class="bi bi-files"></i> Copy</button>
+                    </span>
+                    <span class="hint" id="peopleInfo"></span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover" id="peopleTable">
+                        <thead><tr>
+                            <th style="width:30px"><input type="checkbox" class="form-check-input" id="chkAll" /></th>
+                            <th>Code</th><th>Name</th><th id="detailHead">Designation</th><th>On machine</th><th>Face</th><th title="On the machine / kept in EasySchool">Fingers</th><th>Photo</th><th>Card no.</th><th>Error</th>
+                        </tr></thead>
+                        <tbody id="peopleBody"><tr><td colspan="10" class="text-center text-muted py-4">Choose a machine and press Load.</td></tr></tbody>
+                    </table>
+                </div>
+                <div class="hint">
+                    A face can be taken on the machine itself (choose the person on the machine and enrol), or uploaded here as a photo - a clear, front-facing picture.
+                    On the machine a person is <span class="mono">E&lt;id&gt;</span> (staff) or <span class="mono">S&lt;id&gt;</span> (student); send people from here before enrolling them on the machine.
+                </div>
+                <input type="file" id="faceFile" accept="image/*" class="d-none" />
+            </div></div>
+        </div>
+
+        @* ── Punch log ── *@
+        <div class="tab-pane fade" id="tabLog">
+            <div class="card"><div class="card-body">
+                <div class="row g-2 align-items-end mb-3">
+                    <div class="col-md-3"><label class="form-label">Machine</label>
+                        <select class="form-select" id="lDevice"><option value="">All machines</option></select></div>
+                    <div class="col-md-2"><label class="form-label">Date</label>
+                        <input type="date" class="form-control" id="lDate" /></div>
+                    <div class="col-md-2"><button class="btn btn-primary" onclick="loadLog()"><i class="bi bi-search"></i> Load</button></div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover" id="logTable">
+                        <thead><tr><th>Time</th><th>Machine</th><th>On machine</th><th>Name</th><th>How</th><th>Received</th><th>Result</th></tr></thead>
+                        <tbody id="logBody"><tr><td colspan="7" class="text-center text-muted py-4">Press Load.</td></tr></tbody>
+                    </table>
+                </div>
+            </div></div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script src="~/js/imageUpload.js" asp-append-version="true"></script>
+<script>
+    const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    let _devices = [], _people = [], _faceFor = null;
+
+    // The full push address: the API's own host and the machine's key.
+    const apiRoot = () => API_BASE.replace(/\/api\/?$/, '');
+
+    $(document).ready(async function () {
+        $('#lDate').val(toInputDate());
+        const [campuses, classes] = await Promise.all([
+            fetch(`${API_BASE}/campus`).then(r => r.ok ? r.json() : []).catch(() => []),
+            fetch(`${API_BASE}/class`).then(r => r.ok ? r.json() : []).catch(() => [])
+        ]);
+        campuses.forEach(c => $('#devCampus').append(`<option value="${c.vid}">${esc(c.vName)}</option>`));
+        classes.forEach(c => $('#pClass').append(`<option value="${c.vid}">${esc(c.vName)}</option>`));
+        $('#pClass').on('change', loadSections);
+        $('#pType').on('change', () => { $('.stu-only').toggle($('#pType').val() === '2'); $('#peopleBody').empty(); });
+        $('.stu-only').hide();
+        $('#chkAll').on('change', function () { $('.p-chk').prop('checked', this.checked); });
+        $('#faceFile').on('change', uploadFace);
+        loadDevices();
+    });
+
+    // ── Machines ──────────────────────────────────────────────────────
+    async function loadDevices() {
+        let loadError = null;
+        _devices = await fetch(`${API_BASE}/hikvision/devices`)
+            .then(async r => { if (r.ok) return r.json(); const e = await r.json().catch(() => ({})); loadError = e.message || `The server answered ${r.status}.`; return []; })
+            .catch(() => { loadError = 'Cannot reach the API.'; return []; });
+        ['#pDevice', '#lDevice', '#pCopyTo'].forEach(sel => {
+            const keep = $(sel).val();
+            $(sel).find('option:not(:first)').remove();
+            _devices.forEach(d => $(sel).append(`<option value="${d.id}">${esc(d.name)}</option>`));
+            $(sel).val(keep && _devices.some(d => String(d.id) === keep) ? keep : '');
+        });
+        if (_devices.length === 1) $('#pDevice').val(String(_devices[0].id));
+
+        const body = $('#devBody');
+        if (loadError) { body.html(`<tr><td colspan="8" class="text-center text-danger py-4">${esc(loadError)}</td></tr>`); return; }
+        if (!_devices.length) { body.html('<tr><td colspan="8" class="text-center text-muted py-4">No machine yet. Add one above.</td></tr>'); return; }
+        body.html(_devices.map(d => {
+            const seen = d.lastSeenAt ? new Date(d.lastSeenAt) : null;
+            const online = seen && (Date.now() - seen.getTime()) < 5 * 60 * 1000;
+            const status = !d.isActive ? '<span class="badge bg-secondary">Off</span>'
+                : online ? '<span class="badge bg-success">Online</span>'
+                : seen ? `<span class="badge bg-warning text-dark">Last seen ${fmtDateTime(d.lastSeenAt)}</span>`
+                : '<span class="badge bg-light text-dark border">Not tested</span>';
+            return `<tr>
+                <td><strong>${esc(d.name)}</strong>${d.deviceModel ? `<div class="hint">${esc(d.deviceModel)} &middot; ${esc(d.serialNumber || '')}</div>` : ''}</td>
+                <td>${esc(d.campusName || 'All')}</td>
+                <td class="mono">${esc(d.ipAddress)}:${d.port}</td>
+                <td>${status}${d.lastError ? `<div class="text-danger small mt-1">${esc(d.lastError)}</div>` : ''}</td>
+                <td>${d.lastEventTime ? fmtDateTime(d.lastEventTime) : '-'}</td>
+                <td>${d.eventsToday}</td>
+                <td>${d.peopleOnDevice}</td>
+                <td class="text-nowrap">
+                    <button class="btn btn-sm btn-outline-primary" onclick="testDevice(${d.id})" title="Test connection"><i class="bi bi-plug"></i> Test</button>
+                    <button class="btn btn-sm btn-outline-success" onclick="pullDevice(${d.id})" title="Read punches now"><i class="bi bi-download"></i> Read</button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="editDevice(${d.id})" title="Edit"><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteDevice(${d.id})" title="Delete"><i class="bi bi-trash"></i></button>
+                </td></tr>`;
+        }).join(''));
+    }
+
+    function resetDevice() {
+        $('#devId').val(0); $('#devFormTitle').text('Add Machine');
+        $('#devName, #devIp, #devPassword').val(''); $('#devPort').val(80); $('#devUser').val('admin');
+        $('#devCampus').val(''); $('#devHttps').prop('checked', false);
+        $('#devActive, #devPull').prop('checked', true);
+        $('#devPassword').attr('placeholder', 'machine admin password');
+    }
+
+    function editDevice(id) {
+        const d = _devices.find(x => x.id === id); if (!d) return;
+        $('#devId').val(d.id); $('#devFormTitle').text('Edit Machine');
+        $('#devName').val(d.name); $('#devCampus').val(d.campusId ? String(d.campusId) : '');
+        $('#devIp').val(d.ipAddress); $('#devPort').val(d.port); $('#devUser').val(d.username);
+        $('#devPassword').val('').attr('placeholder', d.hasPassword ? 'unchanged - type to change' : 'machine admin password');
+        $('#devHttps').prop('checked', d.useHttps); $('#devActive').prop('checked', d.isActive); $('#devPull').prop('checked', d.pullEnabled);
+        showPushAddress(d);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function saveDevice() {
+        const id = parseInt($('#devId').val()) || 0;
+        const dto = {
+            Name: $('#devName').val().trim(), CampusId: parseInt($('#devCampus').val()) || null,
+            IpAddress: $('#devIp').val().trim(), Port: parseInt($('#devPort').val()) || 80,
+            UseHttps: $('#devHttps').is(':checked'), Username: $('#devUser').val().trim() || 'admin',
+            Password: $('#devPassword').val() || null,
+            IsActive: $('#devActive').is(':checked'), PullEnabled: $('#devPull').is(':checked')
+        };
+        if (!dto.Name) { toastWarning('Give the machine a name.'); return; }
+        if (!dto.IpAddress) { toastWarning('Enter the machine\'s IP address.'); return; }
+        const res = await fetch(`${API_BASE}/hikvision/devices${id ? '/' + id : ''}`, { method: id ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(dto) })
+            .catch(() => null);
+        if (!res) { toastError('Cannot reach the API.'); return; }
+        if (!res.ok) {
+            const e = await res.json().catch(() => ({}));
+            // A validation answer lists its problems under "errors".
+            const v = e.errors ? Object.values(e.errors).flat().join(' ') : '';
+            toastError(e.message || v || e.title || `Failed to save (server answered ${res.status}).`);
+            return;
+        }
+        const d = await res.json();
+        toastSuccess('Machine saved. Press Test to check the connection.');
+        resetDevice(); await loadDevices(); showPushAddress(d);
+    }
+
+    function showPushAddress(d) {
+        const url = apiRoot() + d.pushPath;
+        let host = '', port = '', path = d.pushPath;
+        try { const u = new URL(url); host = u.hostname; port = u.port || (u.protocol === 'https:' ? '443' : '80'); } catch (e) { }
+        $('#testResult').html(`<div class="push-box mb-3">
+            <div><strong>${esc(d.name)} - push address</strong></div>
+            <div class="mono mt-1" id="pushUrl">${esc(url)}</div>
+            <div class="hint mt-1">On the machine: Configuration &rarr; Network &rarr; Advanced &rarr; HTTP Listening &rarr;
+                Event Alarm IP <b class="mono">${esc(host)}</b>, Port <b class="mono">${esc(port)}</b>, URL <b class="mono">${esc(path)}</b>, Protocol HTTP.
+                The machine must be able to reach this address; if it cannot, punches still arrive by the every-minute read.</div>
+            <button class="btn btn-sm btn-outline-success mt-2" onclick="copyPush()"><i class="bi bi-clipboard"></i> Copy</button>
+        </div>`);
+    }
+
+    function copyPush() {
+        const t = $('#pushUrl').text();
+        (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toastSuccess('Copied'), () => toastWarning(t));
+    }
+
+    async function testDevice(id) {
+        const d = _devices.find(x => x.id === id);
+        $('#testResult').html('<div class="alert alert-info py-2">Connecting to the machine...</div>');
+        const res = await fetch(`${API_BASE}/hikvision/devices/${id}/test`, { method: 'POST' });
+        const r = await res.json().catch(() => ({}));
+        if (r.ok) {
+            const clockNote = r.deviceTime ? `Machine clock <b>${esc(r.deviceTime)}</b> &middot; server clock <b>${esc(r.serverTime)}</b> - these must agree, or punches get the wrong time.` : '';
+            $('#testResult').html(`<div class="alert alert-success py-2"><b>Connected.</b> ${esc(r.model || '')} &middot; serial ${esc(r.serialNumber || '-')} &middot; firmware ${esc(r.firmware || '-')}
+                ${r.usersOnDevice != null ? ` &middot; people on machine: ${r.usersOnDevice}${r.usersOnDevice >= 150 ? '+' : ''}` : ''}<div class="mt-1">${clockNote}</div></div>`);
+        } else {
+            $('#testResult').html(`<div class="alert alert-danger py-2"><b>Not connected.</b> ${esc(r.message || 'No answer')}</div>`);
+        }
+        loadDevices();
+    }
+
+    async function pullDevice(id) {
+        const res = await fetch(`${API_BASE}/hikvision/devices/${id}/pull`, { method: 'POST' });
+        const r = await res.json().catch(() => ({}));
+        (r.ok ? toastSuccess : toastError)(r.message || 'Could not read the machine');
+        loadDevices();
+    }
+
+    async function deleteDevice(id) {
+        const d = _devices.find(x => x.id === id);
+        if (!await confirmDelete(`Remove the machine "${esc(d ? d.name : '')}" from EasySchool? Its punch log stays; the people stay on the machine itself.`)) return;
+        const res = await fetch(`${API_BASE}/hikvision/devices/${id}`, { method: 'DELETE' });
+        if (res.ok) { toastSuccess('Removed'); loadDevices(); } else toastError('Failed to remove');
+    }
+
+    // ── People ────────────────────────────────────────────────────────
+    async function loadSections() {
+        const classId = $('#pClass').val();
+        $('#pSection').find('option:not(:first)').remove();
+        if (!classId) return;
+        const list = await fetch(`${API_BASE}/section/byClass/${classId}`).then(r => r.ok ? r.json() : []).catch(() => []);
+        list.forEach(s => $('#pSection').append(`<option value="${s.vid}">${esc(s.vName)}</option>`));
+    }
+
+    async function loadPeople() {
+        const dev = $('#pDevice').val();
+        if (!dev) { toastWarning('Choose a machine'); return; }
+        const type = $('#pType').val();
+        let url = `${API_BASE}/hikvision/devices/${dev}/people?type=${type}`;
+        if (type === '2') {
+            if ($('#pClass').val()) url += `&classId=${$('#pClass').val()}`;
+            if ($('#pSection').val()) url += `&sectionId=${$('#pSection').val()}`;
+        }
+        const res = await fetch(url);
+        if (!res.ok) { toastError('Could not load the list'); return; }
+        _people = await res.json();
+        $('#detailHead').text(type === '1' ? 'Designation' : 'Class');
+        renderPeople();
+    }
+
+    function renderPeople() {
+        $('#chkAll').prop('checked', false);
+        const on = _people.filter(p => p.onDevice).length, faces = _people.filter(p => p.faceOnDevice).length;
+        const fingers = _people.filter(p => p.fingersOnDevice > 0).length;
+        $('#peopleInfo').text(`${_people.length} listed - ${on} on the machine, ${faces} with a face, ${fingers} with fingerprints on it`);
+        if (!_people.length) { $('#peopleBody').html('<tr><td colspan="10" class="text-center text-muted py-4">Nobody to show for this campus and filter.</td></tr>'); return; }
+        $('#peopleBody').html(_people.map((p, i) => `<tr>
+            <td><input type="checkbox" class="form-check-input p-chk" data-i="${i}" /></td>
+            <td class="mono">${esc(p.code)}<div class="hint">${esc(p.employeeNo)}</div></td>
+            <td>${esc(p.name)}</td>
+            <td>${esc(p.detail || '-')}</td>
+            <td>${p.onDevice ? '<span class="badge bg-success">Yes</span>' : '<span class="badge bg-light text-dark border">No</span>'}</td>
+            <td>${p.faceOnDevice ? '<span class="badge bg-success">Yes</span>' : '<span class="badge bg-warning text-dark">No face</span>'}</td>
+            <td class="text-nowrap">${fingerCell(p)}</td>
+            <td class="text-nowrap">${p.hasFacePhoto ? `<img class="face-thumb" src="${apiFileUrl(`${API_BASE}/hikvision/face/${p.personType}/${p.personId}?t=${Date.now()}`)}" />` : ''}
+                <button class="btn btn-sm btn-outline-secondary ms-1" onclick="pickFace(${i})" title="Upload a face photo"><i class="bi bi-camera"></i></button></td>
+            <td class="text-nowrap"><input type="text" class="form-control form-control-sm d-inline-block card-input mono" id="card${i}" value="${esc(p.cardNo || '')}" maxlength="32" />
+                <button class="btn btn-sm btn-outline-secondary" onclick="saveCard(${i})" title="Save card number"><i class="bi bi-check"></i></button></td>
+            <td class="text-danger small">${esc(p.lastError || '')}</td>
+        </tr>`).join(''));
+    }
+
+    function selected() {
+        return $('.p-chk:checked').map((_, el) => _people[+el.dataset.i]).get()
+            .map(p => ({ PersonType: p.personType, PersonId: p.personId }));
+    }
+
+    async function sendSelected() {
+        const people = selected();
+        if (!people.length) { toastWarning('Tick the people to send'); return; }
+        if (typeof toastInfo === 'function') toastInfo(`Sending ${people.length} to the machine...`);
+        const res = await fetch(`${API_BASE}/hikvision/devices/${$('#pDevice').val()}/sync`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ People: people, IncludeFace: true, IncludeFingers: true }) });
+        const r = await res.json().catch(() => ({}));
+        if (r.failed) toastError(`${r.done} sent, ${r.failed} failed: ${(r.errors || [])[0] || ''}`);
+        else toastSuccess(`${r.done} sent to the machine`);
+        loadPeople();
+    }
+
+    async function removeSelected() {
+        const people = selected();
+        if (!people.length) { toastWarning('Tick the people to remove'); return; }
+        if (!await confirmDelete(`Remove ${people.length} person(s) from the machine? Their face and card on the machine go too; EasySchool keeps its records and photos.`)) return;
+        const res = await fetch(`${API_BASE}/hikvision/devices/${$('#pDevice').val()}/remove`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ People: people }) });
+        const r = await res.json().catch(() => ({}));
+        if (r.failed) toastError(`${r.done} removed, ${r.failed} failed: ${(r.errors || [])[0] || ''}`); else toastSuccess(`${r.done} removed`);
+        loadPeople();
+    }
+
+    async function refreshFromDevice() {
+        const dev = $('#pDevice').val();
+        if (!dev) { toastWarning('Choose a machine'); return; }
+        const res = await fetch(`${API_BASE}/hikvision/devices/${dev}/refresh`, { method: 'POST' });
+        const r = await res.json().catch(() => ({}));
+        if (r.failed) toastError((r.errors || [])[0] || 'Could not read the machine'); else toastSuccess(`${r.done} EasySchool people found on the machine`);
+        loadPeople();
+    }
+
+    function pickFace(i) { _faceFor = _people[i]; $('#faceFile').val('').trigger('click'); }
+
+    async function uploadFace() {
+        const f = this.files && this.files[0];
+        if (!f || !_faceFor) return;
+        try {
+            // Small and JPEG: the machine refuses a photo over 200 KB.
+            const img = await imageFileToUpload(f, 640, 0.85);
+            const res = await fetch(`${API_BASE}/hikvision/face`, { method: 'POST', headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ PersonType: _faceFor.personType, PersonId: _faceFor.personId, SendToMachines: true,
+                                       Image: { FileName: img.fileName, ContentType: img.contentType, Base64: img.base64 } }) });
+            const r = await res.json().catch(() => ({}));
+            if (!res.ok) { toastError(r.message || 'Could not save the photo'); return; }
+            if (r.failed) toastError(`Photo saved, but the machine refused it: ${(r.errors || [])[0] || ''}`);
+            else toastSuccess(_faceFor.onDevice ? 'Photo saved and sent to the machine' : 'Photo saved - it goes to the machine when the person is sent');
+            loadPeople();
+        } catch (e) { toastError(e.message); }
+    }
+
+    async function saveCard(i) {
+        const p = _people[i];
+        const res = await fetch(`${API_BASE}/hikvision/devices/${$('#pDevice').val()}/card`, { method: 'PUT', headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ PersonType: p.personType, PersonId: p.personId, CardNo: $('#card' + i).val().trim() }) });
+        const r = await res.json().catch(() => ({}));
+        if (!res.ok) { toastError(r.message || 'Could not save'); return; }
+        if (r.failed) toastError((r.errors || [])[0] || 'The machine refused the card'); else toastSuccess('Card saved');
+        loadPeople();
+    }
+
+    // Fingerprints: how many the machine has (as last read), and how many EasySchool keeps.
+    function fingerCell(p) {
+        const on = p.fingersOnDevice == null ? '<span class="text-muted">-</span>'
+            : p.fingersOnDevice > 0 ? `<span class="badge bg-success">${p.fingersOnDevice}</span>` : '<span class="badge bg-light text-dark border">0</span>';
+        return on + (p.fingersSaved > 0 ? ` <span class="hint" title="Kept in EasySchool">saved ${p.fingersSaved}</span>` : '');
+    }
+
+    function biometricsMessage(r) {
+        const parts = [`${r.faces || 0} face(s)`, `${r.fingers || 0} fingerprint(s)`];
+        if (r.photosSet) parts.push(`${r.photosSet} employee photo(s) filled`);
+        return parts.join(', ');
+    }
+
+    // Reads face and fingerprints of the ticked people from this machine into EasySchool.
+    async function fetchBiometrics() {
+        const dev = $('#pDevice').val();
+        const people = selected();
+        if (!dev) { toastWarning('Choose a machine'); return; }
+        if (!people.length) { toastWarning('Tick the people to read (the top box ticks everyone listed)'); return; }
+        if (typeof toastInfo === 'function') toastInfo(`Reading ${people.length} from the machine...`);
+        const res = await fetch(`${API_BASE}/hikvision/devices/${dev}/fetch-biometrics`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ People: people }) });
+        const r = await res.json().catch(() => ({}));
+        if (!res.ok) { toastError(r.message || 'Could not read the machine'); return; }
+        const msg = `${r.done} read: ${biometricsMessage(r)}`;
+        if (r.failed) toastError(`${msg}. ${r.failed} failed: ${(r.errors || [])[0] || ''}`);
+        else if ((r.errors || []).length) toastWarning(`${msg}. ${r.errors.length} note(s): ${r.errors[0]}`);
+        else toastSuccess(msg);
+        loadPeople();
+    }
+
+    // Reads them from this machine and puts them, with face and fingerprints, on another.
+    async function copyToMachine() {
+        const dev = $('#pDevice').val(), target = $('#pCopyTo').val();
+        const people = selected();
+        if (!dev) { toastWarning('Choose a machine'); return; }
+        if (!target) { toastWarning('Choose the machine to copy to'); return; }
+        if (target === dev) { toastWarning('Choose a different machine to copy to'); return; }
+        if (!people.length) { toastWarning('Tick the people to copy'); return; }
+        const targetName = $('#pCopyTo option:selected').text();
+        if (typeof toastInfo === 'function') toastInfo(`Copying ${people.length} to ${targetName}...`);
+        const res = await fetch(`${API_BASE}/hikvision/devices/${dev}/copy-to/${target}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ People: people }) });
+        const r = await res.json().catch(() => ({}));
+        if (!res.ok) { toastError(r.message || 'Could not copy'); return; }
+        const msg = `${r.sent || 0} put on ${targetName} (${biometricsMessage(r)})`;
+        if (r.failed) toastError(`${msg}. ${r.failed} failed: ${(r.errors || [])[0] || ''}`);
+        else if ((r.errors || []).length) toastWarning(`${msg}. ${r.errors.length} note(s): ${r.errors[0]}`);
+        else toastSuccess(msg);
+        loadPeople();
+    }
+
+    // ── Punch log ─────────────────────────────────────────────────────
+    async function loadLog() {
+        let url = `${API_BASE}/hikvision/events?take=500`;
+        if ($('#lDevice').val()) url += `&deviceId=${$('#lDevice').val()}`;
+        if ($('#lDate').val()) url += `&date=${$('#lDate').val()}`;
+        const rows = await fetch(url).then(r => r.ok ? r.json() : []).catch(() => []);
+        if (!rows.length) { $('#logBody').html('<tr><td colspan="7" class="text-center text-muted py-4">No punches for this day.</td></tr>'); return; }
+        $('#logBody').html(rows.map(e => `<tr>
+            <td class="text-nowrap">${fmtDateTime(e.eventTime)}</td>
+            <td>${esc(e.deviceName || '')}</td>
+            <td class="mono">${esc(e.employeeNo || '-')}</td>
+            <td>${esc(e.personName || '')}</td>
+            <td class="small">${esc(e.verifyMode || '')} <span class="hint">${e.major}/${e.minor}</span></td>
+            <td><span class="badge ${e.receivedBy === 'push' ? 'bg-primary' : 'bg-secondary'}">${esc(e.receivedBy)}</span></td>
+            <td class="small ${e.accepted ? 'text-success' : 'text-danger'}">${esc(e.result || '')}</td>
+        </tr>`).join(''));
+    }
+</script>
+}

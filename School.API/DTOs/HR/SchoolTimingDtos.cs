@@ -4,6 +4,10 @@ namespace School.API.DTOs.HR
     {
         public int Id { get; set; }
         public string? Name { get; set; }
+
+        /// <summary>Which designation this timing is for; null = every designation.</summary>
+        public int? DesignationId { get; set; }
+        public string? DesignationName { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public TimeSpan TimeIn { get; set; }
@@ -12,6 +16,13 @@ namespace School.API.DTOs.HR
         /// <summary>Fridays in this range run on these instead, when set.</summary>
         public TimeSpan? FridayTimeIn { get; set; }
         public TimeSpan? FridayTimeOut { get; set; }
+
+        // Carried over from the retired HrShift: how the day is judged. Half-day,
+        // full-day and work-hours left null are derived from the day.s own span.
+        public int GraceMinutes { get; set; }
+        public int? HalfDayMinutes { get; set; }
+        public int? FullDayMinutes { get; set; }
+        public decimal? WorkHours { get; set; }
 
         /// <summary>Weekly off, 1 = Sunday .. 7 = Saturday.</summary>
         public byte? OffDay1 { get; set; }
@@ -38,6 +49,10 @@ namespace School.API.DTOs.HR
     public class SaveSchoolTimingDto
     {
         public string? Name { get; set; }
+
+        // Null applies the timing to every designation. Naming one overrides the
+        // school-wide row for that designation only.
+        public int? DesignationId { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public TimeSpan TimeIn { get; set; }
@@ -46,6 +61,13 @@ namespace School.API.DTOs.HR
         // Both or neither. Set them and Fridays in the range get these instead.
         public TimeSpan? FridayTimeIn { get; set; }
         public TimeSpan? FridayTimeOut { get; set; }
+
+        // Carried over from the retired HrShift: how the day is judged. Half-day,
+        // full-day and work-hours left null are derived from the day.s own span.
+        public int GraceMinutes { get; set; }
+        public int? HalfDayMinutes { get; set; }
+        public int? FullDayMinutes { get; set; }
+        public decimal? WorkHours { get; set; }
 
         // Weekly off, 1 = Sunday .. 7 = Saturday. Those weekdays are dropped from
         // the range entirely -- the school is shut, so there is nothing to apply.

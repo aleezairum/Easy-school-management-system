@@ -1,0 +1,65 @@
+@{
+    ViewData["Title"] = "Monthly Attendance Register";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+@*
+    The students' monthly attendance register, the way a class register is
+    kept on paper: a row per student, a column per day of the month, and the
+    month's totals. One section, or every section of a class (printed a page
+    each). The marks are the ones entered on Mark Daily Attendance.
+*@
+
+<style>
+    .form-section { background: #f8fafc; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+    .hint { font-size: 12px; color: #64748b; }
+    .reg-block { margin-bottom: 26px; }
+    .reg-title { font-weight: 700; font-size: 15px; margin-bottom: 6px; display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+    .reg-title .hint { font-weight: 400; }
+    .reg-wrap { overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 8px; }
+    table.reg { border-collapse: collapse; font-size: 12px; white-space: nowrap; }
+    table.reg th, table.reg td { border: 1px solid #e2e8f0; padding: 3px 5px; text-align: center; }
+    table.reg thead th { background: #f1f5f9; position: sticky; top: 0; }
+    table.reg th.d, table.reg td.d { min-width: 24px; padding: 3px 2px; }
+    table.reg th.d small { display: block; font-weight: 400; color: #64748b; font-size: 10px; }
+    table.reg td.l, table.reg th.l { text-align: left; }
+    table.reg td.name { position: sticky; left: 0; background: #fff; font-weight: 600; }
+    table.reg .off { background: #f1f5f9; color: #94a3b8; }
+    table.reg .hol { background: #fef3c7; color: #92400e; }
+    table.reg td.A { color: #dc2626; font-weight: 700; background: #fef2f2; }
+    table.reg td.L { color: #2563eb; font-weight: 700; background: #eff6ff; }
+    table.reg td.T { color: #c2410c; font-weight: 700; background: #fff7ed; }
+    table.reg td.P { color: #15803d; }
+    table.reg td.tot { font-weight: 700; background: #f8fafc; }
+    table.reg tr.left td { color: #94a3b8; }
+    .legend span { display: inline-block; margin-right: 14px; }
+</style>
+
+<div class="container-fluid">
+    <div class="card"><div class="card-body">
+        <div class="form-section">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3"><label class="form-label">Class <span class="text-danger">*</span></label>
+                    <select class="form-select" id="rClass" onchange="regLoadSections()"><option value="">-- Select Class --</option></select></div>
+                <div class="col-md-3"><label class="form-label">Section</label>
+                    <select class="form-select" id="rSection"><option value="">All sections</option></select></div>
+                <div class="col-md-2"><label class="form-label">Month <span class="text-danger">*</span></label>
+                    <input type="month" class="form-control" id="rMonth" /></div>
+                <div class="col-md-4 d-flex gap-2">
+                    <button class="btn btn-primary" onclick="regLoad()"><i class="bi bi-search"></i> Load</button>
+                    <button class="btn btn-success" onclick="regPrint()"><i class="bi bi-printer"></i> Print</button>
+                </div>
+                <div class="col-12 hint legend">
+                    <span><b class="text-success">P</b> Present</span><span><b class="text-danger">A</b> Absent</span>
+                    <span><b class="text-primary">L</b> Leave</span><span><b style="color:#c2410c">T</b> Late</span>
+                    <span><b>H</b> Holiday</span><span><b>S</b> Sunday</span><span>A grey day: the register was not taken.</span>
+                </div>
+            </div>
+        </div>
+        <div id="regArea"><div class="text-center text-muted py-4">Choose a class and month, then press Load.</div></div>
+    </div></div>
+</div>
+
+@section Scripts {
+<script src="~/js/attendanceRegister.js" asp-append-version="true"></script>
+}

@@ -24,8 +24,9 @@ namespace School.API.Services.Implementations.HR
             _repository = repository;
         }
 
-        public Task<List<EmployeeListDto>> GetAllAsync() => _repository.GetAllAsync();
+        public Task<List<EmployeeListDto>> GetAllAsync(int? campusId = null) => _repository.GetAllAsync(campusId);
         public Task<EmployeeDto?> GetByIdAsync(int id) => _repository.GetByIdAsync(id);
+        public Task<string?> GetPhotoAsync(int id) => _repository.GetPhotoAsync(id);
         public Task<List<EmployeeDropdownDto>> GetDropdownAsync() => _repository.GetDropdownAsync();
 
         public Task<List<TeacherDto>> GetTeachingStaffAsync(int examId = 0) => _repository.GetTeachingStaffAsync(examId);
@@ -54,6 +55,9 @@ namespace School.API.Services.Implementations.HR
 
             return await _repository.GetByIdAsync(id);
         }
+
+        public Task<int> SetStaffCategoryAsync(List<int> employeeIds, int? staffCategoryId, int userId, string userIp)
+            => _repository.SetStaffCategoryAsync(employeeIds, staffCategoryId, userId, userIp);
 
         public Task<bool> DeleteAsync(int id) => _repository.DeleteAsync(id);
     }

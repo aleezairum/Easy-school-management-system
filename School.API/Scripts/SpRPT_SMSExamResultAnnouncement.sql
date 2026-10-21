@@ -1,5 +1,3 @@
-USE [EasySchoolDB]
-GO
 /* ============================================================================
    SpRPT_SMSExamResultAnnouncement
    ----------------------------------------------------------------------------
@@ -14,9 +12,12 @@ GO
    A student "passes" only if they passed EVERY subject in the exam.
 
    Returns 4 result sets:
-     (1) Overall      -> TotalStudents, TotalPass, TotalFail, PassPct, FailPct
-     (2) Campus wise  -> Name(=Campus), TotalStudents, TotalPass, TotalFail, PassPct, FailPct
-     (3) Class wise   -> Name(=Class),  TotalStudents, TotalPass, TotalFail, PassPct, FailPct
+     (1) Overall      -> TotalStudents, TotalPass, TotalFail, PassPct, FailPct, PrevPassPct
+     (2) Campus wise  -> Name(=Campus), TotalStudents, TotalPass, TotalFail, PassPct, FailPct, PrevPassPct
+     (3) Class wise   -> Name(=Class),  TotalStudents, TotalPass, TotalFail, PassPct, FailPct, PrevPassPct
+         PrevPassPct = the same figure for @PrevExamID (the previous term), worked
+         out the same way and over the same classes/sections; NULL when there is
+         no previous exam or it has no result for that campus/class.
      (4) Top positions-> ClassName, Scope, ScopeOrder, Position(1-3), RollNo,
                          StudentName, SectionName, ObtainedMarks, Percent
                          For EACH class three blocks are returned, in order:
@@ -30,6 +31,9 @@ GO
      @ExamID     INT          - the exam to announce (required)
      @ClassIDs   VARCHAR(MAX) - optional CSV of ClassIDs   (NULL/'' = all)
      @SectionIDs VARCHAR(MAX) - optional CSV of SectionIDs (NULL/'' = all)
+     @PrevExamID INT          - optional exam to compare with (NULL/0 = none).
+                                The caller picks it (the API finds the previous
+                                term of the same kind when the user leaves it on Auto).
 
    Target: SQL Server 2019
    ============================================================================ */
@@ -44,7 +48,8 @@ CREATE PROCEDURE [dbo].[SpRPT_SMSExamResultAnnouncement]
 (
     @ExamID     INT,
     @ClassIDs   VARCHAR(MAX) = NULL,
-    @SectionIDs VARCHAR(MAX) = NULL
+    @SectionIDs VARCHAR(MAX) = NULL,
+    @PrevExamID INT          = NULL
 )
 AS
 BEGIN
@@ -82,6 +87,7 @@ BEGIN
     /* Per-student aggregate for the exam (scoped by the optional filters). */
     CREATE TABLE #Stu
     (
+        ExamID    INT,
         StudentID INT,
         ClassID   INT,
         SectionID INT,
@@ -91,8 +97,11 @@ BEGIN
         FailCount INT
     );
 
-    INSERT INTO #Stu (StudentID, ClassID, SectionID, CampusID, Obtained, MaxMarks, FailCount)
-    SELECT  R.StudentID,
+    IF (@PrevExamID = @ExamID OR @PrevExamID <= 0) SET @PrevExamID = NULL;
+
+    INSERT INTO #Stu (ExamID, StudentID, ClassID, SectionID, CampusID, Obtained, MaxMarks, FailCount)
+    SELECT  R.ExamID,
+            R.StudentID,
             MIN(R.ClassID),
             MIN(R.SectionID),
             MAX(ISNULL(ST.CampusID, 0)),
@@ -101,17 +110,29 @@ BEGIN
             SUM(CASE WHEN R.IsAbsent = 1 OR ISNULL(R.IsPassed, 0) = 0 THEN 1 ELSE 0 END)
     FROM        SMSExamResult R
     INNER JOIN  SMSStudent    ST ON ST.VID = R.StudentID
-    WHERE       R.ExamID   = @ExamID
+    WHERE       (R.ExamID = @ExamID OR R.ExamID = @PrevExamID)
       AND       R.IsActive = 1
       AND       EXISTS (SELECT 1 FROM SMSStudentAcademic SA
                         WHERE SA.StudentID = R.StudentID AND SA.IsActive = 1 AND SA.StatusID = 1)
+      -- On the Result Exclude List of this exam: left out of every result report.
+      AND       NOT EXISTS (SELECT 1 FROM SMSExamExclude X
+                            WHERE X.ExamID = R.ExamID AND X.StudentID = R.StudentID)
       /* Section filter wins when supplied; otherwise apply the class filter. */
       AND       (@SectionIDs IS NOT NULL
                     OR @ClassIDs IS NULL
                     OR R.ClassID IN (SELECT Id FROM @ClassFilter))
       AND       (@SectionIDs IS NULL
                     OR R.SectionID IN (SELECT Id FROM @SectionFilter))
-    GROUP BY    R.StudentID;
+    GROUP BY    R.ExamID, R.StudentID;
+
+    /* The previous term's figures, by campus and by class (and overall), for
+       the "Pass % Prev." column. Kept apart from #Stu's current rows. */
+    SELECT  CampusID, ClassID, COUNT(*) AS Total, SUM(CASE WHEN FailCount = 0 THEN 1 ELSE 0 END) AS Pass
+    INTO    #Prev
+    FROM    #Stu
+    WHERE   ExamID = @PrevExamID
+    GROUP BY CampusID, ClassID;
+    DELETE FROM #Stu WHERE ExamID <> @ExamID;
 
     /* ---- 1) Overall (whole school) ---- */
     SELECT
@@ -119,7 +140,8 @@ BEGIN
         SUM(CASE WHEN FailCount = 0 THEN 1 ELSE 0 END)    AS TotalPass,
         SUM(CASE WHEN FailCount > 0 THEN 1 ELSE 0 END)    AS TotalFail,
         CAST(CASE WHEN COUNT(*) > 0 THEN SUM(CASE WHEN FailCount = 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) ELSE 0 END AS DECIMAL(5,2)) AS PassPct,
-        CAST(CASE WHEN COUNT(*) > 0 THEN SUM(CASE WHEN FailCount > 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) ELSE 0 END AS DECIMAL(5,2)) AS FailPct
+        CAST(CASE WHEN COUNT(*) > 0 THEN SUM(CASE WHEN FailCount > 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) ELSE 0 END AS DECIMAL(5,2)) AS FailPct,
+        (SELECT CAST(SUM(Pass) * 100.0 / NULLIF(SUM(Total), 0) AS DECIMAL(5,2)) FROM #Prev) AS PrevPassPct
     FROM #Stu;
 
     /* ---- 2) Campus wise ---- */
@@ -129,10 +151,11 @@ BEGIN
         SUM(CASE WHEN S.FailCount = 0 THEN 1 ELSE 0 END)  AS TotalPass,
         SUM(CASE WHEN S.FailCount > 0 THEN 1 ELSE 0 END)  AS TotalFail,
         CAST(CASE WHEN COUNT(*) > 0 THEN SUM(CASE WHEN S.FailCount = 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) ELSE 0 END AS DECIMAL(5,2)) AS PassPct,
-        CAST(CASE WHEN COUNT(*) > 0 THEN SUM(CASE WHEN S.FailCount > 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) ELSE 0 END AS DECIMAL(5,2)) AS FailPct
+        CAST(CASE WHEN COUNT(*) > 0 THEN SUM(CASE WHEN S.FailCount > 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) ELSE 0 END AS DECIMAL(5,2)) AS FailPct,
+        (SELECT CAST(SUM(P.Pass) * 100.0 / NULLIF(SUM(P.Total), 0) AS DECIMAL(5,2)) FROM #Prev P WHERE P.CampusID = S.CampusID) AS PrevPassPct
     FROM        #Stu       S
     LEFT  JOIN  SMSCampus  C ON C.VID = S.CampusID
-    GROUP BY    C.VID, C.VName
+    GROUP BY    S.CampusID, C.VID, C.VName
     ORDER BY    C.VName;
 
     /* ---- 3) Class wise ---- */
@@ -142,10 +165,11 @@ BEGIN
         SUM(CASE WHEN S.FailCount = 0 THEN 1 ELSE 0 END)  AS TotalPass,
         SUM(CASE WHEN S.FailCount > 0 THEN 1 ELSE 0 END)  AS TotalFail,
         CAST(CASE WHEN COUNT(*) > 0 THEN SUM(CASE WHEN S.FailCount = 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) ELSE 0 END AS DECIMAL(5,2)) AS PassPct,
-        CAST(CASE WHEN COUNT(*) > 0 THEN SUM(CASE WHEN S.FailCount > 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) ELSE 0 END AS DECIMAL(5,2)) AS FailPct
+        CAST(CASE WHEN COUNT(*) > 0 THEN SUM(CASE WHEN S.FailCount > 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) ELSE 0 END AS DECIMAL(5,2)) AS FailPct,
+        (SELECT CAST(SUM(P.Pass) * 100.0 / NULLIF(SUM(P.Total), 0) AS DECIMAL(5,2)) FROM #Prev P WHERE P.ClassID = S.ClassID) AS PrevPassPct
     FROM        #Stu      S
     LEFT  JOIN  SMSClass  CL ON CL.VID = S.ClassID
-    GROUP BY    CL.VID, CL.VName
+    GROUP BY    S.ClassID, CL.VID, CL.VName
     ORDER BY    CL.VID;
 
     /* ---- 4) Top 1st/2nd/3rd positions per class ----
@@ -207,5 +231,6 @@ BEGIN
     ORDER BY    CL.VID, SC.ScopeOrder, SC.Position, SC.Obtained DESC, TRY_CONVERT(INT, ST.RollNo), ST.RollNo;
 
     DROP TABLE #Stu;
+    DROP TABLE #Prev;
 END
 GO

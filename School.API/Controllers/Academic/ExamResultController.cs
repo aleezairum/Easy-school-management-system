@@ -123,13 +123,16 @@ public class ExamResultController : ControllerBase
         return Ok(rows);
     }
 
+    /// <param name="prevExamId">The exam for "Pass % Prev.": leave out for the previous term
+    /// of the same kind (found from the paper dates), 0 for none.</param>
     [HttpGet("announcement-report")]
     public async Task<IActionResult> GetAnnouncementReport(
         [FromQuery] int examId,
         [FromQuery] string? classIds = null,
-        [FromQuery] string? sectionIds = null)
+        [FromQuery] string? sectionIds = null,
+        [FromQuery] int? prevExamId = null)
     {
-        var report = await _service.GetAnnouncementReportAsync(examId, classIds, sectionIds);
+        var report = await _service.GetAnnouncementReportAsync(examId, classIds, sectionIds, prevExamId);
         return Ok(report);
     }
 
@@ -160,6 +163,23 @@ public class ExamResultController : ControllerBase
 
         var result = await _service.SaveAsync(dto, userId, userIp);
         return Ok(result);
+    }
+
+    // Marks Entry: a whole award list (Exam + Class + Section + Subject) moved to another date.
+    [HttpPut("list/date")]
+    public async Task<IActionResult> SetListDate(SMSExamResultListDateDto dto)
+    {
+        var (count, error) = await _service.SetListDateAsync(dto, Request.GetUserId());
+        return error == null ? Ok(new { count }) : BadRequest(new { message = error });
+    }
+
+    // Marks Entry: a whole award list deleted (refused while the exam is finalised).
+    [HttpDelete("list")]
+    public async Task<IActionResult> DeleteList(
+        [FromQuery] int examId, [FromQuery] int classId, [FromQuery] int sectionId, [FromQuery] int subjectId)
+    {
+        var (count, error) = await _service.DeleteListAsync(examId, classId, sectionId, subjectId);
+        return error == null ? Ok(new { count }) : BadRequest(new { message = error });
     }
 
     [HttpPost("bulk")]

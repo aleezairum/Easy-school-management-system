@@ -17,15 +17,24 @@
                     <option value="10">October</option><option value="11">November</option><option value="12">December</option>
                 </select>
             </div>
+            @* One campus's salary bill, or every campus in one run. Also
+               narrows the list below to that campus. *@
+            <div class="col-md-3"><label class="form-label">Campus</label>
+                <select class="form-select" id="genCampus"><option value="">All campuses</option></select>
+            </div>
             <div class="col-md-3"><button class="btn btn-primary" onclick="generateRun()"><i class="bi bi-gear-fill"></i> Generate / Regenerate Payroll</button></div>
         </div>
-        <div class="form-text mt-2">Regenerating is only possible while a run is in <strong>Draft</strong>. Locking or marking paid freezes it.</div>
+        <div class="form-text mt-2">
+            Regenerating is only possible while a run is in <strong>Draft</strong>. Locking or marking paid freezes it.
+            A month is paid either for <strong>all campuses</strong> in one run or <strong>campus by campus</strong>, not both:
+            to switch, delete the month's Draft run(s) first.
+        </div>
         <div id="warningsBox" class="alert alert-warning mt-3" style="display:none;"></div>
     </div></div>
 
     <div class="card"><div class="card-body">
         <table class="table table-hover">
-            <thead><tr><th>Period</th><th>Status</th><th>Employees</th><th>Total Net Pay</th><th>Generated</th><th></th></tr></thead>
+            <thead><tr><th>Period</th><th>Campus</th><th>Status</th><th>Employees</th><th>Total Net Pay</th><th>Generated</th><th></th></tr></thead>
             <tbody id="runsBody"></tbody>
         </table>
     </div></div>
@@ -37,32 +46,66 @@
     const RUN_STATUS = {1:'Draft',2:'Locked',3:'Paid'};
     const RUN_BADGE = {1:'bg-warning text-dark',2:'bg-info',3:'bg-success'};
 
+    const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    let _runs = [];
+
     $(document).ready(function () {
         const now = new Date();
         $('#genYear').val(now.getFullYear());
         $('#genMonth').val(now.getMonth() + 1);
+
+        fetch(`${API_BASE}/campus`).then(r => r.ok ? r.json() : []).then(list => {
+            list.forEach(c => $('#genCampus').append(`<option value="${c.vid}">${esc(c.vName)}</option>`));
+        }).catch(() => {});
+        $('#genCampus').on('change', renderRuns);
+
         loadRuns();
     });
 
     async function loadRuns() {
         const res = await fetch(`${API_BASE}/hr/payroll/runs`);
-        const data = res.ok ? await res.json() : [];
+        _runs = res.ok ? await res.json() : [];
+        renderRuns();
+    }
+
+    // A campus picked above shows that campus's runs; "All campuses" shows every run.
+    function renderRuns() {
+        const campus = $('#genCampus').val();
+        const data = campus ? _runs.filter(r => String(r.campusId) === campus) : _runs;
         const body = $('#runsBody'); body.empty();
-        if (!data.length) { body.html('<tr><td colspan="6" class="text-center text-muted py-3">No payroll runs yet.</td></tr>'); return; }
+        if (!data.length) { body.html('<tr><td colspan="7" class="text-center text-muted py-3">No payroll runs yet.</td></tr>'); return; }
         data.forEach(r => {
             body.append(`<tr>
                 <td>${MONTH_NAMES[r.payMonth]} ${r.payYear}</td>
+                <td>${r.campusId ? esc(r.campusName || ('Campus #' + r.campusId)) : '<span class="text-muted">All campuses</span>'}</td>
                 <td><span class="badge ${RUN_BADGE[r.status]}">${RUN_STATUS[r.status]}</span></td>
                 <td>${r.employeeCount}</td>
                 <td>Rs ${Number(r.totalNetPay).toLocaleString(undefined,{minimumFractionDigits:2})}</td>
                 <td>${r.generatedAt ? fmtDateTime(r.generatedAt) : '-'}</td>
-                <td><a class="btn btn-sm btn-info" href="/hr/payroll/${r.id}"><i class="bi bi-eye"></i> Review</a></td>
+                <td class="text-nowrap">
+                    <a class="btn btn-sm btn-info" href="/hr/payroll/${r.id}"><i class="bi bi-eye"></i> Review</a>
+                    ${r.status === 1 ? `<button class="btn btn-sm btn-outline-danger ms-1" title="Delete this draft run" onclick="deleteRun(${r.id})"><i class="bi bi-trash"></i></button>` : ''}
+                </td>
             </tr>`);
         });
     }
 
+    async function deleteRun(id) {
+        const r = _runs.find(x => x.id === id);
+        if (!r) return;
+        const label = `${MONTH_NAMES[r.payMonth]} ${r.payYear} - ${r.campusId ? (r.campusName || 'Campus #' + r.campusId) : 'All campuses'}`;
+        if (!await confirmDelete(`Delete the draft payroll run for ${label}? Its ${r.employeeCount} payslip(s) go with it.`)) return;
+        const res = await fetch(`${API_BASE}/hr/payroll/runs/${id}`, { method: 'DELETE' });
+        if (res.ok) { toastSuccess('Draft run deleted'); loadRuns(); }
+        else {
+            const err = await res.json().catch(() => ({}));
+            toastError(err.message || 'Failed to delete the run');
+        }
+    }
+
     async function generateRun() {
-        const dto = { Year: parseInt($('#genYear').val()), Month: parseInt($('#genMonth').val()) };
+        const campus = parseInt($('#genCampus').val()) || null;
+        const dto = { Year: parseInt($('#genYear').val()), Month: parseInt($('#genMonth').val()), CampusId: campus };
         $('#warningsBox').hide().empty();
         try {
             const res = await fetch(`${API_BASE}/hr/payroll/runs/generate`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(dto) });

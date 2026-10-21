@@ -58,6 +58,13 @@
             <!-- Filter Row 2 -->
             <div class="filter-section" style="background: #f8fafc; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px;">
                 <div class="row g-2 align-items-end">
+                    <div class="col-lg-2 col-md-6 col-sm-6 col-12" id="campusField">
+                        <label for="filterCampus" class="form-label form-label-sm mb-1">Campus</label>
+                        @* Nothing selected = every campus, the same convention the
+                           Class and Fee Type filters already use. *@
+                        <select class="form-select form-select-sm" id="filterCampus" multiple>
+                        </select>
+                    </div>
                     <div class="col-lg-3 col-md-6 col-sm-6 col-12" id="classField">
                         <label for="filterClass" class="form-label form-label-sm mb-1">Class</label>
                         <select class="form-select form-select-sm" id="filterClass" multiple onchange="loadFilterSections()">
@@ -114,6 +121,28 @@
                             <div class="form-check form-check-sm">
                                 <input class="form-check-input" type="radio" name="reportType" id="reportAll" value="2">
                                 <label class="form-check-label" for="reportAll">All</label>
+                            </div>
+                            @* Every other report type filters to StatusID = 1, so the
+                               moment a child is marked Dropped Out their unpaid fee
+                               vanishes from all of them. This is that money. *@
+                            <div class="form-check form-check-sm">
+                                <input class="form-check-input" type="radio" name="reportType" id="reportDropout" value="3">
+                                <label class="form-check-label" for="reportDropout"
+                                       title="Outstanding fee of students who have left — ignores the date range">
+                                    Unpaid &mdash; Dropout / Left
+                                </label>
+                            </div>
+
+                            @* Children whose parents have promised to pay by a date
+                               still to come are off this report by default — that is
+                               the point of taking the promise. Ticking this is the
+                               only way to see everything the school is owed. *@
+                            <div class="form-check form-check-sm mt-2 pt-2" style="border-top:1px solid #e2e8f0;">
+                                <input class="form-check-input" type="checkbox" id="includePromised">
+                                <label class="form-check-label" for="includePromised"
+                                       title="Show children whose parents have promised to pay by a date that has not yet passed">
+                                    Include promised to pay
+                                </label>
                             </div>
                         </div>
                     </div>
@@ -205,12 +234,14 @@
                 // ── Load Dropdowns ────────────────────────────────────────────
                 async function loadDropdowns() {
                     try {
-                        const [classes, feeTypes, grades] = await Promise.all([
+                        const [classes, feeTypes, grades, campuses] = await Promise.all([
                             fetch(`${API_BASE}/class`).then(r => r.ok ? r.json() : []),
                             fetch(`${API_BASE}/feetype`).then(r => r.ok ? r.json() : []),
-                            fetch(`${API_BASE}/AcademicGrade`).then(r => r.ok ? r.json() : [])
+                            fetch(`${API_BASE}/AcademicGrade`).then(r => r.ok ? r.json() : []),
+                            fetch(`${API_BASE}/campus`).then(r => r.ok ? r.json() : [])
                         ]);
 
+                        campuses.forEach(c => $('#filterCampus').append(`<option value="${c.vid}">${c.vName}</option>`));
                         classes.forEach(c  => $('#filterClass').append(`<option value="${c.vid}">${c.vName}</option>`));
                         feeTypes.forEach(f => $('#filterFeeType').append(`<option value="${f.vid}">${f.vName}</option>`));
                         grades.forEach(g   => $('#filterGrade').append(`<option value="${g.vid}">${g.vName}</option>`));
@@ -324,9 +355,10 @@
                     const classArr    = ($('#filterClass').val()   || []).filter(Boolean);
                     const sectionArr  = ($('#filterSection').val() || []).filter(Boolean);
                     const feeTypeArr  = ($('#filterFeeType').val() || []).filter(Boolean);
+                    const campusArr   = ($("#filterCampus").val()  || []).filter(Boolean);
                     const studentId   = parseInt($('#filterStudent').val()) || 0;
                     const gradeName   = $('#filterGrade option:selected').text().trim();
-                    const reportType  = parseInt($('input[name="reportType"]:checked').val(), 10); // 0=Paid, 1=Unpaid, 2=All
+                    const reportType  = parseInt($('input[name="reportType"]:checked').val(), 10); // 0=Paid, 1=Unpaid, 2=All, 3=Dropout/Left
 
                     $('#btnPrint').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Loading...');
 
@@ -336,7 +368,12 @@
                         if (classArr.length)   url += `&classIds=${encodeURIComponent(classArr.join(','))}`;
                         if (sectionArr.length) url += `&sectionIds=${encodeURIComponent(sectionArr.join(','))}`;
                         if (feeTypeArr.length) url += `&feeTypeIds=${encodeURIComponent(feeTypeArr.join(','))}`;
+                        if (campusArr.length)  url += `&campusIds=${encodeURIComponent(campusArr.join(","))}`;
                         if (studentId)         url += `&studentId=${studentId}`;
+
+                        // Off by default: a promise in force takes the child off
+                        // this report until the date passes.
+                        if ($('#includePromised').is(':checked')) url += '&includePromised=true';
 
                         const response = await fetch(url);
 
@@ -395,6 +432,11 @@
                             sections.push({ type: 'paid', label: 'Paid Fee Report', data: data });
                         } else if (reportType === 1) {
                             sections.push({ type: 'unpaid', label: 'Unpaid Fee Report', data: data });
+                        } else if (reportType === 3) {
+                            // Rendered like the Unpaid report, plus a Status column and
+                            // a heading with no date range — the SP ignores the range for
+                            // leavers, so their whole outstanding balance is listed.
+                            sections.push({ type: 'dropout', label: 'Unpaid Fee — Dropout / Left Students', data: data });
                         } else {
                             // For "All" (ReportType=2) the SP returns two UNION-ALL halves:
                             //   Paid rows    -> ClearedAmount = PaidAmount, PendingAmount = 0   (from FeeVoucher)
@@ -458,6 +500,7 @@
                     $('#filterStudent').find('option:not(:first)').remove();
                     $('#filterGrade').val('').trigger('change');
                     $('#filterFeeType').val(null).trigger('change');
+                    $("#filterCampus").val(null).trigger("change");
                     $('input[name="listChoice"][value="student"]').prop('checked', true);
                     $('input[name="reportType"][value="1"]').prop('checked', true);
                     toggleChoiceFields();

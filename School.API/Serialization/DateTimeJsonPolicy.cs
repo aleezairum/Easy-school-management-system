@@ -26,6 +26,11 @@ namespace School.API.Serialization
     ///              a day backwards for any viewer west of UTC, so these are written
     ///              as a bare "yyyy-MM-dd" that carries no zone to convert.
     ///
+    ///   local    — EventTime, LastEventTime: a time read off a clock at the school
+    ///              (an attendance machine's punch). Kept as the wall-clock time it
+    ///              was, written "yyyy-MM-ddTHH:mm:ss" with no zone, so the browser
+    ///              shows it exactly as the machine recorded it.
+    ///
     /// Applied through the type-info resolver rather than [JsonConverter] attributes
     /// so it covers every DTO and entity — including ones added later — from a single
     /// place, with nothing to remember to annotate.
@@ -36,9 +41,19 @@ namespace School.API.Serialization
         private static readonly NullableUtcInstantConverter NullableInstant = new();
         private static readonly CalendarDateConverter Calendar = new();
         private static readonly NullableCalendarDateConverter NullableCalendar = new();
+        private static readonly LocalTimeConverter Local = new();
+        private static readonly NullableLocalTimeConverter NullableLocal = new();
 
         private const string InstantFormat = "yyyy-MM-dd'T'HH:mm:ss.fff'Z'";
         private const string CalendarFormat = "yyyy-MM-dd";
+        private const string LocalFormat = "yyyy-MM-dd'T'HH:mm:ss";
+
+        /// <summary>Wall-clock times from the school's own clocks (see "local" above).</summary>
+        private static readonly HashSet<string> LocalNames = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "EventTime",
+            "LastEventTime"
+        };
 
         /// <summary>
         /// Instants whose name does not end in "At". Anything not listed here and
@@ -57,9 +72,9 @@ namespace School.API.Serialization
             foreach (var prop in typeInfo.Properties)
             {
                 if (prop.PropertyType == typeof(DateTime))
-                    prop.CustomConverter = IsInstant(prop.Name) ? Instant : Calendar;
+                    prop.CustomConverter = LocalNames.Contains(prop.Name) ? Local : IsInstant(prop.Name) ? Instant : Calendar;
                 else if (prop.PropertyType == typeof(DateTime?))
-                    prop.CustomConverter = IsInstant(prop.Name) ? NullableInstant : NullableCalendar;
+                    prop.CustomConverter = LocalNames.Contains(prop.Name) ? NullableLocal : IsInstant(prop.Name) ? NullableInstant : NullableCalendar;
             }
         }
 
@@ -84,6 +99,14 @@ namespace School.API.Serialization
 
         internal static string WriteCalendarDate(DateTime value) =>
             value.ToString(CalendarFormat, CultureInfo.InvariantCulture);
+
+        internal static string WriteLocal(DateTime value) =>
+            value.ToString(LocalFormat, CultureInfo.InvariantCulture);
+
+        internal static DateTime ReadLocal(string? text) =>
+            !string.IsNullOrWhiteSpace(text) && DateTime.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.None, out var v)
+                ? DateTime.SpecifyKind(v, DateTimeKind.Unspecified)
+                : default;
 
         internal static DateTime ReadInstant(string? text)
         {
@@ -165,6 +188,33 @@ namespace School.API.Serialization
         {
             if (value is null) writer.WriteNullValue();
             else writer.WriteStringValue(DateTimeJsonPolicy.WriteCalendarDate(value.Value));
+        }
+    }
+
+    /// <summary>Writes a school wall-clock time as "yyyy-MM-ddTHH:mm:ss" - no zone.</summary>
+    internal sealed class LocalTimeConverter : JsonConverter<DateTime>
+    {
+        public override DateTime Read(ref Utf8JsonReader reader, Type t, JsonSerializerOptions o) =>
+            DateTimeJsonPolicy.ReadLocal(reader.GetString());
+
+        public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions o) =>
+            writer.WriteStringValue(DateTimeJsonPolicy.WriteLocal(value));
+    }
+
+    internal sealed class NullableLocalTimeConverter : JsonConverter<DateTime?>
+    {
+        public override DateTime? Read(ref Utf8JsonReader reader, Type t, JsonSerializerOptions o)
+        {
+            if (reader.TokenType == JsonTokenType.Null) return null;
+
+            var text = reader.GetString();
+            return string.IsNullOrWhiteSpace(text) ? null : DateTimeJsonPolicy.ReadLocal(text);
+        }
+
+        public override void Write(Utf8JsonWriter writer, DateTime? value, JsonSerializerOptions o)
+        {
+            if (value is null) writer.WriteNullValue();
+            else writer.WriteStringValue(DateTimeJsonPolicy.WriteLocal(value.Value));
         }
     }
 }

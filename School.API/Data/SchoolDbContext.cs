@@ -31,6 +31,15 @@ namespace School.API.Data
         public DbSet<User> Users { get; set; }
         public DbSet<UserRole> UserRoles { get; set; }
 
+        // The School Profile form. Was never registered, so Set<Institute>()
+        // threw "cannot create a DbSet for this type" the moment it was called.
+        public DbSet<Institute> Institutes { get; set; }
+
+        // Which role each LOGIN has. UserRoles above keys to the Users table;
+        // this one keys to SecUser, which is what the app logs in against and
+        // what the Users form edits.
+        public DbSet<School.API.Data.DBModels.UserManagement.SecUserRole> SecUserRoles { get; set; }
+
         // Academic entities
         public DbSet<SMSClass> SMSClasses { get; set; }
         public DbSet<SMSSection> SMSSections { get; set; }
@@ -44,21 +53,41 @@ namespace School.API.Data
 
         // HR entities
         public DbSet<Designation> Designations { get; set; }
+        public DbSet<HrStaffCategory> StaffCategories { get; set; }
         public DbSet<HRGrade> HRGrades { get; set; }
         public DbSet<Employee> Employees { get; set; }
 
         // HR Payroll (HR-Payroll-Final-Plan.md section 3)
-        public DbSet<HrShift> HrShifts { get; set; }
         public DbSet<HrHoliday> HrHolidays { get; set; }
         public DbSet<HrSchoolTiming> HrSchoolTimings { get; set; }
         public DbSet<HrSchoolTimingDay> HrSchoolTimingDays { get; set; }
         public DbSet<HrLeaveType> HrLeaveTypes { get; set; }
         public DbSet<HrAttendance> HrAttendances { get; set; }
+        // Face-attendance machines (Hikvision) - Scripts/HikvisionAttendance.sql
+        public DbSet<HrAttendanceDevice> HrAttendanceDevices { get; set; }
+        public DbSet<HrDevicePerson> HrDevicePersons { get; set; }
+        public DbSet<HrBiometricFace> HrBiometricFaces { get; set; }
+        public DbSet<HrBiometricFinger> HrBiometricFingers { get; set; }
+
+        // Mobile app (Scripts/MobileApp.sql)
+        public DbSet<School.API.Data.DBModels.MobileApp.AppAccount> AppAccounts { get; set; }
+        public DbSet<School.API.Data.DBModels.MobileApp.AppRoleFeature> AppRoleFeatures { get; set; }
+        public DbSet<School.API.Data.DBModels.MobileApp.AppDevice> AppDevices { get; set; }
+        public DbSet<School.API.Data.DBModels.MobileApp.AppPushLog> AppPushLogs { get; set; }
+        public DbSet<HrDeviceEvent> HrDeviceEvents { get; set; }
+
+        // Trips out of school during the day — see HrAttendanceOuting.
+        public DbSet<HrAttendanceOuting> HrAttendanceOutings { get; set; }
         public DbSet<HrLeave> HrLeaves { get; set; }
         public DbSet<HrPayComponent> HrPayComponents { get; set; }
         public DbSet<HrEmployeePay> HrEmployeePays { get; set; }
         public DbSet<HrPayrollRun> HrPayrollRuns { get; set; }
         public DbSet<HrPayslip> HrPayslips { get; set; }
+        public DbSet<HrPayrollMonthlyAmount> HrPayrollMonthlyAmounts { get; set; }
+        public DbSet<HrStaffAdvance> HrStaffAdvances { get; set; }
+        public DbSet<HrExtraDaysSetting> HrExtraDaysSettings { get; set; }
+        public DbSet<HrExtraDaysRule> HrExtraDaysRules { get; set; }
+        public DbSet<HrPayrollExtraDays> HrPayrollExtraDays { get; set; }
 
         public DbSet<SMSCampus> Campuses { get; set; }
         public DbSet<StudentStatus> StudentStatuses { get; set; }
@@ -73,6 +102,9 @@ namespace School.API.Data
 
         // SMS entities
         public DbSet<SmsMessage> SmsMessages { get; set; }
+        public DbSet<SMSAnnouncement> SMSAnnouncements { get; set; }
+        public DbSet<SMSDailyDiary> SMSDailyDiaries { get; set; }
+        public DbSet<SMSDailyDiaryImage> SMSDailyDiaryImages { get; set; }
 
         // WhatsApp two-way chat (built from Meta webhook events + our sends)
         public DbSet<WaConversation> WaConversations { get; set; }
@@ -87,6 +119,9 @@ namespace School.API.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<HrBiometricFace>().HasKey(f => new { f.PersonType, f.PersonId });
+            modelBuilder.Entity<HrBiometricFinger>().HasKey(f => new { f.PersonType, f.PersonId, f.FingerNo });
+            modelBuilder.Entity<School.API.Data.DBModels.MobileApp.AppRoleFeature>().HasKey(f => new { f.RoleId, f.FeatureKey });
             base.OnModelCreating(modelBuilder);
 
 
@@ -103,7 +138,12 @@ namespace School.API.Data
 
             // SchoolDbContext.cs � OnModelCreating
             modelBuilder.Entity<StudentFeeListDto>().HasNoKey();
+            modelBuilder.Entity<PendingFeeStudentDto>().HasNoKey();
             modelBuilder.Entity<StudentFeeReportDto>().HasNoKey();
+
+            // Promises to pay — read from SpGet_SMSFeePromise, never as a table.
+            modelBuilder.Entity<School.API.DTOs.FeeManagement.FeePromiseDto>().HasNoKey().ToView(null);
+            modelBuilder.Entity<School.API.DTOs.FeeManagement.FeePromiseReportDto>().HasNoKey().ToView(null);
             modelBuilder.Entity<VNoDto>().HasNoKey().ToView(null);
             // OnModelCreating mein
             modelBuilder.Entity<FeeVoucherRptRow>().HasNoKey().ToView(null);
@@ -140,6 +180,11 @@ namespace School.API.Data
             //  table for them, the way the other SP-result DTOs above do.
             modelBuilder.Entity<LedgerRowDto>().HasNoKey().ToView(null);
             modelBuilder.Entity<FamilyLookupDto>().HasNoKey().ToView(null);
+
+            //  Class-wise student timings (SpGet_SMSClassTiming). Keyless because
+            //  the grid rows for classes with nothing saved carry VID 0 — several
+            //  at once — so VID is not an identity EF can track.
+            modelBuilder.Entity<ClassTimingDto>().HasNoKey().ToView(null);
 
             //  Table name mappings 
             modelBuilder.Entity<StdAttendence>().ToTable("StdAttendence");

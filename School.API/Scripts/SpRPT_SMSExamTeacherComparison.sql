@@ -1,5 +1,3 @@
-USE [EasySchoolDB]
-GO
 /* ============================================================================
    SpRPT_SMSExamTeacherComparison
    ----------------------------------------------------------------------------
@@ -120,6 +118,9 @@ BEGIN
           AND       R.IsActive = 1
           AND       EXISTS (SELECT 1 FROM SMSStudentAcademic SA
                             WHERE SA.StudentID = R.StudentID AND SA.IsActive = 1 AND SA.StatusID = 1)
+          -- Left out of the teachers' result for this exam (Result Exclude List).
+          AND       NOT EXISTS (SELECT 1 FROM SMSExamExclude X
+                                WHERE X.ExamID = @ExamID AND X.StudentID = R.StudentID)
         GROUP BY    R.ClassID, R.SectionID, R.SubjectID
     ),
     Assign AS

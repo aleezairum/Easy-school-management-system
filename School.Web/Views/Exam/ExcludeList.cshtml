@@ -1,0 +1,156 @@
+@{
+    ViewData["Title"] = "Result Exclude List";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+@*
+    Students left out of the result of one exam: the class result sheet, result
+    cards, position and percentage lists, subject-wise, executive and result
+    announcement reports, the teachers' result, and the result in the mobile app
+    and on WhatsApp. Their marks are kept, so taking them off the list brings
+    them back everywhere.
+*@
+
+<style>
+    .form-section { background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+    .form-section-title { font-size: 14px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #e2e8f0; }
+    .hint { font-size: 12px; color: #64748b; }
+    tr.excluded { background: #fef2f2; }
+    .reason { min-width: 220px; }
+</style>
+
+<div class="container-fluid">
+    <div id="alertContainer"></div>
+
+    <div class="card"><div class="card-body">
+        <div class="form-section">
+            <div class="form-section-title"><i class="bi bi-person-dash me-2"></i>Leave students out of the exam result</div>
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3"><label class="form-label">Exam <span class="text-danger">*</span></label>
+                    <select class="form-select" id="examId"><option value="">-- Select Exam --</option></select></div>
+                <div class="col-md-3"><label class="form-label">Class</label>
+                    <select class="form-select" id="classId"><option value="">-- Excluded students only --</option></select></div>
+                <div class="col-md-2"><label class="form-label">Section</label>
+                    <select class="form-select" id="sectionId"><option value="">All sections</option></select></div>
+                <div class="col-md-4 d-flex gap-2">
+                    <button class="btn btn-primary" onclick="loadList()"><i class="bi bi-search"></i> Load</button>
+                    <button class="btn btn-success" id="btnSave" onclick="saveList()"><i class="bi bi-check-lg"></i> Save</button>
+                </div>
+            </div>
+            <div class="hint mt-2">
+                Tick a student to leave them out of every result of this exam - the result sheet, result cards, positions, percentages, subject-wise,
+                executive and announcement reports, the teachers' result, and the app and WhatsApp - for example a student who joined after the exam.
+                Their marks are kept: untick to bring them back.
+                Choose no class to see everyone already left out of the exam.
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+            <span class="hint" id="listInfo"></span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead><tr>
+                    <th style="width:40px">Sr.</th>
+                    <th style="width:70px">Exclude</th>
+                    <th>Roll No</th><th>Student</th><th>Father</th><th>Class</th><th>Reason</th>
+                </tr></thead>
+                <tbody id="listBody"><tr><td colspan="7" class="text-center text-muted py-4">Choose an exam and press Load.</td></tr></tbody>
+            </table>
+        </div>
+    </div></div>
+</div>
+
+@section Scripts {
+<script>
+    const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    let _rows = [];
+
+    $(document).ready(async function () {
+        const [exams, classes] = await Promise.all([
+            fetch(`${API_BASE}/exam`).then(r => r.ok ? r.json() : []).catch(() => []),
+            fetch(`${API_BASE}/class`).then(r => r.ok ? r.json() : []).catch(() => [])
+        ]);
+        exams.forEach(e => $('#examId').append(`<option value="${e.vid}">${esc(e.vName)}</option>`));
+        classes.forEach(c => $('#classId').append(`<option value="${c.vid}">${esc(c.vName)}</option>`));
+        $('#classId').on('change', loadSections);
+        $('#examId').on('change', () => { _rows = []; $('#listBody').html('<tr><td colspan="7" class="text-center text-muted py-4">Press Load.</td></tr>'); $('#listInfo').text(''); });
+    });
+
+    async function loadSections() {
+        const classId = $('#classId').val();
+        $('#sectionId').find('option:not(:first)').remove();
+        $('#sectionId').val('').trigger('change.select2');
+        if (!classId) return;
+        const list = await fetch(`${API_BASE}/section/byClass/${classId}`).then(r => r.ok ? r.json() : []).catch(() => []);
+        list.forEach(s => $('#sectionId').append(`<option value="${s.vid}">${esc(s.vName)}</option>`));
+    }
+
+    async function loadList() {
+        const examId = $('#examId').val();
+        if (!examId) { toastWarning('Choose the exam.'); return; }
+        const q = new URLSearchParams();
+        if ($('#classId').val()) q.set('classId', $('#classId').val());
+        if ($('#sectionId').val()) q.set('sectionId', $('#sectionId').val());
+        $('#listBody').html('<tr><td colspan="7" class="text-center text-muted py-4">Loading...</td></tr>');
+        const r = await fetch(`${API_BASE}/exam-control/${examId}/exclude?${q}`).catch(() => null);
+        if (!r || !r.ok) {
+            const e = r ? await r.json().catch(() => ({})) : {};
+            $('#listBody').html(`<tr><td colspan="7" class="text-center text-danger py-4">${esc(e.message || 'Could not load the students.')}</td></tr>`);
+            return;
+        }
+        _rows = await r.json();
+        render();
+    }
+
+    function render() {
+        const body = $('#listBody');
+        if (!_rows.length) {
+            body.html(`<tr><td colspan="7" class="text-center text-muted py-4">${$('#classId').val() ? 'No current students in this class.' : 'No student is left out of this exam.'}</td></tr>`);
+            $('#listInfo').text('');
+            return;
+        }
+        body.html(_rows.map((s, i) => `<tr class="${s.excluded ? 'excluded' : ''}" data-i="${i}">
+            <td>${i + 1}</td>
+            <td><input type="checkbox" class="form-check-input ex-chk" ${s.excluded ? 'checked' : ''} onchange="toggleRow(${i}, this.checked)" /></td>
+            <td>${esc(s.rollNo)}</td>
+            <td><strong>${esc(s.name)}</strong></td>
+            <td>${esc(s.fatherName || '')}</td>
+            <td>${esc([s.className, s.sectionName].filter(Boolean).join(' - '))}</td>
+            <td><input type="text" class="form-control form-control-sm reason" maxlength="200" value="${esc(s.reason || '')}"
+                       placeholder="optional" oninput="_rows[${i}].reason = this.value" ${s.excluded ? '' : 'disabled'} /></td>
+        </tr>`).join(''));
+        count();
+    }
+
+    function toggleRow(i, on) {
+        _rows[i].excluded = on;
+        const tr = $(`#listBody tr[data-i="${i}"]`);
+        tr.toggleClass('excluded', on);
+        tr.find('.reason').prop('disabled', !on);
+        count();
+    }
+
+    function count() {
+        const n = _rows.filter(r => r.excluded).length;
+        $('#listInfo').text(`${_rows.length} student(s) listed, ${n} left out of the result.`);
+    }
+
+    async function saveList() {
+        const examId = parseInt($('#examId').val());
+        if (!examId) { toastWarning('Choose the exam.'); return; }
+        if (!_rows.length) { toastWarning('Load the students first.'); return; }
+        const dto = { ExamId: examId, Items: _rows.map(r => ({ StudentId: r.studentId, Excluded: r.excluded, Reason: r.reason || null })) };
+        $('#btnSave').prop('disabled', true);
+        try {
+            const r = await fetch(`${API_BASE}/exam-control/exclude`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dto) });
+            const res = await r.json().catch(() => ({}));
+            if (!r.ok) { toastError(res.message || 'Could not save.'); return; }
+            toastSuccess('Saved. The results of this exam now leave these students out.');
+            await loadList();
+        } finally {
+            $('#btnSave').prop('disabled', false);
+        }
+    }
+</script>
+}

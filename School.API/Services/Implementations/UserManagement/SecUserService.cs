@@ -27,6 +27,12 @@ namespace School.API.Services.Implementations.UserManagement
         public Task<ResponseDto?> DeleteByIdAsync(int id, int userId, string userIp)
             => _repo.DeleteByIdAsync(id, userId, userIp);
 
+        public Task<List<UserRolesDto>> GetRolesAsync(int? userVid)
+            => _repo.GetRolesAsync(userVid);
+
+        public Task ReplaceRolesAsync(int userVid, List<int> roleIds)
+            => _repo.ReplaceRolesAsync(userVid, roleIds);
+
         public Task<UserLoginResponseDto?> LoginAsync(UserLoginDto dto)
             => _repo.LoginAsync(dto);
     }

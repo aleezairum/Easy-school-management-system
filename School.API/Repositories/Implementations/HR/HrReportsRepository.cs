@@ -19,120 +19,160 @@ namespace School.API.Repositories.Implementations.HR
             _context = context;
         }
 
-        private class ReportJoinRow
+        /// <summary>
+        /// Every saved attendance row in the range for the staff the filter
+        /// picks, with the employee's name, designation and campus. The
+        /// deductions are left at 0 here - HrReportsService prices them.
+        /// </summary>
+        public async Task<List<AttendanceReportRowDto>> GetAttendanceRowsAsync(DateTime from, DateTime to, HrReportFilter filter)
         {
-            public HrAttendance A { get; set; } = null!;
-            public string EmployeeCode { get; set; } = string.Empty;
-            public string EmpName { get; set; } = string.Empty;
-            public string? Designation { get; set; }
+            var f = from.Date;
+            var t = to.Date;
+
+            var rows = await (
+                from a in _context.Set<HrAttendance>().AsNoTracking()
+                join e in _context.Employees.AsNoTracking() on a.EmployeeId equals e.Id
+                join d in _context.Designations.AsNoTracking() on e.DesignationId equals d.Id into dj
+                from d in dj.DefaultIfEmpty()
+                join c in _context.Campuses.AsNoTracking() on e.CampusId equals c.VID into cj
+                from c in cj.DefaultIfEmpty()
+                where a.AttDate >= f && a.AttDate <= t
+                   && (!filter.CampusId.HasValue || e.CampusId == filter.CampusId)
+                   && (!filter.DesignationId.HasValue || e.DesignationId == filter.DesignationId)
+                   && (!filter.EmployeeId.HasValue || e.Id == filter.EmployeeId)
+                select new AttendanceReportRowDto
+                {
+                    AttDate = a.AttDate,
+                    EmployeeId = a.EmployeeId,
+                    EmployeeCode = e.EmployeeCode,
+                    EmployeeName = e.FirstName + (e.LastName != null ? " " + e.LastName : ""),
+                    DesignationName = d != null ? d.Name : null,
+                    CampusName = c != null ? c.VName : null,
+                    Status = (byte)a.Status,
+                    TimeIn = a.TimeIn,
+                    TimeOut = a.TimeOut,
+                    LateMinutes = a.LateMinutes,
+                    IgnoreLate = a.IgnoreLate,
+                    EarlyMinutes = a.EarlyMinutes,
+                    OutingMinutes = a.OutingMinutes,
+                    Remarks = a.Remarks
+                }).ToListAsync();
+
+            return rows.OrderBy(r => r.AttDate).ThenBy(r => r.EmployeeName).ToList();
         }
 
-        private IQueryable<ReportJoinRow> BaseQuery(int? designationId)
-        {
-            return from a in _context.Set<HrAttendance>().AsNoTracking()
-                   join e in _context.Employees.AsNoTracking() on a.EmployeeId equals e.Id
-                   join d in _context.Designations.AsNoTracking() on e.DesignationId equals d.Id into dj
-                   from d in dj.DefaultIfEmpty()
-                   where !designationId.HasValue || e.DesignationId == designationId
-                   select new ReportJoinRow
-                   {
-                       A = a,
-                       EmployeeCode = e.EmployeeCode,
-                       EmpName = e.FirstName + (e.LastName != null ? " " + e.LastName : ""),
-                       Designation = d != null ? d.Name : null
-                   };
-        }
-
-        public async Task<List<DailyAttendanceReportRowDto>> GetDailyAsync(DateTime date, int? designationId)
-        {
-            var rows = await BaseQuery(designationId)
-                .Where(x => x.A.AttDate == date.Date)
+        /// <summary>The hours each day was meant to run, as Staff Timings expanded them.</summary>
+        public Task<List<TimingDayRow>> GetTimingDaysAsync(DateTime from, DateTime to) =>
+            _context.Set<HrSchoolTimingDay>().AsNoTracking()
+                .Where(d => d.TDate >= from.Date && d.TDate <= to.Date)
+                .Select(d => new TimingDayRow { DesignationId = d.DesignationId, TDate = d.TDate, TimeIn = d.TimeIn, TimeOut = d.TimeOut })
                 .ToListAsync();
 
-            return rows
-                .OrderBy(x => x.EmpName)
-                .Select(x => new DailyAttendanceReportRowDto
-                {
-                    AttDate = x.A.AttDate,
-                    EmployeeId = x.A.EmployeeId,
-                    EmployeeCode = x.EmployeeCode,
-                    EmployeeName = x.EmpName,
-                    DesignationName = x.Designation,
-                    Status = (byte)x.A.Status,
-                    TimeIn = x.A.TimeIn,
-                    TimeOut = x.A.TimeOut,
-                    LateMinutes = x.A.LateMinutes
-                })
-                .ToList();
-        }
-
-        public async Task<List<MonthlyAttendanceSummaryRowDto>> GetMonthlySummaryAsync(int year, int month, int? designationId)
+        /// <summary>
+        /// The Staff Statement as of a date.
+        /// </summary>
+        /// <remarks>
+        /// The salary is taken from the pay structure IN FORCE on the report
+        /// date — the latest HrEmployeePay row effective on or before it — not
+        /// simply the newest one. A statement dated last April must show last
+        /// April's salary, or it is not a statement of anything.
+        ///
+        /// Components are summed in memory rather than in SQL: they live in
+        /// ComponentsJson as an owned collection, and the staff list is a few
+        /// dozen rows, so unpicking JSON in the database buys nothing and costs
+        /// a query nobody can read. Only EARNING components are added — adding
+        /// a deduction would report a salary the employee never sees.
+        /// </remarks>
+        public async Task<List<StaffStatementRowDto>> GetStaffStatementAsync(
+            DateTime asOn, int? designationId, bool includeInactive, int? campusId = null,
+            int? employeeId = null, DateTime? joinedFrom = null, DateTime? joinedTo = null)
         {
-            var from = new DateTime(year, month, 1);
-            var to = from.AddMonths(1).AddDays(-1);
+            var on = asOn.Date;
+            var jf = joinedFrom?.Date;
+            var jt = joinedTo?.Date;
 
-            var rows = await BaseQuery(designationId)
-                .Where(x => x.A.AttDate >= from && x.A.AttDate <= to)
+            var staff = await (
+                from e in _context.Employees.AsNoTracking()
+                join d in _context.Designations.AsNoTracking() on e.DesignationId equals d.Id into dj
+                from d in dj.DefaultIfEmpty()
+                where (includeInactive || e.IsActive)
+                   && (!designationId.HasValue || e.DesignationId == designationId)
+                   // Staff with no campus recorded are excluded from a
+                   // campus-specific sheet, not folded into it.
+                   && (!campusId.HasValue || e.CampusId == campusId)
+                   && (!employeeId.HasValue || e.Id == employeeId)
+                   // Appointment date range. Staff with no joining date
+                   // recorded cannot be placed in one, so they drop out.
+                   && (!jf.HasValue || e.JoiningDate >= jf)
+                   && (!jt.HasValue || e.JoiningDate <= jt)
+                select new
+                {
+                    e.Id,
+                    e.EmployeeCode,
+                    e.FirstName,
+                    e.LastName,
+                    e.FatherName,
+                    e.DateOfBirth,
+                    e.Qualification,
+                    e.JoiningDate,
+                    e.Mobile,
+                    e.Phone,
+                    e.IsActive,
+                    Designation = d != null ? d.Name : null
+                }).ToListAsync();
+
+            if (staff.Count == 0) return new List<StaffStatementRowDto>();
+
+            var ids = staff.Select(s => s.Id).ToList();
+
+            var pays = await _context.Set<HrEmployeePay>()
+                .AsNoTracking()
+                .Where(p => ids.Contains(p.EmployeeId) && p.IsActive && p.EffectiveFrom <= on)
                 .ToListAsync();
 
-            return rows
-                .GroupBy(x => new { x.A.EmployeeId, x.EmployeeCode, x.EmpName, x.Designation })
-                .Select(g => new MonthlyAttendanceSummaryRowDto
-                {
-                    EmployeeId = g.Key.EmployeeId,
-                    EmployeeCode = g.Key.EmployeeCode,
-                    EmployeeName = g.Key.EmpName,
-                    DesignationName = g.Key.Designation,
-                    PresentDays = g.Count(x => x.A.Status == HrAttendanceStatus.Present),
-                    AbsentDays = g.Count(x => x.A.Status == HrAttendanceStatus.Absent),
-                    LeaveDays = g.Count(x => x.A.Status == HrAttendanceStatus.Leave),
-                    HalfDays = g.Count(x => x.A.Status == HrAttendanceStatus.HalfDay),
-                    ExemptDays = g.Count(x => x.A.Status == HrAttendanceStatus.Exempt),
-                    LateCount = g.Count(x => x.A.LateMinutes > 0),
-                    TotalLateMinutes = g.Sum(x => x.A.LateMinutes)
-                })
-                .OrderBy(r => r.EmployeeName)
-                .ToList();
-        }
-
-        public async Task<List<LateComerRowDto>> GetLateComersAsync(DateTime from, DateTime to, int? designationId)
-        {
-            var rows = await BaseQuery(designationId)
-                .Where(x => x.A.AttDate >= from.Date && x.A.AttDate <= to.Date && x.A.LateMinutes > 0)
+            // Which components add to the salary and which take away.
+            var earnings = await _context.Set<HrPayComponent>()
+                .AsNoTracking()
+                .Where(c => c.Kind == HrPayComponentKind.Earning)
+                .Select(c => c.Id)
                 .ToListAsync();
 
-            return rows
-                .OrderByDescending(x => x.A.AttDate).ThenByDescending(x => x.A.LateMinutes)
-                .Select(x => new LateComerRowDto
-                {
-                    AttDate = x.A.AttDate,
-                    EmployeeId = x.A.EmployeeId,
-                    EmployeeCode = x.EmployeeCode,
-                    EmployeeName = x.EmpName,
-                    DesignationName = x.Designation,
-                    TimeIn = x.A.TimeIn,
-                    LateMinutes = x.A.LateMinutes,
-                    IgnoreLate = x.A.IgnoreLate
-                })
-                .ToList();
-        }
+            var earningIds = earnings.ToHashSet();
 
-        public async Task<List<AbsenteeRowDto>> GetAbsenteesAsync(DateTime from, DateTime to, int? designationId)
-        {
-            var rows = await BaseQuery(designationId)
-                .Where(x => x.A.AttDate >= from.Date && x.A.AttDate <= to.Date && x.A.Status == HrAttendanceStatus.Absent)
-                .ToListAsync();
+            var salaryByEmployee = pays
+                .GroupBy(p => p.EmployeeId)
+                .ToDictionary(
+                    g => g.Key,
+                    g =>
+                    {
+                        var current = g.OrderByDescending(p => p.EffectiveFrom)
+                                       .ThenByDescending(p => p.Id)
+                                       .First();
 
-            return rows
-                .OrderByDescending(x => x.A.AttDate).ThenBy(x => x.EmpName)
-                .Select(x => new AbsenteeRowDto
+                        return current.Basic + current.Components
+                            .Where(c => earningIds.Contains(c.ComponentId))
+                            .Sum(c => c.Amount);
+                    });
+
+            return staff
+                // Appointment date, oldest first — the sheet doubles as a
+                // seniority list. Employees with no joining date recorded sort
+                // last rather than first, where a null date would put them.
+                .OrderBy(s => s.JoiningDate ?? DateTime.MaxValue)
+                .ThenBy(s => s.FirstName)
+                .Select(s => new StaffStatementRowDto
                 {
-                    AttDate = x.A.AttDate,
-                    EmployeeId = x.A.EmployeeId,
-                    EmployeeCode = x.EmployeeCode,
-                    EmployeeName = x.EmpName,
-                    DesignationName = x.Designation,
-                    Remarks = x.A.Remarks
+                    EmployeeId = s.Id,
+                    EmployeeCode = s.EmployeeCode,
+                    Name = $"{s.FirstName} {s.LastName}".Trim(),
+                    Designation = s.Designation,
+                    FatherName = s.FatherName,
+                    DateOfBirth = s.DateOfBirth,
+                    Qualification = s.Qualification,
+                    JoiningDate = s.JoiningDate,
+                    MonthlySalary = salaryByEmployee.TryGetValue(s.Id, out var salary) ? salary : null,
+                    ContactNo = !string.IsNullOrWhiteSpace(s.Mobile) ? s.Mobile : s.Phone,
+                    IsActive = s.IsActive
                 })
                 .ToList();
         }

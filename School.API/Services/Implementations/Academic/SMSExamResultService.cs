@@ -78,10 +78,32 @@ namespace School.API.Services.Implementations.Academic
             int examId, string? lClassIds, string? lSectionIds, string? rClassIds, string? rSectionIds)
             => _repo.GetTeacherComparisonReportAsync(examId, lClassIds, lSectionIds, rClassIds, rSectionIds);
 
-        public Task<ExamAnnouncementDto> GetAnnouncementReportAsync(int examId, string? classIds = null, string? sectionIds = null)
-            => _repo.GetAnnouncementReportAsync(examId, classIds, sectionIds);
+        public Task<ExamAnnouncementDto> GetAnnouncementReportAsync(int examId, string? classIds = null, string? sectionIds = null, int? prevExamId = null)
+            => _repo.GetAnnouncementReportAsync(examId, classIds, sectionIds, prevExamId);
 
         public Task<ResponseDto?> DeleteByIdAsync(int id)
             => _repo.DeleteByIdAsync(id);
+
+        // Only the date moves; the marks stay as entered. Allowed on a finalised exam too:
+        // the date decides the result card's attendance window, nothing parents see changes.
+        public async Task<(int Count, string? Error)> SetListDateAsync(SMSExamResultListDateDto dto, int userId)
+        {
+            if (dto.ExamID <= 0 || dto.ClassID <= 0 || dto.SectionID <= 0 || dto.SubjectID <= 0)
+                return (0, "Choose the exam, class, section and subject.");
+            var n = await _repo.SetListDateAsync(dto, userId);
+            return n == 0 ? (0, "No marks are saved for this list.") : (n, null);
+        }
+
+        // A finalised exam is what parents and teachers see on WhatsApp and in the app,
+        // so its marks cannot be wiped from here: un-finalise it first (Exams screen).
+        public async Task<(int Count, string? Error)> DeleteListAsync(int examId, int classId, int sectionId, int subjectId)
+        {
+            if (examId <= 0 || classId <= 0 || sectionId <= 0 || subjectId <= 0)
+                return (0, "Choose the exam, class, section and subject.");
+            if (await _repo.IsExamFinalizedAsync(examId))
+                return (0, "This exam's result is finalised. Un-finalise it on the Exams screen first, then delete the list.");
+            var n = await _repo.DeleteListAsync(examId, classId, sectionId, subjectId);
+            return n == 0 ? (0, "No marks are saved for this list.") : (n, null);
+        }
     }
 }

@@ -1,0 +1,109 @@
+@model School.Web.Controllers.MobileAppController.DownloadPageModel
+@{
+    Layout = null;
+    var meta = string.Join(" · ", new[] {
+        Model.Version != null ? $"Version {Model.Version}" : null,
+        $"{Model.SizeMb} MB",
+        Model.Updated?.ToString("d MMM yyyy")
+    }.Where(x => x != null));
+}
+@*
+    Public page (no sign-in): parents and staff open it from the QR code on
+    their login slip and download the Android app. See MobileAppController.
+*@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0B7A3E" />
+    <title>EasySchool app - @Model.SchoolName</title>
+    <link rel="icon" href="~/images/easyschool-app.png" />
+    <style>
+        :root { --brand: #0B7A3E; --brand-dark: #075A2D; --ink: #0f172a; --muted: #64748b; --line: #e2e8f0; --bg: #f4f7f5; }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink); background: var(--bg); }
+        .hero { background: linear-gradient(135deg, var(--brand), var(--brand-dark)); color: #fff; padding: 36px 20px 64px; text-align: center; }
+        .hero img { width: 88px; height: 88px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,.25); background: #fff; }
+        .hero h1 { margin: 16px 0 4px; font-size: 26px; }
+        .hero p { margin: 0; opacity: .9; }
+        .wrap { max-width: 520px; margin: -40px auto 32px; padding: 0 16px; }
+        .card { background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 22px; margin-bottom: 16px; }
+        .btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 16px; border-radius: 14px;
+               background: var(--brand); color: #fff; font-size: 18px; font-weight: 700; text-decoration: none; border: 0; }
+        .btn:active { background: var(--brand-dark); }
+        .btn.off { background: #94a3b8; pointer-events: none; }
+        .meta { text-align: center; color: var(--muted); font-size: 13px; margin-top: 10px; }
+        h2 { font-size: 17px; margin: 0 0 12px; }
+        ol { margin: 0; padding-left: 22px; line-height: 1.6; }
+        li { margin-bottom: 8px; }
+        .ur { direction: rtl; text-align: right; font-family: "Noto Nastaliq Urdu", "Jameel Noori Nastaleeq", "Urdu Typesetting", serif; font-size: 18px; line-height: 2.1; }
+        .ur ol { padding-left: 0; padding-right: 22px; }
+        .note { background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; border-radius: 12px; padding: 12px 14px; font-size: 14px; }
+        .qr { text-align: center; }
+        .qr img { width: 180px; height: 180px; }
+        .qr p { color: var(--muted); font-size: 13px; margin: 6px 0 0; word-break: break-all; }
+        .foot { text-align: center; color: var(--muted); font-size: 12px; }
+        kbd { background: #f1f5f9; border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; font-family: inherit; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <img src="~/images/easyschool-app.png" alt="EasySchool" />
+        <h1>EasySchool</h1>
+        <p>@Model.SchoolName</p>
+    </div>
+
+    <div class="wrap">
+        <div class="card">
+            @if (Model.Available)
+            {
+                <a class="btn" href="~/app/download">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M5 20h14v-2H5v2zm7-18-1.4 1.4L11 4.8V15l-3.6-3.6L6 12.8 12 19l6-6.2-1.4-1.4L13 15V4.8l.4-.4L12 2z" transform="translate(0,-1)"/></svg>
+                    Download for Android
+                </a>
+                <div class="meta">@meta</div>
+            }
+            else
+            {
+                <a class="btn off">Coming soon</a>
+                <div class="meta">The app will be available here shortly.</div>
+            }
+        </div>
+
+        <div class="card">
+            <h2>How to install</h2>
+            <ol>
+                <li>Tap <b>Download for Android</b> and wait for it to finish.</li>
+                <li>Open the downloaded file <b>EasySchool.apk</b> (from the notification or the <b>Files / Downloads</b> app).</li>
+                <li>If the phone asks, allow <b>Install unknown apps</b> for Chrome / Files, then go back.</li>
+                <li>Tap <b>Install</b>, then <b>Open</b>.</li>
+                <li>Type the <b>School Code</b> from your login slip, choose <b>Parent</b>, <b>Student</b> or <b>Staff</b>, and sign in with the Login ID and PIN.</li>
+            </ol>
+            <div class="note" style="margin-top:12px">
+                If Google Play Protect says the app is from an unknown developer, tap <b>More details</b> → <b>Install anyway</b>.
+                The app comes straight from your school, not from the Play Store.
+            </div>
+        </div>
+
+        <div class="card ur" lang="ur">
+            <h2>انسٹال کرنے کا طریقہ</h2>
+            <ol>
+                <li><b>Download for Android</b> کے بٹن کو دبائیں اور ڈاؤن لوڈ مکمل ہونے دیں۔</li>
+                <li>ڈاؤن لوڈ ہونے والی فائل <b dir="ltr">EasySchool.apk</b> کھولیں۔</li>
+                <li>اگر فون اجازت مانگے تو <b dir="ltr">Install unknown apps</b> کی اجازت دیں۔</li>
+                <li><b dir="ltr">Install</b> اور پھر <b dir="ltr">Open</b> دبائیں۔</li>
+                <li>لاگ اِن سلپ پر لکھا <b>اسکول کوڈ</b> لکھیں، پھر لاگ اِن آئی ڈی اور پِن سے سائن اِن کریں۔</li>
+            </ol>
+        </div>
+
+        <div class="card qr">
+            <h2>Share with another phone</h2>
+            <img src="~/app/qr.png" alt="QR code" />
+            <p>@Model.DownloadUrl</p>
+        </div>
+
+        <div class="foot">EasySchool by EasySol</div>
+    </div>
+</body>
+</html>

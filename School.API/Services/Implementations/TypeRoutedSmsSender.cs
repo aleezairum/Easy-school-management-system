@@ -15,6 +15,7 @@ namespace School.API.Services.Implementations
         private readonly ISmsSender _waha;
         private readonly ISmsSender _meta;
         private readonly ISmsRoutingPolicy _policy;
+        private readonly IWahaSessionStatusService _wahaStatus;
         private readonly ILogger<TypeRoutedSmsSender> _logger;
 
         // Reflects whichever provider actually handled the most recent send —
@@ -25,11 +26,13 @@ namespace School.API.Services.Implementations
             WahaSmsSender waha,
             MetaWhatsAppSender meta,
             ISmsRoutingPolicy policy,
+            IWahaSessionStatusService wahaStatus,
             ILogger<TypeRoutedSmsSender> logger)
         {
             _waha = waha;
             _meta = meta;
             _policy = policy;
+            _wahaStatus = wahaStatus;
             _logger = logger;
         }
 
@@ -53,6 +56,7 @@ namespace School.API.Services.Implementations
                 var outcome = await _waha.SendTemplateAsync(phoneNumber, request);
                 if (outcome.Success)
                 {
+                    _wahaStatus.ReportSendSuccess();
                     ProviderName = _waha.ProviderName;
                     return outcome;
                 }
@@ -71,6 +75,25 @@ namespace School.API.Services.Implementations
                         $"WhatsApp (free) went offline mid-send — status {status.Status}. Held until resumed.");
                 }
 
+                // WAHA says WORKING and still could not send - a hung WEBJS
+                // session does exactly this until it is restarted. The message
+                // is not at fault, so it is held, not failed; and WAHA is
+                // marked as failing so the rest of the queue is held without
+                // being tried one by one. Restart the session, then Resume.
+                if (outcome.ErrorCode == WahaSmsSender.ServerErrorCode)
+                {
+                    _wahaStatus.ReportSendFailure(outcome.Error ?? "send failed");
+                    _logger.LogWarning(
+                        "[TypeRouted] WAHA is WORKING but refused the send to {Phone}; holding. {Error}",
+                        phoneNumber, outcome.Error);
+
+                    return SmsSendOutcome.Hold(
+                        $"WhatsApp (free) shows connected but is not sending: {outcome.Error}. " +
+                        "Held - restart the WAHA session, then Resume.");
+                }
+
+                // Refused for this message alone (a bad number, say): a real
+                // failure, recorded with WAHA's own reason.
                 _logger.LogWarning(
                     "[TypeRouted] WAHA send failed for {Phone} ({Type}) while connected. Error: {Error}",
                     phoneNumber, request.MessageType, outcome.Error);

@@ -155,7 +155,13 @@
             const parts = String(dateStr).match(/^([0-9]{4})-([0-9]{2})-([0-9]{2})/);
             const d = parts ? new Date(+parts[1], +parts[2] - 1, +parts[3]) : new Date(dateStr);
 
-            return isNaN(d) ? '' : d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            if (isNaN(d)) return '';
+
+            // dd-MMM-yyyy, the application's date format. Spelled out here for
+            // the same reason as the date parsing above: no common.js on this page.
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            return `${String(d.getDate()).padStart(2, '0')}-${months[d.getMonth()]}-${d.getFullYear()}`;
         }
     </script>
 </body>

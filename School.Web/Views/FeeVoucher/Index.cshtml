@@ -689,7 +689,7 @@
                         <td style="color:#94a3b8; font-size:12px;">${i + 1}</td>
                         <td><span class="vno-badge">${v.vNo || v.VNo || '-'}</span></td>
                         <td style="white-space:nowrap;">
-                            ${fmtDate(v.vDate || v.VDate)}
+                            ${fmtDay(v.vDate || v.VDate)}
                             <div style="color:#94a3b8; font-size:11px;">${fmtTime(v.insertedDate || v.InsertedDate)}</div>
                         </td>
                         <td style="font-weight:600;">${v.studentName || v.StudentName || '-'}</td>
@@ -819,12 +819,10 @@
             });
         }
 
-        function fmtDate(dateStr) {
-            if (!dateStr) return '-';
-            const d = parseCalendarDate(dateStr) || new Date(NaN);
-            return d.getDate().toString().padStart(2, '0') + '-' +
-                   (d.getMonth() + 1).toString().padStart(2, '0') + '-' +
-                   d.getFullYear();
+        // Shadowed the shared fmtDate() from common.js; kept only for the "-"
+        // this list prints in place of a missing date.
+        function fmtDay(dateStr) {
+            return dateStr ? (fmtDate(dateStr) || '-') : '-';
         }
 
         // Time-of-day (e.g. "11:53 AM") taken from the voucher's InsertedDate,

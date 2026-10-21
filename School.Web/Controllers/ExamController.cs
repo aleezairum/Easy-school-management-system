@@ -45,6 +45,14 @@ namespace School.Web.Controllers
             return View();
         }
 
+        // Students left out of the teachers' result for one exam.
+        [Route("exam/exclude-list")]
+        public IActionResult ExcludeList()
+        {
+            ViewData["Title"] = "Result Exclude List";
+            return View();
+        }
+
         [Route("exam/reports")]
         public IActionResult Reports()
         {
@@ -326,7 +334,7 @@ namespace School.Web.Controllers
         public async Task<IActionResult> ResultAnnouncement(
             int examId, string examName,
             string? classIds = null, string? sectionIds = null,
-            string? scopeText = null)
+            string? scopeText = null, int? prevExamId = null)
         {
             ViewData["Title"] = "Result Announcement";
             ViewData["ExamName"] = examName;
@@ -335,6 +343,8 @@ namespace School.Web.Controllers
             var url = $"{_apiBaseUrl}/examresult/announcement-report?examId={examId}";
             if (!string.IsNullOrWhiteSpace(classIds))   url += $"&classIds={Uri.EscapeDataString(classIds)}";
             if (!string.IsNullOrWhiteSpace(sectionIds)) url += $"&sectionIds={Uri.EscapeDataString(sectionIds)}";
+            // Left out: the API compares with the previous term itself. 0: no comparison.
+            if (prevExamId.HasValue) url += $"&prevExamId={prevExamId.Value}";
 
             var report = await FetchAsync<AnnouncementPayload>(url) ?? new AnnouncementPayload();
 
@@ -605,6 +615,8 @@ namespace School.Web.Controllers
         // Mirrors the API ExamAnnouncementDto.
         public class AnnouncementPayload
         {
+            public int? PrevExamId { get; set; }
+            public string? PrevExamName { get; set; }
             public ResultStatRow Overall { get; set; } = new();
             public List<ResultStatRow> Campuses { get; set; } = new();
             public List<ResultStatRow> Classes { get; set; } = new();
@@ -619,6 +631,7 @@ namespace School.Web.Controllers
             public int TotalFail { get; set; }
             public decimal? PassPct { get; set; }
             public decimal? FailPct { get; set; }
+            public decimal? PrevPassPct { get; set; }
         }
 
         public class AnnouncementTopRow

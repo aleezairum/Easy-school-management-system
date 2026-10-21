@@ -12,6 +12,8 @@
     var positions = Model?.TopPositions ?? new List<School.Web.Controllers.ExamController.AnnouncementTopRow>();
 
     string Pct(decimal? v) => v.HasValue ? v.Value.ToString("0.00") + "%" : "-";
+    // "Pass % Prev." - the previous term's pass %, when the report compares with one.
+    var showPrev = Model.PrevExamId != null;
     string Marks(decimal? v) => v.HasValue ? (v.Value == Math.Floor(v.Value) ? ((long)v.Value).ToString() : v.Value.ToString("0.##")) : "-";
 
     // Friendly heading per scope shown inside each class block.
@@ -63,6 +65,7 @@
         .school-address { font-size: 14.5px; font-weight: bold; margin-top: 3px; }
 
         /* ── Title ── */
+        td.prev { color: #555; }
         .report-title {
             background-color: #d6d6d6;
             text-align: center;
@@ -175,7 +178,7 @@
     <button type="button" class="btn-close-win" onclick="window.close()">Close</button>
 </div>
 
-<div class="page-wrapper">
+<div class="page-wrapper" data-fit="portrait">
 
     <!-- School Header -->
     <div class="school-header">
@@ -189,6 +192,10 @@
         <strong>Exam :</strong> @(string.IsNullOrWhiteSpace(examName) ? "-" : examName)
         &nbsp;&nbsp;|&nbsp;&nbsp;
         <strong>Scope :</strong> @(string.IsNullOrWhiteSpace(scopeText) ? "Whole School" : scopeText)
+        @if (showPrev)
+        {
+            <text>&nbsp;&nbsp;|&nbsp;&nbsp;<strong>Pass % Prev. :</strong> @Model.PrevExamName</text>
+        }
     </div>
 
     <!-- 1) Overall (whole school) -->
@@ -201,6 +208,7 @@
                     <th>Total Pass</th>
                     <th>Total Fail</th>
                     <th>Pass %</th>
+                    @if (showPrev) { <th>Pass % Prev.</th> }
                     <th>Fail %</th>
                 </tr>
             </thead>
@@ -210,6 +218,7 @@
                     <td>@overall.TotalPass</td>
                     <td>@overall.TotalFail</td>
                     <td>@Pct(overall.PassPct)</td>
+                    @if (showPrev) { <td class="prev">@Pct(overall.PrevPassPct)</td> }
                     <td>@Pct(overall.FailPct)</td>
                 </tr>
             </tbody>
@@ -227,13 +236,14 @@
                     <th>Pass</th>
                     <th>Fail</th>
                     <th>Pass %</th>
+                    @if (showPrev) { <th>Pass % Prev.</th> }
                     <th>Fail %</th>
                 </tr>
             </thead>
             <tbody>
                 @if (campuses.Count == 0)
                 {
-                    <tr><td colspan="6" class="empty-msg">No data.</td></tr>
+                    <tr><td colspan="@(showPrev ? 7 : 6)" class="empty-msg">No data.</td></tr>
                 }
                 else
                 {
@@ -245,6 +255,7 @@
                             <td>@c.TotalPass</td>
                             <td>@c.TotalFail</td>
                             <td>@Pct(c.PassPct)</td>
+                            @if (showPrev) { <td class="prev">@Pct(c.PrevPassPct)</td> }
                             <td>@Pct(c.FailPct)</td>
                         </tr>
                     }
@@ -264,13 +275,14 @@
                     <th>Pass</th>
                     <th>Fail</th>
                     <th>Pass %</th>
+                    @if (showPrev) { <th>Pass % Prev.</th> }
                     <th>Fail %</th>
                 </tr>
             </thead>
             <tbody>
                 @if (classes.Count == 0)
                 {
-                    <tr><td colspan="6" class="empty-msg">No data.</td></tr>
+                    <tr><td colspan="@(showPrev ? 7 : 6)" class="empty-msg">No data.</td></tr>
                 }
                 else
                 {
@@ -282,6 +294,7 @@
                             <td>@c.TotalPass</td>
                             <td>@c.TotalFail</td>
                             <td>@Pct(c.PassPct)</td>
+                            @if (showPrev) { <td class="prev">@Pct(c.PrevPassPct)</td> }
                             <td>@Pct(c.FailPct)</td>
                         </tr>
                     }
@@ -341,5 +354,6 @@
     </div>
 
 </div>
+<script src="~/js/fitPage.js" asp-append-version="true"></script>
 </body>
 </html>

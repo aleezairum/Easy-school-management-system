@@ -16,12 +16,22 @@ namespace School.API.Repositories.Implementations.HR
             _context = context;
         }
 
-        public async Task<List<EmployeeListDto>> GetAllAsync()
+        public async Task<List<EmployeeListDto>> GetAllAsync(int? campusId = null)
         {
-            return await _context.Employees
+            var query = _context.Employees
                 .AsNoTracking()
                 .Include(e => e.Designation)
                 .Include(e => e.HRGrade)
+                .AsQueryable();
+
+            // Staff with no campus recorded yet are NOT returned for a specific
+            // campus. They belong somewhere, but nobody has said where, and
+            // quietly folding them into whichever campus was asked for would
+            // put them on that campus's staff statement as fact.
+            if (campusId.HasValue)
+                query = query.Where(e => e.CampusId == campusId.Value);
+
+            return await query
                 .OrderByDescending(e => e.CreatedAt)
                 .Select(e => new EmployeeListDto
                 {
@@ -31,10 +41,22 @@ namespace School.API.Repositories.Implementations.HR
                     FatherName = e.FatherName,
                     CNIC = e.CNIC,
                     Mobile = e.Mobile,
-                    Photo = e.Photo,
+                    // The picture is a data: URL now; a list of them all would be megabytes.
+                    // The page loads each one from api/Employee/{id}/photo instead.
+                    HasPhoto = e.Photo != null && e.Photo != "",
                     Department = e.Department,
+                    CampusId = e.CampusId,
+                    CampusName = _context.Campuses
+                        .Where(c => c.VID == e.CampusId)
+                        .Select(c => c.VName)
+                        .FirstOrDefault(),
                     DesignationId = e.DesignationId,
                     DesignationName = e.Designation != null ? e.Designation.Name : null,
+                    StaffCategoryId = e.StaffCategoryId,
+                    StaffCategoryName = _context.StaffCategories
+                        .Where(c => c.Id == e.StaffCategoryId)
+                        .Select(c => c.Name)
+                        .FirstOrDefault(),
                     HRGradeName = e.HRGrade != null ? e.HRGrade.Name : null,
                     EmployeeType = e.EmployeeType,
                     Status = e.Status,
@@ -45,13 +67,15 @@ namespace School.API.Repositories.Implementations.HR
                 .ToListAsync();
         }
 
+        public Task<string?> GetPhotoAsync(int id) =>
+            _context.Employees.AsNoTracking().Where(e => e.Id == id).Select(e => e.Photo).FirstOrDefaultAsync();
+
         public async Task<EmployeeDto?> GetByIdAsync(int id)
         {
             return await _context.Employees
                 .AsNoTracking()
                 .Include(e => e.Designation)
                 .Include(e => e.HRGrade)
-                .Include(e => e.Shift)
                 .Where(e => e.Id == id)
                 .Select(e => new EmployeeDto
                 {
@@ -78,13 +102,21 @@ namespace School.API.Repositories.Implementations.HR
                     Specialization = e.Specialization,
                     Experience = e.Experience,
                     Department = e.Department,
+                    CampusId = e.CampusId,
+                    CampusName = _context.Campuses
+                        .Where(c => c.VID == e.CampusId)
+                        .Select(c => c.VName)
+                        .FirstOrDefault(),
                     DesignationId = e.DesignationId,
                     DesignationName = e.Designation != null ? e.Designation.Name : null,
+                    StaffCategoryId = e.StaffCategoryId,
+                    StaffCategoryName = _context.StaffCategories
+                        .Where(c => c.Id == e.StaffCategoryId)
+                        .Select(c => c.Name)
+                        .FirstOrDefault(),
                     HRGradeId = e.HRGradeId,
                     HRGradeName = e.HRGrade != null ? e.HRGrade.Name : null,
                     AcademicGradeId = e.AcademicGradeId,
-                    ShiftId = e.ShiftId,
-                    ShiftName = e.Shift != null ? e.Shift.Name : null,
                     MachineCardNo = e.MachineCardNo,
                     OffDay1 = e.OffDay1,
                     OffDay2 = e.OffDay2,
@@ -169,7 +201,9 @@ namespace School.API.Repositories.Implementations.HR
                 {
                     Id = e.Id,
                     EmployeeCode = e.EmployeeCode,
-                    FullName = e.FirstName + (e.LastName != null ? " " + e.LastName : "")
+                    FullName = e.FirstName + (e.LastName != null ? " " + e.LastName : ""),
+                    CampusId = e.CampusId,
+                    DesignationId = e.DesignationId
                 })
                 .ToListAsync();
         }
@@ -199,6 +233,33 @@ namespace School.API.Repositories.Implementations.HR
 
             await _context.SaveChangesAsync();
             return entity;
+        }
+
+        /// <summary>
+        /// Sets the category on the given staff and touches nothing else.
+        /// </summary>
+        /// <remarks>
+        /// Loads and assigns rather than going through ApplyDto: the whole
+        /// point is that a record missing a campus or a joining date can still
+        /// be put into a category. Returns how many rows changed.
+        /// </remarks>
+        public async Task<int> SetStaffCategoryAsync(
+            List<int> employeeIds, int? staffCategoryId, int userId, string userIp)
+        {
+            var staff = await _context.Employees
+                .Where(e => employeeIds.Contains(e.Id))
+                .ToListAsync();
+
+            foreach (var e in staff)
+            {
+                e.StaffCategoryId = staffCategoryId;
+                e.UpdatedAt = DateTime.UtcNow;
+                e.UpdatedBy = userId;
+                e.UpdatedIp = userIp;
+            }
+
+            await _context.SaveChangesAsync();
+            return staff.Count;
         }
 
         public async Task<bool> DeleteAsync(int id)
@@ -259,10 +320,11 @@ namespace School.API.Repositories.Implementations.HR
             e.Specialization = dto.Specialization;
             e.Experience = dto.Experience;
             e.Department = dto.Department;
+            e.CampusId = dto.CampusId;
             e.DesignationId = dto.DesignationId;
+            e.StaffCategoryId = dto.StaffCategoryId;
             e.HRGradeId = dto.HRGradeId;
             e.AcademicGradeId = dto.AcademicGradeId;
-            e.ShiftId = dto.ShiftId;
             e.MachineCardNo = dto.MachineCardNo;
             e.OffDay1 = dto.OffDay1;
             e.OffDay2 = dto.OffDay2;

@@ -1,0 +1,91 @@
+@{
+    ViewData["Title"] = "Salary Slips";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+@*
+    Salary slips of the generated payroll, for the months in the date range,
+    by campus, designation or one employee. Printed two to an A4 page - see
+    wwwroot/js/salarySlipPrint.js. A month with no payroll generated has no
+    slips: generate it first from Generate Payroll.
+*@
+
+<div class="container-fluid">
+    <div id="alertContainer"></div>
+
+    <div class="card mb-3"><div class="card-body">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-2"><label class="form-label">From</label><input type="date" class="form-control" id="fFrom" /></div>
+            <div class="col-md-2"><label class="form-label">To</label><input type="date" class="form-control" id="fTo" /></div>
+            <div class="col-md-2"><label class="form-label">Campus</label>
+                <select class="form-select" id="fCampus"><option value="">All campuses</option></select></div>
+            <div class="col-md-3"><label class="form-label">Designation</label>
+                <select class="form-select" id="fDesignation"><option value="">All designations</option></select></div>
+            <div class="col-md-3"><label class="form-label">Employee</label>
+                <select class="form-select" id="fEmployee"><option value="">All employees</option></select></div>
+        </div>
+        <div class="d-flex gap-2 mt-3">
+            <button class="btn btn-primary" onclick="loadSlips()"><i class="bi bi-search"></i> Load</button>
+            <button class="btn btn-dark" onclick="printSalarySlips(_slips)"><i class="bi bi-printer"></i> Print All</button>
+            <span id="slipInfo" class="text-muted small align-self-center ms-2"></span>
+        </div>
+        <div class="form-text">Every month that falls in the date range is included. Slips come from the generated payroll.</div>
+    </div></div>
+
+    <div class="card"><div class="card-body">
+        <div class="table-responsive"><table class="table table-sm table-hover table-bordered">
+            <thead><tr>
+                <th>Sr.</th><th>Month</th><th>Code</th><th>Employee</th><th>Designation</th><th>Campus</th>
+                <th class="text-end">Gross</th><th class="text-end">Deduction</th><th class="text-end">Net</th>
+                <th class="text-end">Take Home</th><th></th>
+            </tr></thead>
+            <tbody id="slipBody"><tr><td colspan="11" class="text-center text-muted py-3">Press Load.</td></tr></tbody>
+            <tfoot id="slipFoot"></tfoot>
+        </table></div>
+    </div></div>
+</div>
+
+@section Scripts {
+<script src="~/js/hrFilters.js" asp-append-version="true"></script>
+<script src="~/js/salarySlipPrint.js" asp-append-version="true"></script>
+<script>
+    let _slips = [];
+
+    $(document).ready(function () {
+        // Last month: salaries are made after the month ends.
+        const now = new Date();
+        $('#fFrom').val(toInputDate(new Date(now.getFullYear(), now.getMonth() - 1, 1)));
+        $('#fTo').val(toInputDate(new Date(now.getFullYear(), now.getMonth(), 0)));
+        hrInitFilters();
+    });
+
+    async function loadSlips() {
+        const from = $('#fFrom').val(), to = $('#fTo').val();
+        if (!from || !to) { toastWarning('Choose From and To dates'); return; }
+        const res = await fetch(`${API_BASE}/hr/payroll/payslips?from=${from}&to=${to}${hrFilterQuery()}`);
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            toastError(err.message || 'Failed to load salary slips'); return;
+        }
+        _slips = await res.json();
+        $('#slipInfo').text(`${_slips.length} slip(s)`);
+        const body = $('#slipBody');
+        if (!_slips.length) {
+            body.html('<tr><td colspan="11" class="text-center text-muted py-3">No payroll generated for these months and filters.</td></tr>');
+            $('#slipFoot').empty(); return;
+        }
+        body.html(_slips.map((p, i) => `<tr>
+            <td>${i + 1}</td><td>${SLIP_MONTHS[p.payMonth - 1]} ${p.payYear}${p.runStatus === 1 ? ' <span class="badge bg-danger" title="Payroll not finalised - the slip prints as PROOF READ ONLY">Proof</span>' : ''}</td>
+            <td>${hrEsc(p.employeeCode)}</td><td>${hrEsc(p.employeeName)}</td>
+            <td>${hrEsc(p.designationName || '-')}</td><td>${hrEsc(p.campusName || '-')}</td>
+            <td class="text-end">${hrMoney(p.grossEarning)}</td><td class="text-end">${hrMoney(p.totalDeduction)}</td>
+            <td class="text-end">${hrMoney(p.netPay)}</td><td class="text-end fw-bold">${hrMoney(p.takeHome)}</td>
+            <td class="text-nowrap"><button class="btn btn-sm btn-outline-dark" onclick="printSalarySlips([_slips[${i}]])"><i class="bi bi-printer"></i> Slip</button></td>
+        </tr>`).join(''));
+        const sum = f => _slips.reduce((t, p) => t + (Number(p[f]) || 0), 0);
+        $('#slipFoot').html(`<tr class="fw-bold"><td colspan="6">Total</td>
+            <td class="text-end">${hrMoney(sum('grossEarning'))}</td><td class="text-end">${hrMoney(sum('totalDeduction'))}</td>
+            <td class="text-end">${hrMoney(sum('netPay'))}</td><td class="text-end">${hrMoney(sum('takeHome'))}</td><td></td></tr>`);
+    }
+</script>
+}

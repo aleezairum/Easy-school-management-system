@@ -23,10 +23,6 @@
                         </select>
                     </div>
                     <div class="col-xl col-lg-3 col-md-4 col-sm-6 col-12">
-                        <label for="examDate" class="form-label">Date <span class="text-danger">*</span></label>
-                        <input type="date" class="form-control" id="examDate" required />
-                    </div>
-                    <div class="col-xl col-lg-3 col-md-4 col-sm-6 col-12">
                         <label for="classId" class="form-label">Class <span class="text-danger">*</span></label>
                         <select class="form-select" id="classId" required>
                             <option value="">-- Select Class --</option>
@@ -43,6 +39,10 @@
                         <select class="form-select" id="subjectId" required disabled>
                             <option value="">-- Select Subject --</option>
                         </select>
+                    </div>
+                    <div class="col-xl col-lg-3 col-md-4 col-sm-6 col-12">
+                        <label for="examDate" class="form-label">Date <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="examDate" required />
                     </div>
                     <div class="col-xl col-lg-3 col-md-4 col-sm-6 col-12">
                         <label for="totalMarks" class="form-label">Total Marks <span class="text-danger">*</span></label>
@@ -62,12 +62,30 @@
                 </div>
             </div>
 
+            <!-- The saved award list for the chosen Exam + Class + Section + Subject -->
+            <div id="savedList" class="alert alert-info d-none d-flex flex-wrap align-items-center justify-content-between gap-2 py-2">
+                <div>
+                    <i class="bi bi-journal-check me-1"></i>
+                    <span id="savedListText"></span>
+                    <div id="savedListWarn" class="text-danger small mt-1 d-none"></div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="changeListDate()">
+                        <i class="bi bi-calendar-event me-1"></i> Change Date
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteList()">
+                        <i class="bi bi-trash me-1"></i> Delete List
+                    </button>
+                </div>
+            </div>
+
             <!-- Marks Entry Grid -->
             <div class="grid-section">
                 <div class="table-responsive">
                     <table class="table table-hover" id="marksTable">
                         <thead>
                             <tr style="background: #f8fafc;">
+                                <th class="text-center" style="width: 60px;">Sr.No.</th>
                                 <th style="width: 80px;">Roll No</th>
                                 <th>Student Name</th>
                                 <th class="text-center" style="width: 150px;">Marks</th>
@@ -76,7 +94,7 @@
                         </thead>
                         <tbody id="marksBody">
                             <tr>
-                                <td colspan="4" class="text-center text-muted py-4">Select Class, Section, Exam and Subject to load students</td>
+                                <td colspan="5" class="text-center text-muted py-4">Select Class, Section, Exam and Subject to load students</td>
                             </tr>
                         </tbody>
                     </table>
@@ -119,7 +137,11 @@
         $('#classId').on('change', function () {
             loadSections();
             loadSubjects();
+            checkSavedList();
         });
+
+        // Exam + Class + Section + Subject chosen: open the list already entered for it, on its own date
+        $('#examId, #sectionId, #subjectId').on('change', checkSavedList);
 
         // Re-render grid when total marks changes
         $('#totalMarks').on('change', function () {
@@ -331,11 +353,105 @@
                 toastWarning(`${missingCount} student(s) have no attendance for ${examDate}. Mark attendance first.`);
             }
 
+            showSavedList(existing || [], existingByStudent, attByStudent);
             renderMarksGrid(students);
         } catch (error) {
             console.error('Error loading students:', error);
             toastError('Error loading students');
         }
+    }
+
+    // ── The saved award list ──────────────────────────────────────────
+    // One list = the marks of one Exam + Class + Section + Subject.
+
+    function listKey() {
+        return { examId: $('#examId').val(), classId: $('#classId').val(), sectionId: $('#sectionId').val(), subjectId: $('#subjectId').val() };
+    }
+
+    // The date most of the list is saved on (normally all of it).
+    function savedDateOf(rows) {
+        const n = {};
+        rows.forEach(r => { const d = toInputDate(r.vDate); if (d) n[d] = (n[d] || 0) + 1; });
+        return Object.keys(n).sort((a, b) => n[b] - n[a])[0] || '';
+    }
+
+    let _checkSeq = 0;
+    async function checkSavedList() {
+        const k = listKey(), seq = ++_checkSeq;
+        $('#savedList').addClass('d-none');
+        if (!k.examId || !k.classId || !k.sectionId || !k.subjectId) return;
+        const params = new URLSearchParams({ subjectId: k.subjectId, classId: k.classId, sectionId: k.sectionId });
+        const rows = await fetch(`${API_BASE}/examresult/byExam/${k.examId}?${params}`).then(r => r.ok ? r.json() : []).catch(() => []);
+        if (seq !== _checkSeq) return;   // the choice changed while this was loading
+        if (rows && rows.length) {
+            $('#examDate').val(savedDateOf(rows));
+            await loadStudents();
+        } else {
+            students = [];
+            $('#marksBody').html('<tr><td colspan="5" class="text-center text-muted py-4">No marks saved yet for this subject. Choose the exam date and Load Students.</td></tr>');
+        }
+    }
+
+    function showSavedList(rows, byStudent, attByStudent) {
+        if (!rows.length) { $('#savedList').addClass('d-none'); return; }
+        const dates = [...new Set(rows.map(r => toInputDate(r.vDate)).filter(Boolean))].sort();
+        const shown = $('#examDate').val();
+        let text = `<strong>Saved list:</strong> ${rows.length} student(s), date <strong>${dates.map(d => fmtDate(d)).join(', ')}</strong>`;
+        if (dates.length && !dates.includes(shown)) text += ` &nbsp;·&nbsp; you are looking at <strong>${fmtDate(shown)}</strong>`;
+        $('#savedListText').html(text);
+        // Saving marks students absent unless they are Present on the date shown, so say so before anyone saves.
+        const atRisk = Object.keys(byStudent).filter(sid => {
+            const r = byStudent[sid];
+            return !r.isAbsent && r.marksObtained !== null && attByStudent[sid] !== ATT.PRESENT;
+        }).length;
+        $('#savedListWarn').toggleClass('d-none', atRisk === 0)
+            .text(`${atRisk} student(s) with saved marks are not marked Present on ${fmtDate(shown)}. Saving now would record them as absent.`);
+        $('#savedList').removeClass('d-none');
+    }
+
+    async function changeListDate() {
+        const k = listKey();
+        const current = $('#examDate').val();
+        const res = await Swal.fire({
+            title: 'Change the date of this list',
+            html: 'Every saved mark of this subject moves to the new date. The marks themselves do not change.',
+            input: 'date',
+            inputValue: current,
+            showCancelButton: true,
+            confirmButtonText: 'Change Date',
+            confirmButtonColor: '#1a7a3e',
+            reverseButtons: true,
+            inputValidator: v => !v ? 'Choose a date' : (v === current ? 'That is the date it already has' : null)
+        });
+        if (!res.isConfirmed) return;
+        const r = await fetch(`${API_BASE}/examresult/list/date`, {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ExamID: +k.examId, ClassID: +k.classId, SectionID: +k.sectionId, SubjectID: +k.subjectId, VDate: res.value })
+        });
+        const body = await r.json().catch(() => ({}));
+        if (!r.ok) { toastError(body.message || 'Could not change the date.'); return; }
+        toastSuccess(`Date changed to ${fmtDate(res.value)} for ${body.count} student(s).`);
+        $('#examDate').val(res.value);
+        await loadStudents();
+    }
+
+    async function deleteList() {
+        const k = listKey();
+        const subject = $('#subjectId option:selected').text(), exam = $('#examId option:selected').text();
+        const section = `${$('#classId option:selected').text()} - ${$('#sectionId option:selected').text()}`;
+        const go = await confirmDelete({
+            title: 'Delete this list?',
+            html: `All saved marks of <b>${subject}</b> for <b>${section}</b> in <b>${exam}</b> will be deleted.<br><span style="color:#94a3b8;font-size:13px;">This action cannot be undone.</span>`,
+            confirmButtonText: 'Yes, Delete List'
+        });
+        if (!go) return;
+        const params = new URLSearchParams(k);
+        const r = await fetch(`${API_BASE}/examresult/list?${params}`, { method: 'DELETE' });
+        const body = await r.json().catch(() => ({}));
+        if (!r.ok) { toastError(body.message || 'Could not delete the list.'); return; }
+        toastSuccess(`List deleted (${body.count} student(s)).`);
+        $('#examDate').val(toInputDate());
+        await checkSavedList();
     }
 
     function attendanceBadgeClass(attCode) {
@@ -352,7 +468,7 @@
         tbody.empty();
 
         if (!studentList || studentList.length === 0) {
-            tbody.html('<tr><td colspan="4" class="text-center text-muted py-4">No students found</td></tr>');
+            tbody.html('<tr><td colspan="5" class="text-center text-muted py-4">No students found</td></tr>');
             return;
         }
 
@@ -364,6 +480,7 @@
 
             const row = `
                 <tr data-student-id="${student.id}">
+                    <td class="text-center">${index + 1}</td>
                     <td><strong>${student.rollNo || index + 1}</strong></td>
                     <td>${student.studentName || '-'}</td>
                     <td class="text-center">

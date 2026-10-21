@@ -223,7 +223,7 @@ namespace School.API.Repositories.Implementations.Academic
             return result;
         }
 
-        public async Task<ExamAnnouncementDto> GetAnnouncementReportAsync(int examId, string? classIds = null, string? sectionIds = null)
+        public async Task<ExamAnnouncementDto> GetAnnouncementReportAsync(int examId, string? classIds = null, string? sectionIds = null, int? prevExamId = null)
         {
             var result = new ExamAnnouncementDto();
 
@@ -233,12 +233,20 @@ namespace School.API.Repositories.Implementations.Academic
 
             try
             {
+                // The term compared with: as chosen, or (null) the previous term of the same kind.
+                var prev = prevExamId is > 0 && prevExamId != examId
+                    ? (await ExamDatesAsync(conn)).FirstOrDefault(e => e.Id == prevExamId)
+                    : prevExamId == null ? await PreviousTermAsync(conn, examId) : null;
+                result.PrevExamId = prev?.Id;
+                result.PrevExamName = prev?.Name;
+
                 await using var cmd = conn.CreateCommand();
                 cmd.CommandType = CommandType.StoredProcedure;
                 cmd.CommandText = "dbo.SpRPT_SMSExamResultAnnouncement";
                 AddParam(cmd, "@ExamID", examId);
                 AddParam(cmd, "@ClassIDs", string.IsNullOrWhiteSpace(classIds) ? (object?)null : classIds);
                 AddParam(cmd, "@SectionIDs", string.IsNullOrWhiteSpace(sectionIds) ? (object?)null : sectionIds);
+                AddParam(cmd, "@PrevExamID", prev?.Id);
 
                 await using var reader = await cmd.ExecuteReaderAsync();
 
@@ -356,8 +364,53 @@ namespace School.API.Repositories.Implementations.Academic
             TotalPass     = GetInt(reader, "TotalPass"),
             TotalFail     = GetInt(reader, "TotalFail"),
             PassPct       = GetDecimal(reader, "PassPct"),
-            FailPct       = GetDecimal(reader, "FailPct")
+            FailPct       = GetDecimal(reader, "FailPct"),
+            PrevPassPct   = HasColumn(reader, "PrevPassPct") ? GetDecimal(reader, "PrevPassPct") : null
         };
+
+        private sealed record ExamDate(int Id, string Name, DateTime FirstPaper);
+
+        // Every exam with results, and the date of its first paper.
+        private static async Task<List<ExamDate>> ExamDatesAsync(DbConnection conn)
+        {
+            var list = new List<ExamDate>();
+            await using var cmd = conn.CreateCommand();
+            cmd.CommandText = @"SELECT E.VID, E.VName, MIN(R.VDate)
+                                FROM SMSExam E JOIN SMSExamResult R ON R.ExamID = E.VID AND R.IsActive = 1
+                                WHERE R.VDate IS NOT NULL
+                                GROUP BY E.VID, E.VName";
+            await using var r = await cmd.ExecuteReaderAsync();
+            while (await r.ReadAsync())
+                list.Add(new ExamDate(r.GetInt32(0), r.IsDBNull(1) ? "" : r.GetString(1), r.GetDateTime(2)));
+            return list;
+        }
+
+        /// <summary>
+        /// The term before this one: the latest exam of the same kind whose papers
+        /// began earlier. Exams carry no type or date of their own, so the kind is
+        /// read from the name - "1st Term 2026-27" and "2nd Term 2026-27" are both
+        /// "term", the schedule tests are "schedule test no" - and the order from
+        /// the paper dates (the order exams were created in is not the order they
+        /// were held: a June test can be entered in September).
+        /// </summary>
+        private static async Task<ExamDate?> PreviousTermAsync(DbConnection conn, int examId)
+        {
+            var exams = await ExamDatesAsync(conn);
+            var current = exams.FirstOrDefault(e => e.Id == examId);
+            if (current == null) return null;
+            var kind = ExamKind(current.Name);
+            return exams.Where(e => e.Id != examId && e.FirstPaper < current.FirstPaper && ExamKind(e.Name) == kind)
+                        .OrderByDescending(e => e.FirstPaper).FirstOrDefault();
+        }
+
+        private static string ExamKind(string name)
+        {
+            var s = name.ToLowerInvariant();
+            s = System.Text.RegularExpressions.Regex.Replace(s, @"\([^)]*\)", " ");                                  // (19-06-2026 to 30-06-2026)
+            s = System.Text.RegularExpressions.Regex.Replace(s, @"\b\d+(st|nd|rd|th)?\b", " ");                         // 1st, 2026, 27, No.1
+            s = System.Text.RegularExpressions.Regex.Replace(s, @"\b(first|second|third|fourth|fifth|sixth|final|last)\b", " ");
+            return System.Text.RegularExpressions.Regex.Replace(s, "[^a-z]", "");
+        }
 
         public Task<List<ExamPositionRowDto>> GetPositionReportAsync(int examId, int classId)
             => ReadStudentRankRowsAsync("dbo.SpRPT_SMSExamStudentPosition", examId, classId);
@@ -679,6 +732,23 @@ namespace School.API.Repositories.Implementations.Academic
 
             return list.FirstOrDefault();
         }
+
+        public Task<int> SetListDateAsync(SMSExamResultListDateDto dto, int userId) =>
+            _context.Database.ExecuteSqlRawAsync(
+                @"UPDATE SMSExamResult
+                     SET VDate = {4}, UpdatedBy = {5}, UpdatedDate = GETDATE()
+                   WHERE ExamID = {0} AND ClassID = {1} AND SectionID = {2} AND SubjectID = {3}",
+                dto.ExamID, dto.ClassID, dto.SectionID, dto.SubjectID, dto.VDate.Date, userId);
+
+        public Task<int> DeleteListAsync(int examId, int classId, int sectionId, int subjectId) =>
+            _context.Database.ExecuteSqlRawAsync(
+                "DELETE FROM SMSExamResult WHERE ExamID = {0} AND ClassID = {1} AND SectionID = {2} AND SubjectID = {3}",
+                examId, classId, sectionId, subjectId);
+
+        public async Task<bool> IsExamFinalizedAsync(int examId) =>
+            await _context.Database
+                .SqlQueryRaw<int>("SELECT COUNT(*) AS Value FROM SMSExamFinalize WHERE ExamID = {0}", examId)
+                .SingleAsync() > 0;
 
         public async Task<ResponseDto> SaveAsync(SMSExamResultSaveDto dto, int userId, string userIp)
         {

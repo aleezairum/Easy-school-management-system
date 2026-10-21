@@ -20,6 +20,20 @@ public class StdAttendenceController : ControllerBase
         return Ok(await _service.GetAllAsync(filter));
     }
 
+    /// <summary>
+    /// Monthly attendance register: classId with sectionId for one section, or
+    /// without it for every section of the class. month is yyyy-MM.
+    /// </summary>
+    [HttpGet("register")]
+    public async Task<IActionResult> Register([FromQuery] int classId, [FromQuery] int? sectionId, [FromQuery] string month)
+    {
+        if (classId <= 0) return BadRequest(new { message = "Choose a class." });
+        if (!DateTime.TryParseExact(month + "-01", "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None, out var first))
+            return BadRequest(new { message = "Choose a month." });
+        return Ok(await _service.GetRegisterAsync(classId, sectionId is > 0 ? sectionId : null, first.Year, first.Month));
+    }
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {

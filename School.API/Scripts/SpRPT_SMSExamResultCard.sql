@@ -17,7 +17,13 @@ GO
    Position, TotalStudents and HighestMarks are ALWAYS calculated within each
    student's OWN Class group (across all sections, via window functions), so
    they stay correct no matter how wide the scope is — even when printing the
-   whole school in one run, and even when filtered to a single student.
+   whole school in one run, filtered to a single section, or to one student.
+
+   That is now true. It used to be only half true: @SectionID was applied to
+   the ranking pool as well as to the output, so printing one section ranked
+   the student against that section alone. Every caller that passed a section —
+   the exam screen, the result-card SMS campaign and the WhatsApp auto-reply —
+   printed section-wise positions under a "class position" heading.
 
    Returns 2 result sets:
      (1) Student headers  -> StudentID, RollNo, StudentName, FatherName,
@@ -77,9 +83,17 @@ BEGIN
           AND  (@ClassID   = 0 OR R.ClassID   = @ClassID)
           AND  (@SectionID = 0 OR R.SectionID = @SectionID);
 
-    /* ---- Per-student aggregates for the selected exam (within scope) ----
-       NOTE: the student filter is NOT applied here, so each student's group
-       stats (position, total, highest) reflect the WHOLE Class. */
+    /* ---- Per-student aggregates for the selected exam ----------------------
+       NEITHER the student filter NOR the section filter is applied here, so
+       each student's group stats (position, total, highest) reflect the WHOLE
+       Class.
+
+       The section filter used to be applied, and that was the bug: passing a
+       section narrowed the pool the ranking runs over, so DENSE_RANK() over
+       PARTITION BY ClassID was really ranking within that one section. A child
+       who came 3rd in the class was printed as 1st because the other two were
+       in the other section. The scope parameters belong on the OUTPUT (see the
+       final SELECTs), never on the pool the position is computed from. */
     ;WITH Cur AS
     (
         SELECT  R.StudentID,
@@ -94,9 +108,11 @@ BEGIN
         WHERE       R.ExamID    = @ExamID
           AND       R.IsActive  = 1
           AND       (@ClassID   = 0 OR R.ClassID   = @ClassID)
-          AND       (@SectionID = 0 OR R.SectionID = @SectionID)
           AND       EXISTS (SELECT 1 FROM SMSStudentAcademic SA
                             WHERE SA.StudentID = R.StudentID AND SA.IsActive = 1 AND SA.StatusID = 1)
+          -- On the Result Exclude List of this exam: left out of every result report.
+          AND       NOT EXISTS (SELECT 1 FROM SMSExamExclude X
+                                WHERE X.ExamID = R.ExamID AND X.StudentID = R.StudentID)
     ),
     Agg AS
     (
@@ -136,7 +152,9 @@ BEGIN
           AND   R.ExamID    = @PrevExamID
           AND   R.IsActive  = 1
           AND   (@ClassID   = 0 OR R.ClassID   = @ClassID)
-          AND   (@SectionID = 0 OR R.SectionID = @SectionID)
+          -- Not filtered by section either: this is joined back per student,
+          -- and a child moved between sections since the last term would
+          -- otherwise lose their previous percentage for no reason.
         GROUP BY R.StudentID
     ),
     Att AS
@@ -190,7 +208,12 @@ BEGIN
     LEFT  JOIN  SMSSection  SE ON RK.SectionID = SE.VID
     LEFT  JOIN  Prev        PR ON PR.StudentID = RK.StudentID
     LEFT  JOIN  Att         AT ON AT.StudentID = RK.StudentID
-    WHERE       (@StudentID = 0 OR ST.VID = @StudentID)
+    -- Section scoping happens HERE, on the output, not in the Cur pool above.
+    -- It used to live in the pool, which is what made the position section-wise;
+    -- moving it here keeps "print one section" working while the ranking still
+    -- runs over the whole class.
+    WHERE       (@StudentID = 0 OR ST.VID       = @StudentID)
+      AND       (@SectionID = 0 OR RK.SectionID = @SectionID)
     ORDER BY    RK.ClassID, RK.SectionID, TRY_CONVERT(INT, ST.RollNo), ST.RollNo;
 
     /* ---- 2) Subject details (one row per student-subject) ---- */
@@ -213,6 +236,9 @@ BEGIN
       AND       (@StudentID = 0 OR R.StudentID = @StudentID)
       AND       EXISTS (SELECT 1 FROM SMSStudentAcademic SA
                         WHERE SA.StudentID = R.StudentID AND SA.IsActive = 1 AND SA.StatusID = 1)
+      -- On the Result Exclude List of this exam: left out of every result report.
+      AND       NOT EXISTS (SELECT 1 FROM SMSExamExclude X
+                            WHERE X.ExamID = R.ExamID AND X.StudentID = R.StudentID)
     ORDER BY    R.ClassID, R.SectionID, TRY_CONVERT(INT, ST.RollNo), ST.RollNo, SU.VID;
 END
 GO

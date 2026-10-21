@@ -45,9 +45,37 @@ namespace School.API.Services.Implementations.HR
             public List<int> DailyLateMinutes { get; set; } = new();
             public int LateCount => DailyLateMinutes.Count;
             public int TotalLateMinutes => DailyLateMinutes.Sum();
+
+            /// <summary>
+            /// Minutes spent out of school during the day, per day — a teacher
+            /// who signed out at 11:00 and came back at 12:30 contributes 90.
+            /// Kept per day, like lateness, so a daily grace and a daily cap
+            /// can be applied before anything is added up.
+            /// </summary>
+            public List<int> DailyOutingMinutes { get; set; } = new();
+            public int OutingCount => DailyOutingMinutes.Count;
+            public int TotalOutingMinutes => DailyOutingMinutes.Sum();
+
+            /// <summary>Minutes left before the day ended, per day.</summary>
+            public List<int> DailyEarlyMinutes { get; set; } = new();
+            public int EarlyCount => DailyEarlyMinutes.Count;
+            public int TotalEarlyMinutes => DailyEarlyMinutes.Sum();
+
+            /// <summary>Minutes somebody else covered for this person.</summary>
+            public int TotalShortMinutes { get; set; }
+
+            /// <summary>Minutes this person covered for somebody else.</summary>
+            public int TotalExtraMinutes { get; set; }
             public decimal AbsentDays { get; set; }
             public decimal PresentDays { get; set; }
             public decimal LeaveDays { get; set; }
+
+            /// <summary>
+            /// Leave days weighted by what each costs - its leave type's Deduct
+            /// Days, 1 for an unpaid type or a day with no type, 0 for a paid
+            /// type. What a PerLeaveDay rule charges for.
+            /// </summary>
+            public decimal ChargeableLeaveDays { get; set; }
             public decimal OvertimeHours { get; set; }
         }
 
@@ -119,7 +147,65 @@ namespace School.API.Services.Implementations.HR
             ShowOnPayslip = c.ShowOnPayslip
         };
 
-        public static PayrollResult Calculate(EmployeeInput input)
+        /// <summary>
+        /// What one day's minutes cost, for the attendance reports and cards:
+        /// late arrival, early leaving and time out of school, each priced by
+        /// the employee's own rules exactly as <see cref="Calculate"/> prices a
+        /// day - same rate, same grace, same daily cap.
+        /// </summary>
+        /// <remarks>
+        /// A rule's FreeUnitsPerMonth and CapPerMonth are month-level and are
+        /// not applied to a single day. With the school's rules (no free days,
+        /// no monthly cap) a month of these days adds up to the payslip.
+        /// </remarks>
+        public class DayMinutePricing
+        {
+            internal readonly List<(HrPayCalcType Type, decimal Rate, int Grace, decimal? CapPerDay)> Rules = new();
+
+            /// <summary>
+            /// One minute's cost - the late rule's, or the first minute rule's
+            /// when there is no late rule. 0 when no minute rule applies.
+            /// </summary>
+            public decimal Rate =>
+                Rules.Where(r => r.Type == HrPayCalcType.PerLateMinute).Select(r => r.Rate).FirstOrDefault() is var late && late != 0
+                    ? late
+                    : Rules.Select(r => r.Rate).FirstOrDefault();
+
+            public decimal Late(int minutes) => Charge(HrPayCalcType.PerLateMinute, minutes);
+            public decimal Early(int minutes) => Charge(HrPayCalcType.PerEarlyMinute, minutes);
+            public decimal Outing(int minutes) => Charge(HrPayCalcType.PerOutingMinute, minutes);
+
+            private decimal Charge(HrPayCalcType type, int minutes)
+            {
+                if (minutes <= 0) return 0;
+                decimal total = 0;
+                foreach (var r in Rules.Where(r => r.Type == type))
+                {
+                    var amount = Math.Max(0, minutes - r.Grace) * r.Rate;
+                    if (r.CapPerDay.HasValue) amount = Math.Min(amount, r.CapPerDay.Value);
+                    total += amount;
+                }
+                return total;
+            }
+        }
+
+        public static DayMinutePricing PriceMinutes(EmployeeInput input)
+        {
+            var (basic, gross, _) = Earnings(input);
+            var pricing = new DayMinutePricing();
+            foreach (var rule in input.Rules.Where(r => r.Kind == HrPayComponentKind.Deduction
+                     && (r.CalcType == HrPayCalcType.PerLateMinute
+                         || r.CalcType == HrPayCalcType.PerEarlyMinute
+                         || r.CalcType == HrPayCalcType.PerOutingMinute)))
+            {
+                pricing.Rules.Add((rule.CalcType, GetPerMinuteRate(rule, basic, gross, input),
+                                   rule.GraceMinutes ?? 0, rule.CapPerDay));
+            }
+            return pricing;
+        }
+
+        /// <summary>Prorated basic, gross, and the earning lines - the first half of Calculate.</summary>
+        private static (decimal Basic, decimal Gross, List<PayslipLineResult> Lines) Earnings(EmployeeInput input)
         {
             var basic = input.MonthDays > 0
                 ? Math.Round(input.Basic * (input.PayableDays / input.MonthDays), 2)
@@ -157,6 +243,13 @@ namespace School.API.Services.Implementations.HR
                 if (rule.ShowOnPayslip || amount != 0)
                     breakdown.Add(new PayslipLineResult { ComponentId = rule.ComponentId, Name = rule.Name, Kind = HrPayComponentKind.Earning, Amount = amount });
             }
+
+            return (basic, gross, breakdown);
+        }
+
+        public static PayrollResult Calculate(EmployeeInput input)
+        {
+            var (basic, gross, breakdown) = Earnings(input);
 
             // Deductions apply AFTER gross is final, in Priority order (5.3) — so a
             // percent-of-gross deduction is never affected by another deduction.
@@ -214,7 +307,9 @@ namespace School.API.Services.Implementations.HR
             var explanation = rule.CalcType switch
             {
                 HrPayCalcType.PerLateMinute => $"Rate {GetPerMinuteRate(rule, basic, gross, input):0.####}/min x late minutes beyond {rule.GraceMinutes ?? 0} min grace, capped at {(rule.CapPerDay?.ToString("0.##") ?? "no")}/day.",
+                HrPayCalcType.PerOutingMinute => $"Rate {GetPerMinuteRate(rule, basic, gross, input):0.####}/min x minutes out of school beyond {rule.GraceMinutes ?? 0} min grace, capped at {(rule.CapPerDay?.ToString("0.##") ?? "no")}/day.",
                 HrPayCalcType.PerAbsentDay => $"Rate {GetPerDayRate(rule, basic, gross, input):0.##}/day x absent days beyond {rule.FreeUnitsPerMonth ?? 0} free.",
+                HrPayCalcType.PerLeaveDay => $"Rate {GetPerDayRate(rule, basic, gross, input):0.##}/day x unpaid leave days beyond {rule.FreeUnitsPerMonth ?? 0} paid per month.",
                 HrPayCalcType.PercentOf => $"{rule.Rate ?? 0}% of {(rule.BaseOn == HrPayBaseOn.Gross ? "gross" : "basic")}.",
                 HrPayCalcType.Fixed => "Fixed amount.",
                 HrPayCalcType.Slab => $"Slab band matched on {input.Attendance.LateCount} late day(s) beyond {rule.FreeUnitsPerMonth ?? 0} free.",
@@ -244,12 +339,39 @@ namespace School.API.Services.Implementations.HR
                 case HrPayCalcType.PerLateMinute:
                     return CalculateLateDeduction(rule, basic, gross, input);
 
+                case HrPayCalcType.PerOutingMinute:
+                    return CalculatePerDayMinuteDeduction(rule, basic, gross, input,
+                                                          input.Attendance.DailyOutingMinutes);
+
+                case HrPayCalcType.PerEarlyMinute:
+                    return CalculatePerDayMinuteDeduction(rule, basic, gross, input,
+                                                          input.Attendance.DailyEarlyMinutes);
+
+                case HrPayCalcType.PerDutyMinute:
+                    {
+                        // short - extra. Negative when this person covered more
+                        // than was covered for them, and a negative deduction is
+                        // the bonus. Grace and the daily cap have no meaning for
+                        // a duty swap, so neither is applied.
+                        var net = att.TotalShortMinutes - att.TotalExtraMinutes;
+                        var perMinute = GetPerMinuteRate(rule, basic, gross, input);
+                        return Math.Round(net * perMinute, 2);
+                    }
+
                 case HrPayCalcType.PerAbsentDay:
                     {
                         var freeUnits = rule.FreeUnitsPerMonth ?? 0;
                         var chargeableDays = Math.Max(0, att.AbsentDays - freeUnits);
                         var perDayRate = GetPerDayRate(rule, basic, gross, input);
                         return Math.Round(chargeableDays * perDayRate, 2);
+                    }
+
+                case HrPayCalcType.PerLeaveDay:
+                    {
+                        // The month's first FreeUnitsPerMonth leave days are paid.
+                        var paidUnits = rule.FreeUnitsPerMonth ?? 0;
+                        var chargeableDays = Math.Max(0, att.ChargeableLeaveDays - paidUnits);
+                        return Math.Round(chargeableDays * GetPerDayRate(rule, basic, gross, input), 2);
                     }
 
                 case HrPayCalcType.PerOvertimeHour:
@@ -285,6 +407,8 @@ namespace School.API.Services.Implementations.HR
                 Parameters =
                 {
                     ["LateMinutes"] = (double)att.TotalLateMinutes,
+                    ["OutingMinutes"] = (double)att.TotalOutingMinutes,
+                    ["OutingCount"] = (double)att.OutingCount,
                     ["LateCount"] = (double)att.LateCount,
                     ["AbsentDays"] = (double)att.AbsentDays,
                     ["WorkedDays"] = (double)att.PresentDays,
@@ -313,11 +437,21 @@ namespace School.API.Services.Implementations.HR
         /// is the most employee-favourable and simplest deterministic choice).
         /// </summary>
         private static decimal CalculateLateDeduction(ComponentRule rule, decimal basic, decimal gross, EmployeeInput input)
+            => CalculatePerDayMinuteDeduction(rule, basic, gross, input, input.Attendance.DailyLateMinutes);
+
+        /// <summary>
+        /// Charges a per-minute rate against a list of per-day minute figures —
+        /// late arrival, or time spent out of school. Shared so short leave is
+        /// priced by exactly the same rules the school already understands for
+        /// lateness, rather than a second set that could drift from it.
+        /// </summary>
+        private static decimal CalculatePerDayMinuteDeduction(
+            ComponentRule rule, decimal basic, decimal gross, EmployeeInput input, List<int> dailyMinutes)
         {
             var grace = rule.GraceMinutes ?? 0;
             var rate = GetPerMinuteRate(rule, basic, gross, input);
 
-            var chargeableDays = input.Attendance.DailyLateMinutes
+            var chargeableDays = dailyMinutes
                 .Select(m => Math.Max(0, m - grace))
                 .Where(m => m > 0)
                 .OrderBy(m => m)

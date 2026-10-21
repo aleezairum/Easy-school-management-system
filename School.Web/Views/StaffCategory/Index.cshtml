@@ -1,0 +1,270 @@
+@{
+    ViewData["Title"] = "Staff Categories";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+@*
+    The groups the office counts and prints staff by — Teaching, Non-Teaching,
+    Admin, Support, whatever the school decides.
+
+    Not the same thing as a designation, which is the job: Principal, Teacher,
+    Coordinator. Several designations fall into one category, and the two lists
+    change for different reasons. See Scripts/StaffCategory.sql.
+*@
+
+<style>
+    .table tbody tr.selected { background: #ecfdf5; border-left: 3px solid #008649; }
+    .loading-overlay { position: absolute; inset: 0; background: rgba(255,255,255,.8); display: flex; align-items: center; justify-content: center; z-index: 100; border-radius: 16px; }
+    .spinner-border { width: 3rem; height: 3rem; border-width: .3rem; }
+    .form-section { background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+    .form-section-title, .grid-section-title { font-size: 14px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #e2e8f0; }
+    .grid-section { margin-top: 24px; }
+    .hint { font-size: 12px; color: #64748b; }
+</style>
+
+<div class="container-fluid">
+    <div id="alertContainer"></div>
+
+    <div class="card">
+        <div class="card-body position-relative">
+            <div id="loadingOverlay" class="loading-overlay" style="display:none;">
+                <div class="spinner-border text-success" role="status"><span class="visually-hidden">Loading...</span></div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title">
+                    <i class="bi bi-pencil-square me-2"></i><span id="formTitle">Add New Category</span>
+                </div>
+                <form id="categoryForm">
+                    <input type="hidden" id="categoryId" value="0" />
+
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-2">
+                            <label for="code" class="form-label">Code <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="code" placeholder="e.g., TEACH" maxlength="20" required />
+                        </div>
+                        <div class="col-md-3">
+                            <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" placeholder="e.g., Teaching Staff" maxlength="100" required />
+                        </div>
+                        <div class="col-md-3">
+                            <label for="description" class="form-label">Description</label>
+                            <input type="text" class="form-control" id="description" placeholder="Description (optional)" maxlength="255" />
+                        </div>
+                        <div class="col-md-1">
+                            <label for="sortOrder" class="form-label">Sort</label>
+                            <input type="number" class="form-control" id="sortOrder" value="0" />
+                        </div>
+                        <div class="col-md-1">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="isActive" checked />
+                                <label class="form-check-label" for="isActive">Active</label>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-primary" onclick="saveCategory()">
+                                    <i class="bi bi-check-lg me-1"></i> Save
+                                </button>
+                                <button type="button" class="btn btn-secondary" onclick="resetForm()">
+                                    <i class="bi bi-x-lg me-1"></i> Clear
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="hint">
+                                A category groups staff for counting and printing. The job itself
+                                stays on the Designation field.
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="grid-section">
+                <div class="grid-section-title">
+                    <i class="bi bi-table me-2"></i>Categories
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover" id="categoriesTable">
+                        <thead>
+                            <tr>
+                                <th class="text-center" style="width:60px;">Sr.No.</th>
+                                <th class="text-center">Code</th>
+                                <th class="text-center">Name</th>
+                                <th class="text-center">Description</th>
+                                <th class="text-center" style="width:90px;">Staff</th>
+                                <th class="text-center" style="width:80px;">Sort</th>
+                                <th class="text-center" style="width:90px;">Status</th>
+                                <th class="text-center" style="width:130px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="categoriesBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    let editingId = 0;
+
+    $(document).ready(function () { loadCategories(); });
+
+    async function loadCategories() {
+        showLoading();
+        try {
+            const res = await fetch(`${API_BASE}/StaffCategory`);
+            if (!res.ok) { showAlert('Failed to load categories', 'danger'); return; }
+            renderList(await res.json());
+        } catch (e) {
+            showAlert('Error loading categories: ' + e.message, 'danger');
+        } finally { hideLoading(); }
+    }
+
+    function renderList(items) {
+        const tbody = $('#categoriesBody').empty();
+
+        if (!items.length) {
+            tbody.html('<tr><td colspan="8" class="text-center text-muted py-4">'
+                + 'No categories yet. Add the first one above — Teaching, Non-Teaching, Admin, and so on.'
+                + '</td></tr>');
+            return;
+        }
+
+        items.forEach((item, i) => {
+            tbody.append(`
+                <tr data-id="${item.id}" class="${editingId === item.id ? 'selected' : ''}">
+                    <td class="text-center">${i + 1}</td>
+                    <td class="text-center"><strong>${esc(item.code)}</strong></td>
+                    <td>${esc(item.name)}</td>
+                    <td>${esc(item.description || '-')}</td>
+                    <td class="text-center">${item.employeeCount}</td>
+                    <td class="text-center">${item.sortOrder || 0}</td>
+                    <td class="text-center">
+                        <span class="badge ${item.isActive ? 'bg-success' : 'bg-secondary'}">
+                            ${item.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-sm btn-info me-1" onclick="editCategory(${item.id})" title="Edit">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-danger"
+                                onclick="deleteCategory(${item.id}, '${esc(item.name).replace(/'/g, "\\'")}')" title="Delete">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>`);
+        });
+    }
+
+    async function editCategory(id) {
+        showLoading();
+        try {
+            const res = await fetch(`${API_BASE}/StaffCategory/${id}`);
+            if (!res.ok) { showAlert('Failed to load the category', 'danger'); return; }
+
+            const data = await res.json();
+            $('#categoryId').val(data.id);
+            $('#code').val(data.code);
+            $('#name').val(data.name);
+            $('#description').val(data.description ?? '');
+            $('#sortOrder').val(data.sortOrder ?? 0);
+            $('#isActive').prop('checked', data.isActive);
+            $('#formTitle').text('Edit Category');
+            editingId = id;
+
+            $('#categoriesBody tr').removeClass('selected');
+            $(`#categoriesBody tr[data-id="${id}"]`).addClass('selected');
+            $('html, body').animate({ scrollTop: $('.form-section').offset().top - 100 }, 300);
+        } catch (e) {
+            showAlert('Error loading the category: ' + e.message, 'danger');
+        } finally { hideLoading(); }
+    }
+
+    async function deleteCategory(id, name) {
+        if (!await confirmDelete(`Delete "${name}"?`)) return;
+
+        showLoading();
+        try {
+            const res = await fetch(`${API_BASE}/StaffCategory/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                showAlert('Category deleted', 'success');
+                if (editingId === id) resetForm();
+                await loadCategories();
+                return;
+            }
+            // Staff still in it: the API says so rather than failing on the key.
+            const err = await res.json().catch(() => ({}));
+            showAlert(err.message || 'Failed to delete the category', 'danger');
+        } catch (e) {
+            showAlert('Error deleting the category: ' + e.message, 'danger');
+        } finally { hideLoading(); }
+    }
+
+    function resetForm() {
+        $('#categoryId').val('0');
+        $('#code, #name, #description').val('');
+        $('#sortOrder').val('0');
+        $('#isActive').prop('checked', true);
+        $('#formTitle').text('Add New Category');
+        editingId = 0;
+        $('#categoriesBody tr').removeClass('selected');
+    }
+
+    async function saveCategory() {
+        const code = $('#code').val().trim();
+        const name = $('#name').val().trim();
+        if (!code || !name) { showAlert('Enter a code and a name', 'danger'); return; }
+
+        const id = parseInt($('#categoryId').val()) || 0;
+        const data = {
+            Id: id,
+            Code: code,
+            Name: name,
+            Description: $('#description').val().trim() || null,
+            SortOrder: parseInt($('#sortOrder').val()) || 0,
+            IsActive: $('#isActive').is(':checked')
+        };
+
+        showLoading();
+        try {
+            const res = id === 0
+                ? await fetch(`${API_BASE}/StaffCategory`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
+                : await fetch(`${API_BASE}/StaffCategory/${id}`, {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+
+            if (res.ok) {
+                showAlert('Category saved', 'success');
+                resetForm();
+                await loadCategories();
+                return;
+            }
+            const err = await res.json().catch(() => ({}));
+            showAlert(err.message || 'Failed to save the category', 'danger');
+        } catch (e) {
+            showAlert('Error saving the category: ' + e.message, 'danger');
+        } finally { hideLoading(); }
+    }
+
+    function showLoading() { $('#loadingOverlay').show(); }
+    function hideLoading() { $('#loadingOverlay').hide(); }
+
+    // Names and descriptions are typed by hand and carry apostrophes.
+    function esc(v) {
+        return (v ?? '').toString()
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function showAlert(message, type) {
+        if (type === 'success') toastSuccess(message);
+        else if (type === 'danger' || type === 'error') toastError(message);
+        else if (type === 'warning') toastWarning(message);
+        else toastInfo(message);
+    }
+</script>
+}

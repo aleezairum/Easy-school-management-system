@@ -31,7 +31,7 @@
     <!-- ── WAHA DISCONNECTED BAR ──
          Stays visible for as long as the session is down, so the reconnect
          link is always one click away after the load-time alert is dismissed. -->
-    <div id="wahaConnectBar" class="d-flex flex-wrap align-items-center gap-2 px-3 py-2 mb-3"
+    <div id="wahaConnectBar" class="flex-wrap align-items-center gap-2 px-3 py-2 mb-3"
          style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;font-size:13px;display:none;">
         <i class="bi bi-exclamation-triangle-fill text-warning"></i>
         <span class="fw-semibold text-dark">WhatsApp (free) is disconnected</span>
@@ -722,7 +722,8 @@
                     badge.text('Disconnected').removeClass('bg-secondary bg-success').addClass('bg-danger');
                     badge.attr('title', `WAHA status: ${j.status}${j.error ? ' — ' + j.error : ''}. Free-routed messages are held until it is reconnected.`);
                     $('#wahaConnectBarStatus').text(j.status || 'disconnected');
-                    $('#wahaConnectBar').show();
+                    // flex, not .show(): a d-flex class would beat the hidden state with !important.
+                    $('#wahaConnectBar').css('display', 'flex');
                 }
                 return j;
             } catch (e) {
@@ -1278,7 +1279,12 @@
             if (data.route === 'free')
                 chips.push('<span class="badge bg-success" style="font-size:12px;"><i class="bi bi-whatsapp me-1"></i>Free (WAHA)</span>');
             else if (data.route === 'hold')
-                chips.push(`<span class="badge bg-danger" style="font-size:12px;"><i class="bi bi-plug me-1"></i>WAHA disconnected (${data.freeStatus || 'unknown'})</span>`);
+                // SEND_FAILING: WAHA reports WORKING but refused the last send
+                // (a hung session). "Disconnected" would contradict what the
+                // WAHA dashboard shows, so say what to do instead.
+                chips.push(data.freeStatus === 'SEND_FAILING'
+                    ? '<span class="badge bg-danger" style="font-size:12px;"><i class="bi bi-exclamation-octagon me-1"></i>WAHA connected but not sending - restart the WAHA session</span>'
+                    : `<span class="badge bg-danger" style="font-size:12px;"><i class="bi bi-plug me-1"></i>WAHA disconnected (${data.freeStatus || 'unknown'})</span>`);
             else
                 chips.push('<span class="badge bg-warning text-dark" style="font-size:12px;"><i class="bi bi-credit-card me-1"></i>Paid gateway</span>');
 

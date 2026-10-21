@@ -1,5 +1,6 @@
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
+using School.API.DTOs.HR;
 using School.API.Repositories.Interfaces.HR;
 using School.API.Services.Interfaces.HR;
 
@@ -10,45 +11,100 @@ namespace School.API.Controllers.HR
     public class HrReportsController : ControllerBase
     {
         private readonly IHrReportsRepository _reports;
+        private readonly IHrReportsService _service;
         private readonly IPayrollService _payroll;
 
-        public HrReportsController(IHrReportsRepository reports, IPayrollService payroll)
+        public HrReportsController(IHrReportsRepository reports, IHrReportsService service, IPayrollService payroll)
         {
             _reports = reports;
+            _service = service;
             _payroll = payroll;
         }
 
+        /// <summary>
+        /// The Staff Attendance Report. Every type takes a date range and the
+        /// campus / designation / employee filters, and shows late, early and
+        /// out-of-school minutes with what payroll deducts for them.
+        /// </summary>
+        /// <param name="type">daily, summary, late, early, outing or absent.</param>
+        /// <remarks>
+        /// The old single-date (date=) and month (year=, month=) forms are
+        /// still read, so a saved link keeps working: "monthly" is the summary.
+        /// </remarks>
         [HttpGet("attendance")]
         public async Task<ActionResult> GetAttendance(
-            [FromQuery] string type,
-            [FromQuery] int? year, [FromQuery] int? month, [FromQuery] DateTime? date,
+            [FromQuery] string? type,
             [FromQuery] DateTime? from, [FromQuery] DateTime? to,
-            [FromQuery] int? designationId)
+            [FromQuery] int? campusId, [FromQuery] int? designationId, [FromQuery] int? employeeId,
+            [FromQuery] int? year, [FromQuery] int? month, [FromQuery] DateTime? date)
         {
-            switch (type?.ToLowerInvariant())
+            type = (type ?? "daily").ToLowerInvariant();
+            if (type == "monthly") type = "summary";
+
+            if (from == null && to == null && date.HasValue) { from = date; to = date; }
+            if (from == null && to == null && year.HasValue && month is >= 1 and <= 12)
             {
-                case "daily":
-                    var d = date ?? DateTime.Today;
-                    return Ok(await _reports.GetDailyAsync(d, designationId));
-
-                case "monthly":
-                    var y = year ?? DateTime.Today.Year;
-                    var m = month ?? DateTime.Today.Month;
-                    return Ok(await _reports.GetMonthlySummaryAsync(y, m, designationId));
-
-                case "late":
-                    var lf = from ?? DateTime.Today.AddDays(-30);
-                    var lt = to ?? DateTime.Today;
-                    return Ok(await _reports.GetLateComersAsync(lf, lt, designationId));
-
-                case "absent":
-                    var af = from ?? DateTime.Today.AddDays(-30);
-                    var at = to ?? DateTime.Today;
-                    return Ok(await _reports.GetAbsenteesAsync(af, at, designationId));
-
-                default:
-                    return BadRequest(new { message = "type must be one of: daily, monthly, late, absent" });
+                from = new DateTime(year.Value, month.Value, 1);
+                to = from.Value.AddMonths(1).AddDays(-1);
             }
+            var f = (from ?? new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1)).Date;
+            var t = (to ?? DateTime.Today).Date;
+            if (t < f) return BadRequest(new { message = "From must be on or before To." });
+            if ((t - f).TotalDays > 366) return BadRequest(new { message = "Run the report for a year at most." });
+
+            var filter = new HrReportFilter { CampusId = campusId, DesignationId = designationId, EmployeeId = employeeId };
+
+            return type switch
+            {
+                "summary" => Ok(await _service.GetAttendanceSummaryAsync(f, t, filter)),
+                "daily" or "late" or "early" or "outing" or "absent" => Ok(await _service.GetAttendanceRowsAsync(type, f, t, filter)),
+                _ => BadRequest(new { message = "type must be one of: daily, summary, late, early, outing, absent" })
+            };
+        }
+
+        /// <summary>
+        /// Staff attendance cards: each employee's every day in the range -
+        /// marked or not, holidays and weekly offs included - with the day's
+        /// hours, the minutes and their deductions, and the totals.
+        /// </summary>
+        [HttpGet("attendance-card")]
+        public async Task<ActionResult<List<AttendanceCardDto>>> GetAttendanceCards(
+            [FromQuery] DateTime? from, [FromQuery] DateTime? to,
+            [FromQuery] int? campusId, [FromQuery] int? designationId, [FromQuery] int? employeeId)
+        {
+            var f = (from ?? new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1)).Date;
+            var t = (to ?? f.AddMonths(1).AddDays(-1)).Date;
+            if (t < f) return BadRequest(new { message = "From must be on or before To." });
+            if ((t - f).TotalDays > 62) return BadRequest(new { message = "An attendance card covers two months at most." });
+
+            var filter = new HrReportFilter { CampusId = campusId, DesignationId = designationId, EmployeeId = employeeId };
+            return Ok(await _service.GetAttendanceCardsAsync(f, t, filter));
+        }
+
+        /// <summary>
+        /// The Staff Statement — the printed sheet listing every employee with
+        /// qualification, appointment date and monthly salary.
+        /// </summary>
+        /// <param name="asOn">
+        /// The "w.e.f." date on the sheet. Defaults to today. It decides which
+        /// pay structure is quoted, so it is a real filter, not just a caption.
+        /// </param>
+        /// <param name="joinedFrom">Appointment date from (the sheet's date range).</param>
+        /// <param name="joinedTo">Appointment date to.</param>
+        [HttpGet("staff-statement")]
+        public async Task<ActionResult> GetStaffStatement(
+            [FromQuery] DateTime? asOn,
+            [FromQuery] int? designationId,
+            [FromQuery] bool includeInactive = false,
+            [FromQuery] int? campusId = null,
+            [FromQuery] int? employeeId = null,
+            [FromQuery] DateTime? joinedFrom = null,
+            [FromQuery] DateTime? joinedTo = null)
+        {
+            var rows = await _reports.GetStaffStatementAsync(
+                asOn ?? DateTime.Today, designationId, includeInactive, campusId, employeeId, joinedFrom, joinedTo);
+
+            return Ok(rows);
         }
 
         [HttpGet("salary-sheet")]

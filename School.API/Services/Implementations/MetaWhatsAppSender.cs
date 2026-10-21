@@ -183,6 +183,23 @@ namespace School.API.Services.Implementations
                     return SmsSendOutcome.Fail(
                         $"Media upload failed: {uploadError}", "media_upload_failed", uploadError);
 
+                // A picture is posted as an image, so it shows in the chat
+                // instead of arriving as a file to download. Meta caps either
+                // caption at 1024 characters and rejects a longer one.
+                if ((request.DocumentMimeType ?? "").StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+                    return await PostMessageAsync(new
+                    {
+                        messaging_product = "whatsapp",
+                        recipient_type = "individual",
+                        to = number,
+                        type = "image",
+                        image = new
+                        {
+                            id = mediaId,
+                            caption = Clip(request.RenderedText ?? string.Empty, 1024)
+                        }
+                    }, number);
+
                 return await PostMessageAsync(new
                 {
                     messaging_product = "whatsapp",
@@ -198,6 +215,56 @@ namespace School.API.Services.Implementations
                 }, number);
             }
 
+            // Tappable menu. The recipient picks a row instead of typing a
+            // number, and the choice comes back as interactive.list_reply.id.
+            // Meta rejects the whole message if any field is over length, so
+            // everything is clipped here rather than trusted from the caller.
+            if (request.HasInteractive)
+            {
+                var list = request.Interactive!;
+
+                var rows = list.Rows.Take(10).Select(r => new
+                {
+                    id = Clip(r.Id, 200),
+                    title = Clip(r.Title, 24),
+                    description = Clip(r.Description ?? string.Empty, 72)
+                }).ToArray();
+
+                object interactive = string.IsNullOrWhiteSpace(list.Header)
+                    ? new
+                    {
+                        type = "list",
+                        body = new { text = Clip(list.Body, 1024) },
+                        footer = new { text = Clip(list.Footer ?? string.Empty, 60) },
+                        action = new
+                        {
+                            button = Clip(list.ButtonText, 20),
+                            sections = new[] { new { title = "Options", rows } }
+                        }
+                    }
+                    : new
+                    {
+                        type = "list",
+                        header = new { type = "text", text = Clip(list.Header!, 60) },
+                        body = new { text = Clip(list.Body, 1024) },
+                        footer = new { text = Clip(list.Footer ?? string.Empty, 60) },
+                        action = new
+                        {
+                            button = Clip(list.ButtonText, 20),
+                            sections = new[] { new { title = "Options", rows } }
+                        }
+                    };
+
+                return await PostMessageAsync(new
+                {
+                    messaging_product = "whatsapp",
+                    recipient_type = "individual",
+                    to = number,
+                    type = "interactive",
+                    interactive
+                }, number);
+            }
+
             return await PostMessageAsync(new
             {
                 messaging_product = "whatsapp",
@@ -207,6 +274,9 @@ namespace School.API.Services.Implementations
                 text = new { preview_url = false, body = request.RenderedText ?? string.Empty }
             }, number);
         }
+
+        private static string Clip(string value, int max) =>
+            string.IsNullOrEmpty(value) || value.Length <= max ? value : value[..max];
 
         // ─────────────────────────────────────────────────────────────
         // Free-form text — only delivers inside the 24h service window

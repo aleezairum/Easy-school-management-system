@@ -27,6 +27,9 @@ namespace School.API.Services.Implementations.Student
         public Task<ResponseDto?> DeleteByIdAsync(int id, int userId, string userIp)
             => _repo.DeleteByIdAsync(id, userId, userIp);
 
+        public Task<List<AttendanceRegisterDto>> GetRegisterAsync(int classId, int? sectionId, int year, int month)
+            => _repo.GetRegisterAsync(classId, sectionId, year, month);
+
         public Task<ResponseDto?> DeleteByFilterAsync(StdAttendenceFilterDto filter, int userId, string userIp)
             => _repo.DeleteByFilterAsync(filter, userId, userIp);
     }

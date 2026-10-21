@@ -10,10 +10,24 @@ namespace School.API.Controllers.HR
     public class SchoolTimingController : ControllerBase
     {
         private readonly ISchoolTimingService _service;
+        private readonly IAttendanceService _attendance;
 
-        public SchoolTimingController(ISchoolTimingService service)
+        public SchoolTimingController(ISchoolTimingService service, IAttendanceService attendance)
         {
             _service = service;
+            _attendance = attendance;
+        }
+
+        /// <summary>
+        /// Changing ONE day's hours has to change the attendance already saved
+        /// for that day: the minutes are stored when a day is saved, so without
+        /// this an early closure at 12:45 went on charging everyone for leaving
+        /// "early". Returns what the re-grade touched, for the screen to report.
+        /// </summary>
+        private async Task<AttendanceRecalculateResultDto> RegradeDayAsync(DateTime date)
+        {
+            var userId = Request.GetUserId();
+            return await _attendance.RecalculateAsync(date, date, userId == 0 ? null : userId);
         }
 
         [HttpGet]
@@ -105,7 +119,10 @@ namespace School.API.Controllers.HR
             try
             {
                 var result = await _service.UpdateDayAsync(dayId, dto);
-                return result == null ? NotFound() : Ok(result);
+                if (result == null) return NotFound();
+
+                var regraded = await RegradeDayAsync(result.TDate);
+                return Ok(new { day = result, regraded });
             }
             catch (InvalidOperationException ex)
             {
@@ -118,7 +135,10 @@ namespace School.API.Controllers.HR
         public async Task<ActionResult<SchoolTimingDayDto>> ResetDay(int dayId)
         {
             var result = await _service.ResetDayAsync(dayId);
-            return result == null ? NotFound() : Ok(result);
+            if (result == null) return NotFound();
+
+            var regraded = await RegradeDayAsync(result.TDate);
+            return Ok(new { day = result, regraded });
         }
     }
 }

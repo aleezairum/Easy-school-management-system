@@ -37,6 +37,14 @@
                         <label for="timingName" class="form-label">Title</label>
                         <input class="form-control" id="timingName" maxlength="100" placeholder="e.g. Winter Timings" />
                     </div>
+                    <div class="col-lg-2 col-md-6 col-12">
+                        <label for="designationId" class="form-label">Designation</label>
+                        @* Blank = the school-wide timing that everyone follows. Naming a
+                           designation overrides it for that designation only. *@
+                        <select class="form-select" id="designationId">
+                            <option value="">All designations</option>
+                        </select>
+                    </div>
                     <div class="col-lg-2 col-md-3 col-6">
                         <label for="startDate" class="form-label">Start Date <span class="text-danger">*</span></label>
                         <input type="date" class="form-control" id="startDate" />
@@ -85,7 +93,39 @@
                         <label for="offDay2" class="form-label">Off Day 2</label>
                         <select class="form-select" id="offDay2"><option value="">None</option></select>
                     </div>
-                    <div class="col-lg-3 col-12">
+                </div>
+
+                @* These four came across when Shifts were retired: a shift could not
+                   describe a school week, but it did carry the rules for grading a
+                   day. Leaving the last three blank derives them from the day's own
+                   length, so most schools never touch them. *@
+                <div class="row g-3 mt-0 align-items-end">
+                    <div class="col-12">
+                        <div class="text-muted" style="font-size:12px;">
+                            How the day is judged &mdash; leave blank to work it out from the day's length
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-3 col-6">
+                        <label for="graceMinutes" class="form-label">Grace (min)</label>
+                        <input type="number" min="0" class="form-control" id="graceMinutes" value="0" />
+                    </div>
+                    <div class="col-lg-2 col-md-3 col-6">
+                        <label for="halfDayMinutes" class="form-label">Half-day (min)</label>
+                        <input type="number" min="0" class="form-control" id="halfDayMinutes" placeholder="auto" />
+                    </div>
+                    <div class="col-lg-2 col-md-3 col-6">
+                        <label for="fullDayMinutes" class="form-label">Full-day (min)</label>
+                        <input type="number" min="0" class="form-control" id="fullDayMinutes" placeholder="auto" />
+                    </div>
+                    <div class="col-lg-2 col-md-3 col-6">
+                        <label for="workHours" class="form-label">Work Hours</label>
+                        <input type="number" min="0" step="0.01" class="form-control" id="workHours" placeholder="auto" />
+                        @* Decimal hours, not hours.minutes: 6:45 is 6.75. Leave it empty
+                           and it is worked out from Time In and Time Out. It sets the
+                           per-minute rate of the late / early deductions. *@
+                        <div class="form-text" id="workHoursHint">Decimal hours: 6:45 = 6.75. Leave empty to use Time In to Time Out.</div>
+                    </div>
+                    <div class="col-lg-4 col-12">
                         <div class="form-text">
                             Off days drop out of the range entirely &mdash; no timing is set for them.
                             Any other one-off change is made on the day itself, below.
@@ -145,6 +185,7 @@
                         <tr>
                             <th style="width:60px;">Sr#</th>
                             <th>Title</th>
+                            <th>Designation</th>
                             <th>From</th>
                             <th>To</th>
                             <th>Start Time</th>
@@ -203,12 +244,25 @@
     let dayEdits = {};
 
     const DOW_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-    // 1 = Sunday .. 7 = Saturday, the convention HrShift and Employees use.
+    // 1 = Sunday .. 7 = Saturday, the convention HrSchoolTiming and Employees use.
     const WEEKDAYS = DOW_NAMES.map((n, i) => ({ v: i + 1, n }));
     function dateKey(v) { return String(v).substring(0, 10); }
 
-    $(document).ready(function () {
+    // Designation id -> name, for the list. Filled before the list is drawn:
+    // the two used to load side by side, and whenever the timings won the race
+    // the list printed "#7" instead of the designation.
+    const DESIGNATION_NAMES = {};
+
+    $(document).ready(async function () {
         WEEKDAYS.forEach(d => $('#offDay1, #offDay2').append(`<option value="${d.v}">${d.n}</option>`));
+
+        const designations = await fetch(`${API_BASE}/Designation/dropdown`)
+            .then(r => r.ok ? r.json() : []).catch(() => []);
+        designations.forEach(d => {
+            DESIGNATION_NAMES[d.id] = d.name;
+            $('#designationId').append(`<option value="${d.id}">${d.name}</option>`);
+        });
+
         loadTimings();
         // Any of these changes the day list, so rebuild it: the range and the off
         // days decide WHICH dates, the times decide what each one runs on.
@@ -237,10 +291,12 @@
             box.addClass('muted').text('End date cannot be before the start date.');
             return;
         }
-        if (timeOut <= timeIn) {
+        // An end time before the start is a shift that runs past midnight —
+        // the guard works 7:00 PM to 7:00 AM. Only an empty day is rejected.
+        if (timeOut === timeIn) {
             dayRows = [];
             renderDays();
-            box.addClass('muted').text('School end time must be after the start time.');
+            box.addClass('muted').text('Start and end time cannot be the same.');
             return;
         }
 
@@ -292,7 +348,7 @@
             body.append(`
                 <tr data-date="${dateKey(d.tDate)}" class="${d.isOverridden ? 'day-edited' : ''}">
                     <td>${i + 1}</td>
-                    <td>${fmtDate(d.tDate)}</td>
+                    <td>${fmtDay(d.tDate)}</td>
                     <td>
                         ${DOW_NAMES[d.dayOfWeek - 1]}
                         ${isFriday ? '<span class="badge bg-info text-dark ms-1">Fri</span>' : ''}
@@ -351,12 +407,19 @@
         }
     }
 
+    // The dropdown is the only list of designations the page has, so the table
+    // reads the name back out of it rather than fetching them twice.
+    function designationName(id) {
+        // "#id" only for a designation that no longer exists (deleted or inactive).
+        return DESIGNATION_NAMES[id] || ('#' + id);
+    }
+
     function renderList() {
         const body = $('#timingsBody');
         body.empty();
 
         if (!allTimings.length) {
-            body.append('<tr class="empty-row"><td colspan="11">No school timings yet.</td></tr>');
+            body.append('<tr class="empty-row"><td colspan="12">No school timings yet.</td></tr>');
             return;
         }
 
@@ -380,8 +443,9 @@
                 <tr>
                     <td>${i + 1}</td>
                     <td>${esc(t.name || '-')}</td>
-                    <td>${fmtDate(t.startDate)}</td>
-                    <td>${fmtDate(t.endDate)}</td>
+                    <td>${t.designationId ? esc(designationName(t.designationId)) : '<span class="text-muted">All</span>'}</td>
+                    <td>${fmtDay(t.startDate)}</td>
+                    <td>${fmtDay(t.endDate)}</td>
                     <td>${fmtTime(t.timeIn)}</td>
                     <td>${fmtTime(t.timeOut)}</td>
                     <td>${friday}</td>
@@ -447,7 +511,7 @@
         const isFriday = d.dayOfWeek === 6;
         return `
             <tr data-day="${d.id}" class="${d.isOverridden ? 'table-warning' : ''}">
-                <td>${fmtDate(d.tDate)}</td>
+                <td>${fmtDay(d.tDate)}</td>
                 <td>
                     ${dow}
                     ${isFriday ? '<span class="badge bg-info text-dark ms-1">Fri</span>' : ''}
@@ -473,7 +537,7 @@
         const timeOut = $row.find('.dy-out').val();
 
         if (!timeIn || !timeOut) { toastWarning('Enter both start and end time'); return; }
-        if (timeOut <= timeIn) { toastWarning('End time must be after the start time'); return; }
+        if (timeOut === timeIn) { toastWarning('Start and end time cannot be the same'); return; }
 
         showLoading();
         try {
@@ -483,7 +547,11 @@
                 body: JSON.stringify({ TimeIn: `${timeIn}:00`, TimeOut: `${timeOut}:00` })
             });
             if (res.ok) {
-                toastSuccess('Day updated.');
+                // The day's saved attendance is worked out again against the new
+                // hours, so an early closure stops charging everyone for leaving.
+                const out = await res.json().catch(() => ({}));
+                const n = out.regraded ? out.regraded.minutesChanged : 0;
+                toastSuccess('Day updated.' + (n ? ` Attendance for that day re-worked: ${n} row(s) changed.` : ''));
                 await refreshDays();
             } else {
                 toastError(await apiError(res, 'Failed to update the day'));
@@ -500,7 +568,9 @@
         try {
             const res = await fetch(`${API}/days/${dayId}/reset`, { method: 'POST' });
             if (res.ok) {
-                toastSuccess("Day reset to the range's timing.");
+                const out = await res.json().catch(() => ({}));
+                const n = out.regraded ? out.regraded.minutesChanged : 0;
+                toastSuccess("Day reset to the range's timing." + (n ? ` Attendance re-worked: ${n} row(s) changed.` : ''));
                 await refreshDays();
             } else {
                 toastError(await apiError(res, 'Failed to reset the day'));
@@ -528,6 +598,11 @@
 
         $('#timingId').val(t.id);
         $('#timingName').val(t.name || '');
+        $('#designationId').val(t.designationId ?? '');
+        $('#graceMinutes').val(t.graceMinutes ?? 0);
+        $('#halfDayMinutes').val(t.halfDayMinutes ?? '');
+        $('#fullDayMinutes').val(t.fullDayMinutes ?? '');
+        $('#workHours').val(t.workHours ?? '');
         $('#startDate').val((t.startDate || '').substring(0, 10));
         $('#endDate').val((t.endDate || '').substring(0, 10));
         $('#timeIn').val(hhmm(t.timeIn));
@@ -567,7 +642,7 @@
         if (to < from){ toastWarning('End date cannot be before the start date'); return; }
         if (!timeIn)  { toastWarning('Please enter the School Start Time'); return; }
         if (!timeOut) { toastWarning('Please enter the School End Time'); return; }
-        if (timeOut <= timeIn) { toastWarning('School end time must be after the start time'); return; }
+        if (timeOut === timeIn) { toastWarning('Start and end time cannot be the same'); return; }
 
         const useFriday = $('#hasFriday').is(':checked');
         const fIn  = $('#fridayTimeIn').val();
@@ -585,6 +660,11 @@
             TimeOut:       `${timeOut}:00`,
             FridayTimeIn:  useFriday ? `${fIn}:00`  : null,
             FridayTimeOut: useFriday ? `${fOut}:00` : null,
+            DesignationId: $('#designationId').val() ? parseInt($('#designationId').val()) : null,
+            GraceMinutes:  parseInt($('#graceMinutes').val()) || 0,
+            HalfDayMinutes: $('#halfDayMinutes').val() ? parseInt($('#halfDayMinutes').val()) : null,
+            FullDayMinutes: $('#fullDayMinutes').val() ? parseInt($('#fullDayMinutes').val()) : null,
+            WorkHours:     $('#workHours').val() ? parseFloat($('#workHours').val()) : null,
             OffDay1:       $('#offDay1').val() ? parseInt($('#offDay1').val()) : null,
             OffDay2:       $('#offDay2').val() ? parseInt($('#offDay2').val()) : null,
             IsActive:      $('#isActive').is(':checked'),
@@ -658,6 +738,9 @@
         $('#fridayTimeOut').val('');
         toggleFriday();
         $('#offDay1, #offDay2').val('');
+        $('#designationId').val('');
+        $('#graceMinutes').val(0);
+        $('#halfDayMinutes, #fullDayMinutes, #workHours').val('');
         $('#isActive').prop('checked', true);
         $('#formTitle').text('Add School Timing');
         dayEdits = {};
@@ -693,10 +776,10 @@
         return fallback;
     }
 
-    function fmtDate(v) {
-        if (!v) return '-';
-        const d = (typeof parseCalendarDate === 'function' ? parseCalendarDate(v) : null) || new Date(v);
-        return isNaN(d) ? '-' : d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    // Shadowed the shared fmtDate() from common.js with a near-copy. Kept only
+    // as the "-" placeholder this screen prints for a missing date.
+    function fmtDay(v) {
+        return v ? (fmtDate(v) || '-') : '-';
     }
 
     // TimeSpan arrives as "08:30:00"; show it as 08:30 AM and feed <input type=time> as 08:30.

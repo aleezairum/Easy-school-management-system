@@ -12,7 +12,7 @@ namespace School.API.Services.Implementations.Academic
     {
         public static string Build(ResultCardStudentDto s, string? examName)
         {
-            var issueDate = DateTime.Now.ToString("dd-MM-yyyy");
+            var issueDate = DateTime.Now.ToString("dd-MMM-yyyy");
 
             var rows = new StringBuilder();
             foreach (var sub in s.Subjects)
@@ -21,7 +21,7 @@ namespace School.API.Services.Implementations.Academic
                 rows.Append($@"
                     <tr>
                         <td class=""subject-name"">{Enc(sub.SubjectName)}</td>
-                        <td>{(sub.VDate.HasValue ? sub.VDate.Value.ToString("dd-MM-yyyy") : "-")}</td>
+                        <td>{(sub.VDate.HasValue ? sub.VDate.Value.ToString("dd-MMM-yyyy") : "-")}</td>
                         <td>{Marks(sub.TotalMarks)}</td>
                         <td>{Marks(sub.PassMarks)}</td>
                         <td>{PctOf(sub.PassMarks, sub.TotalMarks)}</td>

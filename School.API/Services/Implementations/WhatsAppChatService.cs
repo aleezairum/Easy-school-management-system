@@ -120,6 +120,23 @@ namespace School.API.Services.Implementations
 
                 ReadContent(element, kind, message);
 
+                // A tapped row arrives as interactive.list_reply = { id, title }.
+                // Body keeps the title because that is what reads well in the
+                // chat thread, but the bot is given the ID — the ids are the
+                // plain digits "1".."6", so a tap and a typed "3" reach the bot
+                // as the same string and there is one code path for both.
+                var selection = message.Body;
+                if (kind == "interactive" &&
+                    element.TryGetProperty("interactive", out var reply))
+                {
+                    if (reply.TryGetProperty("list_reply", out var lr) &&
+                        lr.TryGetProperty("id", out var lrId))
+                        selection = lrId.GetString();
+                    else if (reply.TryGetProperty("button_reply", out var br) &&
+                             br.TryGetProperty("id", out var brId))
+                        selection = brId.GetString();
+                }
+
                 if (await _repository.AddInboundAsync(message))
                 {
                     stored++;
@@ -131,8 +148,8 @@ namespace School.API.Services.Implementations
                     // messages — AddInboundAsync returns false for a webhook
                     // retry, so a message Meta sends twice cannot be answered
                     // twice.
-                    if (kind == "text")
-                        await AutoReplyAsync(from!, message.Body);
+                    if (kind is "text" or "interactive")
+                        await AutoReplyAsync(from!, selection);
                 }
             }
 
@@ -167,7 +184,8 @@ namespace School.API.Services.Implementations
                     // window is respected and the answer is recorded in the
                     // thread just like one typed by a member of staff.
                     var (ok, error, _) = await SendReplyAsync(
-                        waId, reply.Text, reply.DocumentBytes, reply.DocumentFileName);
+                        waId, reply.Text, reply.DocumentBytes, reply.DocumentFileName,
+                        reply.Interactive);
 
                     if (!ok)
                         _logger.LogWarning(
@@ -337,7 +355,8 @@ namespace School.API.Services.Implementations
         // ─────────────────────────────────────────────────────────────
         public async Task<(bool ok, string? error, WaMessageDto? message)> SendReplyAsync(
             string waId, string text,
-            byte[]? documentBytes = null, string? documentFileName = null)
+            byte[]? documentBytes = null, string? documentFileName = null,
+            SmsInteractiveList? interactive = null)
         {
             if (string.IsNullOrWhiteSpace(text))
                 return (false, "Message is empty", null);
@@ -355,6 +374,9 @@ namespace School.API.Services.Implementations
                     null);
             }
 
+            // A picture goes as a picture; everything else the bot attaches is a PDF.
+            var mime = documentBytes is null ? null : MimeFor(documentFileName);
+
             var outcome = await _sender.SendTemplateAsync(normalized, new SmsTemplateRequest
             {
                 // No template name — the sender posts this as free-form text,
@@ -365,7 +387,10 @@ namespace School.API.Services.Implementations
                 // document message carrying this text as its caption.
                 DocumentBytes = documentBytes,
                 DocumentFileName = documentFileName,
-                DocumentMimeType = documentBytes is null ? null : "application/pdf"
+                DocumentMimeType = mime,
+                // A tappable menu; the sender falls back to RenderedText if it
+                // cannot render one.
+                Interactive = interactive
             });
 
             var message = new WaMessage
@@ -373,9 +398,9 @@ namespace School.API.Services.Implementations
                 ConversationId = conversation.VID,
                 WaId = normalized,
                 MessageId = outcome.ProviderMessageId,
-                MessageKind = documentBytes is null ? "text" : "document",
+                MessageKind = documentBytes is null ? "text" : mime!.StartsWith("image/") ? "image" : "document",
                 MediaFileName = documentFileName,
-                MediaMimeType = documentBytes is null ? null : "application/pdf",
+                MediaMimeType = mime,
                 Body = text,
                 Status = outcome.Success ? "accepted" : "failed",
                 ErrorCode = outcome.ErrorCode,
@@ -389,6 +414,14 @@ namespace School.API.Services.Implementations
                 ? (true, null, ToDto(message))
                 : (false, outcome.Error ?? "Send failed", ToDto(message));
         }
+
+        private static string MimeFor(string? fileName) =>
+            Path.GetExtension(fileName ?? "").ToLowerInvariant() switch
+            {
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".png" => "image/png",
+                _ => "application/pdf"
+            };
 
         public async Task<int> MarkReadAsync(string waId)
         {

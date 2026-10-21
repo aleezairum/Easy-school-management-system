@@ -17,6 +17,11 @@ namespace School.API.Controllers
         private readonly IWahaSessionStatusService _wahaStatus;
         private readonly ISmsRoutingPolicy _routingPolicy;
         private readonly ILogger<SmsController> _logger;
+        private readonly School.API.Services.Interfaces.Academic.IExamControlService _examControl;
+
+        // Results go out on WhatsApp only once the office has finalised them.
+        private const string NotFinalized =
+            "This exam's result is not finalised yet. Finalise it on the Exams screen before sending it.";
 
         // Controllers are created per request, so this keeps the "app secret is
         // missing" warning to one line per process instead of one per webhook.
@@ -28,8 +33,10 @@ namespace School.API.Controllers
             IConfiguration configuration,
             IWahaSessionStatusService wahaStatus,
             ISmsRoutingPolicy routingPolicy,
-            ILogger<SmsController> logger)
+            ILogger<SmsController> logger,
+            School.API.Services.Interfaces.Academic.IExamControlService examControl)
         {
+            _examControl = examControl;
             _smsService = smsService;
             _chatService = chatService;
             _configuration = configuration;
@@ -155,6 +162,9 @@ namespace School.API.Controllers
             if (dto.ExamId <= 0)
                 return BadRequest(new { message = "Exam is required" });
 
+            if (!await _examControl.IsFinalizedAsync(dto.ExamId))
+                return BadRequest(new { message = NotFinalized });
+
             return Ok(await _smsService.PreviewResultTextAsync(dto));
         }
 
@@ -163,6 +173,9 @@ namespace School.API.Controllers
         {
             if (dto.ExamId <= 0)
                 return BadRequest(new { message = "Exam is required" });
+
+            if (!await _examControl.IsFinalizedAsync(dto.ExamId))
+                return BadRequest(new { message = NotFinalized });
 
             return Ok(await _smsService.PreviewRcardAsync(dto));
         }
@@ -229,6 +242,9 @@ namespace School.API.Controllers
             if (dto.ExamId <= 0)
                 return BadRequest(new { message = "Exam is required" });
 
+            if (!await _examControl.IsFinalizedAsync(dto.ExamId))
+                return BadRequest(new { message = NotFinalized });
+
             if (dto.Scope == "student" && (dto.StudentId ?? 0) <= 0)
                 return BadRequest(new { message = "Student is required for student scope" });
 
@@ -245,6 +261,9 @@ namespace School.API.Controllers
         {
             if (dto.ExamId <= 0)
                 return BadRequest(new { message = "Exam is required" });
+
+            if (!await _examControl.IsFinalizedAsync(dto.ExamId))
+                return BadRequest(new { message = NotFinalized });
 
             if (dto.Scope == "student" && (dto.StudentId ?? 0) <= 0)
                 return BadRequest(new { message = "Student is required for student scope" });
@@ -296,6 +315,8 @@ namespace School.API.Controllers
         // Meta calls GET once to verify the endpoint, then POSTs every
         // sent/delivered/read/failed update for messages we sent.
         // Configure the URL + VerifyToken in the Meta app's Webhooks section.
+        // Meta calls these with no sign-in; the signature check below is their guard.
+        [Microsoft.AspNetCore.Authorization.AllowAnonymous]
         [HttpGet("webhook")]
         public ActionResult VerifyWebhook(
             [FromQuery(Name = "hub.mode")] string? mode,
@@ -315,6 +336,7 @@ namespace School.API.Controllers
             return Forbid();
         }
 
+        [Microsoft.AspNetCore.Authorization.AllowAnonymous]
         [HttpPost("webhook")]
         public async Task<ActionResult> ReceiveWebhook()
         {

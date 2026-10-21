@@ -39,12 +39,12 @@ function ledgerAmount(v) {
 const LG_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-// dd MMM yyyy — built from the date's own parts so a calendar date can never
+// dd-MMM-yyyy — built from the date's own parts so a calendar date can never
 // slide a day in a timezone west of UTC.
 function ledgerDate(value) {
     const d = parseCalendarDate(value);
     if (!d) return '';
-    return `${String(d.getDate()).padStart(2, '0')} ${LG_MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+    return `${String(d.getDate()).padStart(2, '0')}-${LG_MONTHS[d.getMonth()]}-${d.getFullYear()}`;
 }
 
 // hh:mm tt, 12-hour with a leading zero.
@@ -57,7 +57,7 @@ function ledgerClock(value) {
     return `${String(h).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} ${ampm}`;
 }
 
-// dd MMM yyyy hh:mm tt for the ledger's Date column.
+// dd-MMM-yyyy hh:mm tt for the ledger's Date column.
 //
 // The accounting date (SMSStudentFee.VDate / FeeVoucherMain.VDate) is a SQL
 // `date` and carries no time of day, so the time comes from when the row was
@@ -75,7 +75,7 @@ function ledgerLongDate(value) {
     return ledgerDate(value);
 }
 
-// "04 Sep 2026 02:45 AM" for the printed-on stamp, which has a real time.
+// "04-Sep-2026 02:45 AM" for the printed-on stamp, which has a real time.
 function ledgerStamp(d) {
     return `${ledgerDate(d)} ${ledgerClock(d)}`;
 }

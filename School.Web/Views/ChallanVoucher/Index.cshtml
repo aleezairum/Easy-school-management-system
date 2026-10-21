@@ -294,8 +294,7 @@
         }
 
         function formatDate(dateString) {
-            const date = parseCalendarDate(dateString) || new Date(NaN);
-            return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            return fmtDate(dateString);
         }
 
         function formatCurrency(amount) {

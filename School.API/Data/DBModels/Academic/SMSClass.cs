@@ -13,6 +13,19 @@ namespace School.API.Data.DBModels.Academic
         [StringLength(100)]
         public string VName { get; set; } = string.Empty;
 
+        /// <summary>
+        /// The class name in Urdu, for the documents parents receive — the
+        /// School Timing notice prints "نہم جونیئر", not "9 Junior".
+        /// </summary>
+        /// <remarks>
+        /// Optional. Anything printing Urdu falls back to its own wording and
+        /// then to <see cref="VName"/>, so a class nobody has translated shows
+        /// up in English rather than blank.
+        /// </remarks>
+        [Column("VName_Urdu")]
+        [StringLength(200)]
+        public string? VNameUrdu { get; set; }
+
         public bool IsActive { get; set; } = true;
 
         public int? InsertedBy { get; set; }

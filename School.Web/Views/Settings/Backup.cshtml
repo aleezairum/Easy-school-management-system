@@ -565,7 +565,7 @@
         }
 
         function connectGoogle() {
-            window.open(`${oauthApiBase()}/BackupJob/oauth/start`, '_blank', 'width=520,height=650');
+            window.open(`${oauthApiBase()}/BackupJob/oauth/start?access_token=${encodeURIComponent(API_TOKEN)}`, '_blank', 'width=520,height=650');
         }
 
         function openSetupGuide() {

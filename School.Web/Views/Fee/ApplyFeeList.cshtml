@@ -485,9 +485,7 @@
                     ? `<span class="badge-cleared">Cleared</span>`
                     : `<span class="badge-pending">Pending</span>`;
 
-                const vDate = (parseCalendarDate(row.vDate) || new Date(NaN)).toLocaleDateString('en-GB', {
-                    day: '2-digit', month: 'short', year: 'numeric'
-                });
+                const vDate = fmtDate(row.vDate);
 
                 const canDelete = row.clearedAmount === 0 && row.isClear === false;
                 const deleteBtn = canDelete

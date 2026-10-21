@@ -36,9 +36,9 @@ namespace School.API.Services.Implementations.Accounts
         private static string Balance(decimal v) =>
             Math.Abs(v) < 0.005m ? "0.00" : Amount(Math.Abs(v)) + (v > 0 ? "Dr" : "Cr");
 
-        private static string Day(DateTime? d) => d?.ToString("dd MMM yyyy") ?? "";
+        private static string Day(DateTime? d) => d?.ToString("dd-MMM-yyyy") ?? "";
 
-        // dd MMM yyyy hh:mm tt, but the time only when the procedure supplied
+        // dd-MMM-yyyy hh:mm tt, but the time only when the procedure supplied
         // one — it does that solely for rows whose entry happened on the line's
         // own date, so a bulk-generated fee posting shows the date alone.
         private static string DayTime(DateTime? d, string? entryTime) =>
@@ -170,7 +170,7 @@ namespace School.API.Services.Implementations.Accounts
 
             sb.Append("<div style=\"margin-top:12px;padding-top:4px;border-top:1px solid #999;")
               .Append("display:flex;justify-content:space-between;font-size:10px;\">")
-              .Append("<span>Printed On: ").Append(DateTime.Now.ToString("dd MMM yyyy hh:mm tt"))
+              .Append("<span>Printed On: ").Append(DateTime.Now.ToString("dd-MMM-yyyy hh:mm tt"))
               .Append("</span><span>").Append(E(data.AccountTitle)).Append("</span></div>")
               .Append("<div style=\"text-align:center;font-size:9px;padding-top:4px;\">")
               .Append("EasySchool 0304-1003238</div>");

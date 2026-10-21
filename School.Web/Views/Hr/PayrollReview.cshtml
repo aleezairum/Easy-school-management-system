@@ -11,6 +11,20 @@
         <div>
             <a href="/hr/payroll" class="btn btn-secondary btn-sm"><i class="bi bi-arrow-left"></i> Back to Runs</a>
             <a href="/hr/salary-sheet/@runId" class="btn btn-outline-success btn-sm ms-2"><i class="bi bi-table"></i> Salary Sheet</a>
+            @* Prints this run as a signed-for salary sheet - see
+               wwwroot/js/payrollReviewPrint.js. *@
+            <button class="btn btn-outline-dark btn-sm ms-2" id="btnPrint" onclick="printPayrollReview()">
+                <i class="bi bi-printer"></i> Print
+            </button>
+            @* The school's own seventeen-column sheet - see
+               wwwroot/js/salarySheetPrint.js. *@
+            <button class="btn btn-dark btn-sm ms-2" id="btnSalarySheet" onclick="printSalarySheet()">
+                <i class="bi bi-file-earmark-spreadsheet"></i> Salary Sheet (Print)
+            </button>
+            @* Every payslip of this run, two to a page - wwwroot/js/salarySlipPrint.js. *@
+            <button class="btn btn-outline-primary btn-sm ms-2" id="btnSlips" onclick="printRunSlips()">
+                <i class="bi bi-receipt"></i> Salary Slips (Print)
+            </button>
         </div>
         <div>
             <button class="btn btn-warning btn-sm" onclick="lockRun()"><i class="bi bi-lock-fill"></i> Lock Run</button>
@@ -19,30 +33,63 @@
     </div></div>
 
     <div class="card"><div class="card-body">
+        @* Which bill this is - month, campus, status - filled from the run list. *@
+        <h5 id="runTitle" class="mb-3"></h5>
         <table class="table table-hover">
-            <thead><tr><th>Code</th><th>Employee</th><th>Designation</th><th>Basic</th><th>Gross</th><th>Deduction</th><th>Net Pay</th><th>Present</th><th>Absent</th><th>Late (min)</th><th></th></tr></thead>
+            <thead><tr><th>Code</th><th>Employee</th><th>Designation</th><th>Basic</th><th>Gross</th><th>Deduction</th><th>Net Pay</th><th>Present</th><th>Absent</th><th>Late (min)</th><th>Early (min)</th><th>Out (min)</th><th title="Gross / (working days x hours x 60)">Per Min Rate</th><th></th></tr></thead>
             <tbody id="payslipsBody"></tbody>
         </table>
     </div></div>
 </div>
 
 @section Scripts {
+<script src="~/js/payrollReviewPrint.js" asp-append-version="true"></script>
+<script src="~/js/salarySheetPrint.js" asp-append-version="true"></script>
+<script src="~/js/hrFilters.js" asp-append-version="true"></script>
+<script src="~/js/salarySlipPrint.js" asp-append-version="true"></script>
 <script>
     const runId = @runId;
 
-    $(document).ready(function () { loadPayslips(); });
+    $(document).ready(function () { loadRunTitle(); loadPayslips(); });
+
+    // One minute's cost and how it was reached: Gross / (days x hours x 60).
+    // Blank for a payslip generated before the rate was recorded.
+    function rateCell(p) {
+        if (!p.perMinuteRate) return '<span class="text-muted">-</span>';
+        const base = p.perMinuteRate * p.rateWorkingDays * p.rateHours * 60;
+        return `<strong>${Number(p.perMinuteRate).toFixed(2)}</strong>`
+             + `<div class="small text-muted text-nowrap" title="${Math.round(base).toLocaleString()} / (${p.rateWorkingDays} days x ${p.rateHours} h x 60)">${p.rateWorkingDays}d x ${p.rateHours}h</div>`;
+    }
+
+    async function printRunSlips() {
+        const res = await fetch(`${API_BASE}/hr/payroll/runs/${runId}`);
+        const slips = res.ok ? await res.json() : [];
+        // The run's payslips carry no month or campus of their own; take them from the run list.
+        const run = (await fetch(`${API_BASE}/hr/payroll/runs`).then(r => r.ok ? r.json() : [])).find(r => r.id === runId) || {};
+        slips.forEach(p => { p.payYear = p.payYear || run.payYear; p.payMonth = p.payMonth || run.payMonth; });
+        printSalarySlips(slips.sort((a, b) => a.employeeName.localeCompare(b.employeeName)));
+    }
+
+    async function loadRunTitle() {
+        const res = await fetch(`${API_BASE}/hr/payroll/runs`);
+        const run = (res.ok ? await res.json() : []).find(r => r.id === runId);
+        if (!run) return;
+        const month = new Date(run.payYear, run.payMonth - 1, 1).toLocaleString('en-GB', { month: 'long' });
+        $('#runTitle').text(`${month} ${run.payYear} — ${run.campusName || 'All campuses'} — ${({1:'Draft',2:'Locked',3:'Paid'})[run.status] || ''}`);
+    }
 
     async function loadPayslips() {
         const res = await fetch(`${API_BASE}/hr/payroll/runs/${runId}`);
         const data = res.ok ? await res.json() : [];
         const body = $('#payslipsBody'); body.empty();
-        if (!data.length) { body.html('<tr><td colspan="11" class="text-center text-muted py-3">No payslips in this run.</td></tr>'); return; }
+        if (!data.length) { body.html('<tr><td colspan="14" class="text-center text-muted py-3">No payslips in this run.</td></tr>'); return; }
         data.forEach(p => {
             body.append(`<tr>
                 <td>${p.employeeCode}</td><td>${p.employeeName}</td><td>${p.designationName || '-'}</td>
                 <td>${Number(p.basic).toLocaleString()}</td><td>${Number(p.grossEarning).toLocaleString()}</td>
                 <td>${Number(p.totalDeduction).toLocaleString()}</td><td><strong>${Number(p.netPay).toLocaleString()}</strong></td>
-                <td>${p.presentDays}</td><td>${p.absentDays}</td><td>${p.lateMinutes}</td>
+                <td>${p.presentDays}</td><td>${p.absentDays}</td><td>${p.lateMinutes}</td><td>${p.earlyMinutes || 0}</td><td>${p.outingMinutes || 0}</td>
+                <td>${rateCell(p)}</td>
                 <td><a class="btn btn-sm btn-info" href="/hr/payslip/${p.id}"><i class="bi bi-receipt"></i></a></td>
             </tr>`);
         });

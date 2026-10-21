@@ -1,7 +1,20 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace School.API.Data.DBModels.Academic
 {
+    /// <summary>
+    /// A campus — Boys or Girls.
+    /// </summary>
+    /// <remarks>
+    /// The [Table] attribute is load-bearing. SchoolDbContext exposes this as
+    /// DbSet&lt;SMSCampus&gt; Campuses, and EF names the table after the DbSet,
+    /// so without it every EF query against campuses fails with
+    /// "Invalid object name 'Campuses'". It went unnoticed because the campus
+    /// screen reads through stored procedures; the first EF query to touch it
+    /// was the employee list joining a campus name.
+    /// </remarks>
+    [Table("SMSCampus")]
     public class SMSCampus
     {
         [Key]

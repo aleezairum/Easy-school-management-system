@@ -76,7 +76,7 @@ namespace School.API.Data.DBModels.HR
         [MaxLength(100)]
         public string? City { get; set; }
 
-        [MaxLength(255)]
+        // The picture itself as a data: URL (NVARCHAR(MAX), Scripts/HikvisionBiometrics.sql).
         public string? Photo { get; set; }
 
         // 500, not 100: the column came over from SMSTeacher, where qualifications
@@ -93,15 +93,35 @@ namespace School.API.Data.DBModels.HR
         [MaxLength(100)]
         public string? Department { get; set; }
 
+        /// <summary>
+        /// The campus this member of staff is posted to.
+        /// </summary>
+        /// <remarks>
+        /// Nullable because the table already held staff before the column
+        /// existed and there is no honest way to guess where each of them
+        /// belongs. Null reads as "not recorded yet", and a campus filter
+        /// simply does not match those rows until the office says which campus
+        /// it is. See Scripts/AddCampusToEmployees.sql.
+        /// </remarks>
+        [Column("CampusID")]
+        public int? CampusId { get; set; }
+
         // Foreign Keys
         public int? DesignationId { get; set; }
 
         public int? HRGradeId { get; set; }
 
+        /// <summary>
+        /// The group the office counts and prints this person by - Teaching,
+        /// Non-Teaching, Admin, whatever the school has set up. Nullable: staff
+        /// already on file predate the column, and null reads as "not set yet"
+        /// rather than as a guess. See Scripts/StaffCategory.sql.
+        /// </summary>
+        public int? StaffCategoryId { get; set; }
+
         public int? AcademicGradeId { get; set; }
 
         // Payroll (HR-Payroll-Final-Plan.md section 3)
-        public int? ShiftId { get; set; }
 
         [MaxLength(50)]
         public string? MachineCardNo { get; set; }
@@ -161,8 +181,6 @@ namespace School.API.Data.DBModels.HR
         [ForeignKey("HRGradeId")]
         public virtual HRGrade? HRGrade { get; set; }
 
-        [ForeignKey("ShiftId")]
-        public virtual HrShift? Shift { get; set; }
 
         // User navigation property for bidirectional relationship
         public virtual User? User { get; set; }

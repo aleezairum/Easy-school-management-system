@@ -1,0 +1,432 @@
+@{
+    ViewData["Title"] = "Class Timings";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+@*
+    Class-wise school timing for STUDENTS.
+
+    A grid rather than the usual one-row form + list: the office sets these once
+    a term for every class at once, and saving fourteen classes one at a time
+    would be fourteen round trips and a half-finished campus if one failed. The
+    whole campus posts in a single request to /ClassTiming/batch.
+
+    Every active class is listed, including the ones with nothing entered yet —
+    filling those blanks is the point of the screen, so hiding them would defeat it.
+*@
+
+<style>
+    .loading-overlay {
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex; align-items: center; justify-content: center;
+        z-index: 100; border-radius: 16px;
+    }
+
+    .spinner-border { width: 3rem; height: 3rem; border-width: 0.3rem; }
+
+    .form-section, .filter-section {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .form-section-title, .grid-section-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .grid-section { margin-top: 24px; }
+
+    .btn-save {
+        background-color: #00A651; color: white; font-weight: 600; font-size: 14px;
+        padding: 12px 24px; border: none; border-radius: 8px;
+        display: inline-flex; align-items: center; gap: 8px;
+        cursor: pointer; transition: all 0.2s ease;
+    }
+    .btn-save:hover  { background-color: #008F45; }
+    .btn-save:active { background-color: #007A3A; box-shadow: inset 0 2px 4px rgba(0,0,0,.15); }
+
+    .btn-clear {
+        background-color: transparent; color: #6B7280; font-weight: 600; font-size: 14px;
+        padding: 12px 24px; border: 2px solid #D1D5DB; border-radius: 8px;
+        display: inline-flex; align-items: center; gap: 8px;
+        cursor: pointer; transition: all 0.2s ease;
+    }
+    .btn-clear:hover  { background-color: #F3F4F6; border-color: #9CA3AF; }
+    .btn-clear:active { background-color: #E5E7EB; }
+
+    #timingTable input[type="time"] {
+        min-width: 120px;
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* A class with nothing saved reads as an empty slot, not as a mistake. */
+    #timingTable tr.unset td:first-child { color: #94a3b8; }
+
+    .hint {
+        font-size: 12px;
+        color: #64748b;
+        margin-top: 6px;
+    }
+</style>
+
+<div class="container-fluid">
+    <div id="alertContainer"></div>
+
+    <div class="card">
+        <div class="card-body position-relative">
+            <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+                <div class="spinner-border text-success" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title">
+                    <i class="bi bi-clock me-2"></i>Student Timings
+                </div>
+
+                <div class="row g-3 align-items-end">
+                    <div class="col-lg-3 col-md-4 col-sm-6 col-12">
+                        <label for="campusId" class="form-label">
+                            Campus <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="campusId">
+                            <option value="">-- Select Campus --</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-9 col-md-8 col-12">
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button type="button" class="btn-save" onclick="saveTimings()">
+                                <i class="bi bi-check-lg"></i> Save All
+                            </button>
+                            <button type="button" class="btn-clear" onclick="fillDown()">
+                                <i class="bi bi-arrow-down"></i> Copy First Row Down
+                            </button>
+                            <button type="button" class="btn-clear" onclick="loadTimings()">
+                                <i class="bi bi-arrow-clockwise"></i> Reload
+                            </button>
+                            <button type="button" class="btn-clear" onclick="printNotice()">
+                                <i class="bi bi-printer"></i> Print Notice
+                            </button>
+                        </div>
+                        <div class="hint">
+                            These are the times parents are told on WhatsApp. Leave a class blank
+                            if it has no fixed timing. Friday and Academy are optional &mdash;
+                            fill both boxes of a pair, or neither.
+                            <strong>Print Notice</strong> builds the parents' Urdu timing sheet
+                            for <em>both</em> campuses, so save your changes first.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-section">
+                <div class="grid-section-title">
+                    <i class="bi bi-table me-2"></i><span id="gridTitle">Classes</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle" id="timingTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">SR#</th>
+                                <th>Class</th>
+                                <th style="width: 135px;">Time In</th>
+                                <th style="width: 135px;">Time Out</th>
+                                <th style="width: 135px;">Friday In</th>
+                                <th style="width: 135px;">Friday Out</th>
+                                <th style="width: 135px;">Academy In</th>
+                                <th style="width: 135px;">Academy Out</th>
+                                <th class="text-center" style="width: 80px;">Active</th>
+                                <th class="text-center" style="width: 80px;">Clear</th>
+                            </tr>
+                        </thead>
+                        <tbody id="timingBody">
+                            <tr>
+                                <td colspan="10" class="text-center text-muted py-4">
+                                    Select a campus to begin.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let rows = [];
+
+        $(document).ready(function () {
+            loadCampuses();
+            $('#campusId').on('change', loadTimings);
+        });
+
+        async function loadCampuses() {
+            try {
+                const campuses = await fetch(`${API_BASE}/campus`).then(r => r.json());
+                const select = $('#campusId');
+                campuses.forEach(c => select.append(`<option value="${c.vid}">${c.vName}</option>`));
+
+                // One campus and there is nothing to choose — open it straight away.
+                if (campuses.length === 1) {
+                    select.val(campuses[0].vid);
+                    await loadTimings();
+                }
+            } catch (error) {
+                console.error('Error loading campuses:', error);
+                toastError('Error loading campuses: ' + error.message);
+            }
+        }
+
+        async function loadTimings() {
+            const campusId = $('#campusId').val();
+            if (!campusId) {
+                rows = [];
+                $('#timingBody').html(
+                    '<tr><td colspan="10" class="text-center text-muted py-4">Select a campus to begin.</td></tr>');
+                $('#gridTitle').text('Classes');
+                return;
+            }
+
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/ClassTiming?campusId=${campusId}`);
+                if (!response.ok) {
+                    toastError('Failed to load class timings');
+                    return;
+                }
+
+                rows = await response.json();
+                renderRows();
+                $('#gridTitle').text(`Classes — ${$('#campusId option:selected').text()}`);
+            } catch (error) {
+                console.error('Error loading class timings:', error);
+                toastError('Error loading class timings: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function renderRows() {
+            const tbody = $('#timingBody');
+            tbody.empty();
+
+            if (rows.length === 0) {
+                tbody.html('<tr><td colspan="10" class="text-center text-muted py-4">No active classes found.</td></tr>');
+                return;
+            }
+
+            rows.forEach((row, i) => {
+                const unset = !row.timeIn && !row.timeOut ? 'unset' : '';
+                tbody.append(`
+                    <tr class="${unset}" data-index="${i}">
+                        <td>${i + 1}</td>
+                        <td><strong>${row.className || ''}</strong></td>
+                        <td><input type="time" class="form-control" id="in_${i}"   value="${row.timeIn || ''}" /></td>
+                        <td><input type="time" class="form-control" id="out_${i}"  value="${row.timeOut || ''}" /></td>
+                        <td><input type="time" class="form-control" id="fin_${i}"  value="${row.fridayTimeIn || ''}" /></td>
+                        <td><input type="time" class="form-control" id="fout_${i}" value="${row.fridayTimeOut || ''}" /></td>
+                        <td><input type="time" class="form-control" id="ain_${i}"  value="${row.academyTimeIn || ''}" /></td>
+                        <td><input type="time" class="form-control" id="aout_${i}" value="${row.academyTimeOut || ''}" /></td>
+                        <td class="text-center">
+                            <input type="checkbox" class="form-check-input" id="act_${i}" ${row.isActive ? 'checked' : ''} />
+                        </td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                    onclick="clearRow(${i})" title="Clear this class">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `);
+            });
+        }
+
+        // Most schools run several classes on the same clock, so the first row
+        // filled in is usually the answer for the rest. Only blank rows are
+        // touched — a class that already has its own timing is left alone.
+        function fillDown() {
+            const source = rows.findIndex((_, i) => $(`#in_${i}`).val() && $(`#out_${i}`).val());
+            if (source < 0) {
+                toastWarning('Fill in the first class before copying it down.');
+                return;
+            }
+
+            const values = {
+                in:   $(`#in_${source}`).val(),
+                out:  $(`#out_${source}`).val(),
+                fin:  $(`#fin_${source}`).val(),
+                fout: $(`#fout_${source}`).val(),
+                ain:  $(`#ain_${source}`).val(),
+                aout: $(`#aout_${source}`).val()
+            };
+
+            let filled = 0;
+            rows.forEach((_, i) => {
+                if (i === source) return;
+                if ($(`#in_${i}`).val() || $(`#out_${i}`).val()) return;
+
+                $(`#in_${i}`).val(values.in);
+                $(`#out_${i}`).val(values.out);
+                $(`#fin_${i}`).val(values.fin);
+                $(`#fout_${i}`).val(values.fout);
+                $(`#ain_${i}`).val(values.ain);
+                $(`#aout_${i}`).val(values.aout);
+                filled++;
+            });
+
+            toastInfo(filled === 0
+                ? 'Every class already has a timing.'
+                : `Copied to ${filled} blank ${filled === 1 ? 'class' : 'classes'}. Press Save All to keep it.`);
+        }
+
+        async function clearRow(i) {
+            const row = rows[i];
+
+            // Nothing saved for this class — just empty the boxes.
+            if (!row.vid) {
+                $(`#in_${i}, #out_${i}, #fin_${i}, #fout_${i}, #ain_${i}, #aout_${i}`).val('');
+                return;
+            }
+
+            if (!await confirmDelete(`Remove the timing for ${row.className}?`)) return;
+
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/ClassTiming/${row.vid}`, { method: 'DELETE' });
+                if (response.ok) {
+                    toastSuccess('Class timing removed.');
+                    await loadTimings();
+                } else {
+                    toastError('Failed to remove the class timing');
+                }
+            } catch (error) {
+                console.error('Error removing class timing:', error);
+                toastError('Error removing class timing: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function saveTimings() {
+            const campusId = $('#campusId').val();
+            if (!campusId) {
+                toastError('Please select a Campus');
+                $('#campusId').focus();
+                return;
+            }
+
+            // Caught here rather than at the server so the office sees which
+            // class is wrong while looking straight at it.
+            for (let i = 0; i < rows.length; i++) {
+                const timeIn  = $(`#in_${i}`).val();
+                const timeOut = $(`#out_${i}`).val();
+                const fIn     = $(`#fin_${i}`).val();
+                const fOut    = $(`#fout_${i}`).val();
+                const aIn     = $(`#ain_${i}`).val();
+                const aOut    = $(`#aout_${i}`).val();
+                const name    = rows[i].className;
+
+                if (!timeIn && !timeOut && !fIn && !fOut && !aIn && !aOut) continue;
+
+                if (!timeIn || !timeOut) {
+                    toastError(`${name}: enter both Time In and Time Out.`);
+                    $(`#in_${i}`).focus();
+                    return;
+                }
+                if (timeOut <= timeIn) {
+                    toastError(`${name}: Time Out must be later than Time In.`);
+                    $(`#out_${i}`).focus();
+                    return;
+                }
+                if (!!fIn !== !!fOut) {
+                    toastError(`${name}: enter both Friday times, or leave both blank.`);
+                    $(`#fin_${i}`).focus();
+                    return;
+                }
+                if (fIn && fOut <= fIn) {
+                    toastError(`${name}: Friday Out must be later than Friday In.`);
+                    $(`#fout_${i}`).focus();
+                    return;
+                }
+                if (!!aIn !== !!aOut) {
+                    toastError(`${name}: enter both academy times, or leave both blank.`);
+                    $(`#ain_${i}`).focus();
+                    return;
+                }
+                if (aIn && aOut <= aIn) {
+                    toastError(`${name}: Academy Out must be later than Academy In.`);
+                    $(`#aout_${i}`).focus();
+                    return;
+                }
+            }
+
+            const payload = {
+                CampusID: parseInt(campusId),
+                Rows: rows.map((row, i) => ({
+                    VID: row.vid || 0,
+                    CampusID: parseInt(campusId),
+                    ClassID: row.classID,
+                    TimeIn:        $(`#in_${i}`).val()   || null,
+                    TimeOut:       $(`#out_${i}`).val()  || null,
+                    FridayTimeIn:  $(`#fin_${i}`).val()  || null,
+                    FridayTimeOut: $(`#fout_${i}`).val() || null,
+                    AcademyTimeIn:  $(`#ain_${i}`).val()  || null,
+                    AcademyTimeOut: $(`#aout_${i}`).val() || null,
+                    IsActive: $(`#act_${i}`).is(':checked')
+                }))
+            };
+
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/ClassTiming/batch`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({}));
+                    toastError(error.message || 'Failed to save class timings');
+                    return;
+                }
+
+                const result = await response.json();
+
+                if (result.totalFailed > 0) {
+                    toastError(`${result.totalFailed} class(es) could not be saved. ${result.errors.join(' ')}`);
+                } else {
+                    toastSuccess(`Saved ${result.totalSaved} class timing(s).`);
+                }
+
+                await loadTimings();
+            } catch (error) {
+                console.error('Error saving class timings:', error);
+                toastError('Error saving class timings: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // The notice covers BOTH campuses, so it is its own page rather than a
+        // print stylesheet over this grid, which only ever shows one.
+        function printNotice() {
+            window.open('/EasySchool/class-timing/notice', '_blank');
+        }
+
+        function showLoading() { $('#loadingOverlay').show(); }
+        function hideLoading() { $('#loadingOverlay').hide(); }
+    </script>
+}

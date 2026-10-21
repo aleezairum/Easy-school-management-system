@@ -77,7 +77,7 @@ namespace School.API.Repositories.Implementations.Accounts
             return await _context
                 .Set<StudentFeeReportDto>()
                 .FromSqlRaw(
-                    "EXEC SpRPT_SMSStudentFee @VID={0}, @StudentID={1}, @SessionID={2}, @SectionIDs={3}, @ClassIDs={4}, @DateFrom={5}, @DateTo={6}, @ReportType={7}, @FeeTypeIDs={8}",
+                    "EXEC SpRPT_SMSStudentFee @VID={0}, @StudentID={1}, @SessionID={2}, @SectionIDs={3}, @ClassIDs={4}, @DateFrom={5}, @DateTo={6}, @ReportType={7}, @FeeTypeIDs={8}, @CampusIDs={9}, @IncludePromised={10}",
                     dto.VID ?? (object)DBNull.Value,
                     dto.StudentID ?? (object)DBNull.Value,
                     dto.SessionID ?? (object)DBNull.Value,
@@ -86,18 +86,36 @@ namespace School.API.Repositories.Implementations.Accounts
                     dto.DateFrom,
                     dto.DateTo,
                     dto.ReportType,
-                    string.IsNullOrWhiteSpace(dto.FeeTypeIDs) ? (object)DBNull.Value : dto.FeeTypeIDs)
+                    string.IsNullOrWhiteSpace(dto.FeeTypeIDs) ? (object)DBNull.Value : dto.FeeTypeIDs,
+                    string.IsNullOrWhiteSpace(dto.CampusIDs)  ? (object)DBNull.Value : dto.CampusIDs,
+                    dto.IncludePromised)
                 .AsNoTracking()
                 .ToListAsync();
         }
-        public async Task<List<StudentFeeListDto>> GetPendingsAsync(int studentId)
+        public async Task<List<StudentFeeListDto>> GetPendingsAsync(int studentId, DateTime? asOn = null)
         {
+            // asOn is the voucher's own date, so a back-dated receipt works out
+            // its arrears as at the day it is dated. Null means today.
             return await _context
                 .Set<StudentFeeListDto>()
                 .FromSqlRaw(
-                    "EXEC SpGetPending_SMSStudentFee @StudentID={0}",
-                    studentId
-                    )
+                    "EXEC SpGetPending_SMSStudentFee @StudentID={0}, @AsOn={1}",
+                    studentId,
+                    (object?)asOn?.Date ?? DBNull.Value)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+        public async Task<List<PendingFeeStudentDto>> GetPendingStudentsAsync(int classId, int sectionId, DateTime? asOn = null)
+        {
+            // Only the children who owe something as at asOn — the counter has
+            // no use for the other nine hundred. Null asOn means today.
+            return await _context
+                .Set<PendingFeeStudentDto>()
+                .FromSqlRaw(
+                    "EXEC SpFillCombo_PendingFeeStudents @ClassID={0}, @SectionID={1}, @AsOn={2}",
+                    classId,
+                    sectionId,
+                    (object?)asOn?.Date ?? DBNull.Value)
                 .AsNoTracking()
                 .ToListAsync();
         }

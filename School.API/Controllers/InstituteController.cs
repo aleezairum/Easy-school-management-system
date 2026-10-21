@@ -6,6 +6,18 @@ using School.API.Models;
 
 namespace School.API.Controllers
 {
+    /// <summary>
+    /// The School Profile form (/my-institute).
+    /// </summary>
+    /// <remarks>
+    /// One school, one row. The form does not ask which institute it is
+    /// editing and has no list, so this is a GET-and-save pair rather than the
+    /// usual CRUD: GET returns the profile (creating an empty one the first
+    /// time so the form never has to handle a 404), and POST writes it back.
+    ///
+    /// Every endpoint here was commented out, so the form could neither load
+    /// nor save anything.
+    /// </remarks>
     [Route("api/[controller]")]
     [ApiController]
     public class InstituteController : ControllerBase
@@ -17,173 +29,134 @@ namespace School.API.Controllers
             _context = context;
         }
 
-        // GET: api/Institute
-        //[HttpGet]
-        //public async Task<ActionResult<IEnumerable<InstituteDto>>> GetInstitutes()
-        //{
-        //    var institutes = await _context.Institutes
-        //        .OrderBy(i => i.Name)
-        //        .Select(i => new InstituteDto
-        //        {
-        //            Id = i.Id,
-        //            Name = i.Name,
-        //            Code = i.Code,
-        //            Address = i.Address,
-        //            Phone = i.Phone,
-        //            Email = i.Email,
-        //            Website = i.Website,
-        //            LogoUrl = i.LogoUrl,
-        //            IsActive = i.IsActive
-        //        })
-        //        .ToListAsync();
+        /// <summary>The school profile. Never 404s — the form expects an object.</summary>
+        [HttpGet]
+        public async Task<ActionResult<InstituteDto>> GetProfile()
+        {
+            var institute = await CurrentAsync();
 
-        //    return Ok(institutes);
-        //}
+            if (institute == null)
+            {
+                // First run on a fresh database: hand the form an empty profile
+                // rather than an error, so it opens blank and saves normally.
+                return Ok(new InstituteDto());
+            }
 
-        //// GET: api/Institute/5
-        //[HttpGet("{id}")]
-        //public async Task<ActionResult<InstituteDto>> GetInstitute(int id)
-        //{
-        //    var institute = await _context.Institutes
-        //        .Where(i => i.Id == id)
-        //        .Select(i => new InstituteDto
-        //        {
-        //            Id = i.Id,
-        //            Name = i.Name,
-        //            Code = i.Code,
-        //            Address = i.Address,
-        //            Phone = i.Phone,
-        //            Email = i.Email,
-        //            Website = i.Website,
-        //            LogoUrl = i.LogoUrl,
-        //            IsActive = i.IsActive
-        //        })
-        //        .FirstOrDefaultAsync();
+            return Ok(ToDto(institute));
+        }
 
-        //    if (institute == null)
-        //    {
-        //        return NotFound(new { message = "Institute not found" });
-        //    }
+        /// <summary>Saves the profile, creating it on first save.</summary>
+        [HttpPost]
+        public async Task<ActionResult<InstituteDto>> SaveProfile([FromBody] InstituteDto dto)
+        {
+            if (dto == null || string.IsNullOrWhiteSpace(dto.InstituteName))
+                return BadRequest(new { message = "Institute name is required." });
 
-        //    return Ok(institute);
-        //}
+            var institute = await CurrentAsync();
+            var isNew = institute == null;
 
-        //// GET: api/Institute/dropdown
-        //[HttpGet("dropdown")]
-        //public async Task<ActionResult<IEnumerable<object>>> GetInstitutesDropdown()
-        //{
-        //    var institutes = await _context.Institutes
-        //        .Where(i => i.IsActive)
-        //        .OrderBy(i => i.Name)
-        //        .Select(i => new
-        //        {
-        //            i.Id,
-        //            i.Name,
-        //            i.Code
-        //        })
-        //        .ToListAsync();
+            if (isNew)
+            {
+                institute = new Institute { CreatedAt = DateTime.Now };
+                _context.Set<Institute>().Add(institute);
+            }
 
-        //    return Ok(institutes);
-        //}
+            institute!.Name = dto.InstituteName.Trim();
 
-        //// POST: api/Institute
-        //[HttpPost]
-        //public async Task<ActionResult<InstituteDto>> CreateInstitute(CreateInstituteDto request)
-        //{
-        //    // Check if institute code already exists
-        //    var existingInstitute = await _context.Institutes
-        //        .FirstOrDefaultAsync(i => i.Code.ToLower() == request.Code.ToLower());
+            // Code is NOT NULL on the table but the form never asks for one, so
+            // derive it from the name rather than refusing the save.
+            institute.Code = string.IsNullOrWhiteSpace(dto.Code)
+                ? (string.IsNullOrWhiteSpace(institute.Code) ? DeriveCode(institute.Name) : institute.Code)
+                : dto.Code.Trim();
 
-        //    if (existingInstitute != null)
-        //    {
-        //        return BadRequest(new { message = "Institute code already exists" });
-        //    }
+            institute.Tagline         = Clean(dto.Tagline);
+            institute.RegistrationNo  = Clean(dto.RegistrationNo);
+            institute.EstablishedYear = dto.EstablishedYear;
+            institute.Phone           = Clean(dto.Phone);
+            institute.Email           = Clean(dto.Email);
+            institute.Website         = Clean(dto.Website);
+            institute.Address         = Clean(dto.Address);
+            institute.City            = Clean(dto.City);
+            institute.State           = Clean(dto.State);
+            institute.Country         = Clean(dto.Country);
+            institute.PostalCode      = Clean(dto.PostalCode);
+            institute.PrincipalName   = Clean(dto.PrincipalName);
+            institute.PrincipalPhone  = Clean(dto.PrincipalPhone);
+            institute.PrincipalEmail  = Clean(dto.PrincipalEmail);
 
-        //    var institute = new Institute
-        //    {
-        //        Name = request.Name,
-        //        Code = request.Code,
-        //        Address = request.Address,
-        //        Phone = request.Phone,
-        //        Email = request.Email,
-        //        Website = request.Website,
-        //        LogoUrl = request.LogoUrl,
-        //        IsActive = request.IsActive,
-        //        CreatedAt = DateTime.UtcNow
-        //    };
+            // A logo is only replaced when one is sent. Saving the form after
+            // editing a phone number must not wipe the logo that is already
+            // there, and the form only sends the picture when it is changed.
+            if (!string.IsNullOrWhiteSpace(dto.LogoUrl))
+                institute.LogoUrl = dto.LogoUrl;
 
-        //    _context.Institutes.Add(institute);
-        //    await _context.SaveChangesAsync();
+            institute.IsActive  = true;
+            institute.UpdatedAt = DateTime.Now;
 
-        //    return CreatedAtAction(nameof(GetInstitute), new { id = institute.Id }, new InstituteDto
-        //    {
-        //        Id = institute.Id,
-        //        Name = institute.Name,
-        //        Code = institute.Code,
-        //        Address = institute.Address,
-        //        Phone = institute.Phone,
-        //        Email = institute.Email,
-        //        Website = institute.Website,
-        //        LogoUrl = institute.LogoUrl,
-        //        IsActive = institute.IsActive
-        //    });
-        //}
+            await _context.SaveChangesAsync();
 
-        //// PUT: api/Institute/5
-        //[HttpPut("{id}")]
-        //public async Task<IActionResult> UpdateInstitute(int id, UpdateInstituteDto request)
-        //{
-        //    if (id != request.Id)
-        //    {
-        //        return BadRequest(new { message = "ID mismatch" });
-        //    }
+            return Ok(ToDto(institute));
+        }
 
-        //    var institute = await _context.Institutes.FindAsync(id);
+        /// <summary>Removes the logo, leaving the rest of the profile alone.</summary>
+        [HttpDelete("logo")]
+        public async Task<IActionResult> DeleteLogo()
+        {
+            var institute = await CurrentAsync();
+            if (institute == null) return Ok(new { message = "Nothing to remove." });
 
-        //    if (institute == null)
-        //    {
-        //        return NotFound();
-        //    }
+            institute.LogoUrl = null;
+            institute.UpdatedAt = DateTime.Now;
+            await _context.SaveChangesAsync();
 
-        //    // Check if institute code already exists (excluding current institute)
-        //    var existingInstitute = await _context.Institutes
-        //        .FirstOrDefaultAsync(i => i.Code.ToLower() == request.Code.ToLower() && i.Id != id);
+            return Ok(new { message = "Logo removed." });
+        }
 
-        //    if (existingInstitute != null)
-        //    {
-        //        return BadRequest(new { message = "Institute code already exists" });
-        //    }
+        // The profile row: the active one, else whatever is there. Ordered by
+        // Id so a database that somehow holds two rows always answers with the
+        // same one rather than alternating between them.
+        private Task<Institute?> CurrentAsync() =>
+            _context.Set<Institute>()
+                    .OrderByDescending(i => i.IsActive)
+                    .ThenBy(i => i.Id)
+                    .FirstOrDefaultAsync();
 
-        //    institute.Name = request.Name;
-        //    institute.Code = request.Code;
-        //    institute.Address = request.Address;
-        //    institute.Phone = request.Phone;
-        //    institute.Email = request.Email;
-        //    institute.Website = request.Website;
-        //    institute.LogoUrl = request.LogoUrl;
-        //    institute.IsActive = request.IsActive;
-        //    institute.UpdatedAt = DateTime.UtcNow;
+        private static string? Clean(string? value) =>
+            string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
-        //    await _context.SaveChangesAsync();
+        // "SIR SYED MODEL HIGH SCHOOL (BOYS & GIRLS)" -> "SSMHSBG"
+        private static string DeriveCode(string name)
+        {
+            var letters = name.Split(new[] { ' ', '-', '(', ')', '&', ',', '.' },
+                                     StringSplitOptions.RemoveEmptyEntries)
+                              .Where(w => char.IsLetter(w[0]))
+                              .Select(w => char.ToUpperInvariant(w[0]));
 
-        //    return Ok(new { message = "Institute updated successfully" });
-        //}
+            var code = new string(letters.ToArray());
+            return string.IsNullOrEmpty(code) ? "SCHOOL" : code[..Math.Min(code.Length, 20)];
+        }
 
-        //// DELETE: api/Institute/5
-        //[HttpDelete("{id}")]
-        //public async Task<IActionResult> DeleteInstitute(int id)
-        //{
-        //    var institute = await _context.Institutes.FindAsync(id);
-
-        //    if (institute == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    _context.Institutes.Remove(institute);
-        //    await _context.SaveChangesAsync();
-
-        //    return Ok(new { message = "Institute deleted successfully" });
-        //}
+        private static InstituteDto ToDto(Institute i) => new()
+        {
+            Id              = i.Id,
+            InstituteName   = i.Name,
+            Code            = i.Code,
+            Tagline         = i.Tagline,
+            RegistrationNo  = i.RegistrationNo,
+            EstablishedYear = i.EstablishedYear,
+            Phone           = i.Phone,
+            Email           = i.Email,
+            Website         = i.Website,
+            Address         = i.Address,
+            City            = i.City,
+            State           = i.State,
+            Country         = i.Country,
+            PostalCode      = i.PostalCode,
+            PrincipalName   = i.PrincipalName,
+            PrincipalPhone  = i.PrincipalPhone,
+            PrincipalEmail  = i.PrincipalEmail,
+            LogoUrl         = i.LogoUrl,
+            IsActive        = i.IsActive
+        };
     }
 }

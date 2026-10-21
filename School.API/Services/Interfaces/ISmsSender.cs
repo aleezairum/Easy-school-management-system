@@ -36,6 +36,25 @@ namespace School.API.Services.Interfaces
             => new() { Success = false, ShouldHold = true, Error = reason };
     }
 
+    // A tappable list menu (WhatsApp "interactive list" message).
+    public class SmsInteractiveList
+    {
+        public string? Header { get; set; }
+        public string Body { get; set; } = string.Empty;
+        public string? Footer { get; set; }
+        public string ButtonText { get; set; } = "Menu";
+        public List<SmsInteractiveRow> Rows { get; set; } = new();
+    }
+
+    public class SmsInteractiveRow
+    {
+        // Comes back verbatim in the webhook as interactive.list_reply.id, so
+        // this is what the bot matches on — not the display title.
+        public string Id { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public string? Description { get; set; }
+    }
+
     // A pre-approved WhatsApp template plus the ordered values for its
     // {{1}}, {{2}}, ... body placeholders. Optionally carries a document that
     // becomes the template's header (used for result-card PDFs).
@@ -59,6 +78,19 @@ namespace School.API.Services.Interfaces
 
         // Body parameters in placeholder order.
         public IReadOnlyList<string> BodyParams { get; set; } = Array.Empty<string>();
+
+        // Optional tappable menu. When set (and no template is named) the
+        // message goes out as a WhatsApp interactive list: the recipient taps a
+        // button and picks a row instead of typing a number back. Senders that
+        // cannot do this ignore it and fall back to RenderedText, so the plain
+        // numbered menu still works.
+        //
+        // Meta's limits, which the builder must respect or the send is rejected:
+        //   header <= 60, body <= 1024, footer <= 60, button <= 20 characters,
+        //   at most 10 rows, row title <= 24, row description <= 72.
+        public SmsInteractiveList? Interactive { get; set; }
+
+        public bool HasInteractive => Interactive is { Rows.Count: > 0 };
 
         // Optional document header (e.g. the result card PDF).
         public byte[]? DocumentBytes { get; set; }

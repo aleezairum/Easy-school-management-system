@@ -32,6 +32,17 @@ namespace School.API.Models
 
         public int Level { get; set; } = 0;
 
+        /// <summary>
+        /// The MVC route behind the entry, as shown on the Page Permissions
+        /// form. Usually the same as Url; kept separate because the form
+        /// presents them as two fields.
+        /// </summary>
+        [MaxLength(400)]
+        public string? RoutingPageUrl { get; set; }
+
+        /// <summary>The serial the Page Permissions form prints in its first column.</summary>
+        public int? SrNo { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime? UpdatedAt { get; set; }

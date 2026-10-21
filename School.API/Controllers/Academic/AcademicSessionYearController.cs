@@ -17,6 +17,8 @@ public class AcademicSessionYearController : ControllerBase
         _service = service;
     }
 
+    // The sign-in page lists the sessions before anyone has signed in.
+    [AllowAnonymous]
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {

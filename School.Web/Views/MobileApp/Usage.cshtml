@@ -1,0 +1,104 @@
+@{
+    ViewData["Title"] = "App Usage";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+@*
+    How many of the mobile app logins are in use: students class by class, staff
+    designation by designation. A login is in use once its owner has signed in
+    and set their own password; one still on the slip's PIN has never been used.
+*@
+
+<style>
+    .form-section { background: #f8fafc; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+    .hint { font-size: 12px; color: #64748b; }
+    .usage { width: 100%; max-width: 820px; border-collapse: collapse; margin: 0 auto 22px; table-layout: fixed; }
+    .usage th, .usage td { border: 1px solid #333; padding: 4px 10px; text-align: center; font-size: 15px; }
+    .usage thead th { background: #bfbfbf; font-size: 18px; font-weight: 700; }
+    .usage td.name { text-align: center; color: #000; }
+    .usage .tot { color: #1f6fb8; }
+    .usage .use { color: #16a34a; }
+    .usage .not { color: #dc2626; }
+    .usage .pct { color: #334155; }
+    .usage thead th.tot, .usage thead th.use, .usage thead th.not { font-size: 18px; }
+    .usage tfoot td { font-weight: 800; font-size: 18px; }
+    .usage-title { text-align: center; font-weight: 700; font-size: 17px; margin: 6px 0 8px; }
+</style>
+
+<div class="container-fluid">
+    <div class="card"><div class="card-body">
+        <div class="form-section">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3"><label class="form-label">Campus</label>
+                    <select class="form-select" id="campusId"><option value="">All campuses</option></select></div>
+                <div class="col-md-9 d-flex gap-2">
+                    <button class="btn btn-primary" onclick="loadUsage()"><i class="bi bi-search"></i> Load</button>
+                    <button class="btn btn-outline-dark" onclick="printUsage()"><i class="bi bi-printer"></i> Print</button>
+                </div>
+            </div>
+            <div class="hint mt-2">
+                <b>Use APP</b>: signed in to the app and set their own password. <b>Not Use APP</b>: login made, but the PIN on the slip has never been used.
+                Students are counted in their current class; a parent signing in with one child's login uses the app for all their children,
+                so a brother or sister still on the PIN shows under Not Use APP.
+            </div>
+        </div>
+
+        <div id="report"><div class="text-center text-muted py-4">Loading...</div></div>
+    </div></div>
+</div>
+
+@section Scripts {
+<script>
+    const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const pct = (a, b) => b > 0 ? (a * 100 / b).toFixed(1) + '%' : '-';
+    // The same column widths in every table, so the Students + Staff line sits under the columns above.
+    const COLS = '<colgroup><col style="width:32%"><col span="4" style="width:17%"></colgroup>';
+
+    $(async function () {
+        const campuses = await fetch(`${API_BASE}/campus`).then(r => r.ok ? r.json() : []).catch(() => []);
+        campuses.forEach(c => $('#campusId').append(`<option value="${c.vid}">${esc(c.vName)}</option>`));
+        $('#campusId').on('change', loadUsage);
+        loadUsage();
+    });
+
+    function table(title, first, rows) {
+        if (!rows.length) return `<div class="usage-title">${title}</div><div class="text-center text-muted mb-4">No logins made yet.</div>`;
+        const t = rows.reduce((a, r) => ({ total: a.total + r.total, use: a.use + r.useApp, not: a.not + r.notUseApp }), { total: 0, use: 0, not: 0 });
+        return `<div class="usage-title">${title}</div>
+        <table class="usage">${COLS}
+            <thead><tr><th>${first}</th><th class="tot">Total ${title}</th><th class="use">Use APP</th><th class="not">Not Use APP</th><th class="pct">Use %</th></tr></thead>
+            <tbody>${rows.map(r => `<tr><td class="name">${esc(r.name)}</td><td class="tot">${r.total}</td><td class="use">${r.useApp}</td><td class="not">${r.notUseApp}</td><td class="pct">${pct(r.useApp, r.total)}</td></tr>`).join('')}</tbody>
+            <tfoot><tr><td>Totals</td><td class="tot">${t.total}</td><td class="use">${t.use}</td><td class="not">${t.not}</td><td class="pct">${pct(t.use, t.total)}</td></tr></tfoot>
+        </table>`;
+    }
+
+    let _last = null;
+    async function loadUsage() {
+        const campus = $('#campusId').val();
+        $('#report').html('<div class="text-center text-muted py-4">Loading...</div>');
+        const r = await fetch(`${API_BASE}/app-admin/usage${campus ? `?campusId=${campus}` : ''}`).catch(() => null);
+        if (!r || !r.ok) { $('#report').html('<div class="text-center text-danger py-4">Could not load the report.</div>'); return; }
+        const d = _last = await r.json();
+        const all = [...d.students, ...d.staff].reduce((a, x) => ({ total: a.total + x.total, use: a.use + x.useApp, not: a.not + x.notUseApp }), { total: 0, use: 0, not: 0 });
+        $('#report').html(table('Students', 'Class', d.students) + table('Staff', 'Designation', d.staff) + `
+            <table class="usage">${COLS}<tfoot><tr>
+                <td>Students + Staff</td><td class="tot">${all.total}</td><td class="use">${all.use}</td><td class="not">${all.not}</td><td class="pct">${pct(all.use, all.total)}</td>
+            </tr></tfoot></table>`);
+    }
+
+    function printUsage() {
+        if (!_last) return;
+        const campus = $('#campusId').val() ? $('#campusId option:selected').text() : 'All campuses';
+        const css = [...document.querySelectorAll('style')].map(s => s.textContent).find(t => t.includes('.usage')) || '';
+        const w = window.open('', '_blank');
+        w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>App Usage</title>
+            <style>body{font-family:Calibri,Arial,sans-serif;margin:12mm} h2{text-align:center;margin:0 0 2px} .sub{text-align:center;color:#555;margin-bottom:10px} ${css}
+            @@page{size:A4 portrait;margin:8mm}</style></head><body>
+            <h2>Mobile App Usage</h2><div class="sub">${esc(campus)} &middot; ${fmtDate(new Date())}</div>
+            ${document.getElementById('report').innerHTML}</body></html>`);
+        w.document.close();
+        w.focus();
+        setTimeout(() => w.print(), 300);
+    }
+</script>
+}

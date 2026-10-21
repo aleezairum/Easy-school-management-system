@@ -37,3 +37,11 @@ Desktop.ini
 
 # macOS
 .DS_Store
+
+# Documents, demo videos and their build scripts - kept on this machine, not in git.
+docs/
+
+firebase-service-account*.json
+
+# The built Android app (mobile/easyschool_app/build-apk.ps1) - published with the site, not kept in git.
+School.Web/AppDownloads/

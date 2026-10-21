@@ -177,15 +177,30 @@
 		loadInstitute();
 	});
 
+	// Holds a newly chosen logo until Save. Null means "no new picture", which
+	// tells the server to keep whatever logo is already stored.
+	let pendingLogo = null;
+
 	function previewLogo(input) {
-		if (input.files && input.files[0]) {
-			const reader = new FileReader();
-			reader.onload = function (e) {
-				$('#logoPreview').attr('src', e.target.result).show();
-				$('#logoPlaceholder').hide();
-			};
-			reader.readAsDataURL(input.files[0]);
+		if (!input.files || !input.files[0]) return;
+
+		const file = input.files[0];
+
+		// The picture is stored in the profile row itself, so it has to be
+		// small enough to belong in a database column and in every backup.
+		if (file.size > 400 * 1024) {
+			toastWarning('Logo must be under 400 KB. Please choose a smaller picture.');
+			input.value = '';
+			return;
 		}
+
+		const reader = new FileReader();
+		reader.onload = function (e) {
+			pendingLogo = e.target.result;
+			$('#logoPreview').attr('src', e.target.result).show();
+			$('#logoPlaceholder').hide();
+		};
+		reader.readAsDataURL(file);
 	}
 
 	async function loadInstitute() {
@@ -258,7 +273,13 @@
 			PostalCode: $('#postalCode').val().trim(),
 			PrincipalName: $('#principalName').val().trim(),
 			PrincipalPhone: $('#principalPhone').val().trim(),
-			PrincipalEmail: $('#principalEmail').val().trim()
+			PrincipalEmail: $('#principalEmail').val().trim(),
+
+			// The logo the form lets you choose was never sent anywhere, so
+			// picking one and saving left the old one — or none at all. Only a
+			// NEWLY chosen picture is sent; the server keeps what it has when
+			// this is null, so saving a phone number cannot wipe the logo.
+			LogoUrl: pendingLogo
 		};
 
 		$('#loadingOverlay').css('display', 'flex');
@@ -270,6 +291,7 @@
 			});
 
 			if (response.ok) {
+				pendingLogo = null;          // it is on the server now
 				toastSuccess('Institute details saved successfully.');
 			} else {
 				const error = await response.json();

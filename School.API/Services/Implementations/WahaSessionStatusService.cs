@@ -20,6 +20,15 @@ namespace School.API.Services.Implementations
         private WahaSessionStatus? _cached;
         private DateTime _cachedAtUtc;
 
+        /// <summary>
+        /// How long a send failure keeps WAHA counted as unavailable. When it
+        /// runs out the next message is tried again; if WAHA is still stuck,
+        /// that one is held too and the window starts over.
+        /// </summary>
+        private static readonly TimeSpan SendFailureWindow = TimeSpan.FromMinutes(10);
+        private DateTime _sendFailingUntilUtc;
+        private string? _sendFailure;
+
         public WahaSessionStatusService(ILogger<WahaSessionStatusService> logger, IConfiguration configuration)
         {
             _logger = logger;
@@ -29,8 +38,33 @@ namespace School.API.Services.Implementations
             _apiKey = configuration["Wasender:ApiKey"] ?? configuration["Waha:ApiKey"];
         }
 
+        public void ReportSendFailure(string reason)
+        {
+            _sendFailure = reason;
+            _sendFailingUntilUtc = DateTime.UtcNow + SendFailureWindow;
+            _logger.LogWarning("[WAHA] Session reports WORKING but sending fails; holding sends for {Minutes} min. {Reason}",
+                SendFailureWindow.TotalMinutes, reason);
+        }
+
+        public void ReportSendSuccess()
+        {
+            _sendFailingUntilUtc = default;
+            _sendFailure = null;
+        }
+
         public async Task<WahaSessionStatus> GetStatusAsync(bool forceRefresh = false)
         {
+            if (forceRefresh)
+                ReportSendSuccess();
+            else if (DateTime.UtcNow < _sendFailingUntilUtc)
+                return new WahaSessionStatus
+                {
+                    Connected = false,
+                    Status = "SEND_FAILING",
+                    Error = _sendFailure,
+                    CheckedAtUtc = DateTime.UtcNow
+                };
+
             if (!forceRefresh && _cached != null && DateTime.UtcNow - _cachedAtUtc < CacheTtl)
                 return _cached;
 

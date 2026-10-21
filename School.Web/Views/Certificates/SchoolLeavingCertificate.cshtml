@@ -7,7 +7,7 @@
     {
         if (d == null || d == DBNull.Value) return "";
         DateTime dt;
-        return DateTime.TryParse(d.ToString(), out dt) ? dt.ToString("dd-MM-yyyy") : "";
+        return DateTime.TryParse(d.ToString(), out dt) ? dt.ToString("dd-MMM-yyyy") : "";
     }
 
     string NumberToWords(int n)

@@ -92,8 +92,9 @@ namespace School.API.Services.Implementations.HR
 
         public async Task<SchoolTimingDayDto?> UpdateDayAsync(int dayId, SaveSchoolTimingDayTimeDto dto)
         {
-            if (dto.TimeOut <= dto.TimeIn)
-                throw new InvalidOperationException("End time must be after the start time.");
+            // An end at or before the start means the shift runs past midnight.
+            if (dto.TimeOut == dto.TimeIn)
+                throw new InvalidOperationException("Start and end time cannot be the same.");
 
             return await _repository.UpdateDayAsync(dayId, dto);
         }
@@ -169,9 +170,11 @@ namespace School.API.Services.Implementations.HR
                 if (IsWeeklyOff(date, dto.OffDay1, dto.OffDay2)) continue;
                 if (!seen.Add(date)) continue;
 
-                if (day.TimeOut <= day.TimeIn)
+                // Past midnight is allowed — see Validate(). Only a zero-length
+                // day is refused.
+                if (day.TimeOut == day.TimeIn)
                     throw new InvalidOperationException(
-                        $"{date:dd MMM yyyy}: end time must be after the start time.");
+                        $"{date:dd-MMM-yyyy}: start and end time cannot be the same.");
 
                 // "Overridden" is worked out here rather than trusted from the
                 // client: it simply means this day does not match what the range
@@ -220,7 +223,7 @@ namespace School.API.Services.Implementations.HR
             return days;
         }
 
-        // 1 = Sunday .. 7 = Saturday, the convention HrShift and Employees use.
+        // 1 = Sunday .. 7 = Saturday, the convention HrSchoolTiming and Employees use.
         private static bool IsWeeklyOff(DateTime date, byte? offDay1, byte? offDay2)
         {
             var dow = (byte)((int)date.DayOfWeek + 1);
@@ -232,8 +235,13 @@ namespace School.API.Services.Implementations.HR
             if (dto.EndDate.Date < dto.StartDate.Date)
                 throw new InvalidOperationException("End date cannot be before the start date.");
 
-            if (dto.TimeOut <= dto.TimeIn)
-                throw new InvalidOperationException("School end time must be after the start time.");
+            // An end time at or before the start is NOT an error: it is a shift
+            // that runs past midnight, which is how the guard works — 7:00 PM to
+            // 7:00 AM. Rejecting it made the night shift impossible to enter.
+            // The one thing still refused is a start equal to its end, which
+            // describes either nothing or a full 24 hours.
+            if (dto.TimeOut == dto.TimeIn)
+                throw new InvalidOperationException("Start and end time cannot be the same.");
 
             if (dto.FridayTimeIn.HasValue != dto.FridayTimeOut.HasValue)
                 throw new InvalidOperationException("Set both Friday times, or neither.");

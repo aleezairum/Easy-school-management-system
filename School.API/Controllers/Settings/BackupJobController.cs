@@ -89,6 +89,8 @@ namespace School.API.Controllers.Settings
             return Redirect(authUrl);
         }
 
+        // Google redirects the browser here; the one-time state in the cache is the guard.
+        [Microsoft.AspNetCore.Authorization.AllowAnonymous]
         [HttpGet("oauth/callback")]
         public async Task<IActionResult> OAuthCallback([FromQuery] string? code, [FromQuery] string? state, [FromQuery] string? error)
         {

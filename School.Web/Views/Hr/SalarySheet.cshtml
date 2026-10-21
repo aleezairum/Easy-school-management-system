@@ -30,7 +30,7 @@
 
     function exportExcel(e) {
         e.preventDefault();
-        window.open(`${API_BASE}/hr/reports/salary-sheet?runId=${runId}&format=xlsx`, '_blank');
+        window.open(apiFileUrl(`${API_BASE}/hr/reports/salary-sheet?runId=${runId}&format=xlsx`), '_blank');
         return false;
     }
 

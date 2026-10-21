@@ -59,9 +59,12 @@ namespace School.API.Repositories.Implementations.Academic
             var resultList = await _context
                 .Set<ResponseDto>()
                 .FromSqlRaw(
-                    "EXEC SpSave_SMSClass @VID={0}, @VName={1}, @IsActive={2}, @UserID={3}, @UserIP={4}",
+                    "EXEC SpSave_SMSClass @VID={0}, @VName={1}, @VName_Urdu={2}, @IsActive={3}, @UserID={4}, @UserIP={5}",
                     dto.VID,
                     dto.VName,
+                    // DBNull rather than null: FromSqlRaw drops a null argument
+                    // and the parameters after it shift up one place.
+                    (object?)dto.VNameUrdu ?? DBNull.Value,
                     dto.IsActive,
                     userId,
                     userIp)

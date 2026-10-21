@@ -21,7 +21,8 @@ namespace School.API.Services.Interfaces
         /// </summary>
         Task<(bool ok, string? error, WaMessageDto? message)> SendReplyAsync(
             string waId, string text,
-            byte[]? documentBytes = null, string? documentFileName = null);
+            byte[]? documentBytes = null, string? documentFileName = null,
+            SmsInteractiveList? interactive = null);
 
         Task<int> MarkReadAsync(string waId);
 

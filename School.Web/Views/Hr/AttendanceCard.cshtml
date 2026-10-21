@@ -1,0 +1,71 @@
+@{
+    ViewData["Title"] = "Staff Attendance Card";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+@*
+    Each employee's attendance for the month (or any range up to two months),
+    day by day, with the day's hours, the minutes late, early and out of
+    school, what they cost, and the totals. Printed one card per page - see
+    wwwroot/js/attendanceCardPrint.js.
+*@
+
+<div class="container-fluid">
+    <div id="alertContainer"></div>
+
+    <div class="card mb-3"><div class="card-body">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-2"><label class="form-label">From</label><input type="date" class="form-control" id="fFrom" /></div>
+            <div class="col-md-2"><label class="form-label">To</label><input type="date" class="form-control" id="fTo" /></div>
+            <div class="col-md-2"><label class="form-label">Campus</label>
+                <select class="form-select" id="fCampus"><option value="">All campuses</option></select></div>
+            <div class="col-md-3"><label class="form-label">Designation</label>
+                <select class="form-select" id="fDesignation"><option value="">All designations</option></select></div>
+            <div class="col-md-3"><label class="form-label">Employee</label>
+                <select class="form-select" id="fEmployee"><option value="">All employees</option></select></div>
+        </div>
+        <div class="d-flex gap-2 mt-3">
+            <button class="btn btn-primary" onclick="loadCards()"><i class="bi bi-search"></i> Load</button>
+            <button class="btn btn-dark" onclick="printAttendanceCards(_cards)"><i class="bi bi-printer"></i> Print All</button>
+            <span id="cardInfo" class="text-muted small align-self-center ms-2"></span>
+        </div>
+    </div></div>
+
+    <div id="cards"></div>
+</div>
+
+@section Scripts {
+<script src="~/js/hrFilters.js" asp-append-version="true"></script>
+<script src="~/js/attendanceCardPrint.js" asp-append-version="true"></script>
+<script>
+    let _cards = [];
+
+    $(document).ready(function () {
+        // This month so far.
+        const now = new Date();
+        $('#fFrom').val(toInputDate(new Date(now.getFullYear(), now.getMonth(), 1)));
+        $('#fTo').val(toInputDate(new Date(now.getFullYear(), now.getMonth() + 1, 0)));
+        $('head').append(`<style>#cards ${AC_CSS.replace(/\n\s*\./g, '\n#cards .')} #cards .ac-card{background:#fff;border:1px solid #dee2e6;border-radius:8px;padding:14px;margin-bottom:14px;}</style>`);
+        hrInitFilters();
+    });
+
+    async function loadCards() {
+        const from = $('#fFrom').val(), to = $('#fTo').val();
+        if (!from || !to) { toastWarning('Choose From and To dates'); return; }
+        $('#cards').html('<div class="text-center text-muted py-4">Loading...</div>');
+        const res = await fetch(`${API_BASE}/hr/reports/attendance-card?from=${from}&to=${to}${hrFilterQuery()}`);
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            $('#cards').empty();
+            toastError(err.message || 'Failed to load attendance cards'); return;
+        }
+        _cards = await res.json();
+        $('#cardInfo').text(`${_cards.length} card(s)`);
+        if (!_cards.length) { $('#cards').html('<div class="text-center text-muted py-4">No staff found.</div>'); return; }
+        $('#cards').html(_cards.map((c, i) => `
+            <div class="text-end mb-1">
+                <button class="btn btn-sm btn-outline-dark" onclick="printAttendanceCards([_cards[${i}]])"><i class="bi bi-printer"></i> Print this card</button>
+            </div>${acCardHtml(c, false)}`).join(''));
+    }
+</script>
+}

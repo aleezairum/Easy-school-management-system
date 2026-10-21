@@ -80,6 +80,10 @@ BEGIN
       AND CAST(F.VDate AS DATE) <= @Till
       AND F.IsActive = 1
       AND SA.StatusID = 1
+      -- A parent who has promised to pay by a date that has not yet passed
+      -- gets no reminder until it does. Same rule as the unpaid report, asked
+      -- of the same view, so a child can never be off one list and on the other.
+      AND NOT EXISTS (SELECT 1 FROM dbo.vwActiveFeePromise PRM WHERE PRM.StudentID = F.StudentID)
       AND (@VID       IS NULL OR @VID       = 0 OR F.VID       = @VID)
       AND (@StudentID IS NULL OR @StudentID = 0 OR F.StudentID = @StudentID)
       AND (@SessionID IS NULL OR @SessionID = 0 OR F.SessionID = @SessionID)
@@ -127,6 +131,10 @@ BEGIN
       AND CAST(F.VDate AS DATE) <= @Today
       AND F.IsActive = 1
       AND SA.StatusID = 1
+      -- A parent who has promised to pay by a date that has not yet passed
+      -- gets no reminder until it does. Same rule as the unpaid report, asked
+      -- of the same view, so a child can never be off one list and on the other.
+      AND NOT EXISTS (SELECT 1 FROM dbo.vwActiveFeePromise PRM WHERE PRM.StudentID = F.StudentID)
       -- @VID/@TillDate only chose the students in step 1; they must not
       -- narrow the dues listed here.
       AND (@SessionID IS NULL OR @SessionID = 0 OR F.SessionID = @SessionID)

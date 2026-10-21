@@ -1,0 +1,329 @@
+@{
+    ViewData["Title"] = "Extra Daily";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+@*
+    Extra days, paid on top of the salary, for staff who took no day off in a
+    month that had more than a set number of working days.
+
+    The threshold is a SETTING (20 to start), not a number in the code. The
+    number of extra days differs by designation and is remembered for next
+    month; any one person's figure can still be changed by hand.
+
+    Each extra day is paid at the salary sheet's Daily Pay (Basic / days in the
+    month). Fill this in BEFORE generating the payroll. See Scripts/ExtraDays.sql.
+*@
+
+<style>
+    .loading-overlay { position: absolute; inset: 0; background: rgba(255,255,255,.8); display: flex; align-items: center; justify-content: center; z-index: 100; border-radius: 16px; }
+    .spinner-border { width: 3rem; height: 3rem; border-width: .3rem; }
+    .form-section { background: #f8fafc; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+    .section-title { font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; }
+    #xdTable th, #xdTable td { font-size: 13px; vertical-align: middle; }
+    #xdTable thead th { text-align: center; background: #f0f4f8; }
+    #xdTable td.num { text-align: right; }
+    #xdTable td.mid { text-align: center; }
+    #xdTable input { text-align: right; }
+    tr.excluded td { color: #94a3b8; background: #fafafa; }
+    .reason { font-size: 11px; color: #b45309; }
+    .emp-sub { font-size: 11px; color: #64748b; }
+    .rule-box { display: flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 10px; }
+    .rule-box input { width: 70px; text-align: right; }
+</style>
+
+<div class="container-fluid">
+    <div id="alertContainer"></div>
+
+    <div class="card">
+        <div class="card-body position-relative">
+            <div id="loadingOverlay" class="loading-overlay" style="display:none;">
+                <div class="spinner-border text-success" role="status"><span class="visually-hidden">Loading...</span></div>
+            </div>
+
+            <div class="form-section">
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-2">
+                        <label class="form-label">Month</label>
+                        <select class="form-select" id="month"></select>
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label">Year</label>
+                        <select class="form-select" id="year"></select>
+                    </div>
+                    @* The threshold. A setting, saved with the sheet. *@
+                    <div class="col-md-2">
+                        <label class="form-label">Working days more than</label>
+                        <input type="number" class="form-control" id="minWorkingDays" min="0" max="31" value="20" />
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Campus</label>
+                        <select class="form-select" id="fCampus"><option value="">All campuses</option></select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Designation</label>
+                        <select class="form-select" id="fDesignation" multiple></select>
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label">Sort by</label>
+                        <select class="form-select" id="fSort">
+                            <option value="code" selected>Code</option>
+                            <option value="name">Name</option>
+                            <option value="designation">Designation</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1">
+                        <button class="btn btn-primary w-100" onclick="loadSheet()"><i class="bi bi-search"></i> Load</button>
+                    </div>
+                    <div class="col-md-1">
+                        <button class="btn btn-success w-100" onclick="saveSheet()"><i class="bi bi-check-lg"></i> Save</button>
+                    </div>
+                </div>
+                <div class="emp-sub mt-2">
+                    Listed: staff with <strong>no day off</strong> in the month — no leave, absence, half day,
+                    or unmarked working day — in a month with <strong>more working days</strong> than the figure above.
+                    Extra Daily is paid per day at the sheet's Daily Pay (Basic ÷ days in the month).
+                    Save here <strong>before</strong> generating the payroll.
+                </div>
+            </div>
+
+            @* Extra days per designation. Typing a figure here fills it in for
+               everybody of that designation below; each person can still be
+               changed by hand. Remembered for next month. *@
+            <div class="form-section" id="rulesSection" style="display:none;">
+                <div class="section-title"><i class="bi bi-diagram-3 me-1"></i>Extra Daily by designation</div>
+                <div class="d-flex flex-wrap gap-2" id="rulesBox"></div>
+            </div>
+
+            <div class="d-flex align-items-center gap-3 mb-2">
+                <span id="summary" class="emp-sub"></span>
+                <div class="form-check ms-auto mb-0">
+                    <input class="form-check-input" type="checkbox" id="showExcluded" />
+                    <label class="form-check-label emp-sub" for="showExcluded">Show staff who do not qualify, and why</label>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover table-sm" id="xdTable">
+                    <thead>
+                        <tr>
+                            <th style="width:50px;">Sr.No.</th>
+                            <th style="text-align:left;">Name</th>
+                            <th style="text-align:left;">Designation</th>
+                            <th style="text-align:left;">Campus</th>
+                            <th>Basic Pay</th>
+                            <th>Daily Pay</th>
+                            <th>Working Days</th>
+                            <th>Present</th>
+                            <th style="width:100px;">Extra Daily</th>
+                            <th>Extra Daily Pay</th>
+                        </tr>
+                    </thead>
+                    <tbody id="xdBody">
+                        <tr><td colspan="10" class="text-center text-muted py-4">Choose a month and click Load.</td></tr>
+                    </tbody>
+                    <tfoot id="xdFoot"></tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
+                         'July', 'August', 'September', 'October', 'November', 'December'];
+    let sheet = null;
+
+    $(document).ready(function () {
+        const now = new Date();
+        MONTH_NAMES.forEach((m, i) => $('#month').append(`<option value="${i + 1}">${m}</option>`));
+        for (let y = now.getFullYear() - 2; y <= now.getFullYear() + 1; y++)
+            $('#year').append(`<option value="${y}">${y}</option>`);
+
+        // Last month by default: extra days are settled after the month ends.
+        const last = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        $('#month').val(last.getMonth() + 1);
+        $('#year').val(last.getFullYear());
+
+        fetch(`${API_BASE}/campus`).then(r => r.ok ? r.json() : []).then(list => {
+            list.forEach(c => $('#fCampus').append(`<option value="${c.vid}">${esc(c.vName)}</option>`));
+        }).catch(() => {});
+
+        fetch(`${API_BASE}/Designation/dropdown`).then(r => r.ok ? r.json() : []).then(list => {
+            list.forEach(d => $('#fDesignation').append(`<option value="${d.id}">${esc(d.name)}</option>`));
+            if ($.fn.select2) {
+                $('#fDesignation').select2({
+                    theme: 'bootstrap-5', placeholder: 'All designations',
+                    allowClear: true, closeOnSelect: false, width: '100%'
+                });
+            }
+        }).catch(() => {});
+
+        $('#showExcluded').on('change', render);
+
+        // A designation's figure fills everybody of that designation.
+        $('#rulesBox').on('input', '.rule-days', function () {
+            const id = $(this).data('id');
+            const v = parseFloat($(this).val()) || 0;
+            $(`#xdBody tr[data-desig="${id}"] .xd-days`).val(v);
+            recalc();
+        });
+        $('#xdBody').on('input', '.xd-days', recalc);
+
+        // First load uses the SAVED threshold, so the box shows what is set.
+        loadSheet(true);
+    });
+
+    const money = v => (Number(v) || 0).toLocaleString('en-PK', { maximumFractionDigits: 0 });
+    const money2 = v => (Number(v) || 0).toLocaleString('en-PK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    async function loadSheet(useSavedThreshold) {
+        showLoading();
+        try {
+            const desig = ($('#fDesignation').val() || []).filter(Boolean).join(',');
+            const campus = $('#fCampus').val();
+
+            let url = `${API_BASE}/hr/payroll/extra-days?year=${$('#year').val()}&month=${$('#month').val()}`;
+            if (useSavedThreshold !== true) url += `&minWorkingDays=${parseInt($('#minWorkingDays').val()) || 0}`;
+            if (campus) url += `&campusId=${campus}`;
+            if (desig) url += `&designationIds=${desig}`;
+            url += `&sortBy=${$('#fSort').val() || 'code'}`;
+
+            const res = await fetch(url);
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                toastError(err.message || 'Could not load the month');
+                return;
+            }
+
+            sheet = await res.json();
+            $('#minWorkingDays').val(sheet.minWorkingDays);
+            render();
+        } catch (e) {
+            toastError('Error loading: ' + e.message);
+        } finally { hideLoading(); }
+    }
+
+    function render() {
+        const body = $('#xdBody').empty();
+        if (!sheet) return;
+
+        // Designation figures.
+        const rules = $('#rulesBox').empty();
+        sheet.rules.forEach(r => rules.append(`
+            <div class="rule-box">
+                <span>${esc(r.designationName)}</span>
+                <input type="number" min="0" step="0.5" class="form-control form-control-sm rule-days"
+                       data-id="${r.designationId}" value="${r.extraDays}" />
+                <span class="emp-sub">day(s)</span>
+            </div>`));
+        $('#rulesSection').toggle(sheet.rules.length > 0);
+
+        const showAll = $('#showExcluded').is(':checked');
+        const rows = sheet.rows.filter(r => r.eligible || showAll);
+
+        const eligible = sheet.rows.filter(r => r.eligible).length;
+        $('#summary').text(`${eligible} of ${sheet.rows.length} staff qualify`
+            + ` (more than ${sheet.minWorkingDays} working days, no day off).`);
+
+        if (!rows.length) {
+            body.html(`<tr><td colspan="10" class="text-center text-muted py-4">
+                Nobody qualifies for this month with these filters.
+                Tick "Show staff who do not qualify" to see why.</td></tr>`);
+            $('#xdFoot').empty();
+            return;
+        }
+
+        rows.forEach((r, i) => {
+            body.append(`
+                <tr data-id="${r.employeeId}" data-desig="${r.designationId ?? ''}"
+                    data-daily="${r.dailyPay}" class="${r.eligible ? '' : 'excluded'}">
+                    <td class="mid">${i + 1}</td>
+                    <td><strong>${esc(r.employeeName)}</strong>
+                        <div class="emp-sub">${esc(r.employeeCode)}</div>
+                        ${r.eligible ? '' : `<div class="reason"><i class="bi bi-info-circle"></i> ${esc(r.reason)}</div>`}
+                        ${!r.eligible && r.saved ? '<div class="reason">Extra Daily was saved earlier but no longer applies.</div>' : ''}
+                    </td>
+                    <td>${esc(r.designationName || '-')}</td>
+                    <td>${esc(r.campusName || '-')}</td>
+                    <td class="num">${money(r.basic)}</td>
+                    <td class="num">${money2(r.dailyPay)}</td>
+                    <td class="mid">${r.workingDays}</td>
+                    <td class="mid">${r.presentDays}</td>
+                    <td>${r.eligible
+                        ? `<input type="number" min="0" step="0.5" class="form-control form-control-sm xd-days" value="${r.extraDays}" />`
+                        : '<span class="emp-sub">—</span>'}</td>
+                    <td class="num xd-pay">${money2(r.extraDaysPay)}</td>
+                </tr>`);
+        });
+
+        recalc();
+    }
+
+    // Extra Days x Daily Pay, row by row and in total, as the office types.
+    function recalc() {
+        let days = 0, pay = 0;
+        $('#xdBody tr[data-id]').each(function () {
+            const $t = $(this);
+            const $in = $t.find('.xd-days');
+            if (!$in.length) return;
+            const d = parseFloat($in.val()) || 0;
+            const p = Math.round(d * (parseFloat($t.data('daily')) || 0) * 100) / 100;
+            $t.find('.xd-pay').text(money2(p));
+            days += d; pay += p;
+        });
+        $('#xdFoot').html(`
+            <tr class="table-light">
+                <td colspan="8" class="text-end"><strong>Total</strong></td>
+                <td class="text-end"><strong>${days}</strong></td>
+                <td class="text-end"><strong>${money2(pay)}</strong></td>
+            </tr>`);
+    }
+
+    async function saveSheet() {
+        if (!sheet) { toastWarning('Load a month first'); return; }
+
+        const payload = {
+            Year: parseInt($('#year').val()),
+            Month: parseInt($('#month').val()),
+            MinWorkingDays: parseInt($('#minWorkingDays').val()) || 0,
+            Rules: $('#rulesBox .rule-days').map(function () {
+                return { DesignationId: parseInt($(this).data('id')), ExtraDays: parseFloat($(this).val()) || 0 };
+            }).get(),
+            // Everybody on screen who qualifies. Those who do not are sent with
+            // 0, so any figure saved for them earlier is cleared.
+            Rows: sheet.rows.map(r => {
+                const $in = $(`#xdBody tr[data-id="${r.employeeId}"] .xd-days`);
+                return { EmployeeId: r.employeeId, ExtraDays: r.eligible && $in.length ? (parseFloat($in.val()) || 0) : 0 };
+            })
+        };
+
+        showLoading();
+        try {
+            const res = await fetch(`${API_BASE}/hr/payroll/extra-days`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const out = await res.json().catch(() => ({}));
+            if (!res.ok) { toastError(out.message || 'Could not save'); return; }
+
+            if (out.refused && out.refused.length)
+                toastWarning('Not saved, no longer qualify: ' + out.refused.join('; '));
+            toastSuccess(`Saved Extra Daily for ${out.saved} member(s) of staff. Generate the payroll again for it to reach the salary sheet.`);
+            await loadSheet();
+        } catch (e) {
+            toastError('Error saving: ' + e.message);
+        } finally { hideLoading(); }
+    }
+
+    function showLoading() { $('#loadingOverlay').show(); }
+    function hideLoading() { $('#loadingOverlay').hide(); }
+
+    function esc(v) {
+        return (v ?? '').toString()
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+</script>
+}

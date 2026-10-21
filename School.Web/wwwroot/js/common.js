@@ -40,25 +40,85 @@ const API_BASE = isLocalDev
 let USER_ID = 0;
 let SESSION_ID = 0;
 
-// Auto-attach X-User-Id header to all API fetch calls
+// The API refuses calls without the signed-in user's token (a short JWT the
+// web server signs - School.Web/Services/ApiToken.cs). Dashboard pages get it
+// from the layout; a print page that loads common.js on its own fetches it
+// from the keep-alive ping before its first API call. The ping renews it.
+let API_TOKEN = '';
 const _originalFetch = window.fetch;
-window.fetch = function (url, options = {}) {
-    if (typeof url === 'string' && url.startsWith(API_BASE) && USER_ID) {
-        options.headers = Object.assign({}, options.headers, {
-            'X-User-Id': String(USER_ID)
-        });
+const _PING_URL = '/EasySchool/session/ping';
+let _tokenRequest = null;
+
+function refreshApiToken() {
+    if (!_tokenRequest) {
+        _tokenRequest = _originalFetch.call(window, _PING_URL, { credentials: 'same-origin', cache: 'no-store' })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (j) { if (j && j.token) API_TOKEN = j.token; return API_TOKEN; })
+            .catch(function () { return API_TOKEN; })
+            .finally(function () { _tokenRequest = null; });
     }
-    return _originalFetch.call(this, url, options);
+    return _tokenRequest;
+}
+
+function _isApiUrl(url) {
+    const href = typeof url === 'string' ? url : (url instanceof URL ? url.href : '');
+    return !!href && href.startsWith(API_BASE);
+}
+
+function _withApiHeaders(headers) {
+    const h = new Headers(headers || {});
+    if (API_TOKEN) h.set('Authorization', 'Bearer ' + API_TOKEN);
+    if (USER_ID) h.set('X-User-Id', String(USER_ID));
+    return h;
+}
+
+// Every fetch to the API carries the token. A 401 means the token went stale
+// (a tab left open for hours): get a fresh one and try once more; still 401
+// means the sign-in itself has ended, so go back to the sign-in page.
+window.fetch = async function (url, options) {
+    options = options || {};
+    if (!_isApiUrl(url)) return _originalFetch.call(this, url, options);
+    if (!API_TOKEN) await refreshApiToken();
+    const send = () => _originalFetch.call(window, url, Object.assign({}, options, { headers: _withApiHeaders(options.headers) }));
+    let res = await send();
+    if (res.status === 401) {
+        const before = API_TOKEN;
+        await refreshApiToken();
+        if (API_TOKEN && API_TOKEN !== before) res = await send();
+        if (res.status === 401) window.location.href = '/EasySchool/login';
+    }
+    return res;
 };
 
-// Keep MVC session alive while the tab is open — AJAX API calls don't touch it.
+// The same for jQuery's $.ajax (a few pages use it).
+document.addEventListener('DOMContentLoaded', function () {
+    // A print page has no token in the page: fetch it now, before anything is clicked.
+    if (!API_TOKEN) refreshApiToken();
+    if (!window.jQuery) return;
+    jQuery.ajaxPrefilter(function (opts, _orig, xhr) {
+        if (_isApiUrl(opts.url) && API_TOKEN) {
+            xhr.setRequestHeader('Authorization', 'Bearer ' + API_TOKEN);
+            if (USER_ID) xhr.setRequestHeader('X-User-Id', String(USER_ID));
+        }
+    });
+});
+
+// For what the browser opens by itself and so cannot send a header with -
+// <img src>, window.open of a PDF or Excel file: the token rides in the URL.
+function apiFileUrl(url) {
+    if (!API_TOKEN || !_isApiUrl(url)) return url;
+    return url + (url.indexOf('?') >= 0 ? '&' : '?') + 'access_token=' + encodeURIComponent(API_TOKEN);
+}
+
+// Keep the MVC session alive while the tab is open — AJAX API calls don't
+// touch it — and the API token fresh.
 (function () {
     function ping() {
         if (document.hidden) return;
-        fetch('/EasySchool/session/ping', { credentials: 'same-origin', cache: 'no-store' })
-            .catch(function () { });
+        refreshApiToken();
     }
     setInterval(ping, 5 * 60 * 1000);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) ping(); });
 })();
 
 /* ---------------------------------------------------------------------------
@@ -96,11 +156,20 @@ function parseCalendarDate(value) {
         : new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
 }
 
-// Instant -> date + time in the viewer's timezone.
+// The month names the whole application prints, spelled out here rather than
+// taken from the browser. A machine set to another language would otherwise
+// render "ago" or "أغسطس" on a sheet that goes to the department.
+const MONTH_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+// Instant -> "16-Aug-2026, 3:45 pm" in the viewer's timezone.
 function fmtDateTime(value, options) {
     if (!value) return '';
     const d = new Date(value);
-    return isNaN(d) ? '' : d.toLocaleString(undefined, options);
+    if (isNaN(d)) return '';
+    if (options) return d.toLocaleString(undefined, options);
+
+    return `${fmtDate(d)}, ${d.toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
 }
 
 // Instant -> time only, in the viewer's timezone.
@@ -110,10 +179,23 @@ function fmtTime(value, options) {
     return isNaN(d) ? '' : d.toLocaleTimeString(undefined, options);
 }
 
-// Calendar date -> date only. Never shifts.
+// Calendar date -> dd-MMM-yyyy, e.g. 16-Aug-1970. THE date format of this
+// application: every screen, every report, every printed sheet.
+//
+// Never shifts, and never changes with the machine it is read on. This used to
+// hand the date to the BROWSER's locale, so the same sheet read 16/08/1970 on
+// one computer and 8/16/1970 on the next, from nothing but a Windows region
+// setting. The month is spelled, which also settles that question for good:
+// 08-09-2026 is ambiguous to a reader, 08-Sep-2026 is not.
+//
+// Pass `options` to ask for something else deliberately; an explicit request
+// still goes through toLocaleDateString as before.
 function fmtDate(value, options) {
     const d = parseCalendarDate(value);
-    return d ? d.toLocaleDateString(undefined, options) : '';
+    if (!d) return '';
+    if (options) return d.toLocaleDateString(undefined, options);
+
+    return `${String(d.getDate()).padStart(2, '0')}-${MONTH_ABBR[d.getMonth()]}-${d.getFullYear()}`;
 }
 
 // LOCAL yyyy-MM-dd, for <input type="date">. Called with no argument it means

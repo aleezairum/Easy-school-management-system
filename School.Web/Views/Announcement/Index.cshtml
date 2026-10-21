@@ -1,0 +1,207 @@
+@{
+    ViewData["Title"] = "Announcements";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+@*
+    Notices for the whole school. Each runs from its start date to its end
+    date (no end date: until switched off) and is given on the WhatsApp menu
+    under "Announcements" - to parents, staff or both, on one campus or both.
+    A picture, if added, goes out with the text.
+*@
+
+<style>
+    .form-section { background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+    .form-section-title { font-size: 14px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #e2e8f0; }
+    .img-box { width: 140px; height: 140px; border: 2px dashed #e2e8f0; border-radius: 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #fff; }
+    .img-box img { max-width: 100%; max-height: 100%; }
+    .img-box i { font-size: 40px; color: #cbd5e1; }
+    #annTable td { vertical-align: middle; font-size: 13px; }
+    #annTable .msg { max-width: 420px; white-space: pre-wrap; }
+    .hint { font-size: 12px; color: #64748b; }
+</style>
+
+<div class="container-fluid">
+    <div id="alertContainer"></div>
+
+    <div class="card"><div class="card-body">
+        <div class="form-section">
+            <div class="form-section-title"><i class="bi bi-megaphone me-2"></i><span id="formTitle">New Announcement</span></div>
+            <input type="hidden" id="annId" value="0" />
+            <div class="row g-3">
+                <div class="col-md-9">
+                    <div class="row g-3">
+                        <div class="col-md-12"><label class="form-label">Title <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="title" maxlength="200" placeholder="e.g. Winter vacation" /></div>
+                        <div class="col-md-12"><label class="form-label">Announcement <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="message" rows="5" maxlength="3500"></textarea>
+                            <div class="hint text-end"><span id="msgCount">0</span> / 3500</div></div>
+                        <div class="col-md-3"><label class="form-label">From <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="startDate" /></div>
+                        <div class="col-md-3"><label class="form-label">To</label>
+                            <input type="date" class="form-control" id="endDate" />
+                            <div class="hint">Empty: until switched off</div></div>
+                        <div class="col-md-3"><label class="form-label">For</label>
+                            <select class="form-select" id="audience">
+                                <option value="0">Everyone</option>
+                                <option value="1">Parents only</option>
+                                <option value="2">Staff only</option>
+                            </select></div>
+                        <div class="col-md-3"><label class="form-label">Campus</label>
+                            <select class="form-select" id="campusId"><option value="">Both campuses</option></select></div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Picture (optional)</label>
+                    <div class="img-box mb-2" id="imgBox"><i class="bi bi-image"></i></div>
+                    <input type="file" class="form-control form-control-sm" id="imageFile" accept="image/*" />
+                    <div class="form-check mt-2 d-none" id="removeWrap">
+                        <input class="form-check-input" type="checkbox" id="removeImage" />
+                        <label class="form-check-label" for="removeImage">Remove picture</label>
+                    </div>
+                    <div class="form-check form-switch mt-3">
+                        <input class="form-check-input" type="checkbox" id="isActive" checked />
+                        <label class="form-check-label" for="isActive">Active</label>
+                    </div>
+                </div>
+            </div>
+            <div class="text-end mt-3">
+                <button class="btn btn-outline-secondary me-2" onclick="resetForm()"><i class="bi bi-x-lg"></i> Clear</button>
+                <button class="btn btn-success" id="btnSave" onclick="saveAnnouncement()"><i class="bi bi-check-lg"></i> Save</button>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover" id="annTable">
+                <thead><tr><th>Sr.No.</th><th>Title / Announcement</th><th>Period</th><th>For</th><th>Campus</th><th>Picture</th><th>Status</th><th></th></tr></thead>
+                <tbody id="annBody"><tr><td colspan="8" class="text-center text-muted py-4">Loading...</td></tr></tbody>
+            </table>
+        </div>
+    </div></div>
+</div>
+
+@section Scripts {
+<script src="~/js/imageUpload.js" asp-append-version="true"></script>
+<script>
+    const AUDIENCE = { 0: 'Everyone', 1: 'Parents', 2: 'Staff' };
+    let _list = [], _image = null;   // _image: a newly picked picture, ready to upload
+
+    const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+    $(document).ready(function () {
+        fetch(`${API_BASE}/campus`).then(r => r.ok ? r.json() : []).then(list =>
+            list.forEach(c => $('#campusId').append(`<option value="${c.vid}">${esc(c.vName)}</option>`))).catch(() => {});
+        $('#message').on('input', () => $('#msgCount').text($('#message').val().length));
+        $('#imageFile').on('change', async function () {
+            const f = this.files && this.files[0];
+            if (!f) return;
+            try {
+                _image = await imageFileToUpload(f);
+                $('#imgBox').html(`<img src="${_image.preview}" />`);
+                $('#removeImage').prop('checked', false);
+            } catch (e) { toastError(e.message); }
+        });
+        resetForm();
+        loadList();
+    });
+
+    function resetForm() {
+        $('#annId').val(0); $('#formTitle').text('New Announcement');
+        $('#title, #message, #endDate').val('');
+        $('#startDate').val(toInputDate());
+        $('#audience').val('0'); $('#campusId').val('');
+        $('#isActive').prop('checked', true);
+        $('#msgCount').text(0);
+        clearImage();
+        $('#removeWrap').addClass('d-none');
+    }
+
+    function clearImage() {
+        _image = null;
+        $('#imageFile').val('');
+        $('#imgBox').html('<i class="bi bi-image"></i>');
+        $('#removeImage').prop('checked', false);
+    }
+
+    function status(a) {
+        if (!a.isActive) return '<span class="badge bg-secondary">Off</span>';
+        if (a.isCurrent) return '<span class="badge bg-success">Running</span>';
+        const today = toInputDate();
+        return toInputDate(a.startDate) > today
+            ? '<span class="badge bg-info">Scheduled</span>'
+            : '<span class="badge bg-dark">Ended</span>';
+    }
+
+    async function loadList() {
+        _list = await fetch(`${API_BASE}/announcement`).then(r => r.ok ? r.json() : []).catch(() => []);
+        const body = $('#annBody');
+        if (!_list.length) { body.html('<tr><td colspan="8" class="text-center text-muted py-4">No announcements yet.</td></tr>'); return; }
+        body.html(_list.map((a, i) => `<tr>
+            <td>${i + 1}</td>
+            <td><strong>${esc(a.title)}</strong><div class="msg text-muted small">${esc(a.message.length > 220 ? a.message.slice(0, 220) + '...' : a.message)}</div></td>
+            <td class="text-nowrap">${fmtDate(a.startDate)}<br><span class="text-muted small">to ${a.endDate ? fmtDate(a.endDate) : 'until switched off'}</span></td>
+            <td>${AUDIENCE[a.audience]}</td>
+            <td>${a.campusName ? esc(a.campusName) : 'Both'}</td>
+            <td>${a.hasImage ? `<a href="${API_BASE}/announcement/${a.id}/image" target="_blank"><img src="${API_BASE}/announcement/${a.id}/image" style="height:48px;border-radius:6px" loading="lazy" /></a>` : '-'}</td>
+            <td>${status(a)}</td>
+            <td class="text-nowrap">
+                <button class="btn btn-sm btn-outline-primary" title="Edit" onclick="editAnnouncement(${a.id})"><i class="bi bi-pencil"></i></button>
+                <button class="btn btn-sm btn-outline-danger" title="Delete" onclick="deleteAnnouncement(${a.id})"><i class="bi bi-trash"></i></button>
+            </td></tr>`).join(''));
+    }
+
+    function editAnnouncement(id) {
+        const a = _list.find(x => x.id === id);
+        if (!a) return;
+        $('#annId').val(a.id); $('#formTitle').text('Edit Announcement');
+        $('#title').val(a.title); $('#message').val(a.message); $('#msgCount').text(a.message.length);
+        $('#startDate').val(toInputDate(a.startDate)); $('#endDate').val(a.endDate ? toInputDate(a.endDate) : '');
+        $('#audience').val(String(a.audience)); $('#campusId').val(a.campusId ? String(a.campusId) : '');
+        $('#isActive').prop('checked', a.isActive);
+        clearImage();
+        if (a.hasImage) {
+            $('#imgBox').html(`<img src="${API_BASE}/announcement/${a.id}/image?t=${Date.now()}" />`);
+            $('#removeWrap').removeClass('d-none');
+        } else $('#removeWrap').addClass('d-none');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function saveAnnouncement() {
+        const id = parseInt($('#annId').val()) || 0;
+        const dto = {
+            Title: $('#title').val().trim(), Message: $('#message').val().trim(),
+            StartDate: $('#startDate').val(), EndDate: $('#endDate').val() || null,
+            Audience: parseInt($('#audience').val()), CampusId: parseInt($('#campusId').val()) || null,
+            IsActive: $('#isActive').is(':checked'),
+            Image: _image ? { FileName: _image.fileName, ContentType: _image.contentType, Base64: _image.base64 } : null,
+            RemoveImage: !_image && $('#removeImage').is(':checked')
+        };
+        if (!dto.Title) { toastWarning('Write a title'); return; }
+        if (!dto.Message) { toastWarning('Write the announcement'); return; }
+        if (!dto.StartDate) { toastWarning('Choose the start date'); return; }
+
+        const btn = $('#btnSave').prop('disabled', true);
+        try {
+            const res = await fetch(`${API_BASE}/announcement${id ? '/' + id : ''}`, {
+                method: id ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(dto) });
+            if (res.ok) {
+                const a = await res.json();
+                toastSuccess(a.isCurrent ? 'Saved - now on the WhatsApp menu' : 'Saved');
+                resetForm(); loadList();
+            } else {
+                const err = await res.json().catch(() => ({}));
+                toastError(err.message || 'Failed to save');
+            }
+        } catch (e) { toastError('Error: ' + e.message); }
+        finally { btn.prop('disabled', false); }
+    }
+
+    async function deleteAnnouncement(id) {
+        const a = _list.find(x => x.id === id);
+        if (!await confirmDelete(`Delete the announcement "${esc(a ? a.title : '')}"?`)) return;
+        const res = await fetch(`${API_BASE}/announcement/${id}`, { method: 'DELETE' });
+        if (res.ok) { toastSuccess('Deleted'); if (parseInt($('#annId').val()) === id) resetForm(); loadList(); }
+        else toastError('Failed to delete');
+    }
+</script>
+}

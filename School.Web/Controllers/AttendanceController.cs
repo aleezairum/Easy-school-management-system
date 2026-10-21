@@ -26,6 +26,13 @@ namespace School.Web.Controllers
             return View();
         }
 
+        [Route("attendance/register")]
+        public IActionResult Register()
+        {
+            ViewData["Title"] = "Monthly Attendance Register";
+            return View();
+        }
+
         [Route("attendance/sheet")]
         public IActionResult Sheet()
         {

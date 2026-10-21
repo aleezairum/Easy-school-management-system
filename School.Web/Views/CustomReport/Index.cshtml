@@ -1,0 +1,521 @@
+@{
+    ViewData["Title"] = "Custom Reports";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+@*
+    Custom report builder for students and employees.
+
+    The screen never decides what is selectable — it asks the API for the
+    schema (/CustomReport/schema) and draws whatever comes back. Columns and
+    operators are whitelisted server-side in ReportFieldCatalog, so adding a
+    column is a change there, not here, and nothing typed on this page can
+    become SQL.
+
+    The chosen layout is remembered per entity in localStorage: the office runs
+    the same three or four reports over and over, and re-ticking twelve boxes
+    every morning is what stops people using a report builder.
+*@
+
+@section Styles {
+<style>
+    .print-header { display: none; }
+
+    .pt-title { display: flex; align-items: center; gap: 12px; }
+    .pt-icon {
+        width: 42px; height: 42px; border-radius: 10px; background: #e8f5ee; color: #008649;
+        display: flex; align-items: center; justify-content: center; font-size: 20px;
+    }
+    .pt-title h4 { margin: 0; font-size: 18px; font-weight: 700; }
+    .pt-sub { margin: 0; font-size: 13px; color: #64748b; }
+
+    .field-group { margin-bottom: 14px; }
+    .field-group-title {
+        font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase;
+        letter-spacing: .5px; margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px solid #e2e8f0;
+    }
+    .field-list { display: flex; flex-wrap: wrap; gap: 4px 18px; }
+    .field-list .form-check { margin: 0; min-width: 180px; }
+    .field-list .form-check-label { font-size: 13px; }
+
+    .filter-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+    .filter-row select, .filter-row input { min-width: 140px; }
+
+    #resultTable th, #resultTable td { font-size: 13px; white-space: nowrap; }
+    #resultTable thead th { text-align: center; vertical-align: middle; }
+
+    .summary-line { font-size: 13px; color: #475569; }
+
+    @@media print {
+        .no-print, .sidebar, .top-header, .topbar, .top-nav, .navbar,
+        .hamburger-btn, .header-actions, .header-search, .header-user-wrapper,
+        .toast-container, #toastContainer, .breadcrumb, .page-title,
+        .page-toolbar, .builder-card { display: none !important; }
+
+        .print-header { display: block !important; text-align: center; margin-bottom: 8px; }
+        .print-header .school-name { font-size: 17px; font-weight: 700; }
+        .print-header .school-address { font-size: 11px; }
+        .print-header .sheet-title { font-size: 14px; font-weight: 700; margin-top: 6px; }
+        .print-header .scope-line { font-size: 12px; font-weight: 600; margin-top: 3px; color: #000; }
+        .print-header .filter-line { font-size: 10px; margin-top: 4px; color: #000; }
+
+        /* Every heading centred, on paper as on screen. */
+        #resultTable thead th { text-align: center !important; vertical-align: middle; }
+
+        body { margin: 0 !important; padding: 0 !important; min-height: 0 !important; height: auto !important; }
+        /* Flex wrappers clip multi-page content to ONE page in Chrome print. */
+        .wrapper { display: block !important; min-height: 0 !important; height: auto !important; }
+        .main-content, .main-content.expanded { display: block !important; margin: 0 !important; min-height: 0 !important; height: auto !important; }
+        .content-area { display: block !important; overflow: visible !important; }
+        .main-content, .content-area, .container-fluid { margin: 0 !important; padding: 0 !important; width: 100% !important; max-width: 100% !important; }
+        .card { box-shadow: none !important; border: none !important; margin: 0 !important; }
+        .card-body { padding: 0 !important; }
+
+        .table-responsive { overflow: visible !important; }
+        #resultTable { width: 100% !important; border-collapse: collapse !important; font-size: 10px !important; }
+        #resultTable th, #resultTable td {
+            border: 1px solid black !important; color: #000 !important; padding: 3px 4px !important;
+            white-space: normal !important; word-wrap: break-word !important;
+        }
+        #resultTable thead { display: table-header-group !important; }
+        #resultTable tr { page-break-inside: avoid !important; }
+        #resultTable thead th { background: none !important; font-weight: 700 !important; }
+
+        @@page { size: A4 landscape; margin: 8mm; }
+    }
+</style>
+}
+
+<div class="container-fluid">
+    <div class="print-header">
+        <div class="school-name">SIR SYED MODEL HIGH SCHOOL (BOYS &amp; GIRLS)</div>
+        <div class="school-address">Chhonawala Road, Hasilpur, District Bahawalpur</div>
+        <div class="sheet-title" id="printTitle">Custom Report</div>
+        @* Campus and Category are named on their own line, and only when the
+           report is actually narrowed to one of each. A sheet for the whole
+           school must not carry a campus name, and a sheet for Boys must. *@
+        <div class="scope-line" id="printScope"></div>
+        <div class="filter-line" id="printFilters"></div>
+    </div>
+
+    <div class="page-toolbar no-print d-flex justify-content-between align-items-center mb-3">
+        <div class="pt-title">
+            <div class="pt-icon"><i class="bi bi-sliders2"></i></div>
+            <div>
+                <h4>Custom Reports</h4>
+                <p class="pt-sub">Pick the columns you want, add filters, then run and print</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3 no-print builder-card">
+        <div class="card-body">
+            <div class="row g-2 align-items-end mb-3">
+                <div class="col-md-3">
+                    <label class="form-label">Report of</label>
+                    <select class="form-select" id="entity">
+                        <option value="student">Students</option>
+                        <option value="employee">Teachers / Employees</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Sort by</label>
+                    <select class="form-select" id="sortBy"><option value="">Default order</option></select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Direction</label>
+                    <select class="form-select" id="sortDir">
+                        <option value="asc">Ascending</option>
+                        <option value="desc">Descending</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Max rows</label>
+                    <input type="number" class="form-control" id="take" value="1000" min="1" max="5000" />
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-primary w-100" onclick="runReport()">
+                        <i class="bi bi-play-fill"></i> Run Report
+                    </button>
+                </div>
+            </div>
+
+            <ul class="nav nav-tabs mb-3" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabColumns" type="button">
+                        <i class="bi bi-list-check"></i> Columns (<span id="colCount">0</span>)
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabFilters" type="button">
+                        <i class="bi bi-funnel"></i> Filters (<span id="filterCount">0</span>)
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="tabColumns">
+                    <div class="d-flex gap-2 mb-3">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="selectColumns('all')">Select all</button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="selectColumns('none')">Clear all</button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="selectColumns('default')">Reset to default</button>
+                    </div>
+                    <div id="fieldGroups"></div>
+                </div>
+
+                <div class="tab-pane fade" id="tabFilters">
+                    <div id="filterRows"></div>
+                    <button class="btn btn-sm btn-outline-primary mt-2" onclick="addFilter()">
+                        <i class="bi bi-plus-lg"></i> Add filter
+                    </button>
+                    <div class="text-muted mt-2" style="font-size: 12px;">
+                        All filters are applied together.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2 no-print">
+                <div class="summary-line" id="summary"></div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-secondary" onclick="exportCsv()">
+                        <i class="bi bi-filetype-csv"></i> CSV
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="window.print()">
+                        <i class="bi bi-printer"></i> Print
+                    </button>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover table-sm" id="resultTable">
+                    <thead id="resultHead"></thead>
+                    <tbody id="resultBody">
+                        <tr><td class="text-center text-muted py-4">Choose your columns and press Run Report.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    let schema = null;              // { entity, fields[], operators[] }
+    let lastResult = null;
+    // The filters the LAST run actually used - the heading is built from
+    // these, not from whatever is sitting in the filter rows now.
+    let lastFilters = [];
+
+    const STORE_KEY = e => `customReport:${e}`;
+
+    $(document).ready(function () {
+        $('#entity').on('change', () => loadSchema($('#entity').val()));
+        loadSchema('student');
+    });
+
+    async function loadSchema(entity) {
+        const res = await fetch(`${API_BASE}/CustomReport/schema?entity=${encodeURIComponent(entity)}`);
+        if (!res.ok) { toastError('Failed to load the report fields'); return; }
+
+        schema = await res.json();
+        renderFields();
+        renderSortOptions();
+
+        // Restore the last layout for this entity, if there is one.
+        const saved = readSaved(entity);
+        if (saved) applyLayout(saved); else selectColumns('default');
+
+        renderFilters(saved?.filters ?? []);
+        updateCounts();
+    }
+
+    function renderFields() {
+        const host = $('#fieldGroups').empty();
+        const groups = [...new Set(schema.fields.map(f => f.group))];
+
+        groups.forEach(group => {
+            const list = schema.fields.filter(f => f.group === group).map(f => `
+                <div class="form-check">
+                    <input class="form-check-input col-check" type="checkbox"
+                           id="col_${f.key}" value="${f.key}" onchange="updateCounts()" />
+                    <label class="form-check-label" for="col_${f.key}">${esc(f.label)}</label>
+                </div>`).join('');
+
+            host.append(`
+                <div class="field-group">
+                    <div class="field-group-title">${esc(group)}</div>
+                    <div class="field-list">${list}</div>
+                </div>`);
+        });
+    }
+
+    function renderSortOptions() {
+        const sel = $('#sortBy').empty().append('<option value="">Default order</option>');
+        schema.fields.forEach(f => sel.append(`<option value="${f.key}">${esc(f.label)}</option>`));
+    }
+
+    function selectColumns(mode) {
+        $('.col-check').each(function () {
+            const field = schema.fields.find(f => f.key === this.value);
+            this.checked = mode === 'all' ? true
+                         : mode === 'none' ? false
+                         : !!field?.default;
+        });
+        updateCounts();
+    }
+
+    function chosenColumns() {
+        return $('.col-check:checked').map((_, el) => el.value).get();
+    }
+
+    // ── Filters ──────────────────────────────────────────────────────────
+
+    let filterSeq = 0;
+
+    function addFilter(preset) {
+        const id = ++filterSeq;
+        const fieldOptions = schema.fields
+            .map(f => `<option value="${f.key}">${esc(f.label)}</option>`).join('');
+
+        $('#filterRows').append(`
+            <div class="filter-row" id="filter_${id}">
+                <select class="form-select form-select-sm f-field" onchange="onFilterFieldChange(${id})">
+                    ${fieldOptions}
+                </select>
+                <select class="form-select form-select-sm f-op" onchange="onFilterOpChange(${id})"></select>
+                <input type="text" class="form-control form-control-sm f-val" placeholder="value" />
+                <input type="text" class="form-control form-control-sm f-val2" placeholder="and" style="display:none;" />
+                <button class="btn btn-sm btn-outline-danger" onclick="$('#filter_${id}').remove(); updateCounts();">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>`);
+
+        if (preset) {
+            $(`#filter_${id} .f-field`).val(preset.field);
+        }
+        onFilterFieldChange(id);
+        if (preset) {
+            $(`#filter_${id} .f-op`).val(preset.operator);
+            onFilterOpChange(id);
+            $(`#filter_${id} .f-val`).val(preset.value ?? '');
+            $(`#filter_${id} .f-val2`).val(preset.value2 ?? '');
+        }
+        updateCounts();
+    }
+
+    function onFilterFieldChange(id) {
+        const row = $(`#filter_${id}`);
+        const field = schema.fields.find(f => f.key === row.find('.f-field').val());
+        if (!field) return;
+
+        // Only the operators this field's type accepts — no "contains" on a date.
+        const ops = schema.operators.filter(o => field.operators.includes(o.key));
+        row.find('.f-op').html(ops.map(o => `<option value="${o.key}">${esc(o.label)}</option>`).join(''));
+
+        const inputType = field.type === 'date' ? 'date' : field.type === 'number' ? 'number' : 'text';
+        row.find('.f-val, .f-val2').attr('type', inputType);
+
+        onFilterOpChange(id);
+    }
+
+    function onFilterOpChange(id) {
+        const row = $(`#filter_${id}`);
+        const op = schema.operators.find(o => o.key === row.find('.f-op').val());
+        const count = op ? op.valueCount : 1;
+
+        row.find('.f-val').toggle(count >= 1);
+        row.find('.f-val2').toggle(count === 2);
+    }
+
+    function renderFilters(list) {
+        $('#filterRows').empty();
+        (list || []).forEach(f => addFilter(f));
+    }
+
+    function collectFilters() {
+        return $('#filterRows .filter-row').map(function () {
+            const row = $(this);
+            return {
+                field: row.find('.f-field').val(),
+                operator: row.find('.f-op').val(),
+                value: row.find('.f-val').val(),
+                value2: row.find('.f-val2').val()
+            };
+        }).get();
+    }
+
+    function updateCounts() {
+        $('#colCount').text(chosenColumns().length);
+        $('#filterCount').text($('#filterRows .filter-row').length);
+    }
+
+    // ── Saved layout ─────────────────────────────────────────────────────
+    //
+    // Per browser, per entity. Nothing here is shared or authoritative — it
+    // only saves the office re-ticking the same boxes every morning — so a
+    // browser that refuses storage is not an error worth reporting.
+
+    function saveLayout() {
+        try {
+            localStorage.setItem(STORE_KEY(schema.entity), JSON.stringify({
+                columns: chosenColumns(),
+                filters: collectFilters(),
+                sortBy: $('#sortBy').val(),
+                sortDir: $('#sortDir').val()
+            }));
+        } catch { /* private window, storage blocked — no matter */ }
+    }
+
+    function readSaved(entity) {
+        try {
+            const raw = localStorage.getItem(STORE_KEY(entity));
+            return raw ? JSON.parse(raw) : null;
+        } catch { return null; }
+    }
+
+    function applyLayout(saved) {
+        $('.col-check').each(function () { this.checked = saved.columns.includes(this.value); });
+        $('#sortBy').val(saved.sortBy || '');
+        $('#sortDir').val(saved.sortDir || 'asc');
+    }
+
+    // ── Run ──────────────────────────────────────────────────────────────
+
+    async function runReport() {
+        const columns = chosenColumns();
+        if (columns.length === 0) {
+            toastError('Select at least one column.');
+            return;
+        }
+
+        const filters = collectFilters();
+
+        const body = {
+            Entity: schema.entity,
+            Columns: columns,
+            Filters: filters,
+            SortBy: $('#sortBy').val() || null,
+            SortDir: $('#sortDir').val(),
+            Take: parseInt($('#take').val()) || 1000
+        };
+
+        const res = await fetch(`${API_BASE}/CustomReport/run`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            toastError(err.message || 'Failed to run the report');
+            return;
+        }
+
+        lastResult = await res.json();
+        lastFilters = filters;
+        saveLayout();
+        renderResult();
+    }
+
+    function renderResult() {
+        const r = lastResult;
+        const head = $('#resultHead').empty();
+        const body = $('#resultBody').empty();
+
+        head.append('<tr><th style="width:60px;">Sr.No.</th>' +
+            r.columns.map(c => `<th>${esc(c.label)}</th>`).join('') + '</tr>');
+
+        if (r.rows.length === 0) {
+            body.html(`<tr><td colspan="${r.columns.length + 1}" class="text-center text-muted py-4">No rows matched.</td></tr>`);
+        } else {
+            r.rows.forEach((row, i) => {
+                body.append('<tr><td>' + (i + 1) + '</td>' +
+                    r.columns.map(c => `<td>${cell(row[c.key], c.type)}</td>`).join('') + '</tr>');
+            });
+        }
+
+        // Just "Students" or "Teachers / Employees". The sheet is what it is;
+        // calling it a "Custom Report" told the reader nothing they needed.
+        const label = schema.entity === 'student' ? 'Students' : 'Teachers / Employees';
+        $('#printTitle').text(label);
+
+        // Campus and Category go in the heading, and ONLY when the report is
+        // narrowed to a single one of each. Anything else stays on the filter
+        // line below: a sheet covering both campuses must not name a campus.
+        const scope = [];
+        const only = key => {
+            const hits = lastFilters.filter(f => f.field === key);
+            return hits.length === 1 && hits[0].operator === 'eq' && (hits[0].value || '').trim()
+                ? hits[0].value.trim() : null;
+        };
+        // The name on its own, with no "Campus:" in front of it. "Girls Campus"
+        // already says what it is, and the label only added clutter to a line
+        // that is read at a glance.
+        const campus = only('campus');
+        const category = only('staffCategory');
+        if (campus) scope.push(campus);
+        if (category) scope.push(category);
+        $('#printScope').text(scope.join('   |   '));
+
+        // The two above are already spelled out, so they are not repeated here.
+        const rest = r.appliedFilters.filter(t =>
+            !(campus && t.startsWith('Campus is')) && !(category && t.startsWith('Category is')));
+        $('#printFilters').text(rest.join('  •  '));
+
+        $('#summary').text(
+            `${r.rowCount} row${r.rowCount === 1 ? '' : 's'}` +
+            (r.truncated ? ' (cut off at the row limit — narrow the filters or raise Max rows)' : '') +
+            (r.appliedFilters.length ? `  •  ${r.appliedFilters.join('  •  ')}` : ''));
+
+        if (r.truncated) toastWarning('More rows matched than the limit allows.');
+    }
+
+    function cell(value, type) {
+        if (value === null || value === undefined) return '';
+        if (type === 'date') return fmtDate(value);
+        if (type === 'bool') return value ? 'Yes' : 'No';
+        if (type === 'number') return Number(value).toLocaleString('en-US');
+        return esc(value);
+    }
+
+    function exportCsv() {
+        if (!lastResult || lastResult.rows.length === 0) {
+            toastWarning('Run a report first.');
+            return;
+        }
+
+        const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+        const lines = [lastResult.columns.map(c => q(c.label)).join(',')];
+
+        lastResult.rows.forEach(row => {
+            lines.push(lastResult.columns.map(c => {
+                const raw = row[c.key];
+                if (raw === null || raw === undefined) return q('');
+                if (c.type === 'date') return q(fmtDate(raw));
+                if (c.type === 'bool') return q(raw ? 'Yes' : 'No');
+                return q(raw);
+            }).join(','));
+        });
+
+        // BOM so Excel opens Urdu names and the rest of the UTF-8 correctly —
+        // without it the columns come out as mojibake.
+        const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `${schema.entity}-report-${toInputDate(new Date())}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+    }
+
+    // Names and addresses are typed by hand and carry ampersands and angle brackets.
+    function esc(value) {
+        return (value ?? '').toString()
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+</script>
+}

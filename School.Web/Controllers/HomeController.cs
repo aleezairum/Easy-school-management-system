@@ -7,10 +7,12 @@ namespace School.Web.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
+        private readonly School.Web.Services.ApiTokenService _tokens;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(ILogger<HomeController> logger, School.Web.Services.ApiTokenService tokens)
         {
             _logger = logger;
+            _tokens = tokens;
         }
 
         public IActionResult Index()
@@ -41,7 +43,8 @@ namespace School.Web.Controllers
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null) return Unauthorized();
-            return Ok(new { alive = true });
+            // The page keeps its API token fresh from here (common.js).
+            return Ok(new { alive = true, token = _tokens.For(HttpContext) });
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

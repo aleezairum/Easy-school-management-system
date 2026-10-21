@@ -125,6 +125,9 @@ BEGIN
       AND       (@hasSec   = 0 OR R.SectionID IN (SELECT Id FROM @Sec))
       AND       EXISTS (SELECT 1 FROM SMSStudentAcademic SA
                         WHERE SA.StudentID = R.StudentID AND SA.IsActive = 1 AND SA.StatusID = 1)
+      -- On the Result Exclude List of this exam: left out of every result report.
+      AND       NOT EXISTS (SELECT 1 FROM SMSExamExclude X
+                            WHERE X.ExamID = R.ExamID AND X.StudentID = R.StudentID)
     GROUP BY    R.ClassID, CL.VName, R.SectionID, SE.VName, SU.VID, SU.VName
     ORDER BY    CL.VName, SE.VName, SU.VName;
 END

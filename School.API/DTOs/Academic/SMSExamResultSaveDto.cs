@@ -40,6 +40,17 @@ namespace School.API.DTOs.Academic
         public List<SMSExamResultSaveDto> Results { get; set; } = new();
     }
 
+    // One award list = the marks of one Exam + Class + Section + Subject.
+    // Marks Entry moves a list entered on the wrong date to another date.
+    public class SMSExamResultListDateDto
+    {
+        public int ExamID { get; set; }
+        public int ClassID { get; set; }
+        public int SectionID { get; set; }
+        public int SubjectID { get; set; }
+        public DateTime VDate { get; set; }
+    }
+
     // ---- Result Sheet report (output of SpRPT_SMSExamResultSheet) ----
 
     public class ExamResultSheetDto
@@ -119,6 +130,10 @@ namespace School.API.DTOs.Academic
 
     public class ExamAnnouncementDto
     {
+        /// <summary>The exam compared with in the "Pass % Prev." column; null when none.</summary>
+        public int? PrevExamId { get; set; }
+        public string? PrevExamName { get; set; }
+
         public ResultStatRowDto Overall { get; set; } = new();
         public List<ResultStatRowDto> Campuses { get; set; } = new();
         public List<ResultStatRowDto> Classes { get; set; } = new();
@@ -133,6 +148,9 @@ namespace School.API.DTOs.Academic
         public int TotalFail { get; set; }
         public decimal? PassPct { get; set; }
         public decimal? FailPct { get; set; }
+
+        /// <summary>Pass % of the previous term (PrevExamId), same scope; null when none.</summary>
+        public decimal? PrevPassPct { get; set; }
     }
 
     public class AnnouncementTopRowDto

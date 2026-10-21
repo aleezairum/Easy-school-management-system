@@ -11,5 +11,6 @@ namespace School.API.Services.Interfaces.Student
         Task<StdAttendence?> GetByIdAsync(int id);
         Task<ResponseDto?> DeleteByIdAsync(int id, int userId, string userIp);
         Task<ResponseDto?> DeleteByFilterAsync(StdAttendenceFilterDto filter, int userId, string userIp);
+        Task<List<AttendanceRegisterDto>> GetRegisterAsync(int classId, int? sectionId, int year, int month);
     }
 }

@@ -64,7 +64,15 @@ namespace School.API.Controllers
             int totalClasses    = await SafeScalarInt("SELECT COUNT(*) AS Value FROM SMSClass");
             int totalSections   = await SafeScalarInt("SELECT COUNT(*) AS Value FROM SMSSection");
             int totalSubjects   = await SafeScalarInt("SELECT COUNT(*) AS Value FROM SMSSubject");
-            int totalCampuses   = await SafeScalarInt("SELECT COUNT(*) AS Value FROM Campus");
+            // SMSCampus, not "Campus" — there is no table by that name, so this
+            // threw on every request and SafeScalarInt quietly returned 0. The
+            // card read "0 campus(es)" while the school has had two on file all
+            // along; only the warning in the log said otherwise.
+            //
+            // ISNULL(IsActive, 1): a campus added straight through SQL can leave
+            // the flag unset, and an unset flag should not hide a campus.
+            int totalCampuses   = await SafeScalarInt(
+                "SELECT COUNT(*) AS Value FROM SMSCampus WHERE ISNULL(IsActive, 1) = 1");
 
             // ── Fee voucher stats (FeeVoucherMain table: VDate, PaidAmount) ──
             decimal todayCollection = await SafeScalarDecimal(
@@ -94,6 +102,33 @@ namespace School.API.Controllers
             int pendingFeeStudents = await SafeScalarInt(
                 "SELECT COUNT(DISTINCT F.StudentID) AS Value" + pendingFeeFrom, today);
 
+            // ── The same money, owed by children who have already LEFT ──
+            // The card above counts only students still enrolled, so the day a
+            // child is marked Dropped Out, Transferred or Passed Out their
+            // arrears vanish from the dashboard entirely. This is the figure
+            // the Unpaid Fee report shows as "students who have left".
+            //
+            // EXISTS rather than a join to SMSStudentAcademic: a student has one
+            // enrolment row per session, and joining would count their fees once
+            // per row. "Left" means they have an enrolment history and not one
+            // active row in it, which also makes this and the card above add up
+            // without overlapping.
+            string leftFeeFrom = $@"
+                FROM SMSStudentFee F
+                WHERE F.FeeAmount - F.ClearedAmount > 0
+                  AND CAST(F.VDate AS DATE) <= {{0}}
+                  AND F.IsActive = 1
+                  AND EXISTS (SELECT 1 FROM SMSStudentAcademic SA
+                               WHERE SA.StudentID = F.StudentID)
+                  AND NOT EXISTS (SELECT 1 FROM SMSStudentAcademic SA
+                                   WHERE SA.StudentID = F.StudentID
+                                     AND SA.StatusID = {StatusActive})";
+
+            decimal leftPendingFeeTotal = await SafeScalarDecimal(
+                "SELECT ISNULL(SUM(F.FeeAmount - F.ClearedAmount), 0) AS Value" + leftFeeFrom, today);
+            int leftPendingFeeStudents = await SafeScalarInt(
+                "SELECT COUNT(DISTINCT F.StudentID) AS Value" + leftFeeFrom, today);
+
             // ── Today's attendance % (StdAttendence: Attendence=1 means Present) ──
             int todayMarked = await SafeScalarInt(
                 "SELECT COUNT(*) AS Value FROM StdAttendence WHERE CAST(VDate AS DATE) = {0}", today);
@@ -110,18 +145,26 @@ namespace School.API.Controllers
             try
             {
                 var rows = await _context.Database
+                    // Father from SMSParent, class and section from the student's
+                    // latest academic record - SMSStudent holds neither.
                     .SqlQueryRaw<RecentStudentRow>(@"
                         SELECT TOP 5
-                            VID            AS Id,
-                            ISNULL(Name, '')         AS Name,
-                            ISNULL(FatherName, '')   AS FatherName,
-                            ISNULL(RollNo, '')       AS RollNo,
-                            ISNULL(ClassName, '')    AS ClassName,
-                            ISNULL(SectionName, '')  AS SectionName,
-                            ISNULL(AdmissionDate, InsertedDate) AS AdmissionDate,
-                            ISNULL(IsActive, 0)      AS IsActive
-                        FROM SMSStudent
-                        ORDER BY ISNULL(AdmissionDate, InsertedDate) DESC, VID DESC")
+                            S.VID                      AS Id,
+                            ISNULL(S.Name, '')         AS Name,
+                            ISNULL(P.FatherName, '')   AS FatherName,
+                            ISNULL(S.RollNo, '')       AS RollNo,
+                            ISNULL(C.VName, '')        AS ClassName,
+                            ISNULL(SEC.VName, '')      AS SectionName,
+                            ISNULL(S.AdmissionDate, S.InsertedDate) AS AdmissionDate,
+                            ISNULL(S.IsActive, 0)      AS IsActive
+                        FROM SMSStudent S
+                        LEFT JOIN SMSParent P ON P.VID = S.ParentID
+                        OUTER APPLY (SELECT TOP 1 A.SectionID FROM SMSStudentAcademic A
+                                     WHERE A.StudentID = S.VID AND ISNULL(A.IsActive, 1) = 1
+                                     ORDER BY A.SessionID DESC, A.VID DESC) A
+                        LEFT JOIN SMSSection SEC ON SEC.VID = A.SectionID
+                        LEFT JOIN SMSClass   C   ON C.VID   = SEC.ClassID
+                        ORDER BY ISNULL(S.AdmissionDate, S.InsertedDate) DESC, S.VID DESC")
                     .ToListAsync();
 
                 foreach (var r in rows)
@@ -201,6 +244,8 @@ namespace School.API.Controllers
                     monthVoucherCount,
                     pendingFeeTotal,
                     pendingFeeStudents,
+                    leftPendingFeeTotal,
+                    leftPendingFeeStudents,
                     pendingAsOf = today
                 },
                 attendance = new

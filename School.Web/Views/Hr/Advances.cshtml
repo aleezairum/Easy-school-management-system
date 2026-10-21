@@ -1,0 +1,197 @@
+@{
+    ViewData["Title"] = "Staff Advances";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+@*
+    Advances handed to staff, one entry per advance on the date it was given.
+    A month's payroll takes off the advances dated in that month; Monthly
+    Amounts shows the month's total, read only. An advance on a month whose
+    payroll is locked cannot be changed - that salary is finished.
+*@
+
+<style>
+    .form-section { background: #f8fafc; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+    .form-section-title { font-size: 14px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 2px solid #e2e8f0; }
+    #advTable th, #advTable td { font-size: 13px; vertical-align: middle; }
+    .hint { font-size: 12px; color: #64748b; }
+    tr.editing { background: #ecfdf5; }
+</style>
+
+<div class="container-fluid">
+    <div id="alertContainer"></div>
+
+    <div class="card"><div class="card-body">
+        <div class="form-section">
+            <div class="form-section-title"><i class="bi bi-wallet2 me-2"></i><span id="formTitle">Add Advance</span></div>
+            <input type="hidden" id="advId" value="0" />
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4"><label class="form-label">Staff <span class="text-danger">*</span></label>
+                    <select class="form-select" id="aEmployee"><option value="">-- Select Staff --</option></select></div>
+                <div class="col-md-2"><label class="form-label">Date <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" id="aDate" /></div>
+                <div class="col-md-2"><label class="form-label">Amount (Rs) <span class="text-danger">*</span></label>
+                    <input type="number" class="form-control text-end" id="aAmount" min="1" step="1" /></div>
+                <div class="col-md-4"><label class="form-label">Remarks</label>
+                    <input type="text" class="form-control" id="aRemarks" maxlength="255" placeholder="optional" /></div>
+                <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <span class="hint">The advance is taken off the salary of the month of its date. Generate that month's payroll again after adding one.</span>
+                    <div>
+                        <button class="btn btn-outline-secondary me-2" onclick="resetForm()"><i class="bi bi-x-lg"></i> Clear</button>
+                        <button class="btn btn-success" id="btnSave" onclick="saveAdvance()"><i class="bi bi-check-lg"></i> Save Advance</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-2 align-items-end mb-3">
+            <div class="col-md-2"><label class="form-label">From</label><input type="date" class="form-control" id="fFrom" /></div>
+            <div class="col-md-2"><label class="form-label">To</label><input type="date" class="form-control" id="fTo" /></div>
+            <div class="col-md-2"><label class="form-label">Campus</label>
+                <select class="form-select" id="fCampus"><option value="">All campuses</option></select></div>
+            <div class="col-md-2"><label class="form-label">Designation</label>
+                <select class="form-select" id="fDesignation"><option value="">All designations</option></select></div>
+            <div class="col-md-3"><label class="form-label">Staff</label>
+                <select class="form-select" id="fEmployee"><option value="">All staff</option></select></div>
+            <div class="col-md-1"><button class="btn btn-primary w-100" onclick="loadAdvances()"><i class="bi bi-search"></i> Load</button></div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover table-sm" id="advTable">
+                <thead><tr>
+                    <th style="width:50px">Sr.No.</th><th>Date</th><th>Code</th><th>Staff</th><th>Designation</th><th>Campus</th>
+                    <th class="text-end">Amount</th><th>Remarks</th><th style="width:110px"></th>
+                </tr></thead>
+                <tbody id="advBody"><tr><td colspan="9" class="text-center text-muted py-4">Loading...</td></tr></tbody>
+                <tfoot id="advFoot"></tfoot>
+            </table>
+        </div>
+    </div></div>
+</div>
+
+@section Scripts {
+<script src="~/js/hrFilters.js" asp-append-version="true"></script>
+<script>
+    let _advances = [];
+
+    $(document).ready(async function () {
+        const today = new Date();
+        $('#aDate').val(toInputDate(today));
+        $('#fFrom').val(toInputDate(new Date(today.getFullYear(), today.getMonth(), 1)));
+        $('#fTo').val(toInputDate(new Date(today.getFullYear(), today.getMonth() + 1, 0)));
+
+        await hrInitFilters();
+        // The entry form offers all staff, by name and code.
+        _hrEmployees
+            .slice().sort((a, b) => String(a.fullName).localeCompare(String(b.fullName)))
+            .forEach(e => $('#aEmployee').append(`<option value="${e.id}">${hrEsc(e.fullName)} (${hrEsc(e.employeeCode)})</option>`));
+        loadAdvances();
+    });
+
+    async function loadAdvances() {
+        const from = $('#fFrom').val(), to = $('#fTo').val();
+        if (!from || !to) { toastWarning('Choose From and To dates'); return; }
+        let url = `${API_BASE}/hr/payroll/advances?from=${from}&to=${to}`;
+        if ($('#fCampus').val()) url += `&campusId=${$('#fCampus').val()}`;
+        if ($('#fEmployee').val()) url += `&employeeId=${$('#fEmployee').val()}`;
+        const res = await fetch(url).catch(() => null);
+        if (!res || !res.ok) {
+            const e = res ? await res.json().catch(() => ({})) : {};
+            $('#advBody').html(`<tr><td colspan="9" class="text-center text-danger py-4">${hrEsc(e.message || 'Could not load the advances.')}</td></tr>`);
+            $('#advFoot').empty();
+            return;
+        }
+        _advances = await res.json();
+        // Designation narrows on the screen: the API filters campus and staff.
+        const desig = parseInt($('#fDesignation').val()) || null;
+        if (desig) {
+            const ids = new Set(_hrEmployees.filter(e => e.designationId === desig).map(e => e.id));
+            _advances = _advances.filter(a => ids.has(a.employeeId));
+        }
+        render();
+    }
+
+    function render() {
+        const body = $('#advBody');
+        if (!_advances.length) {
+            body.html('<tr><td colspan="9" class="text-center text-muted py-4">No advance in these dates.</td></tr>');
+            $('#advFoot').empty();
+            return;
+        }
+        const editing = parseInt($('#advId').val()) || 0;
+        body.html(_advances.map((a, i) => `<tr class="${a.id === editing ? 'editing' : ''}">
+            <td>${i + 1}</td>
+            <td>${fmtDate(a.advanceDate)}</td>
+            <td>${hrEsc(a.employeeCode)}</td>
+            <td><strong>${hrEsc(a.employeeName)}</strong></td>
+            <td>${hrEsc(a.designationName || '-')}</td>
+            <td>${hrEsc(a.campusName || '-')}</td>
+            <td class="text-end fw-bold">${hrMoney(a.amount)}</td>
+            <td>${hrEsc(a.remarks || '')}</td>
+            <td class="text-nowrap text-end">${a.locked
+                ? '<span class="badge bg-secondary" title="On a locked payroll - cannot be changed"><i class="bi bi-lock-fill"></i> Locked</span>'
+                : `<button class="btn btn-sm btn-outline-secondary" onclick="editAdvance(${a.id})" title="Edit"><i class="bi bi-pencil"></i></button>
+                   <button class="btn btn-sm btn-outline-danger" onclick="deleteAdvance(${a.id})" title="Delete"><i class="bi bi-trash"></i></button>`}</td>
+        </tr>`).join(''));
+        const total = _advances.reduce((t, a) => t + (Number(a.amount) || 0), 0);
+        $('#advFoot').html(`<tr class="table-light fw-bold"><td colspan="6" class="text-end">Total (${_advances.length})</td>
+            <td class="text-end">${hrMoney(total)}</td><td colspan="2"></td></tr>`);
+    }
+
+    function resetForm() {
+        $('#advId').val(0); $('#formTitle').text('Add Advance');
+        $('#aEmployee').val('').trigger('change');
+        $('#aDate').val(toInputDate(new Date()));
+        $('#aAmount, #aRemarks').val('');
+        render();
+    }
+
+    function editAdvance(id) {
+        const a = _advances.find(x => x.id === id);
+        if (!a) return;
+        $('#advId').val(a.id); $('#formTitle').text('Edit Advance');
+        $('#aEmployee').val(String(a.employeeId)).trigger('change');
+        $('#aDate').val(toInputDate(a.advanceDate));
+        $('#aAmount').val(a.amount);
+        $('#aRemarks').val(a.remarks || '');
+        render();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function saveAdvance() {
+        const id = parseInt($('#advId').val()) || 0;
+        const dto = {
+            EmployeeId: parseInt($('#aEmployee').val()) || 0,
+            AdvanceDate: $('#aDate').val(),
+            Amount: parseFloat($('#aAmount').val()) || 0,
+            Remarks: $('#aRemarks').val().trim() || null
+        };
+        if (!dto.EmployeeId) { toastWarning('Choose the member of staff'); return; }
+        if (!dto.AdvanceDate) { toastWarning('Enter the date'); return; }
+        if (dto.Amount <= 0) { toastWarning('Enter the amount'); return; }
+
+        $('#btnSave').prop('disabled', true);
+        try {
+            const res = await fetch(`${API_BASE}/hr/payroll/advances${id ? '/' + id : ''}`, {
+                method: id ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dto)
+            });
+            if (!res.ok) { const e = await res.json().catch(() => ({})); toastError(e.message || 'Could not save'); return; }
+            toastSuccess(id ? 'Advance updated.' : 'Advance saved. Generate that month\'s payroll again for it to reach the salary.');
+            resetForm();
+            await loadAdvances();
+        } finally {
+            $('#btnSave').prop('disabled', false);
+        }
+    }
+
+    async function deleteAdvance(id) {
+        const a = _advances.find(x => x.id === id);
+        if (!await confirmDelete(`Delete the advance of Rs ${hrMoney(a ? a.amount : 0)} to ${hrEsc(a ? a.employeeName : '')} on ${a ? fmtDate(a.advanceDate) : ''}?`)) return;
+        const res = await fetch(`${API_BASE}/hr/payroll/advances/${id}`, { method: 'DELETE' });
+        if (!res.ok) { const e = await res.json().catch(() => ({})); toastError(e.message || 'Could not delete'); return; }
+        toastSuccess('Advance deleted');
+        if ((parseInt($('#advId').val()) || 0) === id) resetForm();
+        loadAdvances();
+    }
+</script>
+}

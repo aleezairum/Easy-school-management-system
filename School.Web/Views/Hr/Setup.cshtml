@@ -19,7 +19,6 @@
     <ul class="nav nav-tabs">
         <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabDesignations" type="button">Designations</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabGrades" type="button">Grades</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabShifts" type="button">Shifts</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabHolidays" type="button">Holidays</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabLeaveTypes" type="button">Leave Types</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabComponents" type="button">Pay Components</button></li>
@@ -77,39 +76,6 @@
                     <table class="table table-hover">
                         <thead><tr><th>Code</th><th>Name</th><th class="text-end">Min Salary</th><th class="text-end">Max Salary</th><th>Sort</th><th>Employees</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
                         <tbody id="gradesBody"></tbody>
-                    </table>
-                </div>
-            </div></div>
-        </div>
-
-        <!-- SHIFTS -->
-        <div class="tab-pane fade" id="tabShifts">
-            <div class="card"><div class="card-body">
-                <div class="form-section">
-                    <div class="section-title"><i class="bi bi-clock me-2"></i><span id="shiftFormTitle">Add Shift</span></div>
-                    <input type="hidden" id="shiftId" value="0" />
-                    <div class="row g-3">
-                        <div class="col-md-2"><label class="form-label">Code</label><input class="form-control" id="shiftCode" /></div>
-                        <div class="col-md-3"><label class="form-label">Name</label><input class="form-control" id="shiftName" /></div>
-                        <div class="col-md-2"><label class="form-label">Time In</label><input type="time" class="form-control" id="shiftTimeIn" /></div>
-                        <div class="col-md-2"><label class="form-label">Time Out</label><input type="time" class="form-control" id="shiftTimeOut" /></div>
-                        <div class="col-md-1"><label class="form-label">Grace (min)</label><input type="number" class="form-control" id="shiftGrace" value="10" /></div>
-                        <div class="col-md-2"><label class="form-label">Work Hours</label><input type="number" step="0.1" class="form-control" id="shiftWorkHours" value="8" /></div>
-                        <div class="col-md-2"><label class="form-label">Half-day (min)</label><input type="number" class="form-control" id="shiftHalfDayMin" value="180" /></div>
-                        <div class="col-md-2"><label class="form-label">Full-day (min)</label><input type="number" class="form-control" id="shiftFullDayMin" value="360" /></div>
-                        <div class="col-md-2"><label class="form-label">Off Day 1</label><select class="form-select" id="shiftOff1"><option value="">None</option></select></div>
-                        <div class="col-md-2"><label class="form-label">Off Day 2</label><select class="form-select" id="shiftOff2"><option value="">None</option></select></div>
-                        <div class="col-md-2 d-flex align-items-end"><div class="form-check"><input class="form-check-input" type="checkbox" id="shiftActive" checked /><label class="form-check-label">Active</label></div></div>
-                        <div class="col-md-3 d-flex align-items-end gap-2">
-                            <button class="btn btn-primary" onclick="saveShift()"><i class="bi bi-check-lg"></i> Save</button>
-                            <button class="btn btn-secondary" onclick="resetShiftForm()"><i class="bi bi-x-lg"></i> Clear</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead><tr><th>Code</th><th>Name</th><th>Time In</th><th>Time Out</th><th>Grace</th><th>Hours</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
-                        <tbody id="shiftsBody"></tbody>
                     </table>
                 </div>
             </div></div>
@@ -205,6 +171,16 @@
                                 <option value="5">Per Overtime Hour</option>
                                 <option value="6">Slab</option>
                                 <option value="7">Formula</option>
+                                @* The attendance-minute rules. Without these three the
+                                   list could not show them, and saving one turned it into
+                                   "Per Late Minute" - it then charged late minutes again
+                                   and stopped charging what it was meant to. *@
+                                <option value="8">Per Out-of-School Minute</option>
+                                <option value="9">Per Early Leaving Minute</option>
+                                <option value="10">Per Duty Minute (short - extra)</option>
+                                @* Leave priced like an absent day; each day by its leave
+                                   type's Paid / Deduct Days, Free Units = paid leaves a month. *@
+                                <option value="11">Per Leave Day</option>
                             </select>
                         </div>
                         <div class="col-md-3"><label class="form-label">Scope</label>
@@ -232,6 +208,14 @@
                         </div>
                         <div class="col-md-2" id="fldGrace"><label class="form-label">Grace Minutes</label><input type="number" class="form-control" id="compGrace" value="0" /></div>
                         <div class="col-md-2"><label class="form-label">Free Units/Month</label><input type="number" step="0.5" class="form-control" id="compFreeUnits" /></div>
+                        <div class="col-12" id="leaveRuleHint" style="display:none;">
+                            <div class="form-text">
+                                <b>Per Leave Day:</b> each day marked <i>Leave</i> is charged at one day's pay (like an absent day).
+                                A day with a Leave Type costs that type's <i>Deduct Days</i> (Leave Types tab: 0 paid, 1 unpaid, 0.5 half);
+                                a day with no type costs a full day. <b>Free Units/Month</b> = leave days a month that are still paid.
+                                Turn this rule off (Active unticked) and all leave is paid.
+                            </div>
+                        </div>
                         <div class="col-md-2"><label class="form-label">Cap / Day</label><input type="number" class="form-control" id="compCapDay" /></div>
                         <div class="col-md-2"><label class="form-label">Cap / Month</label><input type="number" class="form-control" id="compCapMonth" /></div>
                         <div class="col-md-2"><label class="form-label">Priority</label><input type="number" class="form-control" id="compPriority" value="0" /></div>
@@ -277,7 +261,8 @@
 @section Scripts {
 <script>
     const KIND_NAMES = {1:'Earning',2:'Deduction'};
-    const CALC_NAMES = {1:'Fixed',2:'Percent Of',3:'Per Late Minute',4:'Per Absent Day',5:'Per Overtime Hour',6:'Slab',7:'Formula'};
+    const CALC_NAMES = {1:'Fixed',2:'Percent Of',3:'Per Late Minute',4:'Per Absent Day',5:'Per Overtime Hour',6:'Slab',7:'Formula',
+                        8:'Per Out-of-School Minute',9:'Per Early Leaving Minute',10:'Per Duty Minute (short - extra)',11:'Per Leave Day'};
     const SCOPE_NAMES = {1:'Global',2:'Grade',3:'Designation',4:'Employee'};
     const HOLIDAY_TYPE_NAMES = {1:'Gazetted',2:'Vacation',3:'Half Day'};
     const WEEKDAYS = [{v:1,n:'Sunday'},{v:2,n:'Monday'},{v:3,n:'Tuesday'},{v:4,n:'Wednesday'},{v:5,n:'Thursday'},{v:6,n:'Friday'},{v:7,n:'Saturday'}];
@@ -312,10 +297,10 @@
     }
 
     $(document).ready(function () {
-        WEEKDAYS.forEach(d => { $('#shiftOff1').append(`<option value="${d.v}">${d.n}</option>`); $('#shiftOff2').append(`<option value="${d.v}">${d.n}</option>`); });
+        
         // Designations and grades load first — the pay-component scope picker reads them.
         Promise.all([loadDesignations(), loadGrades()]).then(loadComponents);
-        loadShifts(); loadHolidays(); loadLeaveTypes();
+        loadHolidays(); loadLeaveTypes();
         toggleCalcFields();
         toggleScopeFields();
     });
@@ -431,64 +416,6 @@
         else toastError(await apiError(res, 'Failed to delete grade'));
     }
 
-    // ---- Shifts ----
-    async function loadShifts() {
-        const res = await fetch(`${API_BASE}/hr/shifts`);
-        const data = res.ok ? await res.json() : [];
-        window._shifts = data;
-        const body = $('#shiftsBody'); body.empty();
-        if (!data.length) { emptyRow(body, 8, 'No shifts yet.'); return; }
-        data.forEach(s => {
-            body.append(`<tr>
-                <td>${esc(s.code)}</td><td>${esc(s.name)}</td><td>${esc(s.timeIn)}</td><td>${esc(s.timeOut)}</td>
-                <td>${s.graceMinutes}</td><td>${s.workHours}</td>
-                <td>${statusBadge(s.isActive)}</td>
-                ${rowActions('editShift', 'deleteShift', s.id)}
-            </tr>`);
-        });
-    }
-    function editShift(id) {
-        const s = (window._shifts || []).find(x => x.id === id);
-        if (!s) return;
-        $('#shiftFormTitle').text('Edit Shift');
-        $('#shiftId').val(s.id); $('#shiftCode').val(s.code); $('#shiftName').val(s.name);
-        $('#shiftTimeIn').val(s.timeIn ? s.timeIn.substring(0,5) : ''); $('#shiftTimeOut').val(s.timeOut ? s.timeOut.substring(0,5) : '');
-        $('#shiftGrace').val(s.graceMinutes); $('#shiftWorkHours').val(s.workHours);
-        $('#shiftHalfDayMin').val(s.halfDayMinutes); $('#shiftFullDayMin').val(s.fullDayMinutes);
-        $('#shiftOff1').val(s.offDay1 || ''); $('#shiftOff2').val(s.offDay2 || '');
-        $('#shiftActive').prop('checked', s.isActive);
-    }
-    function resetShiftForm() {
-        $('#shiftFormTitle').text('Add Shift');
-        $('#shiftId').val(0); $('#shiftCode,#shiftName').val('');
-        $('#shiftTimeIn,#shiftTimeOut').val(''); $('#shiftGrace').val(10); $('#shiftWorkHours').val(8);
-        $('#shiftHalfDayMin').val(180); $('#shiftFullDayMin').val(360);
-        $('#shiftOff1,#shiftOff2').val(''); $('#shiftActive').prop('checked', true);
-    }
-    async function saveShift() {
-        const id = parseInt($('#shiftId').val()) || 0;
-        const dto = {
-            Id: id, Code: $('#shiftCode').val().trim(), Name: $('#shiftName').val().trim(),
-            TimeIn: $('#shiftTimeIn').val() + ':00', TimeOut: $('#shiftTimeOut').val() + ':00',
-            GraceMinutes: parseInt($('#shiftGrace').val()) || 0, WorkHours: parseFloat($('#shiftWorkHours').val()) || 0,
-            HalfDayMinutes: parseInt($('#shiftHalfDayMin').val()) || 0, FullDayMinutes: parseInt($('#shiftFullDayMin').val()) || 0,
-            OffDay1: $('#shiftOff1').val() ? parseInt($('#shiftOff1').val()) : null,
-            OffDay2: $('#shiftOff2').val() ? parseInt($('#shiftOff2').val()) : null,
-            IsActive: $('#shiftActive').is(':checked')
-        };
-        if (!dto.Code || !dto.Name || !$('#shiftTimeIn').val() || !$('#shiftTimeOut').val()) { toastError('Code, name, time in and time out are required'); return; }
-        const res = await fetch(`${API_BASE}/hr/shifts${id ? '/'+id : ''}`, { method: id ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(dto) });
-        if (res.ok) { toastSuccess('Shift saved'); resetShiftForm(); loadShifts(); }
-        else toastError(await apiError(res, 'Failed to save shift'));
-    }
-    async function deleteShift(id) {
-        const s = (window._shifts || []).find(x => x.id === id);
-        if (!await confirmDelete(`Delete shift "${s ? esc(s.name) : id}"?`)) return;
-        const res = await fetch(`${API_BASE}/hr/shifts/${id}`, { method: 'DELETE' });
-        if (res.ok) { toastSuccess('Shift deleted'); resetShiftForm(); loadShifts(); }
-        else toastError(await apiError(res, 'Failed to delete shift'));
-    }
-
     // ---- Holidays ----
     async function loadHolidays() {
         const year = $('#holidayFilterYear').val();
@@ -600,10 +527,14 @@
         $('#fldFormula').toggle(t === 7);
         $('#fldSlabs').toggle(t === 6);
         $('#fldRate').toggle(t !== 6);
-        $('#fldRateSource').toggle(t === 3 || t === 4);
-        $('#fldBaseOn').toggle(t === 2 || t === 3 || t === 4 || t === 6);
-        $('#fldDivisorDays').toggle(t === 3 || t === 4);
-        $('#fldGrace').toggle(t === 3);
+        // 3, 8, 9 and 10 are all priced per minute of the salary; 4 and 11 per day.
+        const perMinute = [3, 8, 9, 10].includes(t);
+        const perDay = t === 4 || t === 11;
+        $('#fldRateSource').toggle(perMinute || perDay);
+        $('#fldBaseOn').toggle(t === 2 || perMinute || perDay || t === 6);
+        $('#fldDivisorDays').toggle(perMinute || perDay);
+        $('#leaveRuleHint').toggle(t === 11);
+        $('#fldGrace').toggle(t === 3 || t === 8 || t === 9);
     }
     // Grade/Designation scopes pick from the lists on this page; Employee stays a raw id.
     function toggleScopeFields() {

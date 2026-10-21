@@ -34,6 +34,16 @@ using School.API.Repositories.Interfaces.Settings;
 using School.API.Services.Implementations.Settings;
 using School.API.Services.Interfaces.Settings;
 
+// Dates are printed as dd-MMM-yyyy across the whole application, and "MMM" is
+// spelled by the CURRENT culture — so a server whose Windows locale is not
+// English would put a different month name on a fee voucher or a result card
+// than the screen that produced it. Pin the culture so the output is the same
+// wherever this runs.
+System.Globalization.CultureInfo.DefaultThreadCurrentCulture =
+    System.Globalization.CultureInfo.InvariantCulture;
+System.Globalization.CultureInfo.DefaultThreadCurrentUICulture =
+    System.Globalization.CultureInfo.InvariantCulture;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Database — EnableRetryOnFailure added per HR-Payroll-Final-Plan.md section 9
@@ -66,11 +76,51 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-            ClockSkew = TimeSpan.Zero
+            ClockSkew = TimeSpan.FromMinutes(2)
+        };
+        options.Events = new JwtBearerEvents
+        {
+            // A picture or a download opened by the browser itself (<img src>,
+            // window.open) cannot carry a header, so a GET may bring the token
+            // as ?access_token=... instead.
+            OnMessageReceived = ctx =>
+            {
+                if (string.IsNullOrEmpty(ctx.Token) && HttpMethods.IsGet(ctx.Request.Method)
+                    && ctx.Request.Query.TryGetValue("access_token", out var t))
+                    ctx.Token = t.ToString();
+                return Task.CompletedTask;
+            }
         };
     });
 
-builder.Services.AddAuthorization();
+// "App": only tokens the mobile app's sign-in issued (they carry app_acc).
+// Fallback (every endpoint with no [Authorize]/[AllowAnonymous] of its own -
+// the whole web portal API): a token School.Web signed for the signed-in
+// office user (claim web_uid). Jwt:RequireForWebApi = false switches this off
+// again - the emergency way back if a page turns out to call the API without
+// its token; the portal then works exactly as before.
+var requireWebToken = builder.Configuration.GetValue("Jwt:RequireForWebApi", true);
+builder.Services.AddAuthorization(o =>
+{
+    o.AddPolicy(School.API.Services.Implementations.MobileApp.AppClaims.Policy,
+        p => p.RequireAuthenticatedUser().RequireClaim(School.API.Services.Implementations.MobileApp.AppClaims.Account));
+    if (requireWebToken)
+        o.FallbackPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
+            .RequireAuthenticatedUser()
+            .RequireClaim(School.API.Extensions.WebClaims.UserId)
+            .Build();
+});
+
+// Mobile app (Scripts/MobileApp.sql, Controllers/MobileApp)
+builder.Services.AddScoped<School.API.Repositories.Implementations.MobileApp.AppRepository>();
+builder.Services.AddScoped<School.API.Services.Implementations.MobileApp.AppTokenIssuer>();
+builder.Services.AddScoped<School.API.Services.Implementations.MobileApp.AppCallerResolver>();
+builder.Services.AddScoped<School.API.Services.Implementations.MobileApp.AppService>();
+builder.Services.AddScoped<School.API.Services.Implementations.MobileApp.AppAdminService>();
+builder.Services.AddScoped<School.API.Services.Implementations.MobileApp.AppChatService>();
+// Push notifications (Firebase section in appsettings.json): each announcement goes to the app once.
+builder.Services.AddSingleton<School.API.Services.Implementations.MobileApp.FcmSender>();
+builder.Services.AddSingleton<School.API.Services.Implementations.MobileApp.AppPushSignal>();
 
 // User Management
 builder.Services.AddScoped<ISecUserRepository, SecUserRepository>();
@@ -81,6 +131,8 @@ builder.Services.AddScoped<IFeeVoucherRepository, FeeVoucherRepository>();
 builder.Services.AddScoped<IFeeVoucherService, FeeVoucherService>();
 builder.Services.AddScoped<IApplyFeeRepository, ApplyFeeRepository>();
 builder.Services.AddScoped<IApplyFeeService, ApplyFeeService>();
+builder.Services.AddScoped<IFeePromiseRepository, FeePromiseRepository>();
+builder.Services.AddScoped<IFeePromiseService, FeePromiseService>();
 
 // Student
 builder.Services.AddScoped<IStdAttendenceRepository, StdAttendenceRepository>();
@@ -120,18 +172,32 @@ builder.Services.AddScoped<ICertificateService, CertificateService>();
 // HR
 builder.Services.AddScoped<IDesignationRepository, DesignationRepository>();
 builder.Services.AddScoped<IDesignationService, DesignationService>();
+builder.Services.AddScoped<IStaffCategoryRepository, StaffCategoryRepository>();
+builder.Services.AddScoped<IStaffCategoryService, StaffCategoryService>();
 builder.Services.AddScoped<IHRGradeRepository, HRGradeRepository>();
 builder.Services.AddScoped<IHRGradeService, HRGradeService>();
 builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
 builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 
 // HR Payroll (HR-Payroll-Final-Plan.md)
-builder.Services.AddScoped<IShiftRepository, ShiftRepository>();
-builder.Services.AddScoped<IShiftService, ShiftService>();
 builder.Services.AddScoped<IHolidayRepository, HolidayRepository>();
 builder.Services.AddScoped<IHolidayService, HolidayService>();
 builder.Services.AddScoped<ISchoolTimingRepository, SchoolTimingRepository>();
 builder.Services.AddScoped<ISchoolTimingService, SchoolTimingService>();
+
+// Custom reports (student / employee). Everything selectable is whitelisted in
+// ReportFieldCatalog — see that file before adding a column.
+builder.Services.AddScoped<School.API.Repositories.Interfaces.Reports.ICustomReportRepository,
+                           School.API.Repositories.Implementations.Reports.CustomReportRepository>();
+builder.Services.AddScoped<School.API.Services.Interfaces.Reports.ICustomReportService,
+                           School.API.Services.Implementations.Reports.CustomReportService>();
+
+// Class-wise STUDENT timings — the parents' side of the clock, and what the
+// WhatsApp auto-reply quotes. The HR pair above stays the staff calendar.
+builder.Services.AddScoped<School.API.Repositories.Interfaces.Academic.IClassTimingRepository,
+                           School.API.Repositories.Implementations.Academic.ClassTimingRepository>();
+builder.Services.AddScoped<School.API.Services.Interfaces.Academic.IClassTimingService,
+                           School.API.Services.Implementations.Academic.ClassTimingService>();
 builder.Services.AddScoped<IAttendanceRepository, AttendanceRepository>();
 builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 builder.Services.AddScoped<ILeaveRepository, LeaveRepository>();
@@ -143,6 +209,11 @@ builder.Services.AddScoped<IEmployeePayService, EmployeePayService>();
 builder.Services.AddScoped<IPayrollRepository, PayrollRepository>();
 builder.Services.AddScoped<IPayrollService, PayrollService>();
 builder.Services.AddScoped<IHrReportsRepository, HrReportsRepository>();
+builder.Services.AddScoped<IHrReportsService, HrReportsService>();
+// Face-attendance machines (Hikvision ISAPI). Idle until a machine is added.
+builder.Services.AddScoped<IHikvisionRepository, HikvisionRepository>();
+builder.Services.AddScoped<School.API.Services.Implementations.HR.Hikvision.HikvisionEventProcessor>();
+builder.Services.AddScoped<IHikvisionService, School.API.Services.Implementations.HR.Hikvision.HikvisionService>();
 
 // Accounts
 builder.Services.AddScoped<IFeeTypeRepository, FeeTypeRepository>();
@@ -188,7 +259,19 @@ builder.Services.AddScoped<IWhatsAppChatService, WhatsAppChatService>();
 // Self-service menu: answers a parent's message with dues, voucher, ledger,
 // result or attendance. Turn off with WhatsAppBot:Enabled = false.
 builder.Services.AddScoped<IWaBotRepository, WaBotRepository>();
-builder.Services.AddScoped<IWhatsAppBotService, WhatsAppBotService>();
+// Daily diary (class / section wise) and school announcements - both given
+// out on the WhatsApp menu.
+builder.Services.AddScoped<IDailyDiaryRepository, DailyDiaryRepository>();
+builder.Services.AddScoped<IDailyDiaryService, DailyDiaryService>();
+builder.Services.AddScoped<IAnnouncementRepository, AnnouncementRepository>();
+builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();
+// Exam result finalising (only finalised exams on WhatsApp) and the students
+// left out of the teachers' result.
+builder.Services.AddScoped<IExamControlRepository, ExamControlRepository>();
+builder.Services.AddScoped<IExamControlService, ExamControlService>();
+builder.Services.AddScoped<WhatsAppBotService>();
+builder.Services.AddScoped<IWhatsAppBotService>(sp => sp.GetRequiredService<WhatsAppBotService>());
+builder.Services.AddScoped<ISchoolDocuments>(sp => sp.GetRequiredService<WhatsAppBotService>());
 builder.Services.AddSingleton<ISmsProgressTracker, SmsProgressTracker>();
 // HTML->PDF renderer (shared headless Chromium) for WhatsApp result cards
 builder.Services.AddSingleton<IPdfRenderer, PuppeteerPdfRenderer>();
@@ -204,6 +287,8 @@ builder.Services.AddHostedService<AbsentNotificationJob>();
 builder.Services.AddHostedService<FeeReminderJob>();
 builder.Services.AddHostedService<SmsQueueProcessor>();
 builder.Services.AddHostedService<DbBackupJob>();
+builder.Services.AddHostedService<HikvisionPullJob>();
+builder.Services.AddHostedService<AnnouncementPushJob>();
 
 // Controllers — registered ONCE with JSON options
 builder.Services.AddControllers()

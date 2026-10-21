@@ -1,0 +1,428 @@
+@{
+    ViewData["Title"] = "School Timing Notice";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>School Timing Notice</title>
+
+    @*
+        The parents' timing notice, matching the sheet the school already prints.
+
+        Both campuses in one sheet. Classes that run to the same clock are
+        merged into one row ("Play Group to Prep"), and when BOTH campuses agree
+        on a class the row is marked (Boys & Girls) instead of being printed
+        twice — which is how the school's own sheet reads. Where the campuses
+        differ, they get a row each. All of that is derived from the saved
+        timings, so the sheet follows whatever the office entered.
+
+        Standalone page (Layout = null): it is a document, not a screen, and the
+        dashboard chrome has no business in a print.
+    *@
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* Nastaliq for the Urdu, a plain face for the Latin digits and times.
+           The fallback matters: Urdu Typesetting ships with Windows, so the
+           sheet still sets correctly on a school PC with no internet. */
+        body {
+            font-family: 'Noto Nastaliq Urdu', 'Jameel Noori Nastaleeq', 'Urdu Typesetting', serif;
+            font-size: 15px;
+            line-height: 2.2;
+            color: #000;
+            margin: 0;
+            padding: 18px;
+            background: #f1f5f9;
+        }
+
+        .sheet {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            background: #fff;
+            padding: 14mm 12mm;
+            border: 2px solid #000;
+            box-sizing: border-box;
+        }
+
+        .school-name {
+            text-align: center;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 19px;
+            font-weight: 700;
+            letter-spacing: .3px;
+            line-height: 1.4;
+        }
+        .school-addr {
+            text-align: center;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .date-line { text-align: left; font-size: 14px; margin: 6px 0 2px; }
+        .notice-title { text-align: center; font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+        .salutation { font-size: 14px; margin-bottom: 8px; }
+        .section-line { font-size: 14px; font-weight: 700; margin: 10px 0 6px; }
+
+        table { border-collapse: collapse; width: 100%; margin-bottom: 6px; }
+        th, td {
+            border: 1px solid #000;
+            padding: 3px 8px;
+            text-align: center;
+            font-size: 14px;
+            line-height: 1.9;
+        }
+        th { font-weight: 700; }
+        td.cls { text-align: right; }
+
+        /* Times stay left-to-right inside a right-to-left page. */
+        .t { direction: ltr; unicode-bidi: embed; font-family: Arial, Helvetica, sans-serif; font-size: 13px; }
+
+        .instructions { font-size: 13px; margin: 8px 0; }
+        .foot {
+            font-size: 13px; font-weight: 700;
+            margin-top: 14px; padding-top: 6px; border-top: 1px solid #000;
+        }
+        .foot .phones { direction: ltr; unicode-bidi: embed; font-family: Arial, Helvetica, sans-serif; }
+
+        .academy-table { width: 74%; margin: 0 auto 6px; }
+
+        .toolbar {
+            width: 210mm; margin: 0 auto 12px; display: flex; gap: 8px;
+            align-items: end; flex-wrap: wrap;
+            font-family: Arial, Helvetica, sans-serif; direction: ltr;
+        }
+        .toolbar label { font-size: 12px; color: #475569; display: block; }
+        .toolbar input, .toolbar button {
+            font-size: 13px; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px;
+        }
+        .toolbar button { background: #00A651; color: #fff; border: none; cursor: pointer; font-weight: 600; }
+
+        .empty { text-align: center; font-family: Arial, Helvetica, sans-serif; color: #64748b; padding: 30px; }
+
+        @@media print {
+            body { background: #fff; padding: 0; }
+            .toolbar { display: none; }
+            .sheet { width: auto; min-height: 0; margin: 0; border: 2px solid #000; padding: 8mm; }
+            @@page { size: A4 portrait; margin: 6mm; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="toolbar">
+    <div>
+        <label for="noticeDate">Notice date</label>
+        <input type="date" id="noticeDate" />
+    </div>
+    <div>
+        <label for="effectiveDate">Effective from</label>
+        <input type="date" id="effectiveDate" />
+    </div>
+    <button onclick="build()">Refresh</button>
+    <button onclick="window.print()">Print</button>
+</div>
+
+<div class="sheet" id="sheet">
+    <div class="empty">Loading…</div>
+</div>
+
+<script src="~/js/common.js"></script>
+<script>
+    // ── Urdu wording ────────────────────────────────────────────────────────
+    //
+    // The Urdu class name comes from SMSClass.VName_Urdu, set on the Class
+    // form. This map is only the fallback for classes nobody has translated
+    // yet, and a class in neither prints its English name — visible and
+    // fixable, instead of silently blank.
+    const URDU_CLASS = {
+        'montessori': 'مونٹیسوری',
+        'play group': 'پلے گروپ',
+        'nursery':    'نرسری',
+        'prep':       'پریپ',
+        '1': 'اوّل', '2': 'دوم', '3': 'سوم', '4': 'چہارم', '5': 'پنجم',
+        '6': 'ششم',  '7': 'ہفتم', '8': 'ہشتم',
+        '9 junior': 'نہم جونیئر', '9': 'نہم', '10': 'دہم'
+    };
+
+    const URDU_DAY = ['اتوار', 'سوموار', 'منگل', 'بدھ', 'جمعرات', 'جمعہ', 'ہفتہ'];
+
+    const URDU_MONTH = ['جنوری','فروری','مارچ','اپریل','مئی','جون',
+                        'جولائی','اگست','ستمبر','اکتوبر','نومبر','دسمبر'];
+
+    // "Boys Campus" -> بوائز, "Girls Campus" -> گرلز
+    function campusWord(name) {
+        const n = (name || '').toLowerCase();
+        if (n.includes('boy'))  return 'بوائز';
+        if (n.includes('girl')) return 'گرلز';
+        return name || '';
+    }
+
+    // The school's own Urdu name first, then the built-in wording, then English.
+    function urduClass(row) {
+        if (row.classNameUrdu && row.classNameUrdu.trim()) return row.classNameUrdu.trim();
+
+        const key = (row.className || '').trim().toLowerCase();
+        return URDU_CLASS[key] || row.className || '';
+    }
+
+    // 08:00 -> 08:00 am
+    function ampm(hhmm) {
+        if (!hhmm) return '';
+        const [h, m] = hhmm.split(':').map(Number);
+        const suffix = h < 12 ? 'am' : 'pm';
+        const hour = h % 12 === 0 ? 12 : h % 12;
+        return `${String(hour).padStart(2, '0')}:${String(m).padStart(2, '0')} ${suffix}`;
+    }
+
+    // Each time gets its OWN left-to-right span, with the Urdu "تا" left in the
+    // right-to-left flow between them. Putting the whole phrase in one ltr span
+    // hands the word to the bidi algorithm as part of a left-to-right run, and
+    // it comes out as "08:00 am 11:45 تا am".
+    function span(from, to) {
+        return `<span class="t">${ampm(from)}</span> تا <span class="t">${ampm(to)}</span>`;
+    }
+
+    function urduDate(value) {
+        const d = new Date(value);
+        if (isNaN(d)) return '';
+        return `${String(d.getDate()).padStart(2, '0')}-${URDU_MONTH[d.getMonth()]} ${d.getFullYear()}`;
+    }
+
+    function isoDate(value) {
+        const d = new Date(value);
+        return isNaN(d) ? '' :
+            `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`;
+    }
+
+    // ── Grouping ────────────────────────────────────────────────────────────
+    //
+    // Two merges, in this order:
+    //   1. Across CAMPUSES  - a class both campuses run identically becomes one
+    //      entry marked (Boys & Girls), which is what the school's sheet does.
+    //   2. Across CLASSES   - neighbouring classes with the same times and the
+    //      same campus grouping collapse into "X to Y".
+    //
+    // Only NEIGHBOURING classes merge, in the school's own class order, so a
+    // label never spans classes it does not actually cover.
+    function group(rows, signature, campuses) {
+        const byClass = new Map();
+        rows.forEach(r => {
+            if (!byClass.has(r.classID)) byClass.set(r.classID, []);
+            byClass.get(r.classID).push(r);
+        });
+
+        const entries = [];
+        [...byClass.keys()].sort((a, b) => a - b).forEach(classId => {
+            // Partition this class's campuses by identical times.
+            const bySig = new Map();
+            byClass.get(classId).forEach(r => {
+                const sig = signature(r);
+                if (sig === null) return;                 // nothing entered for this pair
+                if (!bySig.has(sig)) bySig.set(sig, []);
+                bySig.get(sig).push(r);
+            });
+
+            [...bySig.entries()].forEach(([sig, group]) => {
+                const ids = group.map(g => g.campusID).sort();
+                entries.push({
+                    classId,
+                    className: group[0].className,
+                    classNameUrdu: group[0].classNameUrdu,
+                    sig,
+                    campusIds: ids.join(','),
+                    // Every campus that has a timing agrees -> "Boys & Girls".
+                    label: ids.length >= campuses.length && campuses.length > 1
+                        ? 'بوائز اینڈ گرلز'
+                        : ids.map(id => campusWord(
+                              (campuses.find(c => c.vid === id) || {}).vName)).join(' اینڈ '),
+                    row: group[0]
+                });
+            });
+        });
+
+        // Merge neighbouring classes with the same times and campus grouping.
+        //
+        // Grouped by (campuses, times) FIRST, then split into runs of adjacent
+        // classes. Walking the flat list instead would never merge anything on
+        // a table where the campuses differ: the entries interleave
+        // Boys-2, Girls-2, Boys-3, Girls-3 …, so two Boys rows are never
+        // neighbours and every class prints on its own line.
+        const order = [...new Set(entries.map(e => e.classId))].sort((a, b) => a - b);
+        const position = new Map(order.map((id, i) => [id, i]));
+
+        const buckets = new Map();
+        entries.forEach(e => {
+            const key = `${e.campusIds}##${e.sig}`;
+            if (!buckets.has(key)) buckets.set(key, []);
+            buckets.get(key).push(e);
+        });
+
+        const merged = [];
+        buckets.forEach(list => {
+            list.sort((a, b) => a.classId - b.classId);
+
+            let run = [];
+            const flush = () => {
+                if (run.length === 0) return;
+                merged.push({
+                    sig: run[0].sig, campusIds: run[0].campusIds, label: run[0].label,
+                    row: run[0].row, classes: run.slice(), firstAt: position.get(run[0].classId)
+                });
+                run = [];
+            };
+
+            list.forEach(e => {
+                // Adjacent means "nothing else in this table sits between them",
+                // so a label never spans a class it does not cover.
+                const prev = run[run.length - 1];
+                if (prev && position.get(e.classId) !== position.get(prev.classId) + 1) flush();
+                run.push(e);
+            });
+            flush();
+        });
+
+        merged.sort((a, b) => a.firstAt - b.firstAt || a.campusIds.localeCompare(b.campusIds));
+
+        merged.forEach(m => {
+            const names = m.classes.map(urduClass);
+            m.title = names.length === 1
+                ? names[0]
+                : `${names[0]} تا ${names[names.length - 1]}`;
+        });
+
+        return merged;
+    }
+
+    // ── Build ───────────────────────────────────────────────────────────────
+    let timings = [], campuses = [];
+
+    async function load() {
+        const [t, c] = await Promise.all([
+            fetch(`${API_BASE}/ClassTiming`).then(r => r.ok ? r.json() : []).catch(() => []),
+            fetch(`${API_BASE}/campus`).then(r => r.ok ? r.json() : []).catch(() => [])
+        ]);
+        timings = t.filter(x => x.isActive !== false);
+        campuses = c;
+
+        const today = new Date();
+        document.getElementById('noticeDate').value = toInputDate(today);
+
+        // Timing changes are announced to start on a Monday, so that is the
+        // sensible default — the office can change it.
+        const monday = new Date(today);
+        monday.setDate(monday.getDate() + ((8 - monday.getDay()) % 7 || 7));
+        document.getElementById('effectiveDate').value = toInputDate(monday);
+
+        build();
+    }
+
+    function build() {
+        const sheet = document.getElementById('sheet');
+
+        if (timings.length === 0) {
+            sheet.innerHTML = '<div class="empty">No class timings have been entered yet.' +
+                ' Fill them in on the Class Timings screen first.</div>';
+            return;
+        }
+
+        const noticeDate = document.getElementById('noticeDate').value;
+        const effective  = document.getElementById('effectiveDate').value;
+        const effDay     = URDU_DAY[new Date(effective).getDay()] || '';
+
+        const school = group(timings,
+            r => (r.timeIn && r.timeOut)
+                ? `${r.timeIn}|${r.timeOut}|${r.fridayTimeIn || ''}|${r.fridayTimeOut || ''}`
+                : null,
+            campuses);
+
+        const academy = group(timings,
+            r => (r.academyTimeIn && r.academyTimeOut)
+                ? `${r.academyTimeIn}|${r.academyTimeOut}`
+                : null,
+            campuses);
+
+        let html = `
+            <div class="school-name">SIR SYED MODEL HIGH SCHOOL (BOYS &amp; GIRLS)</div>
+            <div class="school-addr">CHHONAWALA ROAD HASILPUR</div>
+            <div class="date-line">تاریخ: ${urduDate(noticeDate)}</div>
+            <div class="notice-title">ضروری اطلاع بابت School&nbsp;Timing</div>
+            <div class="salutation">محترم والدین / اسٹوڈنٹس ................. السلام علیکم</div>
+
+            <div class="section-line">
+                ☆ مورخہ <span class="t">${isoDate(effective)}</span> بروز ${effDay} سکول کے اوقات کار:
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:38%">کلاس</th>
+                        <th style="width:31%">سوموار تا جمعرات اور ہفتہ</th>
+                        <th style="width:31%">جمعۃ المبارک</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+        school.forEach(g => {
+            const r = g.row;
+            html += `<tr>
+                        <td class="cls">${g.title} &nbsp;(${g.label})</td>
+                        <td>${span(r.timeIn, r.timeOut)}</td>
+                        <td>${r.fridayTimeIn && r.fridayTimeOut
+                                ? span(r.fridayTimeIn, r.fridayTimeOut) : '&mdash;'}</td>
+                     </tr>`;
+        });
+
+        html += `</tbody></table>
+            <div class="instructions">
+                ضروری ہدایات: تمام والدین بچوں کو مکمل یونیفارم میں بروقت سکول بھیجیں اور
+                سکول ٹائم کے دوران بچوں کی چھٹی لینے سے مکمل اجتناب کریں۔
+            </div>`;
+
+        // The academy table is dropped entirely when no class has academy
+        // times, rather than printed empty under its heading.
+        if (academy.length > 0) {
+            html += `
+            <div class="section-line">
+                ☆ مورخہ <span class="t">${isoDate(effective)}</span> بروز ${effDay} سکول اکیڈمی کے اوقات کار:
+            </div>
+            <table class="academy-table">
+                <thead>
+                    <tr>
+                        <th style="width:55%">کلاس</th>
+                        <th style="width:45%">سوموار تا ہفتہ</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+            academy.forEach(g => {
+                html += `<tr>
+                            <td class="cls">${g.title} &nbsp;(${g.label})</td>
+                            <td>${span(g.row.academyTimeIn, g.row.academyTimeOut)}</td>
+                         </tr>`;
+            });
+
+            html += `</tbody></table>`;
+        }
+
+        html += `
+            <div class="foot">
+                منجانب: پرنسپل سر سید ماڈل (بوائز اینڈ گرلز) ہائی سکول چھوناوالا روڈ حاصل پور
+                &nbsp;&nbsp;<span class="phones">0301-7330101 &nbsp; 0301-6591766</span>
+            </div>`;
+
+        sheet.innerHTML = html;
+    }
+
+    load();
+</script>
+</body>
+</html>

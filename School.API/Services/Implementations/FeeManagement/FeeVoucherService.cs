@@ -57,7 +57,7 @@ namespace School.API.Services.Implementations.Accounts
             {
                 new ReportParameter("VNo", receipt.VNo ?? "-"),
                 // VDate is date-only; append the actual save time from InsertedDate.
-                new ReportParameter("VDate", $"{receipt.VDate:dd-MM-yyyy} {receipt.InsertedDate:hh:mm tt}"),
+                new ReportParameter("VDate", $"{receipt.VDate:dd-MMM-yyyy} {receipt.InsertedDate:hh:mm tt}"),
                 new ReportParameter("PaymentMethod", receipt.PaymentMethod ?? "-"),
                 new ReportParameter("ParentName", receipt.ParentName ?? "-"),
                 new ReportParameter("TotalPaid", totalPaid.ToString("N0")),

@@ -29,7 +29,12 @@ namespace School.API.Repositories.Interfaces.Academic
         Task<List<ExamTeacherWiseRowDto>> GetTeacherWiseReportAsync(int examId, int teacherId);
         Task<List<ExamTeacherComparisonRowDto>> GetTeacherComparisonReportAsync(
             int examId, string? lClassIds, string? lSectionIds, string? rClassIds, string? rSectionIds);
-        Task<ExamAnnouncementDto> GetAnnouncementReportAsync(int examId, string? classIds = null, string? sectionIds = null);
+        Task<ExamAnnouncementDto> GetAnnouncementReportAsync(int examId, string? classIds = null, string? sectionIds = null, int? prevExamId = null);
         Task<ResponseDto?> DeleteByIdAsync(int id);
+
+        // A whole award list (Exam + Class + Section + Subject): move it to another date, or delete it.
+        Task<int> SetListDateAsync(SMSExamResultListDateDto dto, int userId);
+        Task<int> DeleteListAsync(int examId, int classId, int sectionId, int subjectId);
+        Task<bool> IsExamFinalizedAsync(int examId);
     }
 }

@@ -1,6 +1,22 @@
 @{
-    ViewData["Title"] = "Attendance Reports";
+    ViewData["Title"] = "Staff Attendance Report";
     Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+@*
+    Staff attendance over a date range, by campus, designation or one employee.
+    Late arrival, early leaving and time out of school are shown in minutes
+    and in rupees - the deduction is what payroll charges for those minutes,
+    priced by the same rules (see HrReportsService). Excused lateness is shown
+    and not charged.
+*@
+
+@section Styles {
+<style>
+    #repTable th, #repTable td { font-size: 12.5px; vertical-align: middle; }
+    #repTable .ctr { text-align: center; }
+    #repTable .num { text-align: right; white-space: nowrap; }
+</style>
 }
 
 <div class="container-fluid">
@@ -9,101 +25,129 @@
     <div class="card mb-3"><div class="card-body">
         <div class="row g-2 align-items-end">
             <div class="col-md-2"><label class="form-label">Report</label>
-                <select class="form-select" id="repType" onchange="toggleFilters()">
+                <select class="form-select" id="repType">
                     <option value="daily">Daily Attendance</option>
-                    <option value="monthly">Monthly Summary</option>
+                    <option value="summary">Summary (per employee)</option>
                     <option value="late">Late Comers</option>
+                    <option value="early">Early Leavers</option>
+                    <option value="outing">Out of School (Short Leave)</option>
                     <option value="absent">Absentees</option>
                 </select>
             </div>
-            <div class="col-md-2" id="fltDate"><label class="form-label">Date</label><input type="date" class="form-control" id="repDate" /></div>
-            <div class="col-md-2" id="fltYearMonth" style="display:none;">
-                <label class="form-label">Year / Month</label>
-                <div class="d-flex gap-1">
-                    <input type="number" class="form-control" id="repYear" />
-                    <select class="form-select" id="repMonth">
-                        <option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option><option value="4">Apr</option>
-                        <option value="5">May</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Aug</option>
-                        <option value="9">Sep</option><option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
-                    </select>
-                </div>
-            </div>
-            <div class="col-md-2" id="fltRange" style="display:none;">
-                <label class="form-label">From</label><input type="date" class="form-control" id="repFrom" />
-            </div>
-            <div class="col-md-2" id="fltRangeTo" style="display:none;">
-                <label class="form-label">To</label><input type="date" class="form-control" id="repTo" />
-            </div>
-            <div class="col-md-2"><label class="form-label">Designation</label><select class="form-select" id="repDesignation"><option value="">All</option></select></div>
-            <div class="col-md-2"><button class="btn btn-primary w-100" onclick="runReport()"><i class="bi bi-search"></i> Run</button></div>
+            <div class="col-md-2"><label class="form-label">From</label><input type="date" class="form-control" id="fFrom" /></div>
+            <div class="col-md-2"><label class="form-label">To</label><input type="date" class="form-control" id="fTo" /></div>
+            <div class="col-md-2"><label class="form-label">Campus</label>
+                <select class="form-select" id="fCampus"><option value="">All campuses</option></select></div>
+            <div class="col-md-2"><label class="form-label">Designation</label>
+                <select class="form-select" id="fDesignation"><option value="">All designations</option></select></div>
+            <div class="col-md-2"><label class="form-label">Employee</label>
+                <select class="form-select" id="fEmployee"><option value="">All employees</option></select></div>
+        </div>
+        <div class="d-flex gap-2 mt-3">
+            <button class="btn btn-primary" onclick="runReport()"><i class="bi bi-search"></i> Run</button>
+            <button class="btn btn-outline-dark" onclick="printReport()"><i class="bi bi-printer"></i> Print</button>
+            <span id="repInfo" class="text-muted small align-self-center ms-2"></span>
         </div>
     </div></div>
 
     <div class="card"><div class="card-body">
-        <div class="table-responsive"><table class="table table-hover" id="repTable"><thead id="repHead"></thead><tbody id="repBody"></tbody></table></div>
+        <div class="table-responsive"><table class="table table-sm table-hover table-bordered" id="repTable">
+            <thead id="repHead"></thead><tbody id="repBody"></tbody><tfoot id="repFoot"></tfoot>
+        </table></div>
     </div></div>
 </div>
 
 @section Scripts {
+<script src="~/js/hrFilters.js" asp-append-version="true"></script>
 <script>
+    const STATUS = {1:'Present',2:'Absent',3:'Leave',4:'Half Day',5:'Holiday',6:'Weekly Off',7:'Short Leave',8:'Exempt'};
+    const TITLES = {
+        daily: 'Daily Attendance', summary: 'Attendance Summary', late: 'Late Comers',
+        early: 'Early Leavers', outing: 'Out of School (Short Leave)', absent: 'Absentees'
+    };
+    let _last = null;   // { type, rows, from, to } of the last run, for printing
+
+    // Columns per report: heading, value, alignment, and the field a total adds up.
+    const who = [
+        { h: 'Code', v: r => hrEsc(r.employeeCode) },
+        { h: 'Employee', v: r => hrEsc(r.employeeName) },
+        { h: 'Designation', v: r => hrEsc(r.designationName || '-') },
+        { h: 'Campus', v: r => hrEsc(r.campusName || '-') }
+    ];
+    const date = { h: 'Date', v: r => fmtDate(r.attDate), c: 'ctr' };
+    const mins = (h, f) => ({ h, v: r => r[f] || '', c: 'ctr', sum: f });
+    // Staff with no salary structure cannot be priced (payroll skips them too) - say so.
+    const rs = (h, f) => ({ h, v: r => r.noSalaryRecord ? '<span class="text-danger small" title="No salary structure: nothing to deduct from">No salary</span>' : hrMoney(r[f], true), c: 'num', sum: f, money: true });
+    const COLS = {
+        daily: [date, ...who,
+            { h: 'Status', v: r => STATUS[r.status] || '-', c: 'ctr' },
+            { h: 'In', v: r => hrTime(r.timeIn), c: 'ctr' }, { h: 'Out', v: r => hrTime(r.timeOut), c: 'ctr' },
+            { h: 'Late (min)', v: r => r.lateMinutes ? r.lateMinutes + (r.ignoreLate ? ' (excused)' : '') : '', c: 'ctr', sum: 'lateMinutes' },
+            rs('Late Ded.', 'lateDeduction'), mins('Early (min)', 'earlyMinutes'), rs('Early Ded.', 'earlyDeduction'),
+            mins('Out (min)', 'outingMinutes'), rs('Out Ded.', 'outingDeduction'), rs('Total Ded.', 'totalDeduction')],
+        late: [date, ...who,
+            { h: 'Time In', v: r => hrTime(r.timeIn), c: 'ctr' }, mins('Late (min)', 'lateMinutes'),
+            { h: 'Excused', v: r => r.ignoreLate ? 'Yes' : '', c: 'ctr' }, rs('Deduction (Rs)', 'lateDeduction')],
+        early: [date, ...who,
+            { h: 'Time Out', v: r => hrTime(r.timeOut), c: 'ctr' }, mins('Early (min)', 'earlyMinutes'), rs('Deduction (Rs)', 'earlyDeduction')],
+        outing: [date, ...who, mins('Out of School (min)', 'outingMinutes'), rs('Deduction (Rs)', 'outingDeduction'),
+            { h: 'Remarks', v: r => hrEsc(r.remarks || '') }],
+        absent: [date, ...who, { h: 'Remarks', v: r => hrEsc(r.remarks || '') }],
+        summary: [...who,
+            mins('Present', 'presentDays'), mins('Absent', 'absentDays'), mins('Leave', 'leaveDays'),
+            mins('Half Day', 'halfDays'), mins('Short Lv', 'shortLeaveDays'), mins('Exempt', 'exemptDays'),
+            mins('Late Days', 'lateCount'), mins('Late (min)', 'lateMinutes'), rs('Late Ded.', 'lateDeduction'),
+            mins('Early Days', 'earlyCount'), mins('Early (min)', 'earlyMinutes'), rs('Early Ded.', 'earlyDeduction'),
+            mins('Out Days', 'outingCount'), mins('Out (min)', 'outingMinutes'), rs('Out Ded.', 'outingDeduction'),
+            rs('Total Ded.', 'totalDeduction')]
+    };
+
     $(document).ready(function () {
         const now = new Date();
-        $('#repDate').val(toInputDate(now));
-        $('#repYear').val(now.getFullYear());
-        $('#repMonth').val(now.getMonth() + 1);
-        $('#repFrom').val(toInputDate(new Date(now.getFullYear(), now.getMonth(), 1)));
-        $('#repTo').val(toInputDate(now));
-        fetch(`${API_BASE}/Designation/dropdown`).then(r => r.ok ? r.json() : []).then(list => {
-            list.forEach(d => $('#repDesignation').append(`<option value="${d.id}">${d.name}</option>`));
-        }).catch(() => {});
-        toggleFilters();
+        $('#fFrom').val(toInputDate(new Date(now.getFullYear(), now.getMonth(), 1)));
+        $('#fTo').val(toInputDate(now));
+        hrInitFilters();
     });
 
-    function toggleFilters() {
-        const type = $('#repType').val();
-        $('#fltDate').toggle(type === 'daily');
-        $('#fltYearMonth').toggle(type === 'monthly');
-        $('#fltRange,#fltRangeTo').toggle(type === 'late' || type === 'absent');
-    }
-
     async function runReport() {
-        const type = $('#repType').val();
-        const desig = $('#repDesignation').val();
-        let url = `${API_BASE}/hr/reports/attendance?type=${type}`;
-        if (desig) url += `&designationId=${desig}`;
-        if (type === 'daily') url += `&date=${$('#repDate').val()}`;
-        if (type === 'monthly') url += `&year=${$('#repYear').val()}&month=${$('#repMonth').val()}`;
-        if (type === 'late' || type === 'absent') url += `&from=${$('#repFrom').val()}&to=${$('#repTo').val()}`;
-
-        const res = await fetch(url);
-        if (!res.ok) { toastError('Failed to load report'); return; }
-        const data = await res.json();
-        renderReport(type, data);
-    }
-
-    function renderReport(type, data) {
-        const head = $('#repHead'), body = $('#repBody');
-        head.empty(); body.empty();
-
-        if (type === 'daily') {
-            head.html('<tr><th>Code</th><th>Employee</th><th>Designation</th><th>Status</th><th>Time In</th><th>Time Out</th><th>Late (min)</th></tr>');
-            data.forEach(r => body.append(`<tr><td>${r.employeeCode}</td><td>${r.employeeName}</td><td>${r.designationName||'-'}</td><td>${statusLabel(r.status)}</td><td>${r.timeIn?.substring(0,5)||'-'}</td><td>${r.timeOut?.substring(0,5)||'-'}</td><td>${r.lateMinutes}</td></tr>`));
-        } else if (type === 'monthly') {
-            head.html('<tr><th>Code</th><th>Employee</th><th>Designation</th><th>Present</th><th>Absent</th><th>Leave</th><th>Half Day</th><th>Late Count</th><th>Total Late (min)</th></tr>');
-            data.forEach(r => body.append(`<tr><td>${r.employeeCode}</td><td>${r.employeeName}</td><td>${r.designationName||'-'}</td><td>${r.presentDays}</td><td>${r.absentDays}</td><td>${r.leaveDays}</td><td>${r.halfDays}</td><td>${r.lateCount}</td><td>${r.totalLateMinutes}</td></tr>`));
-        } else if (type === 'late') {
-            head.html('<tr><th>Date</th><th>Code</th><th>Employee</th><th>Designation</th><th>Time In</th><th>Late (min)</th><th>Ignored</th></tr>');
-            data.forEach(r => body.append(`<tr><td>${fmtDate(r.attDate)}</td><td>${r.employeeCode}</td><td>${r.employeeName}</td><td>${r.designationName||'-'}</td><td>${r.timeIn?.substring(0,5)||'-'}</td><td>${r.lateMinutes}</td><td>${r.ignoreLate?'Yes':'No'}</td></tr>`));
-        } else if (type === 'absent') {
-            head.html('<tr><th>Date</th><th>Code</th><th>Employee</th><th>Designation</th><th>Remarks</th></tr>');
-            data.forEach(r => body.append(`<tr><td>${fmtDate(r.attDate)}</td><td>${r.employeeCode}</td><td>${r.employeeName}</td><td>${r.designationName||'-'}</td><td>${r.remarks||'-'}</td></tr>`));
+        const type = $('#repType').val(), from = $('#fFrom').val(), to = $('#fTo').val();
+        if (!from || !to) { toastWarning('Choose From and To dates'); return; }
+        const res = await fetch(`${API_BASE}/hr/reports/attendance?type=${type}&from=${from}&to=${to}${hrFilterQuery()}`);
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            toastError(err.message || 'Failed to load report'); return;
         }
-
-        if (!data.length) body.html(`<tr><td colspan="10" class="text-center text-muted py-3">No data.</td></tr>`);
+        const rows = await res.json();
+        _last = { type, rows, from, to };
+        const t = tableParts(type, rows);
+        $('#repHead').html(t.head); $('#repBody').html(t.body); $('#repFoot').html(t.foot);
+        $('#repInfo').text(`${rows.length} row(s)`);
     }
 
-    function statusLabel(s) {
-        return {1:'Present',2:'Absent',3:'Leave',4:'Half Day',5:'Holiday',6:'Weekly Off',7:'Short Leave'}[s] || '-';
+    function tableParts(type, rows) {
+        const cols = COLS[type];
+        const head = '<tr><th class="ctr">Sr.</th>' + cols.map(c => `<th class="${c.c || ''}">${c.h}</th>`).join('') + '</tr>';
+        if (!rows.length)
+            return { head, body: `<tr><td colspan="${cols.length + 1}" class="text-center text-muted py-3">No data.</td></tr>`, foot: '' };
+        const body = rows.map((r, i) => '<tr><td class="ctr">' + (i + 1) + '</td>'
+            + cols.map(c => `<td class="${c.c || ''}">${c.v(r)}</td>`).join('') + '</tr>').join('');
+        const foot = cols.some(c => c.sum)
+            ? '<tr><td></td>' + cols.map((c, i) => {
+                if (!c.sum) return i === 0 ? '<td><strong>Total</strong></td>' : '<td></td>';
+                const s = rows.reduce((t, r) => t + (Number(r[c.sum]) || 0), 0);
+                return `<td class="${c.c || ''}"><strong>${c.money ? hrMoney(s) : s}</strong></td>`;
+            }).join('') + '</tr>'
+            : '';
+        return { head, body, foot };
+    }
+
+    function printReport() {
+        if (!_last) { toastWarning('Run the report first'); return; }
+        const t = tableParts(_last.type, _last.rows);
+        const caption = [hrPeriodCaption(_last.from, _last.to), hrFilterCaption()].filter(Boolean).join('   |   ');
+        hrPrintWindow(`Staff ${TITLES[_last.type]}`, caption,
+            `<table><thead>${t.head}</thead><tbody>${t.body}</tbody><tfoot>${t.foot}</tfoot></table>`,
+            { landscape: _last.type === 'daily' || _last.type === 'summary', css: 'th,td{font-size:10px}' });
     }
 </script>
 }

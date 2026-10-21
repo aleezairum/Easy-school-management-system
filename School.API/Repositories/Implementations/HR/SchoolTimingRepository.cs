@@ -30,14 +30,19 @@ namespace School.API.Repositories.Implementations.HR
             // range) is easier to read here than in a projection.
             var days = await _context.Set<HrSchoolTimingDay>()
                 .AsNoTracking()
-                .Select(d => new { d.TimingId, d.TDate, d.IsOverridden })
+                .Select(d => new { d.TimingId, d.TDate, d.IsOverridden, d.DesignationId })
                 .ToListAsync();
 
             return timings.Select(t => ToDto(
                 t,
                 days.Count(d => d.TimingId == t.Id),
                 days.Count(d => d.TimingId == t.Id && d.IsOverridden),
-                days.Count(d => d.TimingId != t.Id && d.TDate >= t.StartDate && d.TDate <= t.EndDate)))
+                // "Taken over by a later range" only counts within the SAME
+                // designation. A Principal's range covering the same dates as a
+                // Teacher's does not override it — they are different clocks.
+                days.Count(d => d.TimingId != t.Id
+                                && d.DesignationId == t.DesignationId
+                                && d.TDate >= t.StartDate && d.TDate <= t.EndDate)))
                 .ToList();
         }
 
@@ -49,7 +54,9 @@ namespace School.API.Repositories.Implementations.HR
             var applied = await _context.Set<HrSchoolTimingDay>().CountAsync(d => d.TimingId == id);
             var edited = await _context.Set<HrSchoolTimingDay>().CountAsync(d => d.TimingId == id && d.IsOverridden);
             var overridden = await _context.Set<HrSchoolTimingDay>()
-                .CountAsync(d => d.TimingId != id && d.TDate >= entity.StartDate && d.TDate <= entity.EndDate);
+                .CountAsync(d => d.TimingId != id
+                                 && d.DesignationId == entity.DesignationId
+                                 && d.TDate >= entity.StartDate && d.TDate <= entity.EndDate);
 
             return ToDto(entity, applied, edited, overridden);
         }
@@ -70,6 +77,11 @@ namespace School.API.Repositories.Implementations.HR
             var entity = new HrSchoolTiming
             {
                 Name = dto.Name,
+                DesignationId = dto.DesignationId,
+                GraceMinutes = dto.GraceMinutes,
+                HalfDayMinutes = dto.HalfDayMinutes,
+                FullDayMinutes = dto.FullDayMinutes,
+                WorkHours = dto.WorkHours,
                 StartDate = dto.StartDate.Date,
                 EndDate = dto.EndDate.Date,
                 TimeIn = dto.TimeIn,
@@ -94,6 +106,11 @@ namespace School.API.Repositories.Implementations.HR
             if (entity == null) return null;
 
             entity.Name = dto.Name;
+            entity.DesignationId = dto.DesignationId;
+            entity.GraceMinutes = dto.GraceMinutes;
+            entity.HalfDayMinutes = dto.HalfDayMinutes;
+            entity.FullDayMinutes = dto.FullDayMinutes;
+            entity.WorkHours = dto.WorkHours;
             entity.StartDate = dto.StartDate.Date;
             entity.EndDate = dto.EndDate.Date;
             entity.TimeIn = dto.TimeIn;
@@ -125,6 +142,14 @@ namespace School.API.Repositories.Implementations.HR
         public async Task<int> ApplyDaysAsync(
             int timingId, IReadOnlyCollection<SchoolTimingDayPlan> plan, bool preserveEdited)
         {
+            // Everything below is scoped to THIS range's designation. Without
+            // that, saving the Teachers' timing would delete the Principal's day
+            // rows for the same dates, because those dates are in the plan.
+            var designationId = await _context.Set<HrSchoolTiming>()
+                .Where(t => t.Id == timingId)
+                .Select(t => t.DesignationId)
+                .FirstOrDefaultAsync();
+
             var dates = plan.Select(p => p.Date.Date).ToList();
             var dateSet = dates.ToHashSet();
 
@@ -142,7 +167,8 @@ namespace School.API.Repositories.Implementations.HR
                 : new HashSet<DateTime>();
 
             var stale = await _context.Set<HrSchoolTimingDay>()
-                .Where(d => d.TimingId == timingId || dates.Contains(d.TDate))
+                .Where(d => d.DesignationId == designationId
+                            && (d.TimingId == timingId || dates.Contains(d.TDate)))
                 .ToListAsync();
 
             var toRemove = stale.Where(d => !kept.Contains(d.TDate)).ToList();
@@ -154,6 +180,7 @@ namespace School.API.Repositories.Implementations.HR
                 .Select(p => new HrSchoolTimingDay
                 {
                     TimingId = timingId,
+                    DesignationId = designationId,
                     TDate = p.Date.Date,
                     TimeIn = p.TimeIn,
                     TimeOut = p.TimeOut,
@@ -196,12 +223,39 @@ namespace School.API.Repositories.Implementations.HR
         public Task<HrSchoolTimingDay?> GetDayAsync(int dayId) =>
             _context.Set<HrSchoolTimingDay>().AsNoTracking().FirstOrDefaultAsync(d => d.Id == dayId);
 
-        public async Task<Dictionary<DateTime, HrSchoolTimingDay>> GetDaysByDateAsync(DateTime from, DateTime to)
+        public async Task<Dictionary<(DateTime Date, int? DesignationId), HrSchoolTimingDay>> GetDaysByDateAsync(
+            DateTime from, DateTime to)
         {
-            return await _context.Set<HrSchoolTimingDay>()
+            var days = await _context.Set<HrSchoolTimingDay>()
                 .AsNoTracking()
+                .Include(d => d.Timing)   // the grace and threshold rules live on the range
                 .Where(d => d.TDate >= from.Date && d.TDate <= to.Date)
-                .ToDictionaryAsync(d => d.TDate);
+                .ToListAsync();
+
+            return days.ToDictionary(d => (d.TDate, d.DesignationId));
+        }
+
+        public async Task<Dictionary<int, (byte? OffDay1, byte? OffDay2)>> GetOffDaysAsync(
+            DateTime from, DateTime to)
+        {
+            var ranges = await _context.Set<HrSchoolTiming>()
+                .AsNoTracking()
+                .Where(t => t.IsActive && t.StartDate <= to.Date && t.EndDate >= from.Date)
+                .Select(t => new { t.DesignationId, t.StartDate, t.Id, t.OffDay1, t.OffDay2 })
+                .ToListAsync();
+
+            // Newest range wins where two overlap the same period — the same
+            // rule the day rows follow, so the off days cannot disagree with them.
+            return ranges
+                // 0 is the school-wide bucket: Dictionary will not take a null key.
+                .GroupBy(t => t.DesignationId ?? 0)
+                .ToDictionary(
+                    g => g.Key,
+                    g =>
+                    {
+                        var latest = g.OrderByDescending(t => t.StartDate).ThenByDescending(t => t.Id).First();
+                        return (latest.OffDay1, latest.OffDay2);
+                    });
         }
 
         private static SchoolTimingDayDto ToDayDto(HrSchoolTimingDay d) => new()
@@ -218,6 +272,11 @@ namespace School.API.Repositories.Implementations.HR
         {
             Id = t.Id,
             Name = t.Name,
+            DesignationId = t.DesignationId,
+            GraceMinutes = t.GraceMinutes,
+            HalfDayMinutes = t.HalfDayMinutes,
+            FullDayMinutes = t.FullDayMinutes,
+            WorkHours = t.WorkHours,
             StartDate = t.StartDate,
             EndDate = t.EndDate,
             TimeIn = t.TimeIn,

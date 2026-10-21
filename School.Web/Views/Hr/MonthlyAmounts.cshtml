@@ -1,0 +1,298 @@
+@{
+    ViewData["Title"] = "Monthly Amounts";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+@*
+    The amounts the office types by hand for one month — incentives (extra
+    duty, academy duty, prize), security, fine. Advances are entered by date on
+    Staff Advances; their month's total shows here, read only. They differ per person AND per month, which is why the pay
+    structure (a basic salary with an effective date) could never hold them.
+
+    Fill these in BEFORE generating the payroll: a run reads whatever is saved
+    here at the moment it runs.
+*@
+
+<style>
+    .loading-overlay { position: absolute; inset: 0; background: rgba(255,255,255,.8); display: flex; align-items: center; justify-content: center; z-index: 100; border-radius: 16px; }
+    .spinner-border { width: 3rem; height: 3rem; border-width: .3rem; }
+    .form-section { background: #f8fafc; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+    #amountsTable th, #amountsTable td { font-size: 13px; vertical-align: middle; }
+    #amountsTable thead th { text-align: center; background: #f0f4f8; }
+    #amountsTable input { text-align: right; }
+    .emp-sub { font-size: 11px; color: #64748b; }
+    .col-money { width: 105px; }
+    #amountsTable thead th.h-inc { background: #cdebd6; color: #11632f; }
+    #amountsTable thead th.h-ded { background: #fde2e2; color: #9b1c1c; }
+    #amountsTable td.c-inc { background: #f3faf5; }
+    #amountsTable td.c-adv { background: #f8fafc; color: #334155; }
+</style>
+
+<div class="container-fluid">
+    <div id="alertContainer"></div>
+
+    <div class="card">
+        <div class="card-body position-relative">
+            <div id="loadingOverlay" class="loading-overlay" style="display:none;">
+                <div class="spinner-border text-success" role="status"><span class="visually-hidden">Loading...</span></div>
+            </div>
+
+            <div class="form-section">
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-2">
+                        <label class="form-label">Month</label>
+                        <select class="form-select" id="month"></select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Year</label>
+                        <select class="form-select" id="year"></select>
+                    </div>
+                    @* The same three the attendance register carries, and they
+                       narrow this sheet the same way — one campus at a time. *@
+                    <div class="col-md-2">
+                        <label class="form-label">Campus</label>
+                        <select class="form-select" id="fCampus"><option value="">All campuses</option></select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Designation</label>
+                        <select class="form-select" id="fDesignation" multiple></select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Sort by</label>
+                        <select class="form-select" id="fSort">
+                            <option value="code" selected>Employee Code</option>
+                            <option value="name">Name</option>
+                            <option value="designation">Designation</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1">
+                        <button class="btn btn-primary w-100" onclick="loadAmounts()">
+                            <i class="bi bi-search"></i> Load
+                        </button>
+                    </div>
+                    <div class="col-md-1 text-end">
+                        <button class="btn btn-success w-100" onclick="saveAmounts()">
+                            <i class="bi bi-check-lg"></i> Save
+                        </button>
+                    </div>
+                    <div class="col-12">
+                        <div class="emp-sub">
+                            Fill these in before generating the payroll.
+                            <span style="color:#11632f;font-weight:600;">Green</span> columns are added to the pay,
+                            <span style="color:#9b1c1c;font-weight:600;">red</span> ones taken off it - type every amount as a plain number.
+                            <strong>Advance</strong> is the total of the month's advances from
+                            <a href="~/hr/advances">Staff Advances</a> and is changed there.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover table-sm" id="amountsTable">
+                    <thead>
+                        <tr>
+                            <th style="width:50px;">Sr.No.</th>
+                            <th style="text-align:left;">Name</th>
+                            <th style="text-align:left;">Designation</th>
+                            <th style="text-align:left;">Campus</th>
+                            <th class="col-money">Basic Pay</th>
+                            <th class="col-money h-inc">Extra Duty</th>
+                            <th class="col-money h-inc">Academy Duty</th>
+                            <th class="col-money h-inc">Security Return</th>
+                            <th class="col-money h-inc">Prize</th>
+                            <th class="col-money h-ded">Pay Deduction</th>
+                            <th class="col-money h-ded">Fine</th>
+                            <th class="col-money h-ded">Security Deduction</th>
+                            <th class="col-money" title="From Staff Advances - read only">Advance</th>
+                            <th style="text-align:left;">Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody id="amountsBody">
+                        <tr><td colspan="14" class="text-center text-muted py-4">Choose a month and click Load.</td></tr>
+                    </tbody>
+                    <tfoot id="amountsFoot"></tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
+                         'July', 'August', 'September', 'October', 'November', 'December'];
+    let rows = [];
+
+    $(document).ready(function () {
+        const now = new Date();
+        MONTH_NAMES.forEach((m, i) =>
+            $('#month').append(`<option value="${i + 1}">${m}</option>`));
+        for (let y = now.getFullYear() - 2; y <= now.getFullYear() + 1; y++)
+            $('#year').append(`<option value="${y}">${y}</option>`);
+
+        $('#month').val(now.getMonth() + 1);
+        $('#year').val(now.getFullYear());
+
+        // Campus and designation, exactly as the attendance register fills them.
+        fetch(`${API_BASE}/campus`).then(r => r.ok ? r.json() : []).then(list => {
+            list.forEach(c => $('#fCampus').append(`<option value="${c.vid}">${esc(c.vName)}</option>`));
+        }).catch(() => {});
+
+        fetch(`${API_BASE}/Designation/dropdown`).then(r => r.ok ? r.json() : []).then(list => {
+            list.forEach(d => $('#fDesignation').append(`<option value="${d.id}">${esc(d.name)}</option>`));
+
+            // Tick boxes rather than a ctrl-click list. Nothing selected means
+            // everyone, which is what the placeholder says.
+            if ($.fn.select2) {
+                $('#fDesignation').select2({
+                    theme: 'bootstrap-5',
+                    placeholder: 'All designations',
+                    allowClear: true,
+                    closeOnSelect: false,
+                    width: '100%'
+                });
+            }
+        }).catch(() => {});
+
+        loadAmounts();
+
+        // Totals follow what is typed, so the office can check a column against
+        // its own sheet before saving.
+        $('#amountsBody').on('input', 'input[type="number"]', renderTotals);
+    });
+
+    async function loadAmounts() {
+        showLoading();
+        try {
+            const desig = ($('#fDesignation').val() || []).filter(Boolean).join(',');
+            const campus = $('#fCampus').val();
+
+            let url = `${API_BASE}/hr/payroll/monthly-amounts`
+                    + `?year=${$('#year').val()}&month=${$('#month').val()}`;
+            if (campus) url += `&campusId=${campus}`;
+            if (desig) url += `&designationIds=${desig}`;
+            url += `&sortBy=${$('#fSort').val() || 'code'}`;
+
+            const res = await fetch(url);
+            if (!res.ok) { toastError('Could not load the month'); return; }
+
+            rows = await res.json();
+            render();
+        } catch (e) {
+            toastError('Error loading: ' + e.message);
+        } finally { hideLoading(); }
+    }
+
+    const money = v => (Number(v) || 0).toLocaleString('en-PK', { maximumFractionDigits: 0 });
+    const box = (cls, v) =>
+        `<input type="number" step="1" min="0" class="form-control form-control-sm ${cls}" value="${Number(v) || 0}" />`;
+
+    function render() {
+        const body = $('#amountsBody').empty();
+
+        if (!rows.length) {
+            body.html('<tr><td colspan="14" class="text-center text-muted py-4">No staff for this month.</td></tr>');
+            $('#amountsFoot').empty();
+            return;
+        }
+
+        rows.forEach((r, i) => {
+            body.append(`
+                <tr data-id="${r.employeeId}">
+                    <td class="text-center">${i + 1}</td>
+                    <td><strong>${esc(r.employeeName)}</strong><div class="emp-sub">${esc(r.employeeCode)}</div></td>
+                    <td>${esc(r.designationName || '-')}</td>
+                    <td>${esc(r.campusName || '-')}</td>
+                    <td class="text-end">${money(r.basic)}</td>
+                    <td class="c-inc">${box('a-extraduty', r.extraDuty)}</td>
+                    <td class="c-inc">${box('a-academyduty', r.academyDuty)}</td>
+                    <td class="c-inc">${box('a-secreturn', r.securityReturn)}</td>
+                    <td class="c-inc">${box('a-prize', r.prize)}</td>
+                    <td>${box('a-paydeduction', r.payDeduction)}</td>
+                    <td>${box('a-fine', r.fine)}</td>
+                    <td>${box('a-secdeduction', r.securityDeduction)}</td>
+                    <td class="text-end c-adv a-advance" data-v="${Number(r.advance) || 0}">${money(r.advance)}</td>
+                    <td><input class="form-control form-control-sm a-remarks" style="text-align:left;"
+                               value="${esc(r.remarks || '')}" maxlength="255" /></td>
+                </tr>`);
+        });
+
+        renderTotals();
+    }
+
+    function columnTotal(cls) {
+        let t = 0;
+        // Inputs by their value; the read-only advance cell by its data-v.
+        $(`#amountsBody .${cls}`).each(function () { t += parseFloat(this.tagName === 'INPUT' ? this.value : $(this).data('v')) || 0; });
+        return t;
+    }
+
+    function renderTotals() {
+        const cols = ['a-extraduty', 'a-academyduty', 'a-secreturn', 'a-prize',
+                      'a-paydeduction', 'a-fine', 'a-secdeduction', 'a-advance'];
+        $('#amountsFoot').html(`
+            <tr class="table-light">
+                <td colspan="4" class="text-end"><strong>Total</strong></td>
+                <td class="text-end"><strong>${money(rows.reduce((t, r) => t + (r.basic || 0), 0))}</strong></td>
+                ${cols.map(c => `<td class="text-end"><strong>${money(columnTotal(c))}</strong></td>`).join('')}
+                <td></td>
+            </tr>`);
+    }
+
+    async function saveAmounts() {
+        if (!rows.length) { toastWarning('Load a month first'); return; }
+
+        const payload = {
+            Year: parseInt($('#year').val()),
+            Month: parseInt($('#month').val()),
+            Rows: $('#amountsBody tr[data-id]').map(function () {
+                const $t = $(this);
+                const num = cls => Math.abs(parseFloat($t.find('.' + cls).val()) || 0);
+                const id = parseInt($t.data('id'));
+                const loaded = rows.find(r => r.employeeId === id) || {};
+                return {
+                    EmployeeId: id,
+                    // Not on the screen any more; kept as loaded so saving never wipes one.
+                    Incentive: Number(loaded.incentive) || 0,
+                    ExtraDuty: num('a-extraduty'),
+                    AcademyDuty: num('a-academyduty'),
+                    SecurityReturn: num('a-secreturn'),
+                    Prize: num('a-prize'),
+                    PayDeduction: num('a-paydeduction'),
+                    Fine: num('a-fine'),
+                    SecurityDeduction: num('a-secdeduction'),
+                    Remarks: $t.find('.a-remarks').val().trim() || null
+                };
+            }).get()
+        };
+
+        showLoading();
+        try {
+            const res = await fetch(`${API_BASE}/hr/payroll/monthly-amounts`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                toastError(err.message || 'Could not save');
+                return;
+            }
+
+            toastSuccess('Saved. Generate the payroll again for it to reach the salary sheet.');
+            await loadAmounts();
+        } catch (e) {
+            toastError('Error saving: ' + e.message);
+        } finally { hideLoading(); }
+    }
+
+    function showLoading() { $('#loadingOverlay').show(); }
+    function hideLoading() { $('#loadingOverlay').hide(); }
+
+    function esc(v) {
+        return (v ?? '').toString()
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+</script>
+}

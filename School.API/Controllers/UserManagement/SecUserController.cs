@@ -46,6 +46,22 @@ public class SecUserController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>Every user's roles, for the Role column on the list.</summary>
+    [HttpGet("roles")]
+    public async Task<IActionResult> GetAllRoles()
+    {
+        return Ok(await _service.GetRolesAsync(null));
+    }
+
+    /// <summary>One user's roles, for the edit form.</summary>
+    [HttpGet("{id:int}/roles")]
+    public async Task<IActionResult> GetRoles(int id)
+    {
+        var rows = await _service.GetRolesAsync(id);
+        return Ok(rows.FirstOrDefault() ?? new UserRolesDto { UserId = id });
+    }
+
+    [Microsoft.AspNetCore.Authorization.AllowAnonymous]
     [HttpPost("login")]
     public async Task<IActionResult> Login(UserLoginDto dto)
     {

@@ -24,7 +24,27 @@ public class AcademicGradeController : ControllerBase
         return Ok(await _service.GetAllAsync());
     }
 
-    [HttpGet("{id}")]
+    /// <summary>
+    /// Id and name only, in the shape the other dropdown endpoints use
+    /// (Designation, HRGrade, Shift) so the screens can treat them alike.
+    /// </summary>
+    /// <remarks>
+    /// Declared BEFORE the "{id}" route below, and it has to be: without it a
+    /// request for /AcademicGrade/dropdown matched "{id}", failed to bind
+    /// "dropdown" as an int and returned 400. The Employee form has been asking
+    /// for this since it was written, so its Academic Grade list was always empty.
+    /// </remarks>
+    [HttpGet("dropdown")]
+    public async Task<IActionResult> GetDropdown()
+    {
+        var grades = await _service.GetAllAsync();
+
+        return Ok(grades
+            .Where(g => g.IsActive != false)
+            .Select(g => new { id = g.VID, name = g.VName }));
+    }
+
+    [HttpGet("{id:int}")]
     public async Task<IActionResult> GetById(int id)
     {
         var record = await _service.GetByIdAsync(id);

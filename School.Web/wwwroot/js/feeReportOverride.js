@@ -1,12 +1,18 @@
 // Override buildReportHTML for Fee Report view: adds Father Name column.
 // Keeps applyFeeReport.js / ApplyFeeList unchanged.
 buildReportHTML = function (sections, dateFrom, dateTo) {
-    const fmtDisplay = d => new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const fmtDisplay = d => fmtDate(d);   // dd-MMM-yyyy, application-wide
 
     let fullBody = '';
 
     sections.forEach((sec, secIdx) => {
         const isPaid = sec.type === 'paid';
+
+        // The dropout sheet lists students who have LEFT, so it carries two
+        // extras: a Status column (Left / Struck Off / …) and a heading that
+        // does NOT claim a date range — the SP deliberately ignores one there,
+        // because a leaver's arrears are whatever is still outstanding today.
+        const isDropout = sec.type === 'dropout';
 
         const monthSet = new Set();
         const feeTypeSet = new Set();
@@ -49,6 +55,15 @@ buildReportHTML = function (sections, dateFrom, dateTo) {
                 studentName: r.studentName || '-',
                 fatherName: r.fatherName || '-',
                 contact: r.contactNo || r.contact || r.fatherContact || '-',
+                status: r.statusName || '-',
+                // The family's promise to pay, when one is in force. A promised
+                // family is off this report by default; tick "Include promised"
+                // and they come back, and then the sheet has to say WHY they
+                // were not being chased and when the money is expected.
+                promiseDate: r.promiseDate || null,
+                promisedBy: r.promisedBy || '',
+                promisedAmount: r.promisedAmount || 0,
+                promisedForName: r.promisedForName || '',
                 cells: {}
             });
 
@@ -64,6 +79,11 @@ buildReportHTML = function (sections, dateFrom, dateTo) {
                      <th rowspan="2" style="${thStyle}">Student Name</th>
                      <th rowspan="2" style="${thStyle}">Father Name</th>
                      <th rowspan="2" style="${thStyle}">Contact</th>`;
+        // Only where somebody actually has one: an empty column on every other
+        // sheet would be noise.
+        const showPromise = sec.data.some(r => r.promiseDate);
+        if (showPromise) hRow1 += `<th rowspan="2" style="${thStyle}">Promised</th>`;
+        if (isDropout) hRow1 += `<th rowspan="2" style="${thStyle}">Status</th>`;
         feeTypes.forEach(ft => {
             hRow1 += `<th colspan="${months.length}" style="${thStyle}">${ft}</th>`;
         });
@@ -135,6 +155,16 @@ buildReportHTML = function (sections, dateFrom, dateTo) {
                     <td style="border:1px solid #ccc;padding:3px 6px;font-weight:600;">${stu.studentName}</td>
                     <td style="border:1px solid #ccc;padding:3px 6px;">${stu.fatherName}</td>
                     <td style="border:1px solid #ccc;padding:3px 6px;font-size:10px;white-space:nowrap;">${stu.contact}</td>
+                    ${showPromise ? `<td style="border:1px solid #ccc;padding:3px 6px;font-size:10px;white-space:nowrap;">${
+                        stu.promiseDate
+                            ? fmtDate(stu.promiseDate)
+                              + (stu.promisedBy ? ' / ' + stu.promisedBy : '')
+                              + (stu.promisedForName && stu.promisedForName !== stu.studentName
+                                    ? `<div style="font-size:9px;">via ${stu.promisedForName}</div>` : '')
+                              + (stu.promisedAmount
+                                    ? `<div style="font-size:9px;">Rs.${formatAmount(stu.promisedAmount)}</div>` : '')
+                            : '-'}</td>` : ''}
+                    ${isDropout ? `<td style="border:1px solid #ccc;padding:3px 6px;font-size:10px;white-space:nowrap;">${stu.status}</td>` : ''}
                     ${cells}
                     <td style="border:1px solid #ccc;padding:3px 6px;text-align:right;font-weight:700;">${formatAmount(rowTotal)}</td>
                 </tr>`;
@@ -160,7 +190,7 @@ buildReportHTML = function (sections, dateFrom, dateTo) {
                     <tbody>
                         ${studentRows}
                         <tr>
-                            <td colspan="5" style="border:1px solid #ccc;padding:3px 6px;text-align:right;font-weight:700;background:#f0f4f8;">Total</td>
+                            <td colspan="${5 + (isDropout ? 1 : 0) + (showPromise ? 1 : 0)}" style="border:1px solid #ccc;padding:3px 6px;text-align:right;font-weight:700;background:#f0f4f8;">Total</td>
                             ${totalCells}
                             <td style="border:1px solid #ccc;padding:3px 6px;text-align:right;font-weight:700;background:#f0f4f8;">${formatAmount(groupTotal)}</td>
                         </tr>
@@ -170,8 +200,16 @@ buildReportHTML = function (sections, dateFrom, dateTo) {
         });
 
         const pageBreak = secIdx > 0 ? 'page-break-before:always;' : '';
-        const titleLabel = isPaid ? 'Student Paid Fee Report' : 'Student Unpaid Fee Report';
+        const titleLabel = isDropout
+            ? 'Student Unpaid Fee Report — Dropout / Left Students'
+            : (isPaid ? 'Student Paid Fee Report' : 'Student Unpaid Fee Report');
         const rangeLabel = isPaid ? 'Paid' : 'Unpaid';
+
+        // No "From … To …" on the dropout sheet: the server ignores the range
+        // there, so printing one would describe a filter that never ran.
+        const subTitle = isDropout
+            ? `Outstanding Dues of Left / Struck Off Students as on ( ${fmtDisplay(new Date())} )`
+            : `${rangeLabel} Fee Report From ( ${fmtDisplay(dateFrom)} ) To ( ${fmtDisplay(dateTo)} )`;
 
         const grandTotalHtml = `
             <div style="text-align:right;margin-top:6px;margin-bottom:6px;">
@@ -186,7 +224,7 @@ buildReportHTML = function (sections, dateFrom, dateTo) {
                     ${titleLabel}
                 </div>
                 <div style="background:#e4e4e4;border:1px solid #aaa;border-top:none;padding:5px;font-size:12px;">
-                    ${rangeLabel} Fee Report From ( ${fmtDisplay(dateFrom)} ) To ( ${fmtDisplay(dateTo)} )
+                    ${subTitle}
                 </div>
             </div>
 

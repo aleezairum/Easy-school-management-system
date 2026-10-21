@@ -8,7 +8,7 @@
     var examName    = ViewData["ExamName"] as string;
 
     var students = Model?.Students ?? new();
-    var issueDate = DateTime.Now.ToString("dd-MM-yyyy");
+    var issueDate = DateTime.Now.ToString("dd-MMM-yyyy");
 
     string Marks(decimal? v) => v.HasValue ? (v.Value == Math.Floor(v.Value) ? ((long)v.Value).ToString() : v.Value.ToString("0.##")) : "-";
     string Pct(decimal? v)   => v.HasValue ? v.Value.ToString("0.00") + "%" : "-";
@@ -322,7 +322,7 @@
                 {
                     <tr>
                         <td class="subject-name">@sub.SubjectName</td>
-                        <td>@(sub.VDate.HasValue ? sub.VDate.Value.ToString("dd-MM-yyyy") : "-")</td>
+                        <td>@(sub.VDate.HasValue ? sub.VDate.Value.ToString("dd-MMM-yyyy") : "-")</td>
                         <td>@Marks(sub.TotalMarks)</td>
                         <td>@Marks(sub.PassMarks)</td>
                         <td>@PctOf(sub.PassMarks, sub.TotalMarks)</td>

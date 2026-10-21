@@ -290,6 +290,17 @@
             color: #475569;
         }
 
+        .btn-danger-custom {
+            background: white;
+            border-color: #fecaca;
+            color: #b91c1c;
+        }
+
+        .btn-danger-custom:hover {
+            background: #fef2f2;
+            border-color: #fca5a5;
+        }
+
         .btn-secondary-custom:hover {
             background: #f8fafc;
             border-color: #cbd5e1;
@@ -537,10 +548,16 @@
                     </div>
                 </form>
 
-                <!-- Button Toolbar at Bottom Right -->
+                @* The script below wires btnDelete. The button was not here, so
+                   the page threw on load at that line and every handler after
+                   it — Clear, the tree search, the whole rest of the script —
+                   was never wired up. *@
                 <div class="btn-toolbar-bottom">
                     <button type="button" class="btn-action btn-secondary-custom" id="btnCancel">
                         <i class="bi bi-x-lg"></i> Clear
+                    </button>
+                    <button type="button" class="btn-action btn-danger-custom" id="btnDelete">
+                        <i class="bi bi-trash"></i> Delete
                     </button>
                     <button type="button" class="btn-action btn-primary-custom" id="btnSave">
                         <i class="bi bi-check2"></i> Save Page

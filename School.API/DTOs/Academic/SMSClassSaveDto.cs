@@ -4,6 +4,10 @@
     {
         public int VID { get; set; }
         public string? VName { get; set; }
+
+        /// <summary>Optional Urdu name, for the documents parents receive.</summary>
+        public string? VNameUrdu { get; set; }
+
         public bool? IsActive { get; set; }
         public int? InsertedBy { get; set; }
         public DateTime? InsertedDate { get; set; }

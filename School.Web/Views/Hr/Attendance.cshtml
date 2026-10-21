@@ -18,6 +18,7 @@
     .st-6 { background: #f3e8ff; color: #6b21a8; } /* WeeklyOff */
     .st-7 { background: #ffe4e6; color: #9f1239; } /* ShortLeave */
     .st-8 { background: #cffafe; color: #155e75; } /* Exempt */
+    .st-9 { background: #f1f5f9; color: #94a3b8; } /* Not employed — before joining or after leaving */
     .st-0 { background: #f8fafc; color: #cbd5e1; } /* Unmarked */
     .table-responsive { max-height: 70vh; }
 
@@ -70,18 +71,32 @@
     <div id="dayView">
         <div class="card mb-3"><div class="card-body">
             <div class="row g-2 align-items-end">
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label">Date</label>
                     <input type="date" class="form-control" id="dDate" />
                 </div>
+                <div class="col-md-2">
+                    <label class="form-label">Campus</label>
+                    <select class="form-select" id="dCampus"><option value="">All campuses</option></select>
+                </div>
                 <div class="col-md-3">
                     <label class="form-label">Designation</label>
-                    <select class="form-select" id="dDesignation"><option value="">All</option></select>
+                    @* Several at once: the office marks the teachers and the
+                       operators together, not one designation per pass. *@
+                    <select class="form-select" id="dDesignation" multiple></select>
                 </div>
                 <div class="col-md-2">
+                    <label class="form-label">Sort by</label>
+                    <select class="form-select" id="dSort">
+                        <option value="code" selected>Employee Code</option>
+                        <option value="name">Name</option>
+                        <option value="designation">Designation</option>
+                    </select>
+                </div>
+                <div class="col-md-1">
                     <button class="btn btn-outline-success w-100" onclick="loadDay()"><i class="bi bi-search"></i> Load</button>
                 </div>
-                <div class="col-md-4 d-flex justify-content-end">
+                <div class="col-md-2 d-flex justify-content-end">
                     <button class="btn btn-success" onclick="saveDay()">
                         <i class="bi bi-save"></i> Save Changes (<span id="dayDirtyCount">0</span>)
                     </button>
@@ -117,13 +132,23 @@
                             <th style="width:170px;">Day Timing</th>
                             <th style="width:130px;">Time In</th>
                             <th style="width:130px;">Time Out</th>
+                            @* A teacher who arrives and leaves at the bell but is away in
+                               between: sign-out and return, so the hours are recorded and
+                               can be charged. *@
+                            <th style="width:210px;">Short Leave (out of school)</th>
+                            @* One teacher covering another's duty. The covered one
+                               gets the minutes as Short, the one who covered gets
+                               them as Extra, and payroll charges short less extra
+                               at the same per-minute rate — so the account settles
+                               between the two of them. *@
+                            <th style="width:160px;">Duty Cover</th>
                             <th style="width:150px;">Status</th>
-                            <th style="width:120px;">Late</th>
+                            <th style="width:150px;">Late / Early</th>
                             <th>Remarks</th>
                         </tr>
                     </thead>
                     <tbody id="dayBody">
-                        <tr><td colspan="8" class="text-center text-muted py-4">Choose a date and click Load.</td></tr>
+                        <tr><td colspan="10" class="text-center text-muted py-4">Choose a date and click Load.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -143,11 +168,27 @@
                     <option value="10">October</option><option value="11">November</option><option value="12">December</option>
                 </select>
             </div>
-            <div class="col-md-3"><label class="form-label">Designation</label><select class="form-select" id="fDesignation"><option value="">All</option></select></div>
-            <div class="col-md-2"><button class="btn btn-outline-success w-100" onclick="loadGrid()"><i class="bi bi-search"></i> Load</button></div>
+            <div class="col-md-2"><label class="form-label">Campus</label><select class="form-select" id="fCampus"><option value="">All campuses</option></select></div>
+            <div class="col-md-2"><label class="form-label">Designation</label><select class="form-select" id="fDesignation" multiple></select></div>
+            <div class="col-md-2"><label class="form-label">Sort by</label>
+                <select class="form-select" id="fSort">
+                    <option value="code" selected>Employee Code</option>
+                    <option value="name">Name</option>
+                    <option value="designation">Designation</option>
+                </select>
+            </div>
+            <div class="col-md-1"><button class="btn btn-outline-success w-100" onclick="loadGrid()"><i class="bi bi-search"></i> Load</button></div>
             <div class="col-md-3 d-flex gap-2">
                 <button class="btn btn-outline-secondary" onclick="fillAll(1)">Mark All Present</button>
                 <button class="btn btn-success" onclick="saveDirty()"><i class="bi bi-save"></i> Save Changes (<span id="dirtyCount">0</span>)</button>
+                @* Works the month's saved attendance out again against the
+                   timings as they stand now: after a day's hours changed, or to
+                   re-grade days the old rule turned into Half Days. Every status
+                   somebody chose (leave, exempt, holiday...) is kept. *@
+                <button class="btn btn-outline-warning" id="btnRecalc" onclick="recalcMonth()"
+                        title="Work this month's late, early and status out again against the current timings">
+                    <i class="bi bi-arrow-repeat"></i> Recalculate
+                </button>
             </div>
         </div>
         <div class="mt-2">
@@ -158,6 +199,7 @@
             <span class="badge st-5 mx-1">Hol</span>Holiday
             <span class="badge st-6 mx-1">Off</span>Weekly Off
             <span class="badge st-8 mx-1">Ex</span>Exempt
+            <span class="badge st-9 mx-1">&middot;</span>Not on the staff yet / left
             <span class="badge st-0 mx-1">-</span>Not entered
         </div>
         <div class="mt-2 holiday-strip" id="holidayStrip"></div>
@@ -209,7 +251,11 @@
 
 @section Scripts {
 <script>
-    const STATUS_LABEL = {0:'-',1:'P',2:'A',3:'L',4:'H½',5:'Hol',6:'Off',7:'SL',8:'Ex'};
+    const STATUS_LABEL = {0:'-',1:'P',2:'A',3:'L',4:'H½',5:'Hol',6:'Off',7:'SL',8:'Ex',9:'·'};
+
+    // Not on the staff that day. Never saved and never editable — see
+    // HrAttendanceStatus.NotEmployed.
+    const NOT_EMPLOYED = 9;
     const DOW_SHORT = ['Su','Mo','Tu','We','Th','Fr','Sa'];
     // Rows are built as HTML strings, so API values have to be escaped.
     function esc(v) {
@@ -230,10 +276,43 @@
                 $('#fDesignation').append(`<option value="${d.id}">${esc(d.name)}</option>`);
                 $('#dDesignation').append(`<option value="${d.id}">${esc(d.name)}</option>`);
             });
+
+            // Tick boxes rather than a ctrl-click list. select2 is loaded by
+            // the layout for the whole application, so nothing extra to pull in.
+            // Nothing selected means everyone, which is what the placeholder says.
+            if ($.fn.select2) {
+                $('#dDesignation, #fDesignation').select2({
+                    theme: 'bootstrap-5',
+                    placeholder: 'All designations',
+                    allowClear: true,
+                    closeOnSelect: false,
+                    width: '100%'
+                });
+            }
         }).catch(() => {});
+
+        // Campus, on both views. Staff are added campus-wise (Employees.CampusID),
+        // and the two campuses keep their own registers.
+        fetch(`${API_BASE}/campus`).then(r => r.ok ? r.json() : []).then(list => {
+            list.forEach(c => {
+                $('#fCampus').append(`<option value="${c.vid}">${esc(c.vName)}</option>`);
+                $('#dCampus').append(`<option value="${c.vid}">${esc(c.vName)}</option>`);
+            });
+        }).catch(() => {});
+
+        // Changing the order reloads on its own — nobody should have to press
+        // Load again just to see the same people in a different order.
+        $('#dSort').on('change', () => loadDay());
+        $('#fSort').on('change', () => loadGrid());
 
         loadDay();   // Day Wise is the landing tab — daily marking is the daily job
     });
+
+    // The picked designations as "3,7,9", or '' for none — which the server
+    // reads as every designation.
+    function designationCsv(selector) {
+        return ($(selector).val() || []).filter(Boolean).join(',');
+    }
 
     // Local date parts, not toISOString() — that converts to UTC and would show
     // yesterday for anyone east of Greenwich late in the day.
@@ -252,10 +331,55 @@
         if (!isDay && !gridData) loadGrid();
     }
 
+    async function recalcMonth() {
+        const year = parseInt($('#fYear').val()), month = parseInt($('#fMonth').val());
+        if (!year || !month) { toastWarning('Choose a month first'); return; }
+
+        const pad = n => String(n).padStart(2, '0');
+        const last = new Date(year, month, 0).getDate();
+        const label = `${MONTHS_FULL[month - 1]} ${year}`;
+
+        // The shared confirm dialog, worded for this: it deletes nothing, so it
+        // must not wear the red "Yes, Delete" button.
+        if (!await confirmDelete({
+            title: `Recalculate ${label}?`,
+            icon: 'question',
+            confirmButtonText: 'Yes, Recalculate',
+            html: `Every member of staff's attendance for ${label} is worked out again against the current ` +
+                  `Staff Timings - whatever campus or designation is picked above. Late and early minutes are ` +
+                  `recalculated, and days the old rule marked Half Day become Present. Leave, exempt, ` +
+                  `holiday and other chosen statuses are kept.`
+        })) return;
+
+        try {
+            const res = await fetch(`${API_BASE}/hr/attendance/recalculate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ From: `${year}-${pad(month)}-01`, To: `${year}-${pad(month)}-${pad(last)}` })
+            });
+            const out = await res.json().catch(() => ({}));
+            if (!res.ok) { toastError(out.message || 'Could not recalculate'); return; }
+
+            toastSuccess(`${label}: ${out.statusChanged} status and ${out.minutesChanged} minute change(s)`
+                + (out.skipped ? `; ${out.skipped} day(s) skipped (no timing).` : '.')
+                + ' Generate the payroll again for it to reach the salary.');
+            await loadGrid();
+        } catch (e) {
+            toastError('Error: ' + e.message);
+        }
+    }
+
+    const MONTHS_FULL = ['January', 'February', 'March', 'April', 'May', 'June',
+                         'July', 'August', 'September', 'October', 'November', 'December'];
+
     async function loadGrid() {
-        const year = $('#fYear').val(), month = $('#fMonth').val(), desig = $('#fDesignation').val();
+        const year = $('#fYear').val(), month = $('#fMonth').val();
+        const desig = designationCsv('#fDesignation');
+        const campus = $('#fCampus').val();
         let url = `${API_BASE}/hr/attendance/month?year=${year}&month=${month}`;
-        if (desig) url += `&designationId=${desig}`;
+        if (desig) url += `&designationIds=${desig}`;
+        if (campus) url += `&campusId=${campus}`;
+        url += `&sortBy=${$('#fSort').val() || 'code'}`;
         const res = await fetch(url);
         if (!res.ok) { toastError('Failed to load attendance'); return; }
         gridData = await res.json();
@@ -316,6 +440,15 @@
                 const title = dayInfo && dayInfo.isHoliday
                     ? esc(dayInfo.holidayName || 'Holiday')
                     : (isOffDayFor(emp, c.day) ? 'Weekly off' : '');
+                // A day before they joined or after they left is not editable:
+                // there is no attendance to record for it, and the server would
+                // refuse to save one anyway.
+                if (status === NOT_EMPLOYED) {
+                    row += `<td class="${bgCls}" title="Not on the staff on this date">`
+                         + `<span class="att-cell st-9">${STATUS_LABEL[NOT_EMPLOYED]}</span></td>`;
+                    return;
+                }
+
                 row += `<td class="${bgCls}" title="${title}"><span class="att-cell st-${status} ${isDirty?'dirty':''}" onclick="openCellEditor(${emp.employeeId}, ${c.day})">${STATUS_LABEL[status] ?? '-'}</span></td>`;
             });
             row += '</tr>';
@@ -397,8 +530,13 @@
         if (!date) { toastWarning('Please choose a date'); return; }
 
         let url = `${API_BASE}/hr/attendance/day?date=${date}`;
-        const desig = $('#dDesignation').val();
-        if (desig) url += `&designationId=${desig}`;
+        const desig = designationCsv('#dDesignation');
+        if (desig) url += `&designationIds=${desig}`;
+        const campus = $('#dCampus').val();
+        if (campus) url += `&campusId=${campus}`;
+        // Always sent, so the sheet is never left in whatever order the
+        // database happened to return. Employee code is the default.
+        url += `&sortBy=${$('#dSort').val() || 'code'}`;
 
         const res = await fetch(url);
         if (!res.ok) { toastError('Failed to load attendance for this date'); return; }
@@ -414,8 +552,11 @@
     // school timing if this date has one, otherwise each employee's own shift.
     function renderDayBanner() {
         const b = $('#dayTimingBanner').removeClass('has-timing no-timing closed');
-        const dateLabel = new Date(dayData.date).toLocaleDateString('en-GB',
-            { weekday: 'long', day: '2-digit', month: 'short', year: 'numeric' });
+        // Weekday + dd-MMM-yyyy: the day name is what the banner is for, and the
+        // date itself is in the application's format like everywhere else.
+        const weekday = (parseCalendarDate(dayData.date) || new Date(dayData.date))
+            .toLocaleDateString('en-GB', { weekday: 'long' });
+        const dateLabel = `${weekday}, ${fmtDate(dayData.date)}`;
 
         if (dayData.isHoliday) {
             b.addClass('closed').html(
@@ -469,10 +610,64 @@
         return { timeIn: e.effectiveTimeIn, timeOut: e.effectiveTimeOut };
     }
 
+    // ── Short leave: time out of school during the day ───────────────────────
+    //
+    // A row per trip, because a teacher can go out twice. Each is a pair of
+    // times; the minutes are shown as they are typed but the SERVER works out
+    // what is charged — the browser only reports what was entered.
+
+    function outingRow(o) {
+        return `<div class="outing-row d-flex align-items-center gap-1 mb-1">
+                    <input type="time" class="form-control form-control-sm o-out" value="${hhmm(o && o.outTime)}" title="Went out" />
+                    <span class="emp-sub">to</span>
+                    <input type="time" class="form-control form-control-sm o-in" value="${hhmm(o && o.inTime)}" title="Came back" />
+                    <button type="button" class="btn btn-sm btn-link text-danger p-0 px-1 o-del" title="Remove">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>`;
+    }
+
+    function outingCell(e) {
+        const rows = (e.outings || []).map(outingRow).join('');
+        const total = e.outingMinutes || 0;
+        return `<div class="outing-list">${rows}</div>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 o-add">
+                        <i class="bi bi-plus-lg"></i> Out
+                    </button>
+                    <span class="emp-sub o-total">${total > 0 ? total + ' min out' : ''}</span>
+                </div>`;
+    }
+
+    // Total for one row, from whatever pairs are currently on screen. Mirrors
+    // the server: a trip with no return time yet counts as zero, and so does a
+    // return that is not after the departure.
+    function outingMinutesOf($tr) {
+        let total = 0;
+        $tr.find('.outing-row').each(function () {
+            const out = $(this).find('.o-out').val();
+            const back = $(this).find('.o-in').val();
+            if (!out || !back) return;
+            const mins = (toMinutes(back) - toMinutes(out));
+            if (mins > 0) total += mins;
+        });
+        return total;
+    }
+
+    function toMinutes(hhmmValue) {
+        const [h, m] = String(hhmmValue).split(':').map(Number);
+        return (h || 0) * 60 + (m || 0);
+    }
+
+    function refreshOutingTotal($tr) {
+        const total = outingMinutesOf($tr);
+        $tr.find('.o-total').text(total > 0 ? total + ' min out' : '');
+    }
+
     function renderDay() {
         const body = $('#dayBody').empty();
         if (!dayData.employees.length) {
-            body.html('<tr><td colspan="8" class="text-center text-muted py-4">No employees found.</td></tr>');
+            body.html('<tr><td colspan="10" class="text-center text-muted py-4">No employees found.</td></tr>');
             return;
         }
 
@@ -490,7 +685,8 @@
             // Say where the times came from — a school timing overriding a shift
             // is exactly the kind of thing that looks like a bug otherwise. Only
             // a row with neither is a real problem, and that one is called out.
-            const source = dayData.schoolTimeIn
+            // The designation's own timing counts as the school timing too.
+            const source = (dayData.schoolTimeIn || e.effectiveTimeIn)
                 ? '<span class="emp-sub">school timing</span>'
                 : e.shiftId ? `<span class="emp-sub">${esc(e.shiftName || 'shift')}</span>`
                 : '<span class="emp-sub text-danger">No school timing or shift</span>';
@@ -505,10 +701,24 @@
                     <td>${timing}<div>${source}</div></td>
                     <td><input type="time" class="form-control form-control-sm d-in" value="${inVal}" /></td>
                     <td><input type="time" class="form-control form-control-sm d-out" value="${outVal}" /></td>
+                    <td class="d-outing-cell">${outingCell(e)}</td>
+                    <td>
+                        <div class="d-flex align-items-center gap-1 mb-1">
+                            <span class="emp-sub" style="width:34px;">Short</span>
+                            <input type="number" min="0" class="form-control form-control-sm d-short"
+                                   style="width:64px;" value="${e.shortMinutes || 0}" title="Minutes somebody else covered for this person" />
+                        </div>
+                        <div class="d-flex align-items-center gap-1">
+                            <span class="emp-sub" style="width:34px;">Extra</span>
+                            <input type="number" min="0" class="form-control form-control-sm d-extra"
+                                   style="width:64px;" value="${e.extraMinutes || 0}" title="Minutes this person covered for somebody else" />
+                        </div>
+                    </td>
                     <td>${statusSelect(initialOverride(e))}</td>
                     <td>
                         <span class="badge st-${e.status}">${STATUS_LABEL[e.status] ?? '-'}</span>
                         ${e.lateMinutes > 0 ? `<div class="emp-sub text-danger">${e.lateMinutes} min late</div>` : ''}
+                        ${e.earlyMinutes > 0 ? `<div class="emp-sub text-danger">${e.earlyMinutes} min early</div>` : ''}
                         <div class="form-check form-check-inline mt-1">
                             <input class="form-check-input d-ignore" type="checkbox" ${e.ignoreLate ? 'checked' : ''}
                                    title="Ignore late for payroll (minutes still recorded)" />
@@ -522,8 +732,28 @@
         // Any edit in a row marks that row for saving — nothing is written that
         // was not touched, so loading a date never rewrites its existing records.
         $('#dayBody').off('change.day input.day')
-            .on('change.day input.day', '.d-in, .d-out, .d-status, .d-ignore, .d-remarks', function () {
+            .on('change.day input.day', '.d-in, .d-out, .d-status, .d-ignore, .d-remarks, .d-short, .d-extra', function () {
                 markDayRowDirty($(this).closest('tr'));
+            })
+            .on('change.day input.day', '.o-out, .o-in', function () {
+                const $tr = $(this).closest('tr');
+                refreshOutingTotal($tr);
+                markDayRowDirty($tr);
+            });
+
+        // Add / remove a trip out. Both mark the row dirty, so the change is
+        // saved with everything else when Save Changes is pressed.
+        $('#dayBody').off('click.outing')
+            .on('click.outing', '.o-add', function () {
+                const $tr = $(this).closest('tr');
+                $tr.find('.outing-list').append(outingRow(null));
+                markDayRowDirty($tr);
+            })
+            .on('click.outing', '.o-del', function () {
+                const $tr = $(this).closest('tr');
+                $(this).closest('.outing-row').remove();
+                refreshOutingTotal($tr);
+                markDayRowDirty($tr);
             });
 
         // The pre-filled rows count as pending too: the Save button's number then
@@ -615,6 +845,20 @@
             const timeOut = $row.find('.d-out').val();
             const status  = $row.find('.d-status').val();
 
+            // Every pair currently on screen for this row. Sent as a complete
+            // list — the server replaces the day's trips with exactly this, so
+            // one the office deleted actually goes.
+            const outings = [];
+            $row.find('.outing-row').each(function () {
+                const out = $(this).find('.o-out').val();
+                const back = $(this).find('.o-in').val();
+                if (!out) return;                       // a blank row the user never filled in
+                outings.push({
+                    OutTime: out + ':00',
+                    InTime: back ? back + ':00' : null  // null = still out
+                });
+            });
+
             cells.push({
                 EmployeeId: id,
                 AttDate: date,
@@ -622,7 +866,12 @@
                 TimeOut: timeOut ? timeOut + ':00' : null,
                 StatusOverride: status ? parseInt(status) : null,
                 IgnoreLate: $row.find('.d-ignore').is(':checked'),
-                Remarks: $row.find('.d-remarks').val().trim() || null
+                Remarks: $row.find('.d-remarks').val().trim() || null,
+                // Always sent from this screen, because this screen owns them.
+                // The month grid sends neither and its saves leave them alone.
+                ShortMinutes: parseInt($row.find('.d-short').val()) || 0,
+                ExtraMinutes: parseInt($row.find('.d-extra').val()) || 0,
+                Outings: outings
             });
         });
 

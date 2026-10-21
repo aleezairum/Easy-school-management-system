@@ -1,3 +1,4 @@
+@inject School.Web.Services.ApiTokenService ApiTokens
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1778,6 +1779,20 @@
                                 sessionStorage.removeItem('sidebarHtml');
                                 _html = null;
                             }
+                            // The cached HTML is a whole rendered menu, so a menu
+                            // that has been restructured keeps showing the old one
+                            // until this cache expires. Bump MENU_VERSION whenever
+                            // SidebarController changes and it is thrown away once.
+                            var MENU_VERSION = '2026-09-16-restructure';
+                            if (sessionStorage.getItem('sidebarMenuVersion') !== MENU_VERSION) {
+                                sessionStorage.removeItem('sidebarHtml');
+                                sessionStorage.removeItem('sidebarData');
+                                Object.keys(localStorage).forEach(function (k) {
+                                    if (k.indexOf('sidebar-') === 0) localStorage.removeItem(k);
+                                });
+                                sessionStorage.setItem('sidebarMenuVersion', MENU_VERSION);
+                                _html = null;
+                            }
                             if (_html) {
                                 document.getElementById('sidebarMenu').innerHTML = _html;
                                 // Re-apply active state and expand parent section/submenu
@@ -1965,6 +1980,8 @@
     <script>
         USER_ID = @(Context.Session.GetInt32("UserId") ?? 0);
         SESSION_ID = @(Context.Session.GetInt32("SessionId") ?? 0);
+        // Sent with every API call by common.js; renewed by the keep-alive ping.
+        API_TOKEN = '@(ApiTokens.For(Context) ?? "")';
     </script>
 
     <script>
@@ -2090,6 +2107,26 @@
         function toggleMenuSection(sectionId) {
             const section = document.getElementById(sectionId);
             if (!section) return;
+
+            const willOpen = section.classList.contains('collapsed');
+
+            // Accordion: opening one section closes the rest, so the sidebar
+            // never grows past the screen and the list stays readable. Submenus
+            // inside the sections being closed are closed with them, or they
+            // would reappear open the next time their section is expanded.
+            if (willOpen) {
+                document.querySelectorAll('.menu-section:not(.collapsed)').forEach(other => {
+                    if (other.id === sectionId) return;
+                    other.classList.add('collapsed');
+                    localStorage.removeItem(`sidebar-${other.id}`);
+                    other.querySelectorAll('.submenu.open').forEach(sub => {
+                        sub.classList.remove('open');
+                        sub.previousElementSibling?.classList.remove('expanded');
+                        localStorage.removeItem(`sidebar-${sub.id}`);
+                    });
+                });
+            }
+
             section.classList.toggle('collapsed');
             if (section.classList.contains('collapsed')) {
                 localStorage.removeItem(`sidebar-${sectionId}`);
@@ -2365,6 +2402,43 @@
 
     <script>
         // ====== SELECT2 GLOBAL INIT ======
+        // Select2 draws its own box next to the real <select> and only redraws
+        // it when told. Pages set values with $('#x').val(v) all over the place
+        // and mostly do not tell it, so the real value changed while the box
+        // kept showing the old one. Every value set on a select2 dropdown now
+        // tells it - with 'change.select2', which redraws the box only and does
+        // not run the page's own change handlers (a full 'change' would, and a
+        // class dropdown would then reload its sections over the value being set).
+        (function ($) {
+            const isSelect2 = el => el.tagName === 'SELECT' && el.classList.contains('select2-hidden-accessible');
+
+            const val = $.fn.val;
+            $.fn.val = function () {
+                const result = val.apply(this, arguments);
+                if (arguments.length) {
+                    this.each(function () { if (isSelect2(this)) $(this).trigger('change.select2'); });
+                }
+                return result;
+            };
+
+            // Hiding the real <select> left select2's box on screen. .toggle(bool)
+            // goes through .show()/.hide(), so these two cover it as well.
+            ['show', 'hide'].forEach(function (name) {
+                const fn = $.fn[name];
+                $.fn[name] = function () {
+                    const result = fn.apply(this, arguments);
+                    this.each(function () { if (isSelect2(this)) syncSelect2Visibility(this); });
+                    return result;
+                };
+            });
+        })(jQuery);
+
+        // Select2's box follows the real <select>: hidden when it is hidden.
+        function syncSelect2Visibility(el) {
+            const s2 = $(el).data('select2');
+            if (s2 && s2.$container) s2.$container.css('display', el.style.display === 'none' ? 'none' : '');
+        }
+
         function applySelect2(el) {
             const $el = $(el);
             if ($el.hasClass('select2-hidden-accessible')) return;
@@ -2375,6 +2449,9 @@
                 width: '100%',
                 dropdownParent: $el.closest('.modal').length ? $el.closest('.modal') : $(document.body)
             });
+            // Rebuilt after its options change, a dropdown the page had hidden
+            // would otherwise come back visible.
+            syncSelect2Visibility(el);
         }
 
         function initSelect2() {

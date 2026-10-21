@@ -416,7 +416,7 @@ namespace School.API.Services.Implementations
                     .ToList();
 
                 decimal total = group.Sum(f => f.PendingAmount);
-                string dueDate = dto.DueDate.ToString("dd-MM-yyyy");
+                string dueDate = dto.DueDate.ToString("dd-MMM-yyyy");
                 string classWithSection = ClassWithSection(first.ClassName, first.SectionName);
 
                 string text =

@@ -222,7 +222,6 @@
 
     <script>
 
-        const USER_TYPE_LABELS = { 0: 'General', 1: 'Admin', 2: 'Teacher', 3: 'Accountant' };
         let editingUserId = 0;
 
         $(document).ready(function () {
@@ -235,8 +234,31 @@
             });
 
             loadRoles();
+            loadEmployees();
             loadUsers();
         });
+
+        // ── Load employees into the dropdown ──────────────────────────────────────
+        // The field has always been on the form with nothing but its placeholder
+        // in it, so a login could never be tied to a member of staff.
+        async function loadEmployees() {
+            try {
+                const response = await fetch(`${API_BASE}/Employee`);
+                if (!response.ok) return;
+
+                const list = await response.json();
+                const select = $('#employeeId');
+                list.filter(e => e.isActive !== false)
+                    .sort((a, b) => (a.fullName || '').localeCompare(b.fullName || ''))
+                    .forEach(e => {
+                        const name = e.fullName || `${e.firstName || ''} ${e.lastName || ''}`.trim();
+                        const code = e.employeeCode ? ` (${e.employeeCode})` : '';
+                        select.append(`<option value="${e.id}">${name}${code}</option>`);
+                    });
+            } catch (error) {
+                console.error('Error loading employees:', error);
+            }
+        }
 
         // ── Load roles into dropdown ──────────────────────────────────────────────
         async function loadRoles() {
@@ -260,10 +282,20 @@
         async function loadUsers() {
             showLoading();
             try {
-                const response = await fetch(`${API_BASE}/SecUser`);
+                // Users and their role assignments together: the Role column
+                // showed a label derived from UserType, which is not a role.
+                const [response, rolesRes] = await Promise.all([
+                    fetch(`${API_BASE}/SecUser`),
+                    fetch(`${API_BASE}/SecUser/roles`).catch(() => null)
+                ]);
+
                 if (response.ok) {
                     const users = await response.json();
-                    renderUsersTable(users);
+                    const map = {};
+                    if (rolesRes && rolesRes.ok) {
+                        (await rolesRes.json()).forEach(r => map[r.userId] = r.roleNames);
+                    }
+                    renderUsersTable(users, map);
                 } else {
                     showAlert('Failed to load users', 'danger');
                 }
@@ -275,7 +307,8 @@
         }
 
         // ── Render table ──────────────────────────────────────────────────────────
-        function renderUsersTable(users) {
+        function renderUsersTable(users, rolesByUser) {
+            rolesByUser = rolesByUser || {};
             const tbody = $('#usersBody');
             tbody.empty();
 
@@ -285,7 +318,10 @@
             }
 
             users.forEach(user => {
-                const roleBadge = `<span class="badge-role">${USER_TYPE_LABELS[user.userType] ?? 'General'}</span>`;
+                const names = rolesByUser[user.vid];
+                const roleBadge = names
+                    ? names.split(',').map(n => `<span class="badge-role">${n.trim()}</span>`).join(' ')
+                    : '<span class="text-muted" style="font-size:12px;">No role</span>';
 
                 const row = `
                     <tr data-user-id="${user.vid}">
@@ -313,7 +349,7 @@
                 const response = await fetch(`${API_BASE}/SecUser/${id}`);
                 if (response.ok) {
                     const user = await response.json();
-                    populateForm(user);
+                    await populateForm(user);
                     editingUserId = id;
                     setEditMode(true);
                     $('html, body').animate({ scrollTop: 0 }, 'slow');
@@ -353,13 +389,30 @@
         }
 
         // ── Populate form ─────────────────────────────────────────────────────────
-        function populateForm(user) {
+        async function populateForm(user) {
             $('#userId').val(user.vid);
             $('#employeeId').val(user.employeeID || '');
             $('#userFullName').val(user.userFullName);
             $('#userLogin').val(user.userLogin);
             $('#userPassword').val('');
-            $('#userRoles').val([String(user.userType)]).trigger('change');
+
+            // The roles this user actually has. This used to put UserType into
+            // the Roles box — a different thing entirely (0 = General, 1 =
+            // Admin…), so editing anyone showed whichever role happened to
+            // carry that id and saving it moved them to that role.
+            $('#userRoles').val(await rolesOf(user.vid)).trigger('change');
+        }
+
+        // The user's role ids, as strings for the Select2 box.
+        async function rolesOf(userId) {
+            try {
+                const res = await fetch(`${API_BASE}/SecUser/${userId}/roles`);
+                if (!res.ok) return [];
+                const data = await res.json();
+                return (data.roleIds || []).map(String);
+            } catch {
+                return [];
+            }
         }
 
         // ── Edit mode toggle ──────────────────────────────────────────────────────
@@ -401,11 +454,12 @@
                 return;
             }
 
-            const userType = selectedRoles && selectedRoles.length > 0 ? parseInt(selectedRoles[0]) : 0;
+            const roleIds = (selectedRoles || []).map(Number).filter(Boolean);
 
             const data = {
+                RoleIds: roleIds,
                 VID: id,
-                EmployeeID: null,
+                EmployeeID: parseInt($('#employeeId').val()) || null,
                 UserFullName: $('#userFullName').val().trim(),
                 UserLogin: $('#userLogin').val().trim(),
                 UserPassword: password || null,

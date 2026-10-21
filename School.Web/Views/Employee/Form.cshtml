@@ -132,8 +132,16 @@
                     <div class="tab-pane fade" id="employment" role="tabpanel">
                         <div class="row g-3">
                             <div class="col-lg-3 col-md-4 col-sm-6 col-12">
+                                <label class="form-label">Campus <span class="text-danger">*</span></label>
+                                <select class="form-select" id="campusId" required><option value="">Select Campus</option></select>
+                            </div>
+                            <div class="col-lg-3 col-md-4 col-sm-6 col-12">
                                 <label class="form-label">Designation <span class="text-danger">*</span></label>
                                 <select class="form-select" id="designationId" required><option value="">Select Designation</option></select>
+                            </div>
+                            <div class="col-lg-3 col-md-4 col-sm-6 col-12">
+                                <label class="form-label">Category</label>
+                                <select class="form-select" id="staffCategoryId"><option value="">Select Category</option></select>
                             </div>
                             <div class="col-lg-3 col-md-4 col-sm-6 col-12">
                                 <label class="form-label">HR Grade</label>
@@ -173,10 +181,12 @@
                     <!-- Payroll -->
                     <div class="tab-pane fade" id="payroll" role="tabpanel">
                         <div class="row g-3">
-                            <div class="col-12"><div class="section-title">Attendance &amp; Shift</div></div>
-                            <div class="col-lg-3 col-md-4 col-sm-6 col-12">
-                                <label class="form-label">Shift</label>
-                                <select class="form-select" id="shiftId"><option value="">Select Shift</option></select>
+                            <div class="col-12"><div class="section-title">Attendance</div></div>
+                            <div class="col-12">
+                                <div class="text-muted" style="font-size:12px;margin-bottom:4px;">
+                                    Working hours come from <strong>HR &gt; School Timings</strong>, which are set per
+                                    designation. The days below only override the weekly off for this one person.
+                                </div>
                             </div>
                             <div class="col-lg-3 col-md-4 col-sm-6 col-12">
                                 <label class="form-label">Machine Card No</label>
@@ -266,6 +276,7 @@
 }
 
 @section Scripts {
+    <script src="~/js/imageUpload.js" asp-append-version="true"></script>
     <script>
         const employeeId = @(employeeId != null ? employeeId.ToString() : "0");
         const WEEKDAYS = [{v:1,n:'Sunday'},{v:2,n:'Monday'},{v:3,n:'Tuesday'},{v:4,n:'Wednesday'},{v:5,n:'Thursday'},{v:6,n:'Friday'},{v:7,n:'Saturday'}];
@@ -289,30 +300,33 @@
             });
         }
 
-        function previewPhoto(input) {
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    $('#photoPreview').html(`<img src="${e.target.result}" />`);
-                    $('#photo').val(e.target.result);
-                }
-                reader.readAsDataURL(input.files[0]);
-            }
+        // The picture is saved in the employee's row, so it is made small first
+        // (400 px JPEG, a few dozen KB) whatever size the camera produced.
+        async function previewPhoto(input) {
+            if (!(input.files && input.files[0])) return;
+            try {
+                const img = await imageFileToUpload(input.files[0], 400, 0.85);
+                $('#photoPreview').html(`<img src="${img.preview}" />`);
+                $('#photo').val(img.preview);
+            } catch (e) { toastError(e.message); }
         }
 
         async function loadDropdowns() {
             try {
-                const [designations, hrGrades, academicGrades, shifts] = await Promise.all([
+                const [designations, hrGrades, academicGrades, campuses, staffCategories] = await Promise.all([
                     fetch(`${API_BASE}/Designation/dropdown`).then(r => r.ok ? r.json() : []).catch(() => []),
                     fetch(`${API_BASE}/HRGrade/dropdown`).then(r => r.ok ? r.json() : []).catch(() => []),
                     fetch(`${API_BASE}/AcademicGrade/dropdown`).then(r => r.ok ? r.json() : []).catch(() => []),
-                    fetch(`${API_BASE}/hr/shifts/dropdown`).then(r => r.ok ? r.json() : []).catch(() => [])
+                    fetch(`${API_BASE}/campus`).then(r => r.ok ? r.json() : []).catch(() => []),
+                    fetch(`${API_BASE}/StaffCategory/dropdown`).then(r => r.ok ? r.json() : []).catch(() => [])
                 ]);
 
+                // Campus uses the SMS naming (vid/vName), not the HR id/name shape.
+                campuses.forEach(c => $('#campusId').append(`<option value="${c.vid}">${c.vName}</option>`));
                 designations.forEach(d => $('#designationId').append(`<option value="${d.id}">${d.name}</option>`));
                 hrGrades.forEach(g => $('#hrGradeId').append(`<option value="${g.id}">${g.name}</option>`));
                 academicGrades.forEach(g => $('#academicGradeId').append(`<option value="${g.id}">${g.name}</option>`));
-                shifts.forEach(s => $('#shiftId').append(`<option value="${s.id}">${s.name}</option>`));
+                staffCategories.forEach(c => $('#staffCategoryId').append(`<option value="${c.id}">${c.name}</option>`));
             } catch (error) {
                 console.error('Error loading dropdowns:', error);
             }
@@ -355,7 +369,9 @@
             $('#address').val(data.address);
             $('#city').val(data.city);
 
+            $('#campusId').val(data.campusId);
             $('#designationId').val(data.designationId);
+            $('#staffCategoryId').val(data.staffCategoryId ?? '');
             $('#hrGradeId').val(data.hrGradeId);
             $('#academicGradeId').val(data.academicGradeId);
             $('#department').val(data.department);
@@ -365,7 +381,6 @@
             $('#status').val(data.status);
             $('#isActive').prop('checked', data.isActive);
 
-            $('#shiftId').val(data.shiftId);
             $('#machineCardNo').val(data.machineCardNo);
             $('#offDay1').val(data.offDay1);
             $('#offDay2').val(data.offDay2);
@@ -441,9 +456,13 @@
             const firstName = $('#firstName').val().trim();
             const joiningDate = $('#joiningDate').val();
             const designationId = $('#designationId').val();
+            const campusId = $('#campusId').val();
 
             if (!firstName) { showAlert('Please enter first name', 'danger'); return; }
             if (!joiningDate) { showAlert('Please enter joining date', 'danger'); return; }
+            // Required, because staff are added campus-wise and every screen
+            // that filters by campus silently drops a row that has none.
+            if (!campusId) { showAlert('Please select a campus', 'danger'); $('#campusId').focus(); return; }
             if (!designationId) { showAlert('Please select a designation', 'danger'); return; }
 
             const id = parseInt($('#employeeId').val()) || 0;
@@ -470,10 +489,13 @@
                 Specialization: $('#specialization').val().trim(),
                 Experience: $('#experience').val().trim(),
                 Department: $('#department').val().trim(),
+                CampusId: parseInt(campusId),
                 DesignationId: parseInt(designationId),
+                // Optional on purpose: staff already on file have no category
+                // until the office sets one, and null says exactly that.
+                StaffCategoryId: $('#staffCategoryId').val() ? parseInt($('#staffCategoryId').val()) : null,
                 HRGradeId: $('#hrGradeId').val() ? parseInt($('#hrGradeId').val()) : null,
                 AcademicGradeId: $('#academicGradeId').val() ? parseInt($('#academicGradeId').val()) : null,
-                ShiftId: $('#shiftId').val() ? parseInt($('#shiftId').val()) : null,
                 MachineCardNo: $('#machineCardNo').val().trim(),
                 OffDay1: $('#offDay1').val() ? parseInt($('#offDay1').val()) : null,
                 OffDay2: $('#offDay2').val() ? parseInt($('#offDay2').val()) : null,

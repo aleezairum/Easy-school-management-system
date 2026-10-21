@@ -64,8 +64,20 @@
                             <option value="">-- All --</option>
                         </select>
                     </div>
-                    <div class="col-12 d-flex justify-content-end mt-2">
-                        <button type="button" class="btn btn-primary btn-lg px-4" id="btnSearch"
+                    <div class="col-12 d-flex flex-wrap align-items-center gap-3 mt-2">
+                        @* The clerk only ever receives money from a child who owes
+                           something, so that is what the four dropdowns above list.
+                           Unticking this brings back the whole roll — a parent
+                           paying months ahead owes nothing today and would
+                           otherwise be impossible to find. *@
+                        <div class="form-check mb-0">
+                            <input class="form-check-input" type="checkbox" id="onlyPending" checked />
+                            <label class="form-check-label" for="onlyPending">
+                                Only students with dues
+                            </label>
+                        </div>
+                        <span id="studentsHint" class="text-muted" style="font-size:12px;"></span>
+                        <button type="button" class="btn btn-primary btn-lg px-4 ms-auto" id="btnSearch"
                                 onclick="searchStudent()" title="Load Fees">
                             <i class="bi bi-search me-1"></i> Search
                         </button>
@@ -162,10 +174,26 @@
                         <input type="text" class="form-control" id="fatherNameDisplay"
                                readonly placeholder="Auto filled" />
                     </div>
+                    @* Arrears only — what this family owes as at the voucher date.
+                       Months raised in advance are listed in the grid but are not
+                       arrears, and counting them here is what made a September
+                       receipt announce October to December as pending. *@
                     <div class="col-lg-2 col-md-4 col-sm-6 col-12">
-                        <label class="form-label">Balance</label>
+                        <label class="form-label">Balance <span class="text-muted" style="font-weight:400;">(due)</span></label>
                         <input type="text" class="form-control text-danger fw-bold"
                                id="paymentBalance" readonly value="0.00" />
+                        <div id="advanceNote" class="text-muted" style="font-size:11px; display:none;"></div>
+                    </div>
+                    @* The box above follows the VOUCHER's date, which a clerk may
+                       back-date. This one never moves off today, so what the
+                       family owes right now is on screen either way. On a
+                       voucher dated today the two read the same. *@
+                    <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                        <label class="form-label">
+                            Due Till <span id="dueTillDate" class="text-muted" style="font-weight:400;">Today</span>
+                        </label>
+                        <input type="text" class="form-control fw-bold"
+                               id="balanceTillToday" readonly value="0.00" />
                     </div>
                     <div class="col-lg-2 col-md-4 col-sm-6 col-12">
                         <label class="form-label">Amount</label>
@@ -229,6 +257,10 @@
 
 @section Styles {
     <style>
+        /* A fee raised for a month still to come: payable, but not arrears. */
+        .fee-advance td { background: #f8fafc; color: #64748b; }
+        .adv-chip { background: #e0f2fe; color: #075985; border-radius: 999px; padding: 1px 7px; font-size: 10px; font-weight: 600; }
+
         .find-student-section h6 {
             font-size: 14px !important;
         }
@@ -379,6 +411,23 @@
             $('#paymentDate').val(
                 d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate())
             );
+            // Which months count as arrears depends on the voucher's date, so
+            // moving the date re-reads the fees rather than leaving the balance
+            // describing a different day.
+            $('#paymentDate').on('change', function () {
+                if (selectedStudent) loadPendingFees(selectedStudent.vid);
+                // The finder is judged by the same date. Re-reading it while a
+                // student is picked would throw the selection away, so that is
+                // left until the clerk goes back to the dropdowns.
+                else loadStudents();
+            });
+
+            $('#onlyPending').on('change', loadStudents);
+
+            // So the box carries today's date from the moment the page opens,
+            // not only once a student has been searched.
+            showDueTillToday(0);
+
             loadDropdowns();
             loadStudents();
             loadNextVNo();
@@ -473,24 +522,55 @@
             const classId   = $('#classId').val()   || 0;
             const sectionId = $('#sectionId').val() || 0;
 
+            // Dues are judged as at the voucher's own date, the same day the fee
+            // grid is judged by, so the list and the balance always agree.
+            const onlyPending = $('#onlyPending').is(':checked');
+            const asOn = $('#paymentDate').val() || toInputDate(new Date());
+
             $('#rollNo, #studentId, #filterFatherName, #filterFatherCNIC')
                 .find('option:not(:first)').remove();
+            $('#studentsHint').text('');
 
             try {
-                const response = await fetch(
-                    `${API_BASE}/Student/students?classId=${classId}&sectionId=${sectionId}`
-                );
+                const url = onlyPending
+                    ? `${API_BASE}/ApplyFee/PendingStudents?classId=${classId}&sectionId=${sectionId}&asOn=${asOn}`
+                    : `${API_BASE}/Student/students?classId=${classId}&sectionId=${sectionId}`;
+
+                const response = await fetch(url);
                 if (!response.ok) return;
 
                 allStudents = await response.json();
-                if (!allStudents.length) return;
+
+                if (!allStudents.length) {
+                    $('#studentsHint').text(
+                        onlyPending
+                            ? 'Nobody here owes anything as at ' + fmtDate(asOn) +
+                              '. Untick to list every student.'
+                            : 'No students found.'
+                    );
+                    return;
+                }
+
+                // Say whose money this is: the children listed here added up,
+                // not the family of whoever is picked, which is the Balance
+                // box below and a different figure.
+                const owed = allStudents.reduce((t, s) => t + (s.pendingAmount || 0), 0);
+                $('#studentsHint').text(
+                    onlyPending
+                        ? `These ${allStudents.length} students owe ${fmt(owed)} between them`
+                        : `${allStudents.length} students in this list`
+                );
 
                 allStudents.forEach(s => {
+                    // The amount rides along on the name so the clerk can see who
+                    // owes what without opening each one.
+                    const dues = s.pendingAmount ? `  —  ${fmt(s.pendingAmount)}` : '';
+
                     $('#rollNo').append(
                         `<option value="${s.vid}">${s.classRollNo || s.rollNo || '-'}</option>`
                     );
                     $('#studentId').append(
-                        `<option value="${s.vid}">${s.name || '-'}</option>`
+                        `<option value="${s.vid}">${s.name || '-'}${dues}</option>`
                     );
                     $('#filterFatherName').append(
                         `<option value="${s.vid}">${s.fatherName || '-'}</option>`
@@ -561,8 +641,11 @@
             updateBottomTotals();
 
             try {
+                // Judged as at the VOUCHER's date, not the day it is printed, so
+                // a back-dated receipt states the arrears of the day it is dated.
+                const asOn = $('#paymentDate').val() || toInputDate(new Date());
                 const response = await fetch(
-                    `${API_BASE}/ApplyFee/Pendings?studentId=${studentId}`
+                    `${API_BASE}/ApplyFee/Pendings?studentId=${studentId}&asOn=${asOn}`
                 );
                 if (!response.ok) { resetFeeGrid('Error loading fees'); return; }
 
@@ -576,24 +659,42 @@
                     $('#feeGridCount').text('');
                     $('#infoBalance').text('0.00');
                     $('#paymentBalance').val('0.00');
+                    showDueTillToday(0);
                     return;
                 }
 
                 $('#feeGridCount').text(pending.length);
 
                 let rows  = '';
-                let total = 0;
+                let total = 0;        // arrears — what is owed as at the voucher date
+                let advance = 0;      // months raised ahead, payable but not owed yet
+                let dueToday = 0;     // the same sum judged by TODAY, whatever the voucher says
+
+                // Today, as a plain calendar date — the fee months are compared
+                // against this, never against a moment in time.
+                const today = parseCalendarDate(toInputDate(new Date()));
 
                 pending.forEach(f => {
-                    const month = (parseCalendarDate(f.vDate) || new Date(NaN))
+                    const feeDate = parseCalendarDate(f.vDate);
+                    if (feeDate && feeDate <= today) dueToday += (f.pendingAmount || 0);
+
+                    const month = (feeDate || new Date(NaN))
                         .toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
-                    total += (f.pendingAmount || 0);
+
+                    // IsDue comes from the server, which compares the fee's month
+                    // against the voucher date. Older API builds do not send it;
+                    // treating a missing value as due keeps their behaviour.
+                    const due = f.isDue !== false;
+                    if (due) total += (f.pendingAmount || 0);
+                    else advance += (f.pendingAmount || 0);
+
                     rows  += `
-                        <tr id="feeRow_${f.vid}" data-vid="${f.vid}" data-pending="${f.pendingAmount || 0}">
+                        <tr id="feeRow_${f.vid}" data-vid="${f.vid}" data-pending="${f.pendingAmount || 0}"
+                            class="${due ? '' : 'fee-advance'}">
                             <td><input type="checkbox" class="fee-check"
                                        value="${f.vid}"
                                        data-pending="${f.pendingAmount || 0}"></td>
-                            <td>${month}</td>
+                            <td>${month}${due ? '' : ' <span class="adv-chip">advance</span>'}</td>
                             <td>${f.studentName  || '-'}</td>
                             <td>${f.className    || '-'}</td>
                             <td>${f.sectionName  || '-'}</td>
@@ -621,6 +722,17 @@
                 $('#feeGridBody').html(rows);
                 $('#infoBalance').text(fmt(total));
                 $('#paymentBalance').val(fmt(total));
+                showDueTillToday(dueToday);
+
+                // Say what is sitting below the arrears, so nobody wonders why
+                // the grid shows more than the balance.
+                if (advance > 0) {
+                    $('#advanceNote')
+                        .text(`+ ${fmt(advance)} raised in advance (not due yet)`)
+                        .show();
+                } else {
+                    $('#advanceNote').hide().text('');
+                }
 
             } catch (error) {
                 console.error('Error loading fees:', error);
@@ -890,6 +1002,7 @@
             }
             $('#fatherNameDisplay').val('');
             $('#paymentBalance').val('0.00');
+            showDueTillToday(0);
             $('#totalAmount').val('0.00');
             $('#paidAmount').val('');
             $('#remainingAmount').val('0.00')
@@ -915,6 +1028,8 @@
            HELPERS
         ════════════════════════════════════════════ */
         function resetFeeGrid(msg) {
+            $('#advanceNote').hide().text('');
+            showDueTillToday(0);
             $('#feeGridBody').html(
                 '<tr><td colspan="12" class="text-center text-muted py-4">' +
                 '<i class="bi bi-person-x me-2"></i>' +
@@ -925,6 +1040,16 @@
             selectedFees = [];
             $('#paidAmount').val('');
             updateBottomTotals();
+        }
+
+        // The read-only "Due Till" box: what the family owes as at today,
+        // regardless of the date on the voucher being written.
+        function showDueTillToday(amount) {
+            $('#dueTillDate').text(fmtDate(new Date()));
+            $('#balanceTillToday')
+                .val(fmt(amount))
+                .toggleClass('text-danger', amount > 0)
+                .toggleClass('text-success', amount <= 0);
         }
 
         function fmt(val) {

@@ -64,7 +64,7 @@ function printReport() {
 
 // ── Build Report HTML (Full Page) ─────────────────────────────
 function buildReportHTML(sections, dateFrom, dateTo) {
-    const fmtDisplay = d => new Date(d).toLocaleDateString('en-GB', { day:'2-digit', month:'2-digit', year:'numeric' });
+    const fmtDisplay = d => fmtDate(d);   // dd-MMM-yyyy, application-wide
 
     let fullBody = '';  // accumulates all section blocks
 
@@ -112,6 +112,13 @@ function buildReportHTML(sections, dateFrom, dateTo) {
                 rollNo:      r.classRollNo || r.rollNo || '-',
                 studentName: r.studentName || '-',
                 contact:     r.contactNo   || r.contact || r.fatherContact || '-',
+                // The family's promise to pay, if one is in force. Only the
+                // unpaid side prints it, and only then because the office asked
+                // to see WHY a promised family is on the sheet at all.
+                promiseDate:     r.promiseDate     || null,
+                promisedBy:      r.promisedBy      || '',
+                promisedAmount:  r.promisedAmount  || 0,
+                promisedForName: r.promisedForName || '',
                 cells: {}
             });
 
@@ -123,10 +130,16 @@ function buildReportHTML(sections, dateFrom, dateTo) {
         const thStyle   = 'border:1px solid #999;padding:4px 6px;text-align:center;background:#e8ecf0;vertical-align:middle;';
         const thStyle2  = 'border:1px solid #999;padding:4px 6px;text-align:center;background:#eef1f5;white-space:nowrap;';
 
+        // A promise column, but only on an unpaid sheet and only when somebody
+        // in it actually has one - an empty column on every other report would
+        // be noise.
+        const showPromise = !isPaid && sec.data.some(r => r.promiseDate);
+
         let hRow1 = `<th rowspan="2" style="${thStyle}">Sr#</th>
                      <th rowspan="2" style="${thStyle}">Roll No.</th>
                      <th rowspan="2" style="${thStyle}">Student Name</th>
                      <th rowspan="2" style="${thStyle}">Contact</th>`;
+        if (showPromise) hRow1 += `<th rowspan="2" style="${thStyle}">Promised</th>`;
         feeTypes.forEach(ft => {
             hRow1 += `<th colspan="${months.length}" style="${thStyle}">${ft}</th>`;
         });
@@ -194,11 +207,26 @@ function buildReportHTML(sections, dateFrom, dateTo) {
                     cells += `<td style="border:1px solid #ccc;padding:3px 6px;text-align:right;">${amt === 0 ? '0' : formatAmount(amt)}</td>`;
                 });
                 groupTotal += rowTotal;
+                // "28-Sep-2026 / Father", with the sibling named underneath when
+                // the promise was given for another child of the same parent.
+                let promiseCell = '';
+                if (showPromise) {
+                    const on = stu.promiseDate ? fmtDate(stu.promiseDate) : '';
+                    const who = stu.promisedBy ? ' / ' + stu.promisedBy : '';
+                    const via = stu.promisedForName && stu.promisedForName !== stu.studentName
+                        ? `<div style="font-size:9px;">via ${stu.promisedForName}</div>` : '';
+                    const amt = stu.promisedAmount
+                        ? `<div style="font-size:9px;">Rs.${formatAmount(stu.promisedAmount)}</div>` : '';
+                    promiseCell = `<td style="border:1px solid #ccc;padding:3px 6px;font-size:10px;white-space:nowrap;">${
+                        on ? on + who + via + amt : '-'}</td>`;
+                }
+
                 studentRows += `<tr>
                     <td style="border:1px solid #ccc;padding:3px 6px;text-align:center;">${srNo}</td>
                     <td style="border:1px solid #ccc;padding:3px 6px;text-align:center;">${stu.rollNo}</td>
                     <td style="border:1px solid #ccc;padding:3px 6px;font-weight:600;">${stu.studentName}</td>
                     <td style="border:1px solid #ccc;padding:3px 6px;font-size:10px;white-space:nowrap;">${stu.contact}</td>
+                    ${promiseCell}
                     ${cells}
                     <td style="border:1px solid #ccc;padding:3px 6px;text-align:right;font-weight:700;">${formatAmount(rowTotal)}</td>
                 </tr>`;
@@ -224,7 +252,7 @@ function buildReportHTML(sections, dateFrom, dateTo) {
                     <tbody>
                         ${studentRows}
                         <tr>
-                            <td colspan="4" style="border:1px solid #ccc;padding:3px 6px;text-align:right;font-weight:700;background:#f0f4f8;">Total</td>
+                            <td colspan="${showPromise ? 5 : 4}" style="border:1px solid #ccc;padding:3px 6px;text-align:right;font-weight:700;background:#f0f4f8;">Total</td>
                             ${totalCells}
                             <td style="border:1px solid #ccc;padding:3px 6px;text-align:right;font-weight:700;background:#f0f4f8;">${formatAmount(groupTotal)}</td>
                         </tr>

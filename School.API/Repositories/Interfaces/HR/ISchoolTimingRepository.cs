@@ -34,7 +34,31 @@ namespace School.API.Repositories.Interfaces.HR
 
         Task<HrSchoolTimingDay?> GetDayAsync(int dayId);
 
-        /// <summary>What attendance reads: the school timing per date, if any.</summary>
-        Task<Dictionary<DateTime, HrSchoolTimingDay>> GetDaysByDateAsync(DateTime from, DateTime to);
+        /// <summary>
+        /// What attendance reads: the school timing per date AND designation.
+        /// </summary>
+        /// <remarks>
+        /// Keyed by (date, designation) because a date no longer resolves to one
+        /// timing — a Principal and a Teacher keep different hours on the same
+        /// day. A null designation in the key is the school-wide row, which is
+        /// what the caller falls back to when a designation has none of its own.
+        /// </remarks>
+        Task<Dictionary<(DateTime Date, int? DesignationId), HrSchoolTimingDay>> GetDaysByDateAsync(
+            DateTime from, DateTime to);
+
+        /// <summary>
+        /// The weekly off days in force over a period, keyed by designation id,
+        /// with <b>0 meaning the school-wide range</b>.
+        /// </summary>
+        /// <remarks>
+        /// 0 rather than null because Dictionary rejects a null key outright,
+        /// even when the key type is int?. Designation ids start at 1, so 0 is
+        /// free to mean "applies to everyone".
+        ///
+        /// These used to come from the employee's shift. They live on the timing
+        /// range now, and the range is chosen the same way its days are: the
+        /// designation's own if it has one, otherwise the school-wide row.
+        /// </remarks>
+        Task<Dictionary<int, (byte? OffDay1, byte? OffDay2)>> GetOffDaysAsync(DateTime from, DateTime to);
     }
 }

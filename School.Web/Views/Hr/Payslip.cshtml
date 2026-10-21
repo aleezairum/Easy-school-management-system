@@ -16,7 +16,7 @@
     <div class="d-flex justify-content-between mb-3 no-print">
         <a href="javascript:history.back()" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back</a>
         <div>
-            <button class="btn btn-outline-success me-2" onclick="window.print()"><i class="bi bi-printer"></i> Print</button>
+            <button class="btn btn-outline-success me-2" onclick="printSalarySlips([_payslip])"><i class="bi bi-printer"></i> Print Slip</button>
             <button class="btn btn-success" onclick="payThis()"><i class="bi bi-cash-coin"></i> Mark Paid</button>
         </div>
     </div>
@@ -25,8 +25,11 @@
 </div>
 
 @section Scripts {
+<script src="~/js/hrFilters.js" asp-append-version="true"></script>
+<script src="~/js/salarySlipPrint.js" asp-append-version="true"></script>
 <script>
     const payslipId = @payslipId;
+    let _payslip = null;
 
     $(document).ready(function () { loadPayslip(); });
 
@@ -34,12 +37,13 @@
         const res = await fetch(`${API_BASE}/hr/payroll/payslip/${payslipId}`);
         if (!res.ok) { $('#payslipBox').html('<p class="text-danger">Payslip not found.</p>'); return; }
         const p = await res.json();
+        _payslip = p;
         const earnings = p.breakdown.filter(b => b.kind === 1);
         const deductions = p.breakdown.filter(b => b.kind === 2);
 
         $('#payslipBox').html(`
             <div class="payslip-header">
-                <h4 class="mb-1">Salary Slip</h4>
+                <h4 class="mb-1">Salary Slip ${p.runStatus === 1 ? '<span class="badge bg-danger align-middle ms-2" style="font-size:12px">PROOF READ ONLY - payroll not finalised</span>' : ''}</h4>
                 <div class="text-muted">${p.employeeCode} — ${p.employeeName} ${p.designationName ? '(' + p.designationName + ')' : ''}</div>
             </div>
             <table class="table table-sm payslip-table">
@@ -53,7 +57,7 @@
             <div class="row text-muted small mt-3">
                 <div class="col-4">Present Days: ${p.presentDays}</div>
                 <div class="col-4">Absent Days: ${p.absentDays}</div>
-                <div class="col-4">Late Minutes: ${p.lateMinutes}</div>
+                <div class="col-4">Late / Early / Out of School (min): ${p.lateMinutes} / ${p.earlyMinutes || 0} / ${p.outingMinutes || 0}</div>
             </div>
             ${p.paidDate ? `<div class="alert alert-success mt-3 mb-0">Paid on ${fmtDate(p.paidDate)} via ${p.paymentMethod || '-'}</div>` : '<div class="alert alert-warning mt-3 mb-0">Not yet paid</div>'}
         `);

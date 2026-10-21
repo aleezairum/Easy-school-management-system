@@ -20,6 +20,19 @@ namespace School.API.Data.DBModels.HR
         [MaxLength(100)]
         public string? Name { get; set; }
 
+        /// <summary>
+        /// Which designation this timing is for. NULL means every designation —
+        /// the school-wide default.
+        /// </summary>
+        /// <remarks>
+        /// A Principal, a Head Teacher and a Teacher do not keep the same hours,
+        /// which is the whole reason this column exists. A row naming a
+        /// designation overrides the school-wide one for that designation only,
+        /// so the common case stays a single row and only the exceptions are
+        /// entered. See Scripts/ReplaceShiftWithDesignationTiming.sql.
+        /// </remarks>
+        public int? DesignationId { get; set; }
+
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
 
@@ -33,6 +46,33 @@ namespace School.API.Data.DBModels.HR
         /// <summary>Weekly off, 1 = Sunday .. 7 = Saturday. These weekdays get no day row.</summary>
         public byte? OffDay1 { get; set; }
         public byte? OffDay2 { get; set; }
+
+        // ── How the day is judged ────────────────────────────────────────
+        //
+        // These came across from HrShift when it was retired. A shift was a
+        // fixed pair of times and could not describe a school week; but it did
+        // carry the rules for grading a day, and losing those would have
+        // silently changed every attendance calculation and every hourly pay
+        // component. They live here now, which also makes them per-designation.
+
+        /// <summary>Minutes after TimeIn before someone counts as late.</summary>
+        public int GraceMinutes { get; set; }
+
+        /// <summary>
+        /// Worked minutes that still count as a half day; null derives it from
+        /// the day's own span (37.5%), the proportion the Shift form defaulted to.
+        /// </summary>
+        public int? HalfDayMinutes { get; set; }
+
+        /// <summary>Worked minutes that count as a full day; null derives 75% of the span.</summary>
+        public int? FullDayMinutes { get; set; }
+
+        /// <summary>
+        /// Hours per working day. Payroll divides by this for per-hour
+        /// components (HrPayComponent.DivisorHours). Null derives it from the span.
+        /// </summary>
+        [Column(TypeName = "decimal(5,2)")]
+        public decimal? WorkHours { get; set; }
 
         public bool IsActive { get; set; } = true;
 
@@ -48,8 +88,12 @@ namespace School.API.Data.DBModels.HR
     /// One school day carrying the timing that applies to it.
     /// </summary>
     /// <remarks>
-    /// TDate is unique: a date resolves to exactly one start/end time, which is
-    /// the whole reason the range is expanded rather than scanned.
+    /// A date resolves to exactly one start/end time PER DESIGNATION, which is
+    /// the whole reason the range is expanded rather than scanned. Two unique
+    /// indexes enforce it: one over (TDate, DesignationId) for the designation
+    /// rows, and one over TDate alone for the school-wide row. They are separate
+    /// because SQL Server treats NULLs as equal in a unique index, so a single
+    /// index across both would allow only one school-wide row in the table.
     /// </remarks>
     [Table("HrSchoolTimingDay")]
     public class HrSchoolTimingDay
@@ -58,6 +102,13 @@ namespace School.API.Data.DBModels.HR
         public int Id { get; set; }
 
         public int TimingId { get; set; }
+
+        /// <summary>
+        /// Copied down from the parent range so attendance can find a day by
+        /// (date, designation) without joining — which is the lookup it does
+        /// once per employee per day. NULL is the school-wide row.
+        /// </summary>
+        public int? DesignationId { get; set; }
 
         [Column("TDate")]
         public DateTime TDate { get; set; }

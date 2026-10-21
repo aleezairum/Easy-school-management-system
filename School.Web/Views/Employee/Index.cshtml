@@ -89,6 +89,12 @@
                         <input type="text" class="form-control" id="searchName" placeholder="Search by name, code, CNIC..." />
                     </div>
                     <div class="col-lg-2 col-md-4 col-sm-6 col-12">
+                        <label for="filterCampus" class="form-label">Campus</label>
+                        <select class="form-select" id="filterCampus">
+                            <option value="">All Campuses</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6 col-12">
                         <label for="filterDesignation" class="form-label">Designation</label>
                         <select class="form-select" id="filterDesignation">
                             <option value="">All Designations</option>
@@ -111,19 +117,42 @@
             </div>
 
             <!-- Grid Section -->
-            <div class="grid-section-title">
-                <i class="bi bi-table me-2"></i>Employees List
+            <div class="grid-section-title d-flex align-items-center flex-wrap gap-2">
+                <span><i class="bi bi-table me-2"></i>Employees List</span>
+
+                @* Categories are set from here, not from the employee form.
+                   The form rightly insists on a campus, a designation and a
+                   joining date; older staff records have none of those, and
+                   nobody should have to invent them to put somebody into a
+                   category. This writes that one column. *@
+                <div class="ms-auto d-flex align-items-center gap-2" style="text-transform:none;">
+                    <span class="text-muted" style="font-size:12px;">
+                        <span id="selectedCount">0</span> selected
+                    </span>
+                    <select class="form-select form-select-sm" id="bulkCategory" style="width:200px;">
+                        <option value="">-- Set category to --</option>
+                    </select>
+                    <button type="button" class="btn btn-sm btn-primary" id="btnApplyCategory"
+                            onclick="applyCategory()">
+                        <i class="bi bi-tags me-1"></i> Apply
+                    </button>
+                </div>
             </div>
             <div class="table-responsive">
                 <table class="table table-hover" id="employeesTable">
                     <thead>
                         <tr>
+                            <th style="width: 34px;" class="text-center">
+                                <input type="checkbox" id="checkAll" title="Select all" />
+                            </th>
                             <th style="width: 60px;">Sr#</th>
                             <th style="width: 60px;">Photo</th>
                             <th>Employee Code</th>
                             <th>Full Name</th>
                             <th>Father Name</th>
+                            <th>Campus</th>
                             <th>Designation</th>
+                            <th>Category</th>
                             <th>Role</th>
                             <th>Phone/Mobile</th>
                             <th>Joining Date</th>
@@ -147,18 +176,80 @@
         $(document).ready(function () {
             loadDropdowns();
             loadEmployees();
+
+            $('#checkAll').on('change', function () {
+                $('.row-check').prop('checked', $(this).is(':checked'));
+                updateSelectedCount();
+            });
+            // Delegated: the rows are drawn after this runs, and again on
+            // every search.
+            $('#employeesBody').on('change', '.row-check', updateSelectedCount);
         });
+
+        function selectedIds() {
+            return $('.row-check:checked').map(function () { return parseInt(this.value); }).get();
+        }
+
+        function updateSelectedCount() {
+            $('#selectedCount').text(selectedIds().length);
+        }
+
+        async function applyCategory() {
+            const ids = selectedIds();
+            if (!ids.length) { toastWarning('Tick the staff to put into a category first'); return; }
+
+            const choice = $('#bulkCategory').val();
+            if (!choice) { toastWarning('Choose a category'); return; }
+
+            const categoryId = choice === 'clear' ? null : parseInt(choice);
+            const what = choice === 'clear'
+                ? `Clear the category on ${ids.length} member(s) of staff?`
+                : `Put ${ids.length} member(s) of staff into "${$('#bulkCategory option:selected').text()}"?`;
+            if (!await confirmDelete(what)) return;
+
+            showLoading();
+            try {
+                const res = await fetch(`${API_BASE}/Employee/category`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ EmployeeIds: ids, StaffCategoryId: categoryId })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    toastError(err.message || 'Could not set the category');
+                    return;
+                }
+
+                const out = await res.json();
+                toastSuccess(`Category set on ${out.updated} member(s) of staff`);
+                $('#checkAll').prop('checked', false);
+                await loadEmployees();
+                updateSelectedCount();
+            } catch (e) {
+                toastError('Error setting the category: ' + e.message);
+            } finally { hideLoading(); }
+        }
 
         async function loadDropdowns() {
             try {
-                const response = await fetch(`${API_BASE}/Designation/dropdown`);
-                if (response.ok) {
-                    const designations = await response.json();
-                    const select = $('#filterDesignation');
-                    designations.forEach(d => {
-                        select.append(`<option value="${d.id}">${d.name}</option>`);
-                    });
-                }
+                const [designations, campuses, categories] = await Promise.all([
+                    fetch(`${API_BASE}/Designation/dropdown`).then(r => r.ok ? r.json() : []).catch(() => []),
+                    fetch(`${API_BASE}/campus`).then(r => r.ok ? r.json() : []).catch(() => []),
+                    fetch(`${API_BASE}/StaffCategory/dropdown`).then(r => r.ok ? r.json() : []).catch(() => [])
+                ]);
+
+                categories.forEach(c =>
+                    $('#bulkCategory').append(`<option value="${c.id}">${c.name}</option>`));
+                // Taking staff back out of a category has to be possible too.
+                $('#bulkCategory').append('<option value="clear">-- Clear category --</option>');
+
+                designations.forEach(d =>
+                    $('#filterDesignation').append(`<option value="${d.id}">${d.name}</option>`));
+
+                // Campus uses the SMS naming (vid/vName), not the HR id/name shape.
+                campuses.forEach(c =>
+                    $('#filterCampus').append(`<option value="${c.vid}">${c.vName}</option>`));
             } catch (error) {
                 console.error('Error loading dropdowns:', error);
             }
@@ -167,7 +258,13 @@
         async function loadEmployees() {
             showLoading();
             try {
-                const response = await fetch(`${API_BASE}/Employee`);
+                // Campus is filtered server-side rather than in the browser:
+                // it is an indexed column, and the list is what the office
+                // works from all day.
+                const campus = $('#filterCampus').val();
+                const url = campus ? `${API_BASE}/Employee?campusId=${campus}` : `${API_BASE}/Employee`;
+
+                const response = await fetch(url);
                 if (response.ok) {
                     let data = await response.json();
 
@@ -209,23 +306,28 @@
             tbody.empty();
 
             if (items.length === 0) {
-                tbody.html('<tr><td colspan="11" class="text-center text-muted py-4">No employees found.</td></tr>');
+                tbody.html('<tr><td colspan="14" class="text-center text-muted py-4">No employees found.</td></tr>');
                 return;
             }
 
             items.forEach((item, index) => {
-                const photoHtml = item.photo
-                    ? `<img src="${item.photo}" class="employee-photo" alt="Photo" />`
+                const photoHtml = item.hasPhoto
+                    ? `<img src="${apiFileUrl(`${API_BASE}/Employee/${item.id}/photo`)}" class="employee-photo" alt="Photo" loading="lazy" />`
                     : `<div class="employee-photo-placeholder"><i class="bi bi-person"></i></div>`;
 
                 const row = `
                     <tr>
+                        <td class="text-center">
+                            <input type="checkbox" class="row-check" value="${item.id}" />
+                        </td>
                         <td>${index + 1}</td>
                         <td>${photoHtml}</td>
                         <td><strong>${item.employeeCode || '-'}</strong></td>
                         <td>${item.fullName || (item.firstName + ' ' + item.lastName)}</td>
                         <td>${item.fatherName || '-'}</td>
+                        <td>${item.campusName || '<span class="text-muted">Not set</span>'}</td>
                         <td>${item.designationName || '-'}</td>
+                        <td>${item.staffCategoryName || '<span class="text-muted">Not set</span>'}</td>
                         <td>${item.isTeachingStaff
                                 ? '<span class="badge bg-primary">Teaching</span>'
                                 : '<span class="badge bg-light text-dark">Non-teaching</span>'}</td>
@@ -247,14 +349,10 @@
             });
         }
 
+        // dd-MMM-yyyy, same as everywhere else. This printed "Apr 1, 2021" while
+        // the Staff Statement printed the same joining date as 01-04-2021.
         function formatDate(dateString) {
-            if (!dateString) return '-';
-            const date = parseCalendarDate(dateString) || new Date(NaN);
-            return date.toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
-            });
+            return dateString ? fmtDate(dateString) : '-';
         }
 
         async function deleteEmployee(id, name) {

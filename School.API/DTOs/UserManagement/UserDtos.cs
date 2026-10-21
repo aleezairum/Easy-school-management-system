@@ -19,6 +19,26 @@ namespace School.API.DTOs.UserManagement
         public string? ComputerName { get; set; }
         public string? WindowLoginName { get; set; }
         public bool IsActive { get; set; } = true;
+
+        /// <summary>
+        /// The roles this user is to have, from the Users form's Roles picker.
+        /// The form has always shown the picker; nothing was ever done with the
+        /// selection, so every user was saved with no role at all.
+        ///
+        /// Null means "leave the roles alone" (an older client that does not
+        /// send the field); an empty list means "this user has no roles".
+        /// </summary>
+        public List<int>? RoleIds { get; set; }
+    }
+
+    /// <summary>One user's role assignment, for the list and the edit form.</summary>
+    public class UserRolesDto
+    {
+        public int UserId { get; set; }
+        public List<int> RoleIds { get; set; } = new();
+
+        /// <summary>"Admin, Accountant" — what the list column prints.</summary>
+        public string RoleNames { get; set; } = string.Empty;
     }
 
     public class UserLoginDto

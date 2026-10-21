@@ -1,0 +1,258 @@
+@{
+    ViewData["Title"] = "Daily Diary";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+@*
+    Class and section wise daily diary. The teacher or office photographs the
+    day's diary and uploads it here; a parent picks "Today's Diary" on the
+    WhatsApp menu and gets the pictures for their child's class and section.
+    "All sections" covers every section of the class at once.
+
+    Uploading again for the same date, class and section ADDS pages.
+*@
+
+<style>
+    .form-section { background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+    .form-section-title { font-size: 14px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #e2e8f0; }
+    .thumbs { display: flex; flex-wrap: wrap; gap: 10px; }
+    .thumb { position: relative; width: 110px; height: 140px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: #fff; }
+    .thumb img { width: 100%; height: 100%; object-fit: cover; cursor: zoom-in; }
+    .thumb .x { position: absolute; top: 4px; right: 4px; border: 0; border-radius: 50%; width: 24px; height: 24px; line-height: 22px; padding: 0;
+                background: rgba(220,38,38,.9); color: #fff; font-size: 14px; }
+    .thumb .n { position: absolute; left: 4px; bottom: 4px; background: rgba(0,0,0,.6); color: #fff; font-size: 11px; padding: 1px 6px; border-radius: 8px; }
+    .diary-card { border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+    .hint { font-size: 12px; color: #64748b; }
+    /* Preview: the diary as a parent gets it on WhatsApp. */
+    .wa-chat { background: #efeae2; border-radius: 10px; padding: 14px; }
+    .wa-msg { background: #fff; border-radius: 8px; padding: 6px; margin: 0 auto 12px; max-width: 420px; box-shadow: 0 1px 1px rgba(0,0,0,.1); }
+    .wa-msg img { width: 100%; border-radius: 6px; display: block; }
+    .wa-msg .cap { font-size: 13.5px; padding: 6px 4px 2px; }
+</style>
+
+<div class="container-fluid">
+    <div id="alertContainer"></div>
+
+    <div class="card"><div class="card-body">
+        <div class="form-section">
+            <div class="form-section-title"><i class="bi bi-journal-arrow-up me-2"></i>Upload Diary</div>
+            <div class="row g-3 align-items-end">
+                <div class="col-md-2"><label class="form-label">Date <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" id="diaryDate" /></div>
+                <div class="col-md-3"><label class="form-label">Class <span class="text-danger">*</span></label>
+                    <select class="form-select" id="classId"><option value="">-- Select Class --</option></select></div>
+                <div class="col-md-3"><label class="form-label">Section</label>
+                    <select class="form-select" id="sectionId"><option value="">All sections</option></select></div>
+                <div class="col-md-4"><label class="form-label">Note (optional)</label>
+                    <input type="text" class="form-control" id="notes" maxlength="500" placeholder="e.g. Test of Urdu tomorrow" /></div>
+                <div class="col-md-6">
+                    <label class="form-label">Diary pictures <span class="text-danger">*</span></label>
+                    <input type="file" class="form-control" id="files" accept="image/*" multiple />
+                    <div class="hint mt-1">Photograph each page. Up to 10 at a time; large photos are made smaller before upload.</div>
+                </div>
+                <div class="col-md-6 text-end">
+                    <button class="btn btn-outline-secondary me-2" onclick="clearForm()"><i class="bi bi-x-lg"></i> Clear</button>
+                    <button class="btn btn-success" id="btnSave" onclick="saveDiary()"><i class="bi bi-cloud-arrow-up"></i> Save Diary</button>
+                </div>
+            </div>
+            <div class="thumbs mt-3" id="pending"></div>
+        </div>
+
+        <div class="d-flex align-items-end gap-3 mb-3 flex-wrap">
+            <div><label class="form-label mb-1">Show diaries of</label>
+                <input type="date" class="form-control" id="listDate" /></div>
+            <div style="min-width:220px"><label class="form-label mb-1">Class</label>
+                <select class="form-select" id="listClass"><option value="">All classes</option></select></div>
+            <span class="hint" id="listInfo"></span>
+        </div>
+        <div id="diaries"></div>
+    </div></div>
+</div>
+
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-eye me-2"></i><span id="previewTitle">Diary preview</span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="hint mb-2">This is how parents of the class / section get it on WhatsApp ("Today's Diary").</div>
+                <div class="wa-chat" id="previewBody"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-success" id="previewAdd"><i class="bi bi-plus-lg"></i> Add pages</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script src="~/js/imageUpload.js" asp-append-version="true"></script>
+<script>
+    let _pending = [];   // pictures picked, ready to upload
+
+    const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+    $(document).ready(async function () {
+        $('#diaryDate, #listDate').val(toInputDate());
+        const classes = await fetch(`${API_BASE}/class`).then(r => r.ok ? r.json() : []).catch(() => []);
+        classes.forEach(c => {
+            $('#classId').append(`<option value="${c.vid}">${esc(c.vName)}</option>`);
+            $('#listClass').append(`<option value="${c.vid}">${esc(c.vName)}</option>`);
+        });
+        $('#classId').on('change', loadSections);
+        $('#files').on('change', pickFiles);
+        $('#listDate, #listClass').on('change', loadDiaries);
+        // The list follows the date being uploaded for.
+        $('#diaryDate').on('change', function () { $('#listDate').val($(this).val()); loadDiaries(); });
+        loadDiaries();
+    });
+
+    async function loadSections() {
+        const classId = $('#classId').val();
+        $('#sectionId').find('option:not(:first)').remove();
+        if (!classId) return;
+        const list = await fetch(`${API_BASE}/section/byClass/${classId}`).then(r => r.ok ? r.json() : []).catch(() => []);
+        list.forEach(s => $('#sectionId').append(`<option value="${s.vid}">${esc(s.vName)}</option>`));
+    }
+
+    async function pickFiles() {
+        const files = Array.from(this.files || []);
+        $(this).val('');
+        for (const f of files) {
+            if (_pending.length >= 10) { toastWarning('Up to 10 pictures at a time'); break; }
+            try { _pending.push(await imageFileToUpload(f)); }
+            catch (e) { toastError(e.message); }
+        }
+        renderPending();
+    }
+
+    function renderPending() {
+        $('#pending').html(_pending.map((p, i) => `
+            <div class="thumb"><img src="${p.preview}" onclick="viewPending(${i})" />
+                <button class="x" title="Remove" onclick="_pending.splice(${i},1);renderPending()">&times;</button>
+                <span class="n">${i + 1}</span></div>`).join(''));
+    }
+
+    function viewPending(i) {
+        const w = window.open('', '_blank');
+        if (w) w.document.write(`<img src="${_pending[i].preview}" style="max-width:100%">`);
+    }
+
+    function clearForm() {
+        _pending = []; renderPending();
+        $('#notes').val('');
+    }
+
+    async function saveDiary() {
+        const date = $('#diaryDate').val(), classId = parseInt($('#classId').val());
+        if (!date) { toastWarning('Choose the date'); return; }
+        if (!classId) { toastWarning('Choose the class'); return; }
+        if (!_pending.length && !$('#notes').val().trim()) { toastWarning('Add the diary pictures'); return; }
+
+        const dto = {
+            DiaryDate: date, ClassId: classId,
+            SectionId: parseInt($('#sectionId').val()) || null,
+            Notes: $('#notes').val().trim() || null,
+            Images: _pending.map(p => ({ FileName: p.fileName, ContentType: p.contentType, Base64: p.base64 }))
+        };
+        const btn = $('#btnSave').prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Saving...');
+        try {
+            const res = await fetch(`${API_BASE}/daily-diary`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(dto) });
+            if (res.ok) {
+                const d = await res.json();
+                toastSuccess(`Diary saved: ${d.className}${d.sectionName ? ' - ' + d.sectionName : ' (all sections)'}, ${d.images.length} page(s)`);
+                clearForm();
+                $('#listDate').val(date);
+                await loadDiaries();
+                previewDiary(d.id);
+            } else {
+                const err = await res.json().catch(() => ({}));
+                toastError(err.message || 'Failed to save the diary');
+            }
+        } catch (e) { toastError('Error: ' + e.message); }
+        finally { btn.prop('disabled', false).html('<i class="bi bi-cloud-arrow-up"></i> Save Diary'); }
+    }
+
+    async function loadDiaries() {
+        const date = $('#listDate').val(), cls = $('#listClass').val();
+        let url = `${API_BASE}/daily-diary?`;
+        if (date) url += `date=${date}&`;
+        if (cls) url += `classId=${cls}`;
+        const list = await fetch(url).then(r => r.ok ? r.json() : []).catch(() => []);
+        $('#listInfo').text(`${list.length} diar${list.length === 1 ? 'y' : 'ies'}`);
+        if (!list.length) { $('#diaries').html('<div class="text-center text-muted py-4">No diary uploaded for this day.</div>'); return; }
+        $('#diaries').html(list.map(d => `
+            <div class="diary-card">
+                <div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
+                    <div>
+                        <strong>${esc(d.className)} &mdash; ${d.sectionName ? esc(d.sectionName) : '<span class="text-primary">All sections</span>'}</strong>
+                        <span class="text-muted ms-2">${fmtDate(d.diaryDate)}</span>
+                        ${d.notes ? `<div class="small mt-1"><i class="bi bi-chat-left-text me-1"></i>${esc(d.notes)}</div>` : ''}
+                    </div>
+                    <div class="text-nowrap">
+                        <button class="btn btn-sm btn-outline-primary" onclick="previewDiary(${d.id})"><i class="bi bi-eye"></i> Preview</button>
+                        <button class="btn btn-sm btn-outline-success" onclick="addPages(${d.id})"><i class="bi bi-plus-lg"></i> Add pages</button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteDiary(${d.id})"><i class="bi bi-trash"></i></button>
+                    </div>
+                </div>
+                <div class="thumbs">${d.images.map((im, i) => `
+                    <div class="thumb"><img loading="lazy" src="${apiFileUrl(`${API_BASE}/daily-diary/image/${im.id}`)}" onclick="previewDiary(${d.id}, ${i})" />
+                        <button class="x" title="Delete this page" onclick="deletePage(${im.id})">&times;</button>
+                        <span class="n">${i + 1}</span></div>`).join('') || '<span class="hint">No pictures - note only.</span>'}</div>
+            </div>`).join(''));
+        window._diaries = list;
+    }
+
+    // The diary as the parent receives it (WhatsAppBotService.DiaryAsync): each
+    // page a picture with the heading and "Page i of n", the note on the first.
+    // WhatsApp names the child where this shows the class.
+    function previewDiary(id, page) {
+        const d = (window._diaries || []).find(x => x.id === id);
+        if (!d) return;
+        const who = `${d.className}${d.sectionName ? ' - ' + d.sectionName : ''}`;
+        const n = d.images.length;
+        const head = `<b>Today's Diary &mdash; ${esc(who)}</b><br>${fmtDate(d.diaryDate)}`;
+        const note = d.notes ? '<br><br>' + esc(d.notes) : '';
+        const msgs = n
+            ? d.images.map((im, i) => `<div class="wa-msg" id="pv-${i}">
+                    <img src="${apiFileUrl(`${API_BASE}/daily-diary/image/${im.id}`)}" alt="Page ${i + 1}" />
+                    <div class="cap">${head}${n > 1 ? `<br>Page ${i + 1} of ${n}` : ''}${i === 0 ? note : ''}</div>
+                </div>`).join('')
+            : `<div class="wa-msg"><div class="cap">${head}${note}</div></div>`;
+        $('#previewTitle').text(`${who} - ${fmtDate(d.diaryDate)}`);
+        $('#previewBody').html(msgs);
+        $('#previewAdd').off('click').on('click', () => { bootstrap.Modal.getInstance(document.getElementById('previewModal')).hide(); addPages(id); });
+        const el = document.getElementById('previewModal');
+        bootstrap.Modal.getOrCreateInstance(el).show();
+        if (page > 0) el.addEventListener('shown.bs.modal', () => document.getElementById('pv-' + page)?.scrollIntoView(), { once: true });
+    }
+
+    // Fills the upload form with a diary's class, section and date, so the
+    // next pictures are added to it.
+    async function addPages(id) {
+        const d = (window._diaries || []).find(x => x.id === id);
+        if (!d) return;
+        $('#diaryDate').val(toInputDate(d.diaryDate));
+        $('#classId').val(String(d.classId));
+        await loadSections();
+        $('#sectionId').val(d.sectionId ? String(d.sectionId) : '');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        $('#files').trigger('click');
+    }
+
+    async function deletePage(imageId) {
+        if (!await confirmDelete('Delete this page of the diary?')) return;
+        const res = await fetch(`${API_BASE}/daily-diary/image/${imageId}`, { method: 'DELETE' });
+        if (res.ok) { toastSuccess('Page deleted'); loadDiaries(); } else toastError('Failed to delete');
+    }
+
+    async function deleteDiary(id) {
+        if (!await confirmDelete('Delete this whole diary with all its pages?')) return;
+        const res = await fetch(`${API_BASE}/daily-diary/${id}`, { method: 'DELETE' });
+        if (res.ok) { toastSuccess('Diary deleted'); loadDiaries(); } else toastError('Failed to delete');
+    }
+</script>
+}
