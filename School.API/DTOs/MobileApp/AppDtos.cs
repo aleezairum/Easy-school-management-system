@@ -164,6 +164,37 @@ namespace School.API.DTOs.MobileApp
         public DateTime? FirstPaper { get; set; }
     }
 
+    // ── Results for staff: every finalised result, read only ──
+
+    public class AppResultExamDto
+    {
+        public int ExamId { get; set; }
+        public string ExamName { get; set; } = string.Empty;
+    }
+
+    public class AppResultSectionDto
+    {
+        public int ClassId { get; set; }
+        public string ClassName { get; set; } = string.Empty;
+        public int SectionId { get; set; }
+        public string SectionName { get; set; } = string.Empty;
+        public int Students { get; set; }
+    }
+
+    public class AppSectionResultRowDto
+    {
+        public int StudentId { get; set; }
+        public string? RollNo { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string? FatherName { get; set; }
+        /// <summary>Class-wide position; null for a student who failed a subject.</summary>
+        public int? Position { get; set; }
+        public decimal? Percent { get; set; }
+        public decimal? Obtained { get; set; }
+        public decimal? Total { get; set; }
+        public bool Passed { get; set; }
+    }
+
     public class AppExamSubjectDto
     {
         public string SubjectName { get; set; } = string.Empty;

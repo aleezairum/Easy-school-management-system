@@ -59,6 +59,24 @@ namespace School.API.DTOs.HR
         public int? UsersOnDevice { get; set; }
     }
 
+    /// <summary>
+    /// A machine's clock against the server's. The times are text on purpose:
+    /// they are wall-clock times, and a DateTime here would be sent as a date only.
+    /// </summary>
+    public class DeviceClockDto
+    {
+        public int DeviceId { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string? Campus { get; set; }
+        public string? DeviceTime { get; set; }
+        public string ServerTime { get; set; } = string.Empty;
+        /// <summary>Machine minus server, in seconds: positive = the machine is ahead. Null when it could not be read.</summary>
+        public int? DiffSeconds { get; set; }
+        /// <summary>True when this call set the machine's clock.</summary>
+        public bool Corrected { get; set; }
+        public string? Error { get; set; }
+    }
+
     public class DevicePullResultDto
     {
         public bool Ok { get; set; }

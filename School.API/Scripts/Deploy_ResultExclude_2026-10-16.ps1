@@ -14,6 +14,19 @@
    SpRPT_SMSExamStudentPercentage.sql  SpRPT_SMSExamResultAnnouncement.sql
    SpRPT_SMSExamStudentPosition.sql
 
+ Updated 22 October 2026: the Position and Percentage reports also get a
+ Prev.% column (the same student's percentage in the previous term). Running
+ this file again applies that too.
+
+ Updated 26 October 2026: first creates the academy attendance table
+ (AcademyAttendance.sql, Students -> Mark Academy Attendance), and the result
+ card shows the academy attendance of the students marked there. The card's
+ school attendance no longer counts days whose attendance was deleted.
+
+ Updated 30 October 2026: also creates the Academy Subject Allocation
+ (AcademyStaffSubject.sql, Academics -> Academy Subject Allocation) and the
+ Academy Teacher Wise result procedure. New table and procedures only.
+
  Nothing else changes: marks stay as entered, and with an empty exclude list
  every report returns exactly what it did before. The mobile app and the
  WhatsApp result skip excluded students too, through the API publish.
@@ -67,9 +80,23 @@ if (($hasList -join "") -notmatch 'ready') {
     throw "dbo.SMSExamExclude is missing in $Database. Run ExamResultControls.sql first."
 }
 if (-not $Yes) {
-    $answer = Read-Host "Apply the 7 result report procedures to $Database? (yes/no)"
+    $answer = Read-Host "Create the academy tables (attendance, subject allocation) and apply the 7 result report procedures to $Database? (yes/no)"
     if ($answer -ne "yes") { Write-Host "Nothing applied."; return }
 }
+
+# The academy attendance table first: the result card procedure reads it.
+Write-Host ""
+Write-Host "=== Applying AcademyAttendance.sql ===" -ForegroundColor Cyan
+sqlcmd -S $Server -d $Database -U $User -P $Password -b -i "AcademyAttendance.sql"
+if ($LASTEXITCODE -ne 0) { throw "AcademyAttendance.sql failed - nothing else applied." }
+Write-Host "  applied." -ForegroundColor Green
+
+# 30 October 2026: the academy's own subject allocation and its teacher result.
+Write-Host ""
+Write-Host "=== Applying AcademyStaffSubject.sql ===" -ForegroundColor Cyan
+sqlcmd -S $Server -d $Database -U $User -P $Password -b -i "AcademyStaffSubject.sql"
+if ($LASTEXITCODE -ne 0) { throw "AcademyStaffSubject.sql failed - nothing else applied." }
+Write-Host "  applied." -ForegroundColor Green
 
 foreach ($file in $files) {
     Write-Host ""
@@ -101,6 +128,23 @@ foreach ($file in $files) {
     if ($state -eq 'OK') { $ok++; Write-Host ("  OK    " + $name) -ForegroundColor Green }
     else { Write-Host ("  FAIL  " + $name + " does not read the exclude list") -ForegroundColor Red }
 }
+
+# 22 October 2026: the Position and Percentage reports gained a Prev.% column.
+foreach ($name in @("SpRPT_SMSExamStudentPosition", "SpRPT_SMSExamStudentPercentage")) {
+    $line = Invoke-Sql "SELECT CASE WHEN OBJECT_DEFINITION(OBJECT_ID('dbo.$name')) LIKE '%PrevPct%' THEN 'OK' ELSE 'NO' END"
+    if ((($line -join "").Trim()) -eq 'OK') { Write-Host ("  OK    " + $name + " has Prev.%") -ForegroundColor Green }
+    else { $ok--; Write-Host ("  FAIL  " + $name + " has no Prev.% column") -ForegroundColor Red }
+}
+
+# 26 October 2026: academy attendance on the result card.
+$line = Invoke-Sql "SELECT CASE WHEN OBJECT_ID('dbo.SMSAcademyAttendance', 'U') IS NOT NULL AND OBJECT_DEFINITION(OBJECT_ID('dbo.SpRPT_SMSExamResultCard')) LIKE '%SMSAcademyAttendance%' THEN 'OK' ELSE 'NO' END"
+if ((($line -join "").Trim()) -eq 'OK') { Write-Host "  OK    academy attendance table and result card" -ForegroundColor Green }
+else { $ok--; Write-Host "  FAIL  academy attendance table or result card not updated" -ForegroundColor Red }
+
+# 30 October 2026: Academy Subject Allocation and the Academy Teacher Wise result.
+$line = Invoke-Sql "SELECT CASE WHEN OBJECT_ID('dbo.SMSAcademyStaffSubject', 'U') IS NOT NULL AND OBJECT_ID('dbo.SpRPT_SMSExamAcademyTeacherWise', 'P') IS NOT NULL THEN 'OK' ELSE 'NO' END"
+if ((($line -join "").Trim()) -eq 'OK') { Write-Host "  OK    academy subject allocation and academy teacher result" -ForegroundColor Green }
+else { $ok--; Write-Host "  FAIL  academy subject allocation not created" -ForegroundColor Red }
 
 # The result sheet builds its query as text at run time, so a mistake in it
 # only shows when it runs. Run it once on the latest exam that has marks.

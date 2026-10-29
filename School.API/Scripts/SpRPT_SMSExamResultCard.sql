@@ -30,7 +30,8 @@ GO
                              ClassName, SectionName, Position, TotalStudents,
                              HighestMarks, CurrentPct, PrevPct, GrandTotal,
                              GrandPass, GrandObt, GrandStatus,
-                             PresentDays, SchoolDays, AttendancePct
+                             PresentDays, SchoolDays, AttendancePct,
+                             AcademyPresentDays, AcademyDays, AcademyPct
      (2) Subject details  -> StudentID, SubjectName, VDate, TotalMarks,
                              PassMarks, MarksObtained, Status
 
@@ -174,6 +175,21 @@ BEGIN
         WHERE   (@ThisLastPaper IS NULL OR A.VDate <= @ThisLastPaper)
           AND   (@PrevLastPaper IS NULL OR A.VDate >  @PrevLastPaper)
           AND   (S.AdmissionDate IS NULL OR A.VDate >= CAST(S.AdmissionDate AS DATE))
+          -- A day whose attendance was deleted (IsActive = 0) is not counted.
+          AND   ISNULL(A.IsActive, 1) = 1
+        GROUP BY A.StudentID
+    ),
+    AcAtt AS
+    (
+        /* Academy attendance (SMSAcademyAttendance, AcademyAttendance.sql) in the
+           same window. Only students marked there have it; the card shows the line
+           for them alone. */
+        SELECT  A.StudentID,
+                COUNT(*)                                              AS AcademyDays,
+                SUM(CASE WHEN A.Attendence = 1 THEN 1 ELSE 0 END)     AS AcademyPresentDays
+        FROM    SMSAcademyAttendance A
+        WHERE   (@ThisLastPaper IS NULL OR A.VDate <= @ThisLastPaper)
+          AND   (@PrevLastPaper IS NULL OR A.VDate >  @PrevLastPaper)
         GROUP BY A.StudentID
     )
     /* ---- 1) Student headers ---- */
@@ -200,7 +216,12 @@ BEGIN
         ISNULL(AT.SchoolDays,  0)                                  AS SchoolDays,
         CAST(CASE WHEN ISNULL(AT.SchoolDays, 0) > 0
                   THEN AT.PresentDays * 100.0 / AT.SchoolDays
-                  ELSE 0 END AS DECIMAL(5,2))                      AS AttendancePct
+                  ELSE 0 END AS DECIMAL(5,2))                      AS AttendancePct,
+        ISNULL(AC.AcademyPresentDays, 0)                           AS AcademyPresentDays,
+        ISNULL(AC.AcademyDays, 0)                                  AS AcademyDays,
+        CAST(CASE WHEN ISNULL(AC.AcademyDays, 0) > 0
+                  THEN AC.AcademyPresentDays * 100.0 / AC.AcademyDays
+                  ELSE 0 END AS DECIMAL(5,2))                      AS AcademyPct
     FROM        Ranked      RK
     INNER JOIN  SMSStudent  ST ON RK.StudentID = ST.VID
     LEFT  JOIN  SMSParent   PA ON ST.ParentID  = PA.VID
@@ -208,6 +229,7 @@ BEGIN
     LEFT  JOIN  SMSSection  SE ON RK.SectionID = SE.VID
     LEFT  JOIN  Prev        PR ON PR.StudentID = RK.StudentID
     LEFT  JOIN  Att         AT ON AT.StudentID = RK.StudentID
+    LEFT  JOIN  AcAtt       AC ON AC.StudentID = RK.StudentID
     -- Section scoping happens HERE, on the output, not in the Cur pool above.
     -- It used to live in the pool, which is what made the position section-wise;
     -- moving it here keeps "print one section" working while the ranking still

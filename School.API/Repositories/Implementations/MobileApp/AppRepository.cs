@@ -135,6 +135,29 @@ namespace School.API.Repositories.Implementations.MobileApp
                     };
                 }, ("@S", studentId));
 
+        /// <summary>Every finalised exam with marks, the newest first (by its last paper).</summary>
+        public Task<List<AppResultExamDto>> GetFinalizedExamsAsync() =>
+            QueryAsync(@"SELECT E.VID, E.VName
+                         FROM SMSExam E JOIN SMSExamResult R ON R.ExamID = E.VID AND R.IsActive = 1
+                         WHERE EXISTS (SELECT 1 FROM SMSExamFinalize F WHERE F.ExamID = E.VID)
+                         GROUP BY E.VID, E.VName ORDER BY MAX(R.VDate) DESC, E.VID DESC;",
+                r => new AppResultExamDto { ExamId = I(r, 0), ExamName = S(r, 1) ?? "" });
+
+        /// <summary>The classes and sections with marks in a finalised exam (none when it is not finalised).</summary>
+        public Task<List<AppResultSectionDto>> GetResultSectionsAsync(int examId) =>
+            QueryAsync(@"SELECT R.ClassID, C.VName, R.SectionID, SE.VName, COUNT(DISTINCT R.StudentID)
+                         FROM SMSExamResult R
+                         JOIN SMSClass   C  ON C.VID  = R.ClassID
+                         JOIN SMSSection SE ON SE.VID = R.SectionID
+                         WHERE R.ExamID = @E AND R.IsActive = 1
+                           AND EXISTS (SELECT 1 FROM SMSExamFinalize F WHERE F.ExamID = R.ExamID)
+                           AND EXISTS (SELECT 1 FROM SMSStudentAcademic SA WHERE SA.StudentID = R.StudentID AND SA.IsActive = 1 AND SA.StatusID = 1)
+                           AND NOT EXISTS (SELECT 1 FROM SMSExamExclude X WHERE X.ExamID = R.ExamID AND X.StudentID = R.StudentID)
+                         GROUP BY R.ClassID, C.VName, R.SectionID, SE.VName
+                         ORDER BY R.ClassID, SE.VName;",
+                r => new AppResultSectionDto { ClassId = I(r, 0), ClassName = (S(r, 1) ?? "").Trim(), SectionId = I(r, 2), SectionName = S(r, 3) ?? "", Students = I(r, 4) },
+                ("@E", examId));
+
         public Task<List<AppExamSubjectDto>> GetStudentExamSubjectsAsync(int studentId, int examId) =>
             QueryAsync(@"SELECT SU.VName, R.VDate, ISNULL(R.TotalMarks,0), ISNULL(R.PassMarks,0), R.MarksObtained, ISNULL(R.IsAbsent,0), ISNULL(R.IsPassed,0)
                          FROM SMSExamResult R JOIN SMSSubject SU ON SU.VID = R.SubjectID

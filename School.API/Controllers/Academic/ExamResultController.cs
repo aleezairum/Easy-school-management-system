@@ -66,18 +66,20 @@ public class ExamResultController : ControllerBase
     [HttpGet("position-report")]
     public async Task<IActionResult> GetPositionReport(
         [FromQuery] int examId,
-        [FromQuery] int classId)
+        [FromQuery] int classId,
+        [FromQuery] int prevExamId = 0)
     {
-        var rows = await _service.GetPositionReportAsync(examId, classId);
+        var rows = await _service.GetPositionReportAsync(examId, classId, prevExamId);
         return Ok(rows);
     }
 
     [HttpGet("percentage-report")]
     public async Task<IActionResult> GetPercentageReport(
         [FromQuery] int examId,
-        [FromQuery] int classId)
+        [FromQuery] int classId,
+        [FromQuery] int prevExamId = 0)
     {
-        var rows = await _service.GetPercentageReportAsync(examId, classId);
+        var rows = await _service.GetPercentageReportAsync(examId, classId, prevExamId);
         return Ok(rows);
     }
 
@@ -110,6 +112,16 @@ public class ExamResultController : ControllerBase
         return Ok(rows);
     }
 
+    // Academy teachers: their Academy Subject Allocation, academy students' results only.
+    [HttpGet("academy-teacher-wise-report")]
+    public async Task<IActionResult> GetAcademyTeacherWiseReport(
+        [FromQuery] int examId,
+        [FromQuery] int teacherId = 0)
+    {
+        var rows = await _service.GetAcademyTeacherWiseReportAsync(examId, teacherId);
+        return Ok(rows);
+    }
+
     [HttpGet("teacher-comparison-report")]
     public async Task<IActionResult> GetTeacherComparisonReport(
         [FromQuery] int examId,
@@ -134,6 +146,22 @@ public class ExamResultController : ControllerBase
     {
         var report = await _service.GetAnnouncementReportAsync(examId, classIds, sectionIds, prevExamId);
         return Ok(report);
+    }
+
+    /// <summary>The exams of a session for the Comparison Result Sheet, first paper first; IsTerm marks the term exams.</summary>
+    [HttpGet("comparison-exams")]
+    public async Task<IActionResult> GetComparisonExams([FromQuery] int sessionId)
+        => Ok(await _service.GetComparisonExamsAsync(sessionId));
+
+    /// <summary>Class result % (students who passed every subject) per exam, class and side (B / G).</summary>
+    /// <param name="examIds">Comma-separated exam ids.</param>
+    [HttpGet("comparison")]
+    public async Task<IActionResult> GetComparison([FromQuery] string examIds)
+    {
+        var ids = (examIds ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                                .Select(s => int.TryParse(s, out var v) ? v : 0).Where(v => v > 0).Distinct().ToList();
+        if (ids.Count == 0) return BadRequest(new { message = "Choose at least one exam." });
+        return Ok(await _service.GetComparisonAsync(ids));
     }
 
     [HttpGet("filter")]

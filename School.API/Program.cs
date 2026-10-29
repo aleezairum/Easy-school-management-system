@@ -269,6 +269,10 @@ builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();
 // left out of the teachers' result.
 builder.Services.AddScoped<IExamControlRepository, ExamControlRepository>();
 builder.Services.AddScoped<IExamControlService, ExamControlService>();
+builder.Services.AddScoped<IAcademyAttendanceRepository, AcademyAttendanceRepository>();
+builder.Services.AddScoped<IAcademyAttendanceService, AcademyAttendanceService>();
+builder.Services.AddScoped<IAcademyStaffSubjectRepository, AcademyStaffSubjectRepository>();
+builder.Services.AddScoped<IAcademyStaffSubjectService, AcademyStaffSubjectService>();
 builder.Services.AddScoped<WhatsAppBotService>();
 builder.Services.AddScoped<IWhatsAppBotService>(sp => sp.GetRequiredService<WhatsAppBotService>());
 builder.Services.AddScoped<ISchoolDocuments>(sp => sp.GetRequiredService<WhatsAppBotService>());
@@ -288,6 +292,7 @@ builder.Services.AddHostedService<FeeReminderJob>();
 builder.Services.AddHostedService<SmsQueueProcessor>();
 builder.Services.AddHostedService<DbBackupJob>();
 builder.Services.AddHostedService<HikvisionPullJob>();
+builder.Services.AddHostedService<HikvisionClockJob>();
 builder.Services.AddHostedService<AnnouncementPushJob>();
 
 // Controllers — registered ONCE with JSON options

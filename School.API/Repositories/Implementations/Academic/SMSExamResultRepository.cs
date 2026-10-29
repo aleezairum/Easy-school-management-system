@@ -82,7 +82,7 @@ namespace School.API.Repositories.Implementations.Academic
                 AddParam(cmd, "@ExamID", examId);
                 AddParam(cmd, "@ClassID", classId);
                 AddParam(cmd, "@SectionID", sectionId);
-                AddParam(cmd, "@PrevExamID", prevExamId);
+                AddParam(cmd, "@PrevExamID", await ResolvePrevExamAsync(conn, examId, prevExamId));
 
                 await using var reader = await cmd.ExecuteReaderAsync();
 
@@ -161,7 +161,7 @@ namespace School.API.Repositories.Implementations.Academic
                 AddParam(cmd, "@ExamID", examId);
                 AddParam(cmd, "@ClassID", classId);
                 AddParam(cmd, "@SectionID", sectionId);
-                AddParam(cmd, "@PrevExamID", prevExamId);
+                AddParam(cmd, "@PrevExamID", await ResolvePrevExamAsync(conn, examId, prevExamId));
                 AddParam(cmd, "@StudentID", studentId);
 
                 await using var reader = await cmd.ExecuteReaderAsync();
@@ -189,7 +189,10 @@ namespace School.API.Repositories.Implementations.Academic
                         GrandStatus   = GetString(reader, "GrandStatus"),
                         PresentDays   = GetInt(reader, "PresentDays"),
                         SchoolDays    = GetInt(reader, "SchoolDays"),
-                        AttendancePct = GetDecimal(reader, "AttendancePct")
+                        AttendancePct = GetDecimal(reader, "AttendancePct"),
+                        AcademyPresentDays = GetInt(reader, "AcademyPresentDays"),
+                        AcademyDays   = GetInt(reader, "AcademyDays"),
+                        AcademyPct    = GetDecimal(reader, "AcademyPct")
                     };
                     result.Students.Add(student);
                     byId[student.StudentId] = student;
@@ -368,6 +371,100 @@ namespace School.API.Repositories.Implementations.Academic
             PrevPassPct   = HasColumn(reader, "PrevPassPct") ? GetDecimal(reader, "PrevPassPct") : null
         };
 
+        // ── Comparison Result Sheet ─────────────────────────────────────
+
+        /// <summary>
+        /// The exams whose first paper falls inside the session's dates (an exam has
+        /// no session of its own), first paper first. IsTerm marks the term exams
+        /// (1st / 2nd / 3rd Term), which the report ticks by default.
+        /// </summary>
+        public async Task<List<ComparisonExamDto>> GetComparisonExamsAsync(int sessionId)
+        {
+            var conn = _context.Database.GetDbConnection();
+            var shouldClose = conn.State != ConnectionState.Open;
+            if (shouldClose) await conn.OpenAsync();
+            try
+            {
+                DateTime? from = null, to = null;
+                await using (var cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = "SELECT DateFrom, DateTo FROM AcademicSessionYear WHERE VID = @S";
+                    AddParam(cmd, "@S", sessionId);
+                    await using var r = await cmd.ExecuteReaderAsync();
+                    if (await r.ReadAsync())
+                    {
+                        from = r.IsDBNull(0) ? null : r.GetDateTime(0);
+                        to = r.IsDBNull(1) ? null : r.GetDateTime(1);
+                    }
+                }
+                return (await ExamDatesAsync(conn))
+                    .Where(e => (from == null || e.FirstPaper >= from) && (to == null || e.FirstPaper <= to))
+                    .OrderBy(e => e.FirstPaper)
+                    .Select(e => new ComparisonExamDto { ExamId = e.Id, ExamName = e.Name, FirstPaper = e.FirstPaper, IsTerm = ExamKind(e.Name) == "term" })
+                    .ToList();
+            }
+            finally
+            {
+                if (shouldClose) await conn.CloseAsync();
+            }
+        }
+
+        /// <summary>
+        /// For each exam, class and side: how many students sat it and how many passed
+        /// every subject - the class "Result %" of the Executive and Announcement reports.
+        /// The side is the first letter of the section the paper was sat in (B1, B2 ->
+        /// B; G1, Girls -> G), which matches the campus for every enrolled student.
+        /// Same students as every other result report: enrolled, not on the exclude list.
+        /// </summary>
+        public async Task<List<ComparisonRowDto>> GetComparisonAsync(IReadOnlyCollection<int> examIds)
+        {
+            var rows = new List<ComparisonRowDto>();
+            if (examIds.Count == 0) return rows;
+            var conn = _context.Database.GetDbConnection();
+            var shouldClose = conn.State != ConnectionState.Open;
+            if (shouldClose) await conn.OpenAsync();
+            try
+            {
+                await using var cmd = conn.CreateCommand();
+                // The ids are ints parsed by the controller, so they are safe to put in the text.
+                cmd.CommandText = $@"
+                    ;WITH Stu AS
+                    (
+                        SELECT  R.ExamID, R.StudentID,
+                                MIN(R.ClassID) AS ClassID, MIN(R.SectionID) AS SectionID,
+                                SUM(CASE WHEN R.IsAbsent = 1 OR ISNULL(R.IsPassed, 0) = 0 THEN 1 ELSE 0 END) AS FailCount
+                        FROM    SMSExamResult R
+                        WHERE   R.ExamID IN ({string.Join(",", examIds.Select(i => i.ToString(System.Globalization.CultureInfo.InvariantCulture)))})
+                          AND   R.IsActive = 1
+                          AND   EXISTS (SELECT 1 FROM SMSStudentAcademic SA
+                                        WHERE SA.StudentID = R.StudentID AND SA.IsActive = 1 AND SA.StatusID = 1)
+                          AND   NOT EXISTS (SELECT 1 FROM SMSExamExclude X
+                                            WHERE X.ExamID = R.ExamID AND X.StudentID = R.StudentID)
+                        GROUP BY R.ExamID, R.StudentID
+                    )
+                    SELECT  S.ExamID, S.ClassID, CL.VName,
+                            UPPER(LEFT(LTRIM(SE.VName), 1)) AS Side,
+                            COUNT(*) AS Total,
+                            SUM(CASE WHEN S.FailCount = 0 THEN 1 ELSE 0 END) AS Passed
+                    FROM    Stu S
+                    JOIN    SMSSection SE ON SE.VID = S.SectionID
+                    JOIN    SMSClass   CL ON CL.VID = S.ClassID
+                    GROUP BY S.ExamID, S.ClassID, CL.VName, UPPER(LEFT(LTRIM(SE.VName), 1));";
+                await using var r = await cmd.ExecuteReaderAsync();
+                while (await r.ReadAsync())
+                    rows.Add(new ComparisonRowDto
+                    {
+                        ExamId = r.GetInt32(0), ClassId = r.GetInt32(1), ClassName = (r.IsDBNull(2) ? "" : r.GetString(2)).Trim(),
+                        Side = r.IsDBNull(3) ? "" : r.GetString(3), Total = r.GetInt32(4), Passed = r.GetInt32(5)
+                    });
+            }
+            finally
+            {
+                if (shouldClose) await conn.CloseAsync();
+            }
+            return rows;
+        }
+
         private sealed record ExamDate(int Id, string Name, DateTime FirstPaper);
 
         // Every exam with results, and the date of its first paper.
@@ -393,6 +490,15 @@ namespace School.API.Repositories.Implementations.Academic
         /// the paper dates (the order exams were created in is not the order they
         /// were held: a June test can be entered in September).
         /// </summary>
+        // The exam a "Prev.%" compares with: the one chosen (> 0), none (< 0), or 0 =
+        // the previous term of the same kind (2nd Term -> 1st Term), as the Result
+        // Announcement does. Every caller that used to pass 0 (WhatsApp, the app,
+        // the SMS result card) now gets the previous term without asking.
+        private static async Task<int> ResolvePrevExamAsync(DbConnection conn, int examId, int prevExamId) =>
+            prevExamId > 0 && prevExamId != examId ? prevExamId
+            : prevExamId == 0 ? (await PreviousTermAsync(conn, examId))?.Id ?? 0
+            : 0;
+
         private static async Task<ExamDate?> PreviousTermAsync(DbConnection conn, int examId)
         {
             var exams = await ExamDatesAsync(conn);
@@ -412,11 +518,11 @@ namespace School.API.Repositories.Implementations.Academic
             return System.Text.RegularExpressions.Regex.Replace(s, "[^a-z]", "");
         }
 
-        public Task<List<ExamPositionRowDto>> GetPositionReportAsync(int examId, int classId)
-            => ReadStudentRankRowsAsync("dbo.SpRPT_SMSExamStudentPosition", examId, classId);
+        public Task<List<ExamPositionRowDto>> GetPositionReportAsync(int examId, int classId, int prevExamId = 0)
+            => ReadStudentRankRowsAsync("dbo.SpRPT_SMSExamStudentPosition", examId, classId, prevExamId);
 
-        public Task<List<ExamPositionRowDto>> GetPercentageReportAsync(int examId, int classId)
-            => ReadStudentRankRowsAsync("dbo.SpRPT_SMSExamStudentPercentage", examId, classId);
+        public Task<List<ExamPositionRowDto>> GetPercentageReportAsync(int examId, int classId, int prevExamId = 0)
+            => ReadStudentRankRowsAsync("dbo.SpRPT_SMSExamStudentPercentage", examId, classId, prevExamId);
 
         public async Task<ExamExecutiveDto> GetExecutiveReportAsync(int examId, int classId, int sectionId)
         {
@@ -530,13 +636,23 @@ namespace School.API.Repositories.Implementations.Academic
             return rows;
         }
 
-        public async Task<List<ExamTeacherWiseRowDto>> GetTeacherWiseReportAsync(int examId, int teacherId)
+        // One row per (Teacher, Subject, Class, Section) for one Exam, driven
+        // by the teacher → subject assignments (SMSStaffSubject); the web layer
+        // groups these by teacher. teacherId of 0 means "all teachers" and is
+        // passed to the SP as NULL.
+        // Backed by dbo.SpRPT_SMSExamTeacherWise (Scripts/SpRPT_SMSExamTeacherWise.sql).
+        public Task<List<ExamTeacherWiseRowDto>> GetTeacherWiseReportAsync(int examId, int teacherId)
+            => ReadTeacherWiseAsync("dbo.SpRPT_SMSExamTeacherWise", examId, teacherId);
+
+        // The same rows for the academy: the Academy Subject Allocation
+        // (SMSAcademyStaffSubject) and the results of academy students only.
+        // SectionId 0 = all sections. Backed by dbo.SpRPT_SMSExamAcademyTeacherWise
+        // (Scripts/AcademyStaffSubject.sql).
+        public Task<List<ExamTeacherWiseRowDto>> GetAcademyTeacherWiseReportAsync(int examId, int teacherId)
+            => ReadTeacherWiseAsync("dbo.SpRPT_SMSExamAcademyTeacherWise", examId, teacherId);
+
+        private async Task<List<ExamTeacherWiseRowDto>> ReadTeacherWiseAsync(string procedure, int examId, int teacherId)
         {
-            // One row per (Teacher, Subject, Class, Section) for one Exam, driven
-            // by the teacher → subject assignments (SMSStaffSubject); the web layer
-            // groups these by teacher. teacherId of 0 means "all teachers" and is
-            // passed to the SP as NULL.
-            // Backed by dbo.SpRPT_SMSExamTeacherWise (Scripts/SpRPT_SMSExamTeacherWise.sql).
             var rows = new List<ExamTeacherWiseRowDto>();
 
             var conn = _context.Database.GetDbConnection();
@@ -547,7 +663,7 @@ namespace School.API.Repositories.Implementations.Academic
             {
                 await using var cmd = conn.CreateCommand();
                 cmd.CommandType = CommandType.StoredProcedure;
-                cmd.CommandText = "dbo.SpRPT_SMSExamTeacherWise";
+                cmd.CommandText = procedure;
                 AddParam(cmd, "@ExamID", examId);
                 AddParam(cmd, "@TeacherID", teacherId > 0 ? teacherId : (object?)null);
 
@@ -629,7 +745,7 @@ namespace School.API.Repositories.Implementations.Academic
 
         // Shared reader for the Position / Percentage reports — both stored
         // procedures return the identical column set (one row per student).
-        private async Task<List<ExamPositionRowDto>> ReadStudentRankRowsAsync(string spName, int examId, int classId)
+        private async Task<List<ExamPositionRowDto>> ReadStudentRankRowsAsync(string spName, int examId, int classId, int prevExamId)
         {
             var rows = new List<ExamPositionRowDto>();
 
@@ -644,8 +760,22 @@ namespace School.API.Repositories.Implementations.Academic
                 cmd.CommandText = spName;
                 AddParam(cmd, "@ExamID", examId);
                 AddParam(cmd, "@ClassID", classId);
+                AddParam(cmd, "@PrevExamID", await ResolvePrevExamAsync(conn, examId, prevExamId));
 
-                await using var reader = await cmd.ExecuteReaderAsync();
+                DbDataReader reader;
+                try
+                {
+                    reader = await cmd.ExecuteReaderAsync();
+                }
+                catch (Microsoft.Data.SqlClient.SqlException ex) when (ex.Number == 8144)
+                {
+                    // "Too many arguments": the database still has the procedure from
+                    // before Prev.% (Deploy_ResultExclude_2026-10-16.ps1 not run on it
+                    // yet). Run it without, so the report still works - Prev.% shows "-".
+                    cmd.Parameters.RemoveAt("@PrevExamID");
+                    reader = await cmd.ExecuteReaderAsync();
+                }
+                await using var _ = reader;
                 while (await reader.ReadAsync())
                 {
                     rows.Add(new ExamPositionRowDto
@@ -659,7 +789,8 @@ namespace School.API.Repositories.Implementations.Academic
                         TotalMarks    = GetDecimal(reader, "TotalMarks"),
                         ObtainedMarks = GetDecimal(reader, "ObtainedMarks"),
                         Percent       = GetDecimal(reader, "Percent"),
-                        Status        = GetString(reader, "Status")
+                        Status        = GetString(reader, "Status"),
+                        PrevPct       = GetDecimal(reader, "PrevPct")
                     });
                 }
             }

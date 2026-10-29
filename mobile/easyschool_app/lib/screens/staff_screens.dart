@@ -11,6 +11,7 @@ import '../core/theme.dart';
 import '../ui/widgets.dart';
 import 'announcements.dart';
 import 'pdf_screen.dart';
+import 'results_screens.dart';
 import 'student_screens.dart';
 
 Color staffStatusColor(String s) {
@@ -91,6 +92,8 @@ class StaffHome extends StatelessWidget {
               GroupCard(children: [
                 MenuTile(icon: Icons.calendar_month_rounded, color: AppColors.present, title: 'My attendance', subtitle: 'Time in, time out, late minutes', onTap: () => go(const StaffAttendanceScreen())),
                 MenuTile(icon: Icons.payments_rounded, color: AppColors.money, title: 'Salary slips', onTap: () => go(const PayslipsScreen())),
+                // Every member of staff: every announced result, read only.
+                MenuTile(icon: Icons.workspace_premium_rounded, color: AppColors.present, title: 'Results', subtitle: 'Every class, announced exams', onTap: () => go(const StaffResultsScreen())),
                 if (me.can(Feature.classView))
                   MenuTile(icon: Icons.groups_rounded, color: AppColors.leave, title: 'My classes', subtitle: '${sum.classCount} class${sum.classCount == 1 ? '' : 'es'}', onTap: () => go(const ClassesTab(standalone: true))),
                 if (me.students.isNotEmpty)

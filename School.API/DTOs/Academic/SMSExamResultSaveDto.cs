@@ -111,6 +111,10 @@ namespace School.API.DTOs.Academic
         public int PresentDays { get; set; }           // days present in attendance window
         public int SchoolDays { get; set; }            // days school was held in the window
         public decimal? AttendancePct { get; set; }    // PresentDays / SchoolDays %
+        // Academy (after-school) attendance in the same window; AcademyDays 0 = not an academy student.
+        public int AcademyPresentDays { get; set; }
+        public int AcademyDays { get; set; }
+        public decimal? AcademyPct { get; set; }
         public List<ResultCardSubjectDto> Subjects { get; set; } = new();
     }
 
@@ -262,5 +266,29 @@ namespace School.API.DTOs.Academic
         public decimal? ObtainedMarks { get; set; } // grand obtained
         public decimal? Percent { get; set; }
         public string? Status { get; set; }         // "Pass" / "Fail"
+        public decimal? PrevPct { get; set; }       // same student, previous exam; null = none
+    }
+
+    // ---- Comparison Result Sheet: class result % term by term ----
+
+    /// <summary>An exam that can go on the Comparison Result Sheet.</summary>
+    public class ComparisonExamDto
+    {
+        public int ExamId { get; set; }
+        public string ExamName { get; set; } = string.Empty;
+        public DateTime FirstPaper { get; set; }
+        /// <summary>A term exam (1st / 2nd / 3rd Term ...), as opposed to a schedule test.</summary>
+        public bool IsTerm { get; set; }
+    }
+
+    /// <summary>One exam, one class, one side (B = boys' sections, G = girls').</summary>
+    public class ComparisonRowDto
+    {
+        public int ExamId { get; set; }
+        public int ClassId { get; set; }
+        public string ClassName { get; set; } = string.Empty;
+        public string Side { get; set; } = string.Empty;
+        public int Total { get; set; }
+        public int Passed { get; set; }
     }
 }

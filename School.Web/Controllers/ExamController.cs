@@ -94,13 +94,13 @@ namespace School.Web.Controllers
 
         [Route("exam/position-report")]
         public async Task<IActionResult> PositionWiseReport(int classId, int examId,
-            string className, string examName)
+            string className, string examName, int? prevExamId)
         {
             ViewData["Title"] = "Students Position Wise Report";
             ViewData["ClassName"] = className;
             ViewData["ExamName"] = examName;
 
-            var query = $"?examId={examId}&classId={classId}";
+            var query = $"?examId={examId}&classId={classId}&prevExamId={prevExamId ?? 0}";
             var rows = await FetchAsync<List<PositionRow>>($"{_apiBaseUrl}/examresult/position-report{query}")
                        ?? new List<PositionRow>();
 
@@ -109,13 +109,13 @@ namespace School.Web.Controllers
 
         [Route("exam/percentage-report")]
         public async Task<IActionResult> PercentageWiseReport(int classId, int examId,
-            string className, string examName)
+            string className, string examName, int? prevExamId)
         {
             ViewData["Title"] = "Students Percentage Wise Report";
             ViewData["ClassName"] = className;
             ViewData["ExamName"] = examName;
 
-            var query = $"?examId={examId}&classId={classId}";
+            var query = $"?examId={examId}&classId={classId}&prevExamId={prevExamId ?? 0}";
             var rows = await FetchAsync<List<PositionRow>>($"{_apiBaseUrl}/examresult/percentage-report{query}")
                        ?? new List<PositionRow>();
 
@@ -211,16 +211,21 @@ namespace School.Web.Controllers
 
         [Route("exam/teacher-wise-report")]
         public async Task<IActionResult> TeacherWiseReport(int examId,
-            int teacherId, string examName, string? teacherName)
+            int teacherId, string examName, string? teacherName, bool academy = false)
         {
-            ViewData["Title"] = "Teacher Wise Result";
+            ViewData["Title"] = academy ? "Academy Teacher Wise Result" : "Teacher Wise Result";
 
+            // academy = the Academy Subject Allocation and the academy students'
+            // results only, in the same report layout.
             var query = $"?examId={examId}&teacherId={teacherId}";
-            var rows = await FetchAsync<List<TeacherWiseRow>>($"{_apiBaseUrl}/examresult/teacher-wise-report{query}")
+            var endpoint = academy ? "academy-teacher-wise-report" : "teacher-wise-report";
+            var rows = await FetchAsync<List<TeacherWiseRow>>($"{_apiBaseUrl}/examresult/{endpoint}{query}")
                        ?? new List<TeacherWiseRow>();
 
             // Scope label shown in the report header.
-            var scope = string.IsNullOrWhiteSpace(teacherName) ? "All Teachers" : $"Teacher: {teacherName}";
+            var scope = string.IsNullOrWhiteSpace(teacherName)
+                ? (academy ? "All Academy Teachers" : "All Teachers")
+                : $"Teacher: {teacherName}";
 
             // Group the flat (teacher, subject, class, section) rows into one
             // report row per teacher; each cell is a subject result, and the
@@ -266,7 +271,7 @@ namespace School.Web.Controllers
             var model = new TeacherWiseResultViewModel
             {
                 SchoolName  = "SIR SYED MODEL HIGH SCHOOL (Boys & Girls)",
-                ReportTitle = "Teacher Wise Result Report",
+                ReportTitle = academy ? "Academy Teacher Wise Result Report" : "Teacher Wise Result Report",
                 Examination = examName,
                 Scope       = scope,
                 // Fixed number of subject-result columns = the busiest teacher.
@@ -351,6 +356,130 @@ namespace School.Web.Controllers
             return View("ResultAnnouncementReport", report);
         }
 
+        /// <summary>
+        /// Comparison Result Sheet: each class's result % exam by exam (normally the
+        /// session's 1st / 2nd / 3rd Term), for the girls' sections, the boys' sections
+        /// and both together, as the school prepared it by hand.
+        /// </summary>
+        [Route("exam/comparison-sheet")]
+        public async Task<IActionResult> ComparisonSheet(int sessionId, string? examIds, string? sessionName)
+        {
+            ViewData["Title"] = "Comparison Result Sheet";
+            var ids = (examIds ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                    .Select(s => int.TryParse(s, out var v) ? v : 0).Where(v => v > 0).ToHashSet();
+            var exams = (await FetchAsync<List<ComparisonExam>>($"{_apiBaseUrl}/examresult/comparison-exams?sessionId={sessionId}") ?? new())
+                        .Where(e => ids.Contains(e.ExamId)).OrderBy(e => e.FirstPaper).ToList();
+            var rows = exams.Count == 0 ? new List<ComparisonRow>()
+                : await FetchAsync<List<ComparisonRow>>($"{_apiBaseUrl}/examresult/comparison?examIds={string.Join(",", exams.Select(e => e.ExamId))}") ?? new();
+            return View("ComparisonResultSheet", ComparisonSheetViewModel.Build(exams, rows, sessionName));
+        }
+
+        public class ComparisonExam
+        {
+            public int ExamId { get; set; }
+            public string ExamName { get; set; } = "";
+            public DateTime FirstPaper { get; set; }
+            public bool IsTerm { get; set; }
+        }
+
+        public class ComparisonRow
+        {
+            public int ExamId { get; set; }
+            public int ClassId { get; set; }
+            public string ClassName { get; set; } = "";
+            public string Side { get; set; } = "";
+            public int Total { get; set; }
+            public int Passed { get; set; }
+        }
+
+        public class ComparisonLine
+        {
+            public string ClassName { get; set; } = "";
+            public List<decimal?> Values { get; set; } = new();   // one per exam; null = no result ("Nill")
+            public decimal? Overall { get; set; }
+        }
+
+        public class ComparisonTable
+        {
+            public string Title { get; set; } = "";
+            public string Section { get; set; } = "";             // G, B or B+G
+            public List<ComparisonLine> Lines { get; set; } = new();
+            public List<decimal?> Average { get; set; } = new();
+            public decimal? OverallAverage { get; set; }
+        }
+
+        public class ComparisonSheetViewModel
+        {
+            public string SessionLabel { get; set; } = "";
+            public List<string> ExamNames { get; set; } = new();
+            public ComparisonTable Girls { get; set; } = new();
+            public ComparisonTable Boys { get; set; } = new();
+            public ComparisonTable Both { get; set; } = new();
+
+            private static decimal? Avg(IEnumerable<decimal?> v)
+            {
+                var have = v.Where(x => x.HasValue).Select(x => x!.Value).ToList();
+                return have.Count == 0 ? null : have.Average();
+            }
+
+            // Play Group, Nursery, Prep first, then 1, 2 ... 10 by number, a "9-Junior"
+            // just before 9; anything else (Montessori) by its position in the list.
+            private static double ClassOrder(string name, int id)
+            {
+                var n = name.Trim().ToLowerInvariant();
+                if (n.StartsWith("play")) return 1;
+                if (n.StartsWith("nursery")) return 2;
+                if (n.StartsWith("prep")) return 3;
+                var m = System.Text.RegularExpressions.Regex.Match(n, @"^\d+");
+                if (m.Success) return 10 + int.Parse(m.Value) * 2 - (n.Contains("junior") ? 1 : 0);
+                return id < 10 ? 0.5 : 100 + id;
+            }
+
+            // "1st Term 2026-27" -> "1st Term"; "Schedule Test No.1 (19-06-2026 to ...)" -> "Schedule Test No.1"
+            private static string ShortName(string name) =>
+                System.Text.RegularExpressions.Regex.Replace(
+                    System.Text.RegularExpressions.Regex.Replace(name, @"\([^)]*\)", ""), @"\s*\d{4}\s*-\s*\d{2,4}\s*$", "").Trim();
+
+            public static ComparisonSheetViewModel Build(List<ComparisonExam> exams, List<ComparisonRow> rows, string? sessionName)
+            {
+                var vm = new ComparisonSheetViewModel
+                {
+                    SessionLabel = System.Text.RegularExpressions.Regex.Replace(sessionName ?? "", @"^\s*year\s*", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase).Trim(),
+                    ExamNames = exams.Select(e => ShortName(e.ExamName)).ToList()
+                };
+                rows = rows.Where(r => r.Side == "B" || r.Side == "G").ToList();
+                var classes = rows.GroupBy(r => r.ClassId)
+                                  .Select(g => (Id: g.Key, Name: g.First().ClassName))
+                                  .OrderBy(c => ClassOrder(c.Name, c.Id)).ThenBy(c => c.Id).ToList();
+
+                decimal? Pct(int examId, int classId, string side)
+                {
+                    var r = rows.FirstOrDefault(x => x.ExamId == examId && x.ClassId == classId && x.Side == side);
+                    return r == null || r.Total == 0 ? null : r.Passed * 100m / r.Total;
+                }
+
+                ComparisonTable Table(string title, string section, Func<int, int, decimal?> value)
+                {
+                    var t = new ComparisonTable { Title = title, Section = section };
+                    foreach (var c in classes)
+                    {
+                        var values = exams.Select(e => value(e.ExamId, c.Id)).ToList();
+                        if (values.All(v => v == null)) continue;           // no such sections in this class
+                        t.Lines.Add(new ComparisonLine { ClassName = c.Name, Values = values, Overall = Avg(values) });
+                    }
+                    t.Average = exams.Select((_, i) => Avg(t.Lines.Select(l => l.Values[i]))).ToList();
+                    t.OverallAverage = Avg(t.Lines.Select(l => l.Overall));
+                    return t;
+                }
+
+                vm.Girls = Table("Comparison Result Sheet", "G", (e, c) => Pct(e, c, "G"));
+                vm.Boys = Table("Comparison Result Sheet", "B", (e, c) => Pct(e, c, "B"));
+                // Both together: the average of the boys' and the girls' result, as on the school's sheet.
+                vm.Both = Table("Overall Comparison Result Sheet", "B+G", (e, c) => Avg(new[] { Pct(e, c, "B"), Pct(e, c, "G") }));
+                return vm;
+            }
+        }
+
         // ── helpers ──────────────────────────────────────────────────────
         private async Task<T?> FetchAsync<T>(string url) where T : class
         {
@@ -425,6 +554,9 @@ namespace School.Web.Controllers
             public int PresentDays { get; set; }
             public int SchoolDays { get; set; }
             public decimal? AttendancePct { get; set; }
+            public int AcademyPresentDays { get; set; }
+            public int AcademyDays { get; set; }
+            public decimal? AcademyPct { get; set; }
             public List<ResultCardSubject> Subjects { get; set; } = new();
         }
 
@@ -451,6 +583,7 @@ namespace School.Web.Controllers
             public decimal? ObtainedMarks { get; set; }
             public decimal? Percent { get; set; }
             public string? Status { get; set; }
+            public decimal? PrevPct { get; set; }
         }
 
         // Mirrors the API ExamExecutiveDto.

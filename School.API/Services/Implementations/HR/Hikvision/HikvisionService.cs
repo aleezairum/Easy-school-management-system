@@ -101,6 +101,89 @@ namespace School.API.Services.Implementations.HR.Hikvision
             return result;
         }
 
+        // ── Clocks ─────────────────────────────────────────────────────
+        // A punch carries the machine's own time, so a machine running fast or
+        // slow gives staff the wrong time in and out. The server's clock is the
+        // reference: Windows keeps it right from the internet.
+
+        public async Task<List<DeviceClockDto>> GetClocksAsync()
+        {
+            var list = new List<DeviceClockDto>();
+            foreach (var row in (await _repo.GetDevicesAsync()).Where(x => x.IsActive))
+            {
+                var d = await _repo.FindDeviceAsync(row.Id);
+                if (d != null) list.Add(await ReadClockAsync(d, row.CampusName));
+            }
+            return list;
+        }
+
+        public async Task<DeviceClockDto> CorrectClockAsync(int id)
+        {
+            var d = await _repo.FindDeviceAsync(id) ?? throw new KeyNotFoundException();
+            var campus = (await _repo.GetDevicesAsync()).FirstOrDefault(x => x.Id == id)?.CampusName;
+            return await SetClockAsync(d, campus);
+        }
+
+        public async Task<List<DeviceClockDto>> CorrectClocksAsync(int maxDriftSeconds)
+        {
+            var result = new List<DeviceClockDto>();
+            foreach (var row in (await _repo.GetDevicesAsync()).Where(x => x.IsActive))
+            {
+                var d = await _repo.FindDeviceAsync(row.Id);
+                if (d == null) continue;
+                var clock = await ReadClockAsync(d, row.CampusName);
+                if (clock.DiffSeconds is int diff && Math.Abs(diff) > maxDriftSeconds)
+                {
+                    clock = await SetClockAsync(d, row.CampusName);
+                    _logger.LogInformation("[Hikvision] {Device}: clock was {Diff}s off the server, corrected ({Error}).",
+                        d.Name, diff, clock.Error ?? "ok");
+                }
+                result.Add(clock);
+            }
+            return result;
+        }
+
+        private async Task<DeviceClockDto> ReadClockAsync(HrAttendanceDevice d, string? campus)
+        {
+            var c = new DeviceClockDto { DeviceId = d.Id, Name = d.Name, Campus = campus };
+            using var client = ClientFor(d);
+            try
+            {
+                // The server's time taken half way through the round trip.
+                var before = DateTime.Now;
+                var text = await client.GetDeviceTimeAsync();
+                var server = before + (DateTime.Now - before) / 2;
+                c.ServerTime = server.ToString("yyyy-MM-dd HH:mm:ss");
+                var device = HikvisionIsapiClient.ParseTime(text);
+                if (device == null) { c.Error = "The machine did not say its time."; return c; }
+                c.DeviceTime = device.Value.ToString("yyyy-MM-dd HH:mm:ss");
+                c.DiffSeconds = (int)Math.Round((device.Value - server).TotalSeconds);
+            }
+            catch (HikvisionIsapiClient.IsapiException ex)
+            {
+                c.ServerTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                c.Error = ex.Message;
+            }
+            return c;
+        }
+
+        private async Task<DeviceClockDto> SetClockAsync(HrAttendanceDevice d, string? campus)
+        {
+            using (var client = ClientFor(d))
+            {
+                try { await client.SetDeviceTimeAsync(DateTime.Now); }
+                catch (HikvisionIsapiClient.IsapiException ex)
+                {
+                    var failed = await ReadClockAsync(d, campus);
+                    failed.Error = "Could not set the clock: " + ex.Message;
+                    return failed;
+                }
+            }
+            var after = await ReadClockAsync(d, campus);
+            after.Corrected = after.Error == null;
+            return after;
+        }
+
         // ── Punches ────────────────────────────────────────────────────
 
         public async Task<DevicePullResultDto> PullAsync(int id, DateTime? from = null)

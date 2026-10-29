@@ -59,11 +59,11 @@ namespace School.API.Services.Implementations.Academic
         public Task<ExamResultCardDto> GetResultCardAsync(int examId, int classId, int sectionId, int prevExamId = 0, int studentId = 0)
             => _repo.GetResultCardAsync(examId, classId, sectionId, prevExamId, studentId);
 
-        public Task<List<ExamPositionRowDto>> GetPositionReportAsync(int examId, int classId)
-            => _repo.GetPositionReportAsync(examId, classId);
+        public Task<List<ExamPositionRowDto>> GetPositionReportAsync(int examId, int classId, int prevExamId = 0)
+            => _repo.GetPositionReportAsync(examId, classId, prevExamId);
 
-        public Task<List<ExamPositionRowDto>> GetPercentageReportAsync(int examId, int classId)
-            => _repo.GetPercentageReportAsync(examId, classId);
+        public Task<List<ExamPositionRowDto>> GetPercentageReportAsync(int examId, int classId, int prevExamId = 0)
+            => _repo.GetPercentageReportAsync(examId, classId, prevExamId);
 
         public Task<ExamExecutiveDto> GetExecutiveReportAsync(int examId, int classId, int sectionId)
             => _repo.GetExecutiveReportAsync(examId, classId, sectionId);
@@ -74,9 +74,16 @@ namespace School.API.Services.Implementations.Academic
         public Task<List<ExamTeacherWiseRowDto>> GetTeacherWiseReportAsync(int examId, int teacherId)
             => _repo.GetTeacherWiseReportAsync(examId, teacherId);
 
+        public Task<List<ExamTeacherWiseRowDto>> GetAcademyTeacherWiseReportAsync(int examId, int teacherId)
+            => _repo.GetAcademyTeacherWiseReportAsync(examId, teacherId);
+
         public Task<List<ExamTeacherComparisonRowDto>> GetTeacherComparisonReportAsync(
             int examId, string? lClassIds, string? lSectionIds, string? rClassIds, string? rSectionIds)
             => _repo.GetTeacherComparisonReportAsync(examId, lClassIds, lSectionIds, rClassIds, rSectionIds);
+
+        public Task<List<ComparisonExamDto>> GetComparisonExamsAsync(int sessionId) => _repo.GetComparisonExamsAsync(sessionId);
+
+        public Task<List<ComparisonRowDto>> GetComparisonAsync(IReadOnlyCollection<int> examIds) => _repo.GetComparisonAsync(examIds);
 
         public Task<ExamAnnouncementDto> GetAnnouncementReportAsync(int examId, string? classIds = null, string? sectionIds = null, int? prevExamId = null)
             => _repo.GetAnnouncementReportAsync(examId, classIds, sectionIds, prevExamId);

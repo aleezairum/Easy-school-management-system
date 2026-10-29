@@ -22,7 +22,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=820" />
     <title>Students Percentage Wise Report</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -214,15 +214,16 @@
     <!-- Table -->
     <table>
         <colgroup>
-            <col style="width:4%;" />   <!-- Sr#       -->
+            <col style="width:5%;" />   <!-- Sr#       -->
             <col style="width:7%;" />   <!-- Roll#     -->
-            <col style="width:24%;" />  <!-- Name      -->
-            <col style="width:24%;" />  <!-- Father    -->
-            <col style="width:6%;" />   <!-- Section   -->
-            <col style="width:7%;" />   <!-- T.Marks   -->
-            <col style="width:7%;" />   <!-- Obt.Marks -->
-            <col style="width:7%;" />   <!-- %age      -->
-            <col style="width:7%;" />   <!-- Position  -->
+            <col style="width:15%;" />  <!-- Name      -->
+            <col style="width:15%;" />  <!-- Father    -->
+            <col style="width:8%;" />   <!-- Section   -->
+            <col style="width:8%;" />   <!-- T.Marks   -->
+            <col style="width:8%;" />   <!-- Obt.Marks -->
+            <col style="width:9%;" />   <!-- %age      -->
+            <col style="width:9%;" />   <!-- Prev.%    -->
+            <col style="width:9%;" />   <!-- Position  -->
             <col style="width:7%;" />   <!-- Status    -->
         </colgroup>
         <thead>
@@ -235,6 +236,7 @@
                 <th>T.Marks</th>
                 <th>Obt. Marks</th>
                 <th>%age</th>
+                <th>Prev.%</th>
                 <th>Position</th>
                 <th>Status</th>
             </tr>
@@ -242,7 +244,7 @@
         <tbody>
             @if (students.Count == 0)
             {
-                <tr><td colspan="10" style="padding:20px; color:#777; font-style:italic;">No results found for the selected Class and Exam.</td></tr>
+                <tr><td colspan="11" style="padding:20px; color:#777; font-style:italic;">No results found for the selected Class and Exam.</td></tr>
             }
             else
             {
@@ -258,6 +260,7 @@
                         <td>@Marks(s.TotalMarks)</td>
                         <td>@Marks(s.ObtainedMarks)</td>
                         <td>@Pct(s.Percent)</td>
+                        <td>@Pct(s.PrevPct)</td>
                         <td>@(s.Position.HasValue ? s.Position.Value.ToString() : "-")</td>
                         <td class="@(isPass ? "pass" : "fail")">@s.Status</td>
                     </tr>

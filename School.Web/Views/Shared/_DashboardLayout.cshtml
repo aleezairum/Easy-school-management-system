@@ -5,6 +5,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - School Management System</title>
+    <partial name="_PwaHead" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -1499,6 +1500,18 @@
             }
         }
 
+        /* ====== PHONES: tables scroll sideways instead of squeezing (js/mobile.js) ====== */
+        @@media (max-width: 767px) {
+            .m-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; }
+            .content-area table, .modal-body table { min-width: var(--m-minw, 0); }
+            .content-area table th, .modal-body table th { white-space: nowrap; }
+            /* Rows of buttons and filters go onto a second line instead of off the screen. */
+            .content-area .d-flex.gap-1, .content-area .d-flex.gap-2, .content-area .d-flex.gap-3,
+            .content-area .d-flex.justify-content-between, .content-area .d-flex.justify-content-end { flex-wrap: wrap; }
+            .select2-container { max-width: 100%; }
+            .modal-dialog { margin: 8px; }
+        }
+
         /* ====== SELECT2 THEME OVERRIDES ====== */
         .select2-container--bootstrap-5 .select2-selection {
             border: 1px solid #e2e8f0 !important;
@@ -1865,6 +1878,9 @@
                         <i class="bi bi-search"></i>
                         <input type="text" placeholder="Search anything...">
                     </div>
+                    <button type="button" class="header-btn d-none" data-install-app title="Install EasySchool as an app">
+                        <i class="bi bi-download"></i>
+                    </button>
                     <button class="header-btn">
                         <i class="bi bi-bell"></i>
                         <span class="notification-dot"></span>
@@ -2641,6 +2657,8 @@
         })();
     </script>
 
+    <script src="~/js/mobile.js" asp-append-version="true"></script>
+    <script src="~/js/pwa.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

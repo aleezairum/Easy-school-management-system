@@ -11,11 +11,13 @@ GO
 
    Returns one row per student:
        Sr, Position, RollNo, StudentName, FatherName, SectionName,
-       TotalMarks, ObtainedMarks, Percent, Status
+       TotalMarks, ObtainedMarks, Percent, Status, PrevPct
 
    Parameters:
      @ExamID  INT - the exam to report on   (required)
      @ClassID INT - the class to report on  (required)
+     @PrevExamID INT - the exam for "Prev.%" (optional, 0/NULL = none); the API
+                       passes the previous term of the same kind
 
    Target: SQL Server 2019
    ============================================================================ */
@@ -28,8 +30,9 @@ SET QUOTED_IDENTIFIER ON
 GO
 CREATE PROCEDURE [dbo].[SpRPT_SMSExamStudentPercentage]
 (
-    @ExamID  INT,
-    @ClassID INT
+    @ExamID     INT,
+    @ClassID    INT,
+    @PrevExamID INT = NULL
 )
 AS
 BEGIN
@@ -75,6 +78,19 @@ BEGIN
                           THEN A.Obtained * 100.0 / A.MaxMarks
                           ELSE 0 END AS DECIMAL(5,2)) AS Pct
         FROM    Agg A
+    ),
+    Prev AS
+    (
+        -- Each student's percentage in the previous exam, same class; none -> NULL.
+        SELECT  R.StudentID,
+                SUM(ISNULL(R.MarksObtained, 0)) AS Obtained,
+                SUM(ISNULL(R.TotalMarks, 0))    AS MaxMarks
+        FROM    SMSExamResult R
+        WHERE   @PrevExamID IS NOT NULL AND @PrevExamID > 0
+          AND   R.ExamID   = @PrevExamID
+          AND   R.IsActive = 1
+          AND   R.ClassID  = @ClassID
+        GROUP BY R.StudentID
     )
     SELECT
         ROW_NUMBER() OVER (
@@ -89,11 +105,15 @@ BEGIN
         CAST(RK.MaxMarks AS DECIMAL(9,2))                      AS TotalMarks,
         CAST(RK.Obtained AS DECIMAL(9,2))                      AS ObtainedMarks,
         RK.Pct                                                 AS [Percent],
-        CASE WHEN RK.FailCount = 0 THEN 'Pass' ELSE 'Fail' END AS Status
+        CASE WHEN RK.FailCount = 0 THEN 'Pass' ELSE 'Fail' END AS Status,
+        CASE WHEN PR.MaxMarks > 0
+             THEN CAST(PR.Obtained * 100.0 / PR.MaxMarks AS DECIMAL(5,2))
+             ELSE NULL END                                     AS PrevPct
     FROM        Ranked     RK
     INNER JOIN  SMSStudent ST ON RK.StudentID = ST.VID
     LEFT  JOIN  SMSParent  PA ON ST.ParentID  = PA.VID
     LEFT  JOIN  SMSSection SE ON RK.SectionID = SE.VID
+    LEFT  JOIN  Prev       PR ON PR.StudentID = RK.StudentID
     -- ALL students (pass + fail) together, strictly by percentage DESC.
     ORDER BY    RK.Pct DESC,
                 RK.Obtained DESC,

@@ -29,6 +29,7 @@
         <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabDevices" type="button" id="btnTabDevices">Machines</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabPeople" type="button" id="btnTabPeople">People on Machine</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabLog" type="button" id="btnTabLog">Punch Log</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabClock" type="button" id="btnTabClock">Machine Clocks</button></li>
     </ul>
 
     <div class="tab-content">
@@ -141,6 +142,27 @@
                 </div>
             </div></div>
         </div>
+
+        @* ── Machine clocks ── *@
+        <div class="tab-pane fade" id="tabClock">
+            <div class="card"><div class="card-body">
+                <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+                    <button class="btn btn-primary" onclick="loadClocks()"><i class="bi bi-arrow-clockwise"></i> Check again</button>
+                    <button class="btn btn-success" onclick="correctAllClocks()"><i class="bi bi-clock-history"></i> Correct all to server time</button>
+                </div>
+                <div class="text-muted small mb-3">
+                    A punch carries the machine's own time, so a machine running fast or slow gives staff the wrong time in and out.
+                    The server's clock is the reference. The server also checks every machine once an hour and sets any machine
+                    that is more than 30 seconds off by itself.
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle" id="clockTable">
+                        <thead><tr><th>Machine</th><th>Campus</th><th>Machine time</th><th>Server time</th><th>Difference</th><th></th></tr></thead>
+                        <tbody id="clockBody"><tr><td colspan="6" class="text-center text-muted py-4">Open this tab to read the clocks.</td></tr></tbody>
+                    </table>
+                </div>
+            </div></div>
+        </div>
     </div>
 </div>
 
@@ -153,7 +175,53 @@
     // The full push address: the API's own host and the machine's key.
     const apiRoot = () => API_BASE.replace(/\/api\/?$/, '');
 
+    // ── Machine clocks ──
+    function clockDiff(s) {
+        if (s === null || s === undefined) return '<span class="text-muted">-</span>';
+        const a = Math.abs(s);
+        if (a <= 5) return '<span class="badge bg-success">On time</span>';
+        const m = Math.floor(a / 60), sec = a % 60;
+        const text = (m ? m + ' min ' : '') + sec + ' sec ' + (s > 0 ? 'ahead' : 'behind');
+        return `<span class="badge ${a > 30 ? 'bg-danger' : 'bg-warning text-dark'}">${text}</span>`;
+    }
+    function clockRow(c) {
+        const machine = c.deviceTime ? esc(c.deviceTime) : `<span class="text-danger">${esc(c.error || 'Not read')}</span>`;
+        const note = c.error && c.deviceTime ? `<div class="small text-danger">${esc(c.error)}</div>` : '';
+        return `<tr data-id="${c.deviceId}">
+            <td class="fw-semibold">${esc(c.name)}</td><td>${esc(c.campus || '')}</td>
+            <td>${machine}</td><td>${esc(c.serverTime)}</td>
+            <td>${clockDiff(c.diffSeconds)}${c.corrected ? ' <span class="badge bg-info text-dark">Corrected</span>' : ''}${note}</td>
+            <td class="text-end"><button class="btn btn-sm btn-outline-success" onclick="correctClock(${c.deviceId})"><i class="bi bi-clock"></i> Correct now</button></td>
+        </tr>`;
+    }
+    async function loadClocks() {
+        $('#clockBody').html('<tr><td colspan="6" class="text-center text-muted py-4">Reading the machines...</td></tr>');
+        const r = await fetch(`${API_BASE}/hikvision/clocks`).catch(() => null);
+        if (!r || !r.ok) { $('#clockBody').html('<tr><td colspan="6" class="text-center text-danger py-4">Could not read the clocks.</td></tr>'); return; }
+        const list = await r.json();
+        $('#clockBody').html(list.length ? list.map(clockRow).join('') : '<tr><td colspan="6" class="text-center text-muted py-4">No active machine.</td></tr>');
+    }
+    async function correctClock(id) {
+        const tr = $(`#clockBody tr[data-id="${id}"]`);
+        tr.find('button').prop('disabled', true);
+        const r = await fetch(`${API_BASE}/hikvision/devices/${id}/clock`, { method: 'POST' }).catch(() => null);
+        if (!r || !r.ok) { toastError('Could not set the clock.'); tr.find('button').prop('disabled', false); return; }
+        const c = await r.json();
+        tr.replaceWith(clockRow(c));
+        if (c.corrected) toastSuccess(`${c.name}: clock set to the server's time.`); else toastError(c.error || 'Could not set the clock.');
+    }
+    async function correctAllClocks() {
+        $('#clockBody').html('<tr><td colspan="6" class="text-center text-muted py-4">Setting the clocks...</td></tr>');
+        const r = await fetch(`${API_BASE}/hikvision/clocks/correct`, { method: 'POST' }).catch(() => null);
+        if (!r || !r.ok) { toastError('Could not set the clocks.'); loadClocks(); return; }
+        const list = await r.json();
+        $('#clockBody').html(list.length ? list.map(clockRow).join('') : '<tr><td colspan="6" class="text-center text-muted py-4">No active machine.</td></tr>');
+        const failed = list.filter(c => !c.corrected).length;
+        if (failed) toastWarning(`${failed} machine(s) could not be set - see the table.`); else if (list.length) toastSuccess('Every machine is on the server time now.');
+    }
+
     $(document).ready(async function () {
+        $('#btnTabClock').on('shown.bs.tab', loadClocks);
         $('#lDate').val(toInputDate());
         const [campuses, classes] = await Promise.all([
             fetch(`${API_BASE}/campus`).then(r => r.ok ? r.json() : []).catch(() => []),

@@ -11,8 +11,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Teacher Wise Result - Sir Syed Model High School</title>
+    <meta name="viewport" content="width=1100" />
+    <title>@(Model?.ReportTitle?.StartsWith("Academy") == true ? "Academy " : "")Teacher Wise Result - Sir Syed Model High School</title>
     <style>
         * {
             margin: 0;
@@ -211,7 +211,7 @@
     <!-- Meta Row -->
     <div class="meta-row">
         <span><strong>Scope:</strong> @(string.IsNullOrWhiteSpace(Model?.Scope) ? "Whole School" : Model.Scope)</span>
-        <span class="title">TEACHER WISE RESULT</span>
+        <span class="title">@(Model?.ReportTitle?.StartsWith("Academy") == true ? "ACADEMY TEACHER WISE RESULT" : "TEACHER WISE RESULT")</span>
         <span><strong>Exam:</strong> @(string.IsNullOrWhiteSpace(Model?.Examination) ? "-" : Model.Examination)</span>
     </div>
 

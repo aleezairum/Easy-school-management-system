@@ -1,0 +1,165 @@
+@{
+    ViewData["Title"] = "Mark Academy Attendance";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+@*
+    Attendance of the academy (the after-school classes): only the students with
+    "Avail Academy" on (Students -> Change Student Status). Kept in its own table,
+    so the school-day attendance, the absent SMS and the registers are not touched.
+    The result card shows it under the school attendance for these students.
+*@
+
+@section Styles {
+<style>
+    :root { --as-green: #008649; --as-green-dark: #006c3a; --as-ink: #1e293b; --as-muted: #64748b; --as-line: #e2e8f0; --as-bg: #f8fafc; }
+    .page-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+    .page-toolbar .pt-title { display: flex; align-items: center; gap: 14px; }
+    .page-toolbar .pt-icon { width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #7c3aed, #5b21b6); color: #fff; font-size: 22px; }
+    .page-toolbar h4 { margin: 0; font-weight: 700; color: var(--as-ink); font-size: 20px; }
+    .page-toolbar .pt-sub { margin: 2px 0 0; font-size: 13px; color: var(--as-muted); }
+    .btn-as-primary { background: var(--as-green); border: none; color: #fff; border-radius: 10px; padding: 8px 16px; font-weight: 600; font-size: 14px; }
+    .btn-as-primary:hover { background: var(--as-green-dark); color: #fff; }
+    .btn-as-danger { background: #dc2626; border: none; color: #fff; border-radius: 10px; padding: 8px 16px; font-weight: 600; font-size: 14px; }
+    .card { border: 1px solid var(--as-line); border-radius: 16px; box-shadow: 0 4px 24px rgba(15,23,42,0.05); }
+    .filter-card { background: var(--as-bg); border: 1px solid var(--as-line); border-radius: 14px; padding: 18px 20px; margin-bottom: 18px; }
+    .stats-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+    .stat-chip { flex: 1 1 120px; border-radius: 12px; padding: 10px 14px; border: 1px solid var(--as-line); background: #fff; }
+    .stat-chip b { font-size: 20px; display: block; }
+    .stat-chip span { font-size: 12px; color: var(--as-muted); text-transform: uppercase; }
+    #acTable thead th { background: #f1f5f9; font-size: 12px; text-transform: uppercase; color: #334155; }
+    #acTable td { vertical-align: middle; }
+    #acBody tr.row-P td { background: #f0fdf4; } #acBody tr.row-A td { background: #fef2f2; } #acBody tr.row-L td { background: #eff6ff; }
+    .att-group { display: inline-flex; gap: 6px; background: #fff; padding: 4px; border-radius: 10px; border: 1px solid var(--as-line); }
+    .att-btn { width: 32px; height: 28px; border-radius: 7px; font-weight: 700; font-size: 13px; border: none; background: transparent; color: #94a3b8; }
+    .att-btn.active[data-v="P"] { background: #16a34a; color: #fff; }
+    .att-btn.active[data-v="A"] { background: #dc2626; color: #fff; }
+    .att-btn.active[data-v="L"] { background: #2563eb; color: #fff; }
+    .not-saved { font-size: 11px; color: #b45309; }
+</style>
+}
+
+<div class="container-fluid">
+    <div class="page-toolbar">
+        <div class="pt-title">
+            <div class="pt-icon"><i class="bi bi-mortarboard"></i></div>
+            <div>
+                <h4>Mark Academy Attendance</h4>
+                <p class="pt-sub">Students with "Avail Academy" on. The result card shows it for them.</p>
+            </div>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn-as-primary" onclick="acSave()"><i class="bi bi-check-lg me-1"></i> Save</button>
+            <button type="button" class="btn-as-danger" onclick="acDelete()"><i class="bi bi-trash me-1"></i> Delete</button>
+        </div>
+    </div>
+
+    <div class="card"><div class="card-body p-4">
+        <div class="filter-card">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3"><label class="form-label">Class</label>
+                    <select class="form-select" id="acClass"><option value="">-- Select Class --</option></select></div>
+                <div class="col-md-3"><label class="form-label">Section</label>
+                    <select class="form-select" id="acSection"><option value="">All sections</option></select></div>
+                <div class="col-md-2"><label class="form-label">Date</label>
+                    <input type="date" class="form-control" id="acDate" /></div>
+                <div class="col-md-4 d-flex gap-2">
+                    <button class="btn btn-primary" onclick="acLoad()"><i class="bi bi-search"></i> Load</button>
+                    <button class="btn btn-outline-success" onclick="acAll('P')"><i class="bi bi-check2-all"></i> All Present</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat-chip"><b id="cTotal">0</b><span>Academy students</span></div>
+            <div class="stat-chip"><b id="cP" class="text-success">0</b><span>Present</span></div>
+            <div class="stat-chip"><b id="cA" class="text-danger">0</b><span>Absent</span></div>
+            <div class="stat-chip"><b id="cL" class="text-primary">0</b><span>Leave</span></div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover" id="acTable">
+                <thead><tr><th style="width:60px">Sr</th><th style="width:90px">Roll #</th><th>Student</th><th>Father</th><th>Section</th><th class="text-center">Academy Attendance</th></tr></thead>
+                <tbody id="acBody"><tr><td colspan="6" class="text-center text-muted py-4">Choose the class and the date, then Load.</td></tr></tbody>
+            </table>
+        </div>
+    </div></div>
+</div>
+
+@section Scripts {
+<script>
+    const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const CODE = { 1: 'P', 0: 'A', 2: 'L' }, VALUE = { P: 1, A: 0, L: 2 };
+    let _rows = [];
+
+    $(async function () {
+        $('#acDate').val(toInputDate());
+        const classes = await fetch(`${API_BASE}/class`).then(r => r.ok ? r.json() : []).catch(() => []);
+        (classes || []).forEach(c => $('#acClass').append(`<option value="${c.vid}">${esc(c.vName)}</option>`));
+        $('#acClass').on('change', async function () {
+            $('#acSection').find('option:not(:first)').remove();
+            if (!this.value) return;
+            const sections = await fetch(`${API_BASE}/section/byClass/${this.value}`).then(r => r.ok ? r.json() : []).catch(() => []);
+            (sections || []).forEach(s => $('#acSection').append(`<option value="${s.vid}">${esc(s.vName)}</option>`));
+        });
+    });
+
+    function query() {
+        const p = new URLSearchParams({ classId: $('#acClass').val(), date: $('#acDate').val() });
+        if ($('#acSection').val()) p.append('sectionId', $('#acSection').val());
+        return p.toString();
+    }
+
+    async function acLoad() {
+        if (!$('#acClass').val()) { toastWarning('Choose the class.'); return; }
+        if (!$('#acDate').val()) { toastWarning('Choose the date.'); return; }
+        $('#acBody').html('<tr><td colspan="6" class="text-center text-muted py-4">Loading...</td></tr>');
+        const r = await fetch(`${API_BASE}/academy-attendance?${query()}`).catch(() => null);
+        const body = r ? await r.json().catch(() => null) : null;
+        if (!r || !r.ok) { $('#acBody').html(`<tr><td colspan="6" class="text-center text-danger py-4">${esc(body?.message || 'Could not load the students.')}</td></tr>`); return; }
+        // Not marked yet for the day: Present, as on the daily attendance form.
+        _rows = body.map(s => ({ ...s, mark: s.attendence === null || s.attendence === undefined ? 'P' : CODE[s.attendence], saved: s.attendence !== null && s.attendence !== undefined }));
+        render();
+    }
+
+    function render() {
+        if (!_rows.length) {
+            $('#acBody').html('<tr><td colspan="6" class="text-center text-muted py-4">No student of this class has "Avail Academy" on. Turn it on in Students &rarr; Change Student Status.</td></tr>');
+            count(); return;
+        }
+        $('#acBody').html(_rows.map((s, i) => `<tr class="row-${s.mark}" data-i="${i}">
+            <td>${i + 1}</td><td><b>${esc(s.rollNo)}</b></td><td class="fw-semibold">${esc(s.name)}${s.saved ? '' : ' <span class="not-saved">not saved</span>'}</td>
+            <td>${esc(s.fatherName)}</td><td>${esc(s.sectionName)}</td>
+            <td class="text-center"><div class="att-group">${['P', 'A', 'L'].map(v => `<button type="button" class="att-btn ${s.mark === v ? 'active' : ''}" data-v="${v}" onclick="acSet(${i}, '${v}')">${v}</button>`).join('')}</div></td>
+        </tr>`).join(''));
+        count();
+    }
+
+    function acSet(i, v) { _rows[i].mark = v; render(); }
+    function acAll(v) { if (!_rows.length) { toastWarning('Load the students first.'); return; } _rows.forEach(s => s.mark = v); render(); }
+    function count() {
+        $('#cTotal').text(_rows.length);
+        ['P', 'A', 'L'].forEach(v => $('#c' + v).text(_rows.filter(s => s.mark === v).length));
+    }
+
+    async function acSave() {
+        if (!_rows.length) { toastWarning('Load the students first.'); return; }
+        const dto = { Date: $('#acDate').val(), Items: _rows.map(s => ({ StudentId: s.studentId, Attendence: VALUE[s.mark], Remarks: s.mark === 'L' ? 'Leave' : null })) };
+        const r = await fetch(`${API_BASE}/academy-attendance`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dto) }).catch(() => null);
+        const body = r ? await r.json().catch(() => ({})) : {};
+        if (!r || !r.ok) { toastError(body.message || 'Could not save.'); return; }
+        toastSuccess(`Academy attendance saved for ${body.saved} student(s).`);
+        await acLoad();
+    }
+
+    async function acDelete() {
+        if (!$('#acClass').val() || !$('#acDate').val()) { toastWarning('Choose the class and the date.'); return; }
+        if (!await confirmDelete({ title: 'Delete academy attendance?', html: `The academy attendance of <b>${esc($('#acClass option:selected').text())}</b>${$('#acSection').val() ? ' - ' + esc($('#acSection option:selected').text()) : ''} on <b>${fmtDate($('#acDate').val())}</b> will be deleted.` })) return;
+        const r = await fetch(`${API_BASE}/academy-attendance?${query()}`, { method: 'DELETE' }).catch(() => null);
+        const body = r ? await r.json().catch(() => ({})) : {};
+        if (!r || !r.ok) { toastError(body.message || 'Could not delete.'); return; }
+        toastSuccess(`Deleted (${body.removed} student(s)).`);
+        await acLoad();
+    }
+</script>
+}

@@ -71,9 +71,10 @@ namespace School.API.Controllers
                             // Three attendance screens that were all called some
                             // form of "Attendance", two of them identically.
                             new MenuItemDto { Id = 13, Title = "Mark Daily Attendance", Icon = "bi-check2-square", Url = "/attendance/form", Order = 4, Section = "Students" },
-                            new MenuItemDto { Id = 14, Title = "Attendance Record", Icon = "bi-calendar2-check-fill", Url = "/Attendance", Order = 5, Section = "Students" },
-                            new MenuItemDto { Id = 15, Title = "Print Attendance Sheet", Icon = "bi-printer-fill", Url = "/attendance/sheet", Order = 6, Section = "Students" },
-                            new MenuItemDto { Id = 16, Title = "Monthly Attendance Register", Icon = "bi-journal-check", Url = "/attendance/register", Order = 7, Section = "Students" }
+                            new MenuItemDto { Id = 17, Title = "Mark Academy Attendance", Icon = "bi-mortarboard", Url = "/attendance/academy", Order = 5, Section = "Students" },
+                            new MenuItemDto { Id = 14, Title = "Attendance Record", Icon = "bi-calendar2-check-fill", Url = "/Attendance", Order = 6, Section = "Students" },
+                            new MenuItemDto { Id = 15, Title = "Print Attendance Sheet", Icon = "bi-printer-fill", Url = "/attendance/sheet", Order = 7, Section = "Students" },
+                            new MenuItemDto { Id = 16, Title = "Monthly Attendance Register", Icon = "bi-journal-check", Url = "/attendance/register", Order = 8, Section = "Students" }
                         }
                     },
 
@@ -95,6 +96,8 @@ namespace School.API.Controllers
                             // for separate people, so each name says which.
                             new MenuItemDto { Id = 24, Title = "Class Timings (Students)", Icon = "bi-clock", Url = "/class-timing", Order = 5, Section = "Academics" },
                             new MenuItemDto { Id = 25, Title = "Subject Allocation", Icon = "bi-person-workspace", Url = "/staff-subjects", Order = 6, Section = "Academics" },
+                            // The academy's own staff -> subject allocation and time table.
+                            new MenuItemDto { Id = 31, Title = "Academy Subject Allocation", Icon = "bi-mortarboard", Url = "/academy-staff-subjects", Order = 6, Section = "Academics" },
                             // Photographed class diary, sent to parents on WhatsApp ("Today's Diary").
                             new MenuItemDto { Id = 26, Title = "Daily Diary", Icon = "bi-journal-richtext", Url = "/daily-diary", Order = 6, Section = "Academics" },
                             // Time Table (/timetable) is deliberately not listed.

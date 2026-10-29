@@ -463,6 +463,14 @@
         font-size: 14px;
         opacity: 0.9;
     }
+
+    /* Phone: the date goes under the greeting instead of on top of it. */
+    @@media (max-width: 767px) {
+        .welcome-banner { padding: 20px; margin-bottom: 20px; }
+        .welcome-banner h2 { font-size: 19px; }
+        .welcome-banner .date-info { position: static; transform: none; text-align: left; margin-top: 12px; display: flex; align-items: baseline; gap: 8px; }
+        .welcome-banner .date-info .day { font-size: 28px; }
+    }
 </style>
 }
 

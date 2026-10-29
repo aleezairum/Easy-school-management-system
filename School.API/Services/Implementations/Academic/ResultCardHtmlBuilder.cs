@@ -93,6 +93,7 @@ namespace School.API.Services.Implementations.Academic
                 <div class=""info-row""><strong>Position in Class :</strong> {(s.Position.HasValue ? s.Position.Value.ToString() : "-")}</div>
                 <div class=""info-row""><strong>Previous Percentage :</strong> {Pct(s.PrevPct)}</div>
                 <div class=""info-row""><strong>Attendance :</strong> {s.PresentDays}/{s.SchoolDays} ({Pct(s.AttendancePct)})</div>
+                {AcademyRow(s)}
             </div>
             <div class=""info-photo""><div class=""photo-placeholder"">Photo</div></div>
         </div>
@@ -141,6 +142,12 @@ namespace School.API.Services.Implementations.Academic
 
         private static string Pct(decimal? v)
             => v.HasValue ? v.Value.ToString("0.00", CultureInfo.InvariantCulture) + "%" : "-";
+
+        // Only students marked on Mark Academy Attendance have the line.
+        private static string AcademyRow(ResultCardStudentDto s)
+            => s.AcademyDays > 0
+                ? $"<div class=\"info-row\"><strong>Academy Attendance :</strong> {s.AcademyPresentDays}/{s.AcademyDays} ({Pct(s.AcademyPct)})</div>"
+                : "";
 
         private static string PctOf(decimal? part, decimal? whole)
             => (part.HasValue && whole.HasValue && whole.Value != 0)

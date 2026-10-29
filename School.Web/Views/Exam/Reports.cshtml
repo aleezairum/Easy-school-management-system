@@ -45,7 +45,8 @@
                     <div class="col-xl col-lg-3 col-md-4 col-sm-6 col-12" id="prevExamFilterCol">
                         <label for="prevExamId" class="form-label">Previous Exam</label>
                         <select class="form-select" id="prevExamId">
-                            <option value="">-- Select Previous Exam --</option>
+                            <option value="">Auto - the previous term</option>
+                            <option value="-1">None</option>
                         </select>
                     </div>
                     <div class="col-xl col-lg-3 col-md-4 col-sm-6 col-12" id="studentFilterCol" style="display:none;">
@@ -89,6 +90,10 @@
                             <label class="form-check-label" for="rtTeacherWise">Teacher Wise Report</label>
                         </div>
                         <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="reportType" id="rtAcademyTeacherWise" value="academyteacherwise" onchange="onReportTypeChange()">
+                            <label class="form-check-label" for="rtAcademyTeacherWise">Academy Teacher Wise Report</label>
+                        </div>
+                        <div class="form-check form-check-inline">
                             <input class="form-check-input" type="radio" name="reportType" id="rtTeacherCompare" value="teachercompare" onchange="onReportTypeChange()">
                             <label class="form-check-label" for="rtTeacherCompare">Teacher Comparison Report</label>
                         </div>
@@ -96,6 +101,22 @@
                             <input class="form-check-input" type="radio" name="reportType" id="rtAnnouncement" value="announcement" onchange="onReportTypeChange()">
                             <label class="form-check-label" for="rtAnnouncement">Result Announcement</label>
                         </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="reportType" id="rtComparisonSheet" value="comparisonsheet" onchange="onReportTypeChange()">
+                            <label class="form-check-label" for="rtComparisonSheet">Comparison Result Sheet</label>
+                        </div>
+                    </div>
+                </div>
+                <!-- Comparison Result Sheet: a session and its exams (the term exams ticked) -->
+                <div class="row mt-3" id="csScopeCol" style="display:none;">
+                    <div class="col-md-3">
+                        <label class="form-label" for="csSession">Session</label>
+                        <select class="form-select" id="csSession" onchange="csLoadExams()"></select>
+                    </div>
+                    <div class="col-md-9">
+                        <label class="form-label d-block">Exams to compare</label>
+                        <div id="csExams" class="d-flex flex-wrap gap-3 pt-1"><span class="text-muted small">Choose the session.</span></div>
+                        <small class="text-muted d-block mt-1">The session's term exams are ticked. Each column is the class result %: students who passed every subject.</small>
                     </div>
                 </div>
                 <!-- Result Announcement scope — only shown for the Announcement report -->
@@ -328,9 +349,15 @@
     // Only the staff who actually hold a subject assignment in this exam — the
     // Teacher Wise report is driven by those assignments, so anyone else would
     // simply produce an empty report. No exam selected = no teachers to offer.
+    // Which report the Teacher list was last filled for: the Academy Teacher
+    // Wise report lists the staff of the Academy Subject Allocation instead.
+    let teacherListFor = 'teacherwise';
+
     async function loadTeachersForExam(examId) {
         const teacherSelect = $('#teacherId');
         const previous = teacherSelect.val();
+        const academy = $('input[name="reportType"]:checked').val() === 'academyteacherwise';
+        teacherListFor = academy ? 'academyteacherwise' : 'teacherwise';
 
         teacherSelect.find('option:not(:first)').remove();
 
@@ -340,8 +367,17 @@
         }
 
         try {
-            const res = await fetch(`${API_BASE}/teacher?examId=${examId}`);
-            const teachers = res.ok ? await res.json() : [];
+            let teachers;
+            if (academy) {
+                const res = await fetch(`${API_BASE}/academystaffsubject?examId=${examId}`);
+                const rows = res.ok ? await res.json() : [];
+                const byId = new Map();
+                (rows || []).forEach(r => { if (r.teacherId && !byId.has(r.teacherId)) byId.set(r.teacherId, { vid: r.teacherId, vName: r.teacherName || '' }); });
+                teachers = [...byId.values()].sort((a, b) => a.vName.localeCompare(b.vName));
+            } else {
+                const res = await fetch(`${API_BASE}/teacher?examId=${examId}`);
+                teachers = res.ok ? await res.json() : [];
+            }
             (teachers || []).forEach(t => {
                 teacherSelect.append(`<option value="${t.vid}">${t.vName}</option>`);
             });
@@ -358,7 +394,7 @@
         const examSelect = $('#examId');
         const prevSelect = $('#prevExamId');
         examSelect.find('option:not(:first)').remove();
-        prevSelect.find('option:not(:first)').remove();
+        prevSelect.find('option:not([value=""]):not([value="-1"])').remove();
         (exams || []).forEach(e => {
             examSelect.append(`<option value="${e.vid}">${e.vName}</option>`);
             prevSelect.append(`<option value="${e.vid}">${e.vName}</option>`);
@@ -425,18 +461,32 @@
     // Adapt which filters are shown / required to the selected report type:
     //   Result Sheet    -> Class* + Section* + Exam* (+ optional Previous Exam)
     //   Result Card     -> Exam* only; Class / Section / Student / Previous Exam optional
-    //   Position Wise   -> Class* + Exam*; no Section, no Previous Exam
+    //   Position Wise   -> Class* + Exam* (+ Previous Exam); no Section
+    //   Previous Exam   -> empty = Auto (the API takes the previous term of the same kind), -1 = None
     function onReportTypeChange() {
         const type          = $('input[name="reportType"]:checked').val();
         const isCard        = type === 'card';
         const isSheet       = type === 'sheet';
         const isExecutive   = type === 'executive';
         const isSubjectWise = type === 'subjectwise';     // Class + Section + Exam
-        const isTeacherWise = type === 'teacherwise';     // Exam only; Class + Section optional
+        // Exam only; Class + Section optional. The academy one reads the Academy
+        // Subject Allocation, so its Teacher list is the academy's.
+        const isTeacherWise = type === 'teacherwise' || type === 'academyteacherwise';
+        if (isTeacherWise && teacherListFor !== type) loadTeachersForExam($('#examId').val());
         const isCompare     = type === 'teachercompare';  // Exam only; Left/Right scope picker
         const isAnnouncement = type === 'announcement';   // whole school — Exam only
+        const isCompSheet   = type === 'comparisonsheet'; // Session + its exams only
         // Position & Percentage are both class-wide (all sections, no prev exam)
         const isClassWide = (type === 'position' || type === 'percentage');
+
+        // Comparison Result Sheet: no class / section / exam filters, its own session panel.
+        $('#csScopeCol').toggle(isCompSheet);
+        $('#examId').closest('[class*="col-"]').toggle(!isCompSheet);
+        if (isCompSheet) {
+            csLoadSessions();
+            $('#classFilterCol, #sectionFilterCol, #prevExamFilterCol, #studentFilterCol, #teacherFilterCol, #annScopeCol, #swScopeCol, #cmpScopeCol').hide();
+            return;
+        }
 
         // Class: every report needs it except the whole-school Announcement, the
         // Teacher Wise report (filters by Teacher), the Comparison report and the
@@ -448,8 +498,8 @@
             $('#classId').val('');
             $('#sectionId').val('').prop('disabled', true).find('option:not(:first)').remove();
         }
-        // Previous Exam: Sheet & Card only
-        $('#prevExamFilterCol').toggle(isSheet || isCard);
+        // Previous Exam (Prev.%): Sheet, Card, Position and Percentage
+        $('#prevExamFilterCol').toggle(isSheet || isCard || isClassWide);
         // Student: Card only
         $('#studentFilterCol').toggle(isCard);
         // Teacher: Teacher Wise only (optional filter)
@@ -475,6 +525,33 @@
         if (isClassWide || isAnnouncement) {
             $('#sectionId').val('');        // section is ignored for these reports
         }
+    }
+
+    // ── Comparison Result Sheet ────────────────────────────────────────
+
+    let _csSessionsLoaded = false;
+    async function csLoadSessions() {
+        if (_csSessionsLoaded) return;
+        _csSessionsLoaded = true;
+        const sessions = await fetch(`${API_BASE}/AcademicSessionYear`).then(r => r.ok ? r.json() : []).catch(() => []);
+        const sel = $('#csSession').empty();
+        (sessions || []).forEach(s => sel.append(`<option value="${s.vid ?? s.vID}">${s.vName}</option>`));
+        const current = (sessions || []).find(s => s.isCurrent);
+        if (current) sel.val(String(current.vid ?? current.vID));
+        csLoadExams();
+    }
+
+    async function csLoadExams() {
+        const sessionId = $('#csSession').val();
+        const box = $('#csExams');
+        if (!sessionId) { box.html('<span class="text-muted small">Choose the session.</span>'); return; }
+        box.html('<span class="text-muted small">Loading...</span>');
+        const exams = await fetch(`${API_BASE}/examresult/comparison-exams?sessionId=${sessionId}`).then(r => r.ok ? r.json() : []).catch(() => []);
+        box.html(exams.length ? exams.map(e => `
+            <div class="form-check">
+                <input class="form-check-input cs-exam" type="checkbox" id="csExam${e.examId}" value="${e.examId}" ${e.isTerm ? 'checked' : ''}>
+                <label class="form-check-label" for="csExam${e.examId}">${e.examName}</label>
+            </div>`).join('') : '<span class="text-muted small">No exam of this session has marks yet.</span>');
     }
 
     // ── Result Announcement scope helpers ──────────────────────────────
@@ -747,6 +824,17 @@
         const sectionId  = $('#sectionId').val();
         const examId     = $('#examId').val();
 
+        // Comparison Result Sheet: a session and its ticked exams, no single exam.
+        if (reportType === 'comparisonsheet') {
+            const sessionId = $('#csSession').val();
+            const ids = $('.cs-exam:checked').map((i, e) => e.value).get();
+            if (!sessionId) { toastWarning('Please choose the Session'); return; }
+            if (!ids.length) { toastWarning('Tick at least one exam'); return; }
+            const params = new URLSearchParams({ sessionId, examIds: ids.join(','), sessionName: $('#csSession option:selected').text() });
+            window.open(`/exam/comparison-sheet?${params.toString()}`, '_blank', 'width=1000,height=800');
+            return;
+        }
+
         // Exam is always required
         if (!examId) { toastWarning('Please select an Exam'); return; }
 
@@ -766,6 +854,7 @@
                 examName: $('#examId option:selected').text(),
                 className: $('#classId option:selected').text()
             });
+            if ($('#prevExamId').val()) params.append('prevExamId', $('#prevExamId').val());
             const url = reportType === 'position' ? '/exam/position-report' : '/exam/percentage-report';
             window.open(`${url}?${params.toString()}`, '_blank', 'width=1000,height=800');
         } else if (reportType === 'executive') {
@@ -786,9 +875,10 @@
             if (scope.classIds)   params.append('classIds', scope.classIds);
             if (scope.sectionIds) params.append('sectionIds', scope.sectionIds);
             window.open(`/exam/subject-wise-report?${params.toString()}`, '_blank', 'width=1200,height=800');
-        } else if (reportType === 'teacherwise') {
+        } else if (reportType === 'teacherwise' || reportType === 'academyteacherwise') {
             // Teacher Wise Report: Exam only (Teacher / Class / Section optional filters)
             const params = buildReportParams();   // includes class/section names when chosen
+            if (reportType === 'academyteacherwise') params.append('academy', 'true');
             const teacherId = $('#teacherId').val();
             if (teacherId) {
                 params.append('teacherId', teacherId);

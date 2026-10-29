@@ -34,14 +34,16 @@ namespace School.API.Services.Implementations.MobileApp
         private readonly AppTokenIssuer _tokens;
         private readonly School.API.Services.Interfaces.HR.IPayrollService _payroll;
         private readonly IAnnouncementService _announcements;
+        private readonly School.API.Services.Interfaces.Academic.ISMSExamResultService _examResults;
         private readonly IConfiguration _config;
 
         public AppService(SchoolDbContext db, AppRepository repo, IWaBotRepository bot, ISchoolDocuments docs,
             ILedgerService ledgers, IStdAttendenceService attendance, AppTokenIssuer tokens,
-            School.API.Services.Interfaces.HR.IPayrollService payroll, IAnnouncementService announcements, IConfiguration config)
+            School.API.Services.Interfaces.HR.IPayrollService payroll, IAnnouncementService announcements, IConfiguration config,
+            School.API.Services.Interfaces.Academic.ISMSExamResultService examResults)
         {
             _db = db; _repo = repo; _bot = bot; _docs = docs; _ledgers = ledgers; _attendance = attendance; _tokens = tokens; _payroll = payroll;
-            _announcements = announcements; _config = config;
+            _announcements = announcements; _config = config; _examResults = examResults;
         }
 
         // ── sign in ───────────────────────────────────────────────────
@@ -263,21 +265,64 @@ namespace School.API.Services.Implementations.MobileApp
             return (await _docs.LedgerPdfsAsync(new() { Bot(card, null) })).FirstOrDefault(d => d.HasDocument);
         }
 
+        /// <summary>
+        /// The student, for their RESULTS only: any member of staff may see any
+        /// student's finalised results (read only); everyone else as StudentAsync.
+        /// Fees, attendance and the rest keep the narrower StudentAsync rule.
+        /// </summary>
+        private async Task<(AppStudentCardDto Card, int? ParentId)> ResultStudentAsync(AppCaller c, int studentId)
+        {
+            if (c.Mode != "staff") return await StudentAsync(c, studentId);
+            var s = await _repo.GetStudentAsync(studentId) ?? throw new KeyNotFoundException();
+            return (s.Card, s.ParentId);
+        }
+
+        // ── results for staff: every finalised result, read only ───────
+
+        public async Task<List<AppResultExamDto>> ResultExamsAsync(AppCaller c)
+        {
+            if (c.Mode != "staff") throw new AppForbiddenException("Only staff can see the class results.");
+            return await _repo.GetFinalizedExamsAsync();
+        }
+
+        public async Task<List<AppResultSectionDto>> ResultSectionsAsync(AppCaller c, int examId)
+        {
+            if (c.Mode != "staff") throw new AppForbiddenException("Only staff can see the class results.");
+            return await _repo.GetResultSectionsAsync(examId);   // empty when the exam is not finalised
+        }
+
+        public async Task<List<AppSectionResultRowDto>> SectionResultAsync(AppCaller c, int examId, int sectionId)
+        {
+            if (c.Mode != "staff") throw new AppForbiddenException("Only staff can see the class results.");
+            // Only a finalised exam has sections here, so an exam still being marked never shows.
+            var section = (await _repo.GetResultSectionsAsync(examId)).FirstOrDefault(s => s.SectionId == sectionId)
+                          ?? throw new AppForbiddenException("This result is not announced yet.");
+            var card = await _examResults.GetResultCardAsync(examId, section.ClassId, sectionId, prevExamId: -1, studentId: 0);
+            return card.Students
+                .Select(s => new AppSectionResultRowDto
+                {
+                    StudentId = s.StudentId, RollNo = s.RollNo, Name = s.StudentName ?? "", FatherName = s.FatherName,
+                    Position = s.Position, Percent = s.CurrentPct, Obtained = s.GrandObt, Total = s.GrandTotal,
+                    Passed = string.Equals(s.GrandStatus, "Pass", StringComparison.OrdinalIgnoreCase)
+                })
+                .ToList();
+        }
+
         public async Task<List<AppExamDto>> ExamsAsync(AppCaller c, int studentId)
         {
-            await StudentAsync(c, studentId);
+            await ResultStudentAsync(c, studentId);
             return await _repo.GetStudentExamsAsync(studentId);
         }
 
         public async Task<List<AppExamSubjectDto>> ExamSubjectsAsync(AppCaller c, int studentId, int examId)
         {
-            await StudentAsync(c, studentId);
+            await ResultStudentAsync(c, studentId);
             return await _repo.GetStudentExamSubjectsAsync(studentId, examId);
         }
 
         public async Task<BotOutgoing?> ResultCardPdfAsync(AppCaller c, int studentId, int examId)
         {
-            var (card, pid) = await StudentAsync(c, studentId);
+            var (card, pid) = await ResultStudentAsync(c, studentId);
             var exam = (await _repo.GetStudentExamsAsync(studentId)).FirstOrDefault(e => e.ExamId == examId);
             if (exam == null) return null;                 // not finalised, or no marks
             return await _docs.ResultCardPdfAsync(Bot(card, pid), examId, exam.ExamName);

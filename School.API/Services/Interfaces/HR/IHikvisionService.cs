@@ -12,6 +12,18 @@ namespace School.API.Services.Interfaces.HR
         Task<bool> DeleteDeviceAsync(int id);
         Task<DeviceTestResultDto> TestDeviceAsync(int id);
 
+        /// <summary>Every active machine's clock against the server's.</summary>
+        Task<List<DeviceClockDto>> GetClocksAsync();
+
+        /// <summary>Sets one machine's clock to the server's time now, then reads it back.</summary>
+        Task<DeviceClockDto> CorrectClockAsync(int id);
+
+        /// <summary>
+        /// Every active machine whose clock is more than <paramref name="maxDriftSeconds"/>
+        /// away from the server's is set to the server's time (0 = every machine).
+        /// </summary>
+        Task<List<DeviceClockDto>> CorrectClocksAsync(int maxDriftSeconds);
+
         /// <summary>Reads the machine's punches since the last read (or since <paramref name="from"/>).</summary>
         Task<DevicePullResultDto> PullAsync(int id, DateTime? from = null);
 

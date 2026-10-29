@@ -59,6 +59,26 @@ namespace School.API.Services.Implementations.HR.Hikvision
             return xml.Descendants().FirstOrDefault(e => e.Name.LocalName == "localTime")?.Value;
         }
 
+        /// <summary>
+        /// Sets the machine's clock to <paramref name="local"/> (the server's wall time).
+        /// The machine's own time settings are read and sent back with only the mode
+        /// (manual) and the time changed, so its time zone and the rest stay as they were.
+        /// A machine left on NTP that kept drifting is switched to manual by this.
+        /// </summary>
+        public async Task SetDeviceTimeAsync(DateTime local)
+        {
+            var xml = await SendXmlAsync(HttpMethod.Get, "ISAPI/System/time", null);
+            XElement Field(string name)
+            {
+                var e = xml.Elements().FirstOrDefault(x => x.Name.LocalName == name);
+                if (e == null) { e = new XElement(xml.Name.Namespace + name); xml.Add(e); }
+                return e;
+            }
+            Field("timeMode").Value = "manual";
+            Field("localTime").Value = IsapiTime(local);
+            await SendXmlAsync(HttpMethod.Put, "ISAPI/System/time", xml.ToString(SaveOptions.DisableFormatting));
+        }
+
         // ── Punches ────────────────────────────────────────────────────
 
         public sealed class AcsEvent

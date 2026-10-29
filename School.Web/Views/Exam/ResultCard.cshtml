@@ -23,7 +23,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=820" />
     <title>Result Card – Sir Syed Model High School</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -298,6 +298,10 @@
                 <div class="info-row"><strong>Position in Class :</strong> @(s.Position.HasValue ? s.Position.Value.ToString() : "-")</div>
                 <div class="info-row"><strong>Previous Percentage :</strong> @Pct(s.PrevPct)</div>
                 <div class="info-row"><strong>Attendance :</strong> @s.PresentDays/@s.SchoolDays (@Pct(s.AttendancePct))</div>
+                @if (s.AcademyDays > 0)
+                {
+                    <div class="info-row"><strong>Academy Attendance :</strong> @s.AcademyPresentDays/@s.AcademyDays (@Pct(s.AcademyPct))</div>
+                }
             </div>
             <div class="info-photo">
                 <div class="photo-placeholder">Photo</div>

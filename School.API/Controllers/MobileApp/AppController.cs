@@ -150,6 +150,17 @@ namespace School.API.Controllers.MobileApp
         public Task<ActionResult> StudentResultCard(int id, int examId) =>
             RunFile(async c => Pdf(await _app.ResultCardPdfAsync(c, id, examId), "No published result for this exam."));
 
+        // ── results for staff: every finalised result, read only ──
+
+        [HttpGet("results/exams")]
+        public Task<ActionResult> ResultExams() => Run(c => _app.ResultExamsAsync(c));
+
+        [HttpGet("results/{examId:int}/sections")]
+        public Task<ActionResult> ResultSections(int examId) => Run(c => _app.ResultSectionsAsync(c, examId));
+
+        [HttpGet("results/{examId:int}/sections/{sectionId:int}")]
+        public Task<ActionResult> SectionResult(int examId, int sectionId) => Run(c => _app.SectionResultAsync(c, examId, sectionId));
+
         [HttpGet("students/{id:int}/diary")]
         public Task<ActionResult> StudentDiary(int id, [FromQuery] DateTime? from, [FromQuery] DateTime? to) =>
             Run(c => _app.DiaryAsync(c, id, (from ?? DateTime.Today.AddDays(-6)).Date, (to ?? DateTime.Today).Date));

@@ -19,6 +19,14 @@ namespace School.Web.Controllers
             return View();
         }
 
+        /// <summary>Academy (after-school) attendance of the students with "Avail Academy" on.</summary>
+        [Route("attendance/academy")]
+        public IActionResult Academy()
+        {
+            ViewData["Title"] = "Mark Academy Attendance";
+            return View();
+        }
+
         [Route("attendance/report")]
         public IActionResult Report()
         {

@@ -67,6 +67,24 @@ namespace School.API.Controllers.HR
             catch (KeyNotFoundException) { return NotFound(); }
         }
 
+        // ── Machine clocks ─────────────────────────────────────────────
+
+        /// <summary>Every active machine's clock against the server's.</summary>
+        [HttpGet("clocks")]
+        public async Task<ActionResult<List<DeviceClockDto>>> Clocks() => Ok(await _service.GetClocksAsync());
+
+        /// <summary>Sets one machine's clock to the server's time now.</summary>
+        [HttpPost("devices/{id:int}/clock")]
+        public async Task<ActionResult<DeviceClockDto>> CorrectClock(int id)
+        {
+            try { return Ok(await _service.CorrectClockAsync(id)); }
+            catch (KeyNotFoundException) { return NotFound(); }
+        }
+
+        /// <summary>Sets every active machine's clock to the server's time now.</summary>
+        [HttpPost("clocks/correct")]
+        public async Task<ActionResult<List<DeviceClockDto>>> CorrectClocks() => Ok(await _service.CorrectClocksAsync(0));
+
         /// <param name="from">Read punches from this time instead of from the last one read - to fetch a missed day.</param>
         [HttpPost("devices/{id:int}/pull")]
         public async Task<ActionResult<DevicePullResultDto>> Pull(int id, [FromQuery] DateTime? from)

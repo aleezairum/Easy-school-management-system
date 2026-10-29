@@ -39,6 +39,8 @@ namespace School.API.Services.Implementations.Academic
             sb.AppendLine($"Total Students: {s.TotalStudents}");
             sb.AppendLine($"Position in Class: {(s.Position.HasValue ? s.Position.Value.ToString() : "-")}");
             sb.AppendLine($"Attendance: {s.PresentDays}/{s.SchoolDays} ({Pct(s.AttendancePct)})");
+            if (s.AcademyDays > 0)
+                sb.AppendLine($"Academy Attendance: {s.AcademyPresentDays}/{s.AcademyDays} ({Pct(s.AcademyPct)})");
             sb.AppendLine($"Result: {s.GrandStatus}");
 
             var text = sb.ToString().TrimEnd();

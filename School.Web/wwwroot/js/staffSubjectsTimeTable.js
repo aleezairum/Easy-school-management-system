@@ -19,6 +19,8 @@
 // costs no extra round trip.
 
 const PRINT_SCHOOL = 'SIR SYED MODEL HIGH SCHOOL (BOYS & GIRLS)';
+// The Academy Subject Allocation page prints the same sheet as "Academy Time Table".
+const PRINT_TITLE = (typeof TIMETABLE_TITLE !== 'undefined' && TIMETABLE_TITLE) || 'Time Table';
 const MAX_COLS_PER_PAGE = 8;   // beyond this a landscape page is unreadable
 
 // Every class-section that has assignments in one exam, in the school's own
@@ -175,7 +177,7 @@ function buildTimeTableHtml({ columns, lectures, cell, spareFor, heading, fromDa
 
         return `<div class="sheet">
                     <div class="hdr">
-                        <div class="ttl">Time Table${heading ? ' ' + esc(heading) : ''}</div>
+                        <div class="ttl">${esc(PRINT_TITLE)}${heading ? ' ' + esc(heading) : ''}</div>
                         <div class="school">${esc(PRINT_SCHOOL)}</div>
                         <div class="meta">
                             ${examName ? esc(examName) + ' &nbsp;&nbsp;|&nbsp;&nbsp; ' : ''}
@@ -192,7 +194,7 @@ function buildTimeTableHtml({ columns, lectures, cell, spareFor, heading, fromDa
                 </div>`;
     }).join('');
 
-    return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Time Table</title>
+    return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(PRINT_TITLE)}</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 body { font-family: Arial, sans-serif; font-size: 11px; color: #000; padding: 10px 14px; }
